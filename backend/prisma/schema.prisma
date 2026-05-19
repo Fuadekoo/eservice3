@@ -1,0 +1,421 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum role {
+  admin
+  manager
+  staff
+  customer
+}
+
+model User {
+  id               String   @id @default(uuid())
+  username         String   @unique
+  phoneNumber      String   @unique
+  password         String
+  roleId           String?
+  role             Role?    @relation(fields: [roleId], references: [id])
+  isActive         Boolean  @default(true)
+  phoneVerified    Boolean  @default(false)
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  staffs           staff[]
+  requests         request[]
+  requestForOthers requestForOther[]
+  appointments     appointment[]
+  reportsSent      report[]          @relation("ReportSender")
+  reportsReceived  report[]          @relation("ReportReceiver")
+  sessions         session[]
+}
+
+model session {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceName      String?
+  deviceType      String?
+  browser         String?
+  operatingSystem String?
+  ipAddress       String?
+  userAgent       String?  @db.Text
+  lastSeenAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@index([userId])
+  @@index([lastSeenAt])
+  @@map("session")
+}
+
+model staff {
+  id                      String                   @id @default(cuid())
+  userId                  String
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  officeId                String
+  office                  Office                   @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @default(now()) @updatedAt
+  appointments            appointment[]
+  approvedStaffRequests   request[]                @relation("ApproveStaff")
+  approvedManagerRequests request[]                @relation("ApproveManager")
+  serviceAssignments      serviceStaffAssignment[]
+
+  @@map("staff")
+}
+
+model Office {
+  id          String   @id @default(cuid())
+  name        String
+  phoneNumber String?
+  roomNumber  String
+  address     String
+  subdomain   String
+  logo        String?
+  slogan      String?
+  settings    Json     @default("{}")
+  status      Boolean  @default(true)
+  startedAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  roles        Role[]
+  staffs       staff[]
+  service      service[]
+  availability officeAvailability?
+
+  @@map("office")
+}
+
+model officeAvailability {
+  id       String @id @default(cuid())
+  officeId String @unique
+  office   Office @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  // Default work schedule (day of week: 0=Sunday, 1=Monday, ..., 6=Saturday)
+  // Format: { "1": { "start": "09:00", "end": "17:00", "available": true }, ... }
+  defaultSchedule Json @default("{}")
+
+  // Slot duration in minutes (e.g., 30, 60)
+  slotDuration Int @default(30)
+
+  // Unavailable date ranges (e.g., holidays, maintenance periods)
+  // Format: [{ "start": "2024-01-01", "end": "2024-01-07", "reason": "Holiday" }]
+  unavailableDateRanges Json @default("[]")
+
+  // Unavailable specific dates (single days)
+  // Format: ["2024-12-25", "2024-12-31"]
+  unavailableDates Json @default("[]")
+
+  // Specific date overrides (for special hours on specific dates)
+  // Format: { "2024-12-24": { "start": "10:00", "end": "14:00", "available": true } }
+  dateOverrides Json @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@map("office_availability")
+}
+
+model Role {
+  id        String   @id @default(cuid())
+  name      String
+  officeId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  office          Office?          @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@map("role")
+}
+
+model Permission {
+  id              String           @id @default(cuid())
+  name            String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  rolePermissions RolePermission[]
+
+  @@map("permission")
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permission")
+}
+
+model gallery {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  images      galleryImage[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("gallery")
+}
+
+model galleryImage {
+  id        String   @id @default(cuid())
+  galleryId String
+  filename  String // Filename stored in filedata folder
+  order     Int      @default(0) // Order for displaying images
+  gallery   gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([galleryId])
+  @@map("gallery_image")
+}
+
+model service {
+  id               String                   @id @default(cuid())
+  name             String
+  description      String
+  timeToTake       String
+  officeId         String
+  office           Office                   @relation(fields: [officeId], references: [id], onDelete: Cascade)
+  requests         request[]
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @default(now()) @updatedAt
+  requestForOthers requestForOther[]
+  staffAssignments serviceStaffAssignment[]
+  requirements     requirement[]
+  serviceFors      serviceFor[]
+
+  @@map("service")
+}
+
+// a requrement to take the service
+model requirement {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  serviceId   String
+  service     service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("requirement")
+}
+
+model serviceFor {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  serviceId   String
+  service     service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("service_for")
+}
+
+model customerSatisfaction {
+  id               String            @id @default(cuid())
+  requestId        String            @unique
+  request          request           @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  rating           Int
+  comment          String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  requestForOthers requestForOther[]
+
+  @@map("customer_satisfaction")
+}
+
+enum requestStatus {
+  pending
+  approved
+  rejected
+}
+
+enum requestStatusAdmin {
+  pending
+  approved
+  rejected
+}
+
+enum reportStatus {
+  pending
+  sent
+  received
+  read
+  archived
+}
+
+model request {
+  id                   String                @id @default(cuid())
+  userId               String
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId            String
+  service              service               @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  currentAddress       String
+  date                 DateTime
+  statusbystaff        requestStatus
+  statusbyadmin        requestStatusAdmin
+  // add the the approve requst staff id and note write by the approve staff
+  approveStaffId       String?
+  approveStaff         staff?                @relation("ApproveStaff", fields: [approveStaffId], references: [id])
+  approveManagerId     String?
+  approveManager       staff?                @relation("ApproveManager", fields: [approveManagerId], references: [id])
+  approveNote          String?
+  customerSatisfaction customerSatisfaction?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @default(now()) @updatedAt
+  appointments         appointment[]
+  fileData             fileData[]
+
+  @@map("request")
+}
+
+model requestForOther {
+  id                     String                @id @default(cuid())
+  userId                 String
+  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId              String
+  service                service               @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  currentAddress         String
+  name                   String
+  phoneNumber            String
+  relationship           String
+  date                   DateTime
+  status                 requestStatus
+  customerSatisfaction   customerSatisfaction? @relation(fields: [customerSatisfactionId], references: [id])
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @default(now()) @updatedAt
+  appointments           appointment[]
+  customerSatisfactionId String?
+  fileData               fileData[]
+
+  @@map("request_for_other")
+}
+
+model fileData {
+  id                String           @id @default(cuid())
+  name              String
+  filepath          String
+  description       String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  requestForOther   requestForOther? @relation(fields: [requestForOtherId], references: [id])
+  requestForOtherId String?
+  request           request?         @relation(fields: [requestId], references: [id])
+  requestId         String?
+  report            report?          @relation(fields: [reportId], references: [id])
+  reportId          String?
+
+  @@map("file_data")
+}
+
+model appointment {
+  id                String           @id @default(cuid())
+  requestId         String
+  request           request          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  date              DateTime
+  time              String?
+  status            String           @default("pending")
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @default(now()) @updatedAt
+  user              User?            @relation(fields: [userId], references: [id])
+  userId            String?
+  approveStaff      staff?           @relation(fields: [staffId], references: [id])
+  staffId           String?
+  requestForOther   requestForOther? @relation(fields: [requestForOtherId], references: [id])
+  requestForOtherId String?
+
+  @@map("appointment")
+}
+
+model otp {
+  id          String @id @default(uuid())
+  phoneNumber String
+  code        Int
+}
+
+model tourismArea {
+  id          String   @id @default(cuid())
+  name        String
+  photo       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("tourism_area")
+}
+
+// Service-Staff Assignment: Many-to-Many relationship
+// Office manager can assign services to staff (same office only)
+model serviceStaffAssignment {
+  id        String   @id @default(cuid())
+  serviceId String
+  service   service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staffId   String
+  staff     staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ensure unique service-staff pairs
+  @@unique([serviceId, staffId])
+  @@index([serviceId])
+  @@index([staffId])
+  @@map("service_staff_assignment")
+}
+
+model administration {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("administration")
+}
+
+model about {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("about")
+}
+
+model report {
+  id               String       @id @default(cuid())
+  name             String
+  description      String       @db.Text
+  fileData         fileData[]
+  reportSentTo     String
+  reportSentToUser User         @relation("ReportReceiver", fields: [reportSentTo], references: [id])
+  receiverStatus   reportStatus @default(pending)
+  reportSentBy     String
+  reportSentByUser User         @relation("ReportSender", fields: [reportSentBy], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@map("report")
+}

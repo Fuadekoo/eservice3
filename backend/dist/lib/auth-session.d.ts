@@ -1,0 +1,70 @@
+import type { Request } from "express";
+export declare const authSessionSelect: {
+    readonly id: true;
+    readonly userId: true;
+    readonly deviceName: true;
+    readonly deviceType: true;
+    readonly browser: true;
+    readonly operatingSystem: true;
+    readonly ipAddress: true;
+    readonly userAgent: true;
+    readonly lastSeenAt: true;
+    readonly createdAt: true;
+    readonly updatedAt: true;
+};
+export type AuthSessionRecord = Awaited<ReturnType<typeof createAuthSession>>;
+export declare function getClientIpAddress(req: Request): string | null;
+export declare function createAuthSession(userId: string, req: Request): Promise<{
+    id: string;
+    deviceName: string | null;
+    deviceType: string | null;
+    browser: string | null;
+    operatingSystem: string | null;
+    ipAddress: string | null;
+    userAgent: string | null;
+    lastSeenAt: Date;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+}>;
+export declare function deleteAuthSession(sessionId: string, userId?: string): Promise<number>;
+export declare function listUserAuthSessions(userId: string): Promise<{
+    id: string;
+    deviceName: string | null;
+    deviceType: string | null;
+    browser: string | null;
+    operatingSystem: string | null;
+    ipAddress: string | null;
+    userAgent: string | null;
+    lastSeenAt: Date;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+}[]>;
+export declare function revokeOtherUserSessions(userId: string, currentSessionId?: string): Promise<void>;
+export declare function touchAuthSession(sessionId: string, lastSeenAt: Date): Promise<void>;
+export declare function serializeAuthSession(session: {
+    id: string;
+    deviceName: string | null;
+    deviceType: string | null;
+    browser: string | null;
+    operatingSystem: string | null;
+    ipAddress: string | null;
+    userAgent: string | null;
+    lastSeenAt: Date;
+    createdAt: Date;
+    updatedAt: Date;
+} | null | undefined, currentSessionId?: string): {
+    isCurrent?: boolean;
+    id: string;
+    deviceName: string | null;
+    deviceType: string | null;
+    browser: string | null;
+    operatingSystem: string | null;
+    ipAddress: string | null;
+    userAgent: string | null;
+    lastSeenAt: string;
+    createdAt: string;
+    updatedAt: string;
+} | null;
+//# sourceMappingURL=auth-session.d.ts.map

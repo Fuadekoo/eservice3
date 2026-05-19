@@ -1,0 +1,460 @@
+import type { Request, Response } from "express";
+import { Prisma } from "../lib/prisma-client.js";
+import { compare, hash } from "bcryptjs";
+import { z } from "zod";
+
+import type { AuthRequest } from "../middleware/auth.js";
+import {
+  disableTwoFactor as disableTwoFactorHandler,
+  generateTwoFactorSetup as beginTwoFactorSetupHandler,
+  getTwoFactorStatus as getTwoFactorStatusHandler,
+  validateTwoFactorLogin as verifyLoginTwoFactorHandler,
+  verifyAndEnableTwoFactor as verifyTwoFactorSetupHandler,
+} from "./two-factor.controller.js";
+import { createAuthSession, serializeAuthSession } from "../lib/auth-session.js";
+import { prisma } from "../lib/db.js";
+import { generateToken } from "../lib/jwt.js";
+import { buildValidationError } from "../validators/security.validator.js";
+
+const loginSchema = z.object({
+  phone: z.string().trim().min(1, "Phone number is required."),
+  password: z.string().min(1, "Password is required."),
+});
+
+const updateProfileSchema = z
+  .object({
+    username: z.string().trim().min(1, "Username is required.").optional(),
+    phone: z.string().trim().min(1, "Phone number is required.").optional(),
+  })
+  .refine((value) => value.username !== undefined || value.phone !== undefined, {
+    message: "Provide at least one field to update.",
+    path: [],
+  });
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required."),
+  newPassword: z.string().min(6, "New password must be at least 6 characters."),
+});
+
+const userAuthInclude = {
+  role: {
+    include: {
+      rolePermissions: {
+        include: {
+          permission: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  staffs: {
+    orderBy: {
+      createdAt: "asc" as const,
+    },
+    take: 1,
+    include: {
+      office: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
+} as const;
+
+async function findUserForAuthByPhone(phone: string) {
+  return prisma.user.findFirst({
+    where: {
+      phoneNumber: phone.trim(),
+    },
+    include: userAuthInclude,
+  });
+}
+
+async function findUserForAuthById(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    include: userAuthInclude,
+  });
+}
+
+type AuthUserRecord = NonNullable<Awaited<ReturnType<typeof findUserForAuthById>>>;
+
+function getPrimaryStaff(user: AuthUserRecord) {
+  return user.staffs[0] ?? null;
+}
+
+function getPermissions(user: AuthUserRecord): string[] {
+  return user.role?.rolePermissions.map((entry) => entry.permission.name) ?? [];
+}
+
+function buildTokenForUser(user: AuthUserRecord, sessionId: string): string {
+  return generateToken({
+    sessionId,
+    userId: user.id,
+    username: user.username,
+    phone: user.phoneNumber,
+    ...(user.role
+      ? {
+          roleId: user.role.id,
+          roleName: user.role.name,
+        }
+      : {}),
+  });
+}
+
+function buildAuthResponse(
+  user: AuthUserRecord,
+  token?: string,
+  session?: Awaited<ReturnType<typeof createAuthSession>>,
+) {
+  const primaryStaff = getPrimaryStaff(user);
+  const permissions = getPermissions(user);
+
+  return {
+    user: {
+      id: user.id,
+      username: user.username,
+      phone: user.phoneNumber,
+      phoneNumber: user.phoneNumber,
+      isActive: user.isActive,
+      phoneVerified: user.phoneVerified,
+      roleId: user.roleId ?? null,
+      officeId: primaryStaff?.officeId ?? null,
+      staffId: primaryStaff?.id ?? null,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    },
+    office: primaryStaff?.office
+      ? {
+          id: primaryStaff.office.id,
+          name: primaryStaff.office.name,
+        }
+      : null,
+    role: user.role
+      ? {
+          id: user.role.id,
+          name: user.role.name,
+        }
+      : null,
+    permissions,
+    ...(session ? { currentSession: serializeAuthSession(session, session.id) } : {}),
+    ...(token ? { token } : {}),
+  };
+}
+
+function isDatabaseConnectionError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const maybeError = error as { code?: unknown };
+  return (
+    maybeError.code === "ECONNREFUSED" ||
+    maybeError.code === "ETIMEDOUT" ||
+    maybeError.code === 45028
+  );
+}
+
+function handleControllerError(
+  res: Response,
+  error: unknown,
+  fallbackMessage: string,
+): Response {
+  console.error(`[auth.controller] ${fallbackMessage}:`, error);
+
+  if (isDatabaseConnectionError(error)) {
+    return res.status(503).json({
+      error: "ServiceUnavailable",
+      message:
+        "Database connection failed. Please check your database configuration.",
+    });
+  }
+
+  return res.status(500).json({
+    error: "InternalServerError",
+    message: fallbackMessage,
+    details:
+      process.env.NODE_ENV === "development" &&
+      error instanceof Error
+        ? error.message
+        : undefined,
+  });
+}
+
+function respondNotImplemented(res: Response, feature: string): Response {
+  return res.status(501).json({
+    error: "NotImplemented",
+    message: `${feature} is not implemented for the current Prisma schema.`,
+  });
+}
+
+export async function login(
+  req: Request,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    const validationResult = loginSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json(buildValidationError(validationResult.error));
+    }
+
+    const { phone, password } = validationResult.data;
+    const user = await findUserForAuthByPhone(phone);
+
+    if (!user) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Invalid phone number or password",
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Account is not active",
+      });
+    }
+
+    const isValidPassword = await compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Invalid phone number or password",
+      });
+    }
+
+    if (user.twoFactorEnabled) {
+      return res.status(202).json({
+        data: {
+          requiresTwoFactor: true,
+          userId: user.id,
+        },
+      });
+    }
+
+    const session = await createAuthSession(user.id, req);
+    const token = buildTokenForUser(user, session.id);
+
+    return res.json({
+      data: buildAuthResponse(user, token, session),
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to login");
+  }
+}
+
+export async function getCurrentUser(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "User not authenticated",
+      });
+    }
+
+    const user = await findUserForAuthById(req.userId);
+    if (!user) {
+      return res.status(404).json({
+        error: "NotFoundError",
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      data: buildAuthResponse(user),
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to get current user");
+  }
+}
+
+export async function updateProfile(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "User not authenticated",
+      });
+    }
+
+    const validationResult = updateProfileSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json(buildValidationError(validationResult.error));
+    }
+
+    const { phone, username } = validationResult.data;
+
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: {
+        ...(username !== undefined ? { username } : {}),
+        ...(phone !== undefined ? { phoneNumber: phone } : {}),
+      },
+    });
+
+    const updatedUser = await findUserForAuthById(req.userId);
+    if (!updatedUser) {
+      return res.status(404).json({
+        error: "NotFoundError",
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      data: buildAuthResponse(updatedUser),
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return res.status(409).json({
+          error: "ConflictError",
+          message: "Username or phone number is already in use.",
+        });
+      }
+    }
+
+    return handleControllerError(res, error, "Failed to update profile");
+  }
+}
+
+export async function changePassword(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "User not authenticated",
+      });
+    }
+
+    const validationResult = changePasswordSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json(buildValidationError(validationResult.error));
+    }
+
+    const { currentPassword, newPassword } = validationResult.data;
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: {
+        id: true,
+        password: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: "NotFoundError",
+        message: "User not found",
+      });
+    }
+
+    const isValidPassword = await compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({
+        error: "ValidationError",
+        message: "Current password is incorrect.",
+      });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: await hash(newPassword, 12),
+      },
+    });
+
+    return res.json({
+      data: {
+        success: true,
+      },
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to change password");
+  }
+}
+
+export async function verifyLoginTwoFactor(
+  req: Request,
+  res: Response,
+): Promise<Response | void> {
+  return verifyLoginTwoFactorHandler(req, res);
+}
+
+export async function registerCustomer(
+  _req: Request,
+  res: Response,
+): Promise<Response | void> {
+  return respondNotImplemented(res, "Customer registration");
+}
+
+export async function getUserSessions(
+  _req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  return respondNotImplemented(res, "Session listing");
+}
+
+export async function logout(
+  _req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  return respondNotImplemented(res, "Logout");
+}
+
+export async function revokeSession(
+  _req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  return respondNotImplemented(res, "Session revocation");
+}
+
+export async function revokeOtherSessions(
+  _req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  return respondNotImplemented(res, "Revoking other sessions");
+}
+
+export async function getTwoFactorStatus(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  return getTwoFactorStatusHandler(req, res);
+}
+
+export async function beginTwoFactorSetup(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  return beginTwoFactorSetupHandler(req, res);
+}
+
+export async function verifyTwoFactorSetup(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  return verifyTwoFactorSetupHandler(req, res);
+}
+
+export async function disableTwoFactor(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  return disableTwoFactorHandler(req, res);
+}

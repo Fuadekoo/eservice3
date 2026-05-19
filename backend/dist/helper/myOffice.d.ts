@@ -1,0 +1,47 @@
+import type { AuthRequest } from "../middleware/auth.js";
+type ScopedWhere = Record<string, unknown>;
+export declare function normalizeRoleName(roleName?: string | null): string;
+export declare function getMyOfficeId(req: AuthRequest): string | undefined;
+export declare function getAssignedOfficeId(req: AuthRequest): string | undefined;
+export declare function hasOfficeWideAccess(roleName?: string | null, isSuperAdmin?: boolean, isManager?: boolean): boolean;
+export declare function requestHasOfficeWideAccess(req: AuthRequest): boolean;
+export declare function roleRequiresOfficeAssignment(roleName?: string | null, isSuperAdmin?: boolean, isManager?: boolean): boolean;
+export declare function getMyOfficeIds(req: AuthRequest): string[];
+export declare function getScopedOfficeId(req: AuthRequest, requestedOfficeId?: string | null): string | undefined;
+export declare function canAccessOffice(req: AuthRequest, officeId?: string | null): boolean;
+export declare function applyOfficeScope(req: AuthRequest, where: ScopedWhere, officeField?: string): ScopedWhere;
+export declare function applyTransferOfficeScope(req: AuthRequest, where: ScopedWhere, fromField?: string, toField?: string): ScopedWhere;
+export declare function getDefaultOfficeId(preferredOfficeId?: string | null): Promise<string | null>;
+type ResolveOfficeAssignmentInput = {
+    actorRoleName?: string | null | undefined;
+    actorIsSuperAdmin?: boolean | undefined;
+    actorIsManager?: boolean | undefined;
+    actorOfficeId?: string | null | undefined;
+    requestedOfficeId?: string | null | undefined;
+    targetRoleName?: string | null | undefined;
+};
+export declare function resolveStaffOfficeAssignment({ actorRoleName, actorIsSuperAdmin, actorIsManager, actorOfficeId, requestedOfficeId, targetRoleName, }: ResolveOfficeAssignmentInput): Promise<string | null>;
+type ResolveOfficerWarehouseAssignmentInput = {
+    companyId?: string | undefined;
+    actorRoleName?: string | null | undefined;
+    actorIsSuperAdmin?: boolean | undefined;
+    actorIsManager?: boolean | undefined;
+    actorWarehouseId?: string | null | undefined;
+    actorOfficeId?: string | null | undefined;
+    requestedWarehouseId?: string | null | undefined;
+    requestedOfficeId?: string | null | undefined;
+    targetRoleName?: string | null | undefined;
+};
+export declare function getMyCompanyId(req: AuthRequest): string | undefined;
+export declare function getAssignedWarehouseId(req: AuthRequest): string | undefined;
+export declare function hasCompanyWideWarehouseAccess(roleName?: string | null, isSuperAdmin?: boolean, isManager?: boolean): boolean;
+export declare function requestHasCompanyWideWarehouseAccess(req: AuthRequest): boolean;
+export declare function roleRequiresWarehouseAssignment(roleName?: string | null, isSuperAdmin?: boolean, isManager?: boolean): boolean;
+export declare function getMyCompanyWarehouses(req: AuthRequest): string[];
+export declare function getScopedWarehouseId(req: AuthRequest, requestedWarehouseId?: string | null): string | undefined;
+export declare function canAccessWarehouse(req: AuthRequest, warehouseId?: string | null): boolean;
+export declare function applyTransferWarehouseScope(req: AuthRequest, where: ScopedWhere, fromField?: string, toField?: string): ScopedWhere;
+export declare function getDefaultWarehouseIdForCompany(_companyId: string, preferredWarehouseId?: string | null): Promise<string | null>;
+export declare function resolveOfficerWarehouseAssignment({ actorRoleName, actorIsSuperAdmin, actorIsManager, actorWarehouseId, actorOfficeId, requestedWarehouseId, requestedOfficeId, targetRoleName, }: ResolveOfficerWarehouseAssignmentInput): Promise<string | null>;
+export {};
+//# sourceMappingURL=myOffice.d.ts.map

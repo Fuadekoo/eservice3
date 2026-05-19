@@ -1,0 +1,461 @@
+import type { NextFunction, Request, Response } from "express";
+
+import {
+  authSessionSelect,
+  touchAuthSession,
+  type AuthSessionRecord,
+} from "../lib/auth-session.js";
+import { prisma } from "../lib/db.js";
+import { extractTokenFromHeader, verifyToken } from "../lib/jwt.js";
+import type { JWTPayload } from "../lib/jwt.js";
+import { roleRequiresOfficeAssignment } from "../helper/myOffice.js";
+
+type AuthenticatedRole = {
+  id: string;
+  name: string;
+};
+
+type AuthenticatedOffice = {
+  id: string;
+  name: string;
+  status: boolean;
+};
+
+type AuthenticatedStaff = {
+  id: string;
+  officeId: string;
+  office?: AuthenticatedOffice | null;
+  role?: AuthenticatedRole | null;
+};
+
+type AuthenticatedOfficer = {
+  id: string;
+  companyId: string;
+  warehouseId?: string | null;
+  roleId: string;
+  role: AuthenticatedRole;
+  company?: {
+    id: string;
+    name: string;
+  } | null;
+};
+
+export interface AuthRequest extends Request {
+  authSession?: AuthSessionRecord | null;
+  sessionId?: string;
+  userId?: string;
+  user?: {
+    id: string;
+    name: string;
+    username: string;
+    phone: string;
+    phoneNumber: string;
+    roleId?: string | null;
+    roleName?: string | null;
+    staff?: AuthenticatedStaff | null;
+    officer?: AuthenticatedOfficer | null;
+  };
+  permissions?: string[];
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  isManager?: boolean;
+  isOfficer?: boolean;
+  isStoreKeeper?: boolean;
+}
+
+const sessionUserInclude = {
+  role: {
+    include: {
+      rolePermissions: {
+        include: {
+          permission: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  staffs: {
+    orderBy: {
+      createdAt: "asc" as const,
+    },
+    include: {
+      office: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+        },
+      },
+    },
+  },
+} as const;
+
+async function findActiveSession(sessionId: string) {
+  return prisma.session.findUnique({
+    where: { id: sessionId },
+    select: {
+      ...authSessionSelect,
+      user: {
+        include: sessionUserInclude,
+      },
+    },
+  });
+}
+
+type ActiveSessionRecord = NonNullable<
+  Awaited<ReturnType<typeof findActiveSession>>
+>;
+
+function normalizeRoleName(roleName?: string | null): string {
+  return roleName?.trim().toUpperCase() ?? "";
+}
+
+function getPrimaryStaff(user: ActiveSessionRecord["user"]) {
+  return user.staffs[0] ?? null;
+}
+
+function isDatabaseConnectionError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const maybeError = error as { code?: unknown };
+  return (
+    maybeError.code === "ECONNREFUSED" ||
+    maybeError.code === "ETIMEDOUT" ||
+    maybeError.code === 45028
+  );
+}
+
+function buildRequestUser(user: ActiveSessionRecord["user"]) {
+  const role = user.role
+    ? {
+        id: user.role.id,
+        name: user.role.name,
+      }
+    : null;
+  const primaryStaff = getPrimaryStaff(user);
+  const staffContext = primaryStaff
+    ? {
+        id: primaryStaff.id,
+        officeId: primaryStaff.officeId,
+        ...(primaryStaff.office
+          ? {
+              office: {
+                id: primaryStaff.office.id,
+                name: primaryStaff.office.name,
+                status: primaryStaff.office.status,
+              },
+            }
+          : {}),
+        ...(role ? { role } : {}),
+      }
+    : null;
+  const officerContext =
+    primaryStaff && role
+      ? {
+          id: primaryStaff.id,
+          companyId: primaryStaff.officeId,
+          warehouseId: primaryStaff.officeId,
+          roleId: role.id,
+          role,
+          ...(primaryStaff.office
+            ? {
+                company: {
+                  id: primaryStaff.office.id,
+                  name: primaryStaff.office.name,
+                },
+              }
+            : {}),
+        }
+      : null;
+
+  return {
+    id: user.id,
+    name: user.username,
+    username: user.username,
+    phone: user.phoneNumber,
+    phoneNumber: user.phoneNumber,
+    ...(user.roleId ? { roleId: user.roleId } : {}),
+    ...(role ? { roleName: role.name } : {}),
+    ...(staffContext ? { staff: staffContext } : {}),
+    ...(officerContext ? { officer: officerContext } : {}),
+  };
+}
+
+/**
+ * Middleware to require authentication.
+ * Verifies the JWT token, validates the backing session, and attaches the
+ * authenticated user context to the request.
+ */
+export async function requireAuth(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void | Response> {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = extractTokenFromHeader(authHeader);
+
+    if (!token) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Authentication required. Please provide a valid token.",
+      });
+    }
+
+    let decodedToken: JWTPayload;
+    try {
+      decodedToken = verifyToken(token);
+    } catch {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Invalid or expired token",
+      });
+    }
+
+    if (!decodedToken.sessionId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Session information is missing. Please sign in again.",
+      });
+    }
+
+    let activeSession: ActiveSessionRecord | null;
+    try {
+      activeSession = await findActiveSession(decodedToken.sessionId);
+    } catch (error) {
+      console.error("[requireAuth] Database error:", error);
+
+      if (isDatabaseConnectionError(error)) {
+        return res.status(503).json({
+          error: "ServiceUnavailable",
+          message: "Database connection failed. Please try again later.",
+        });
+      }
+
+      throw error;
+    }
+
+    if (!activeSession || activeSession.userId !== decodedToken.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Session expired or revoked. Please sign in again.",
+      });
+    }
+
+    const authenticatedUser = activeSession.user;
+    if (!authenticatedUser.isActive) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Account is not active",
+      });
+    }
+
+    const roleName = normalizeRoleName(authenticatedUser.role?.name);
+    const isSuperAdmin = roleName === "SUPERADMIN";
+    const isManager = roleName === "MANAGER";
+    const isAdmin = isSuperAdmin || isManager || roleName === "ADMIN";
+    const isStoreKeeper =
+      roleName === "STORE KEEPER" ||
+      roleName === "STOREKEEPER" ||
+      roleName === "STOREMAN";
+    const primaryStaff = getPrimaryStaff(authenticatedUser);
+    const isOfficer = primaryStaff !== null;
+
+    if (!isSuperAdmin && primaryStaff?.office && !primaryStaff.office.status) {
+      return res.status(403).json({
+        error: "AuthenticationError",
+        message:
+          "Your office account is currently inactive. Please contact support.",
+      });
+    }
+
+    if (
+      roleRequiresOfficeAssignment(roleName, isSuperAdmin, isManager) &&
+      !primaryStaff?.officeId
+    ) {
+      return res.status(403).json({
+        error: "OfficeAssignmentRequired",
+        message:
+          "Your account is not assigned to an office. Please contact your administrator.",
+      });
+    }
+
+    let permissions =
+      authenticatedUser.role?.rolePermissions.map(
+        (entry) => entry.permission.name,
+      ) ?? [];
+
+    if (isSuperAdmin) {
+      const allPermissions = await prisma.permission.findMany({
+        select: {
+          name: true,
+        },
+      });
+      permissions = allPermissions.map((permission) => permission.name);
+    }
+
+    req.user = buildRequestUser(authenticatedUser);
+    req.userId = authenticatedUser.id;
+    req.permissions = permissions;
+    req.isAdmin = isAdmin;
+    req.isSuperAdmin = isSuperAdmin;
+    req.isManager = isManager;
+    req.isOfficer = isOfficer;
+    req.isStoreKeeper = isStoreKeeper;
+    req.sessionId = activeSession.id;
+    req.authSession = {
+      id: activeSession.id,
+      userId: activeSession.userId,
+      deviceName: activeSession.deviceName,
+      deviceType: activeSession.deviceType,
+      browser: activeSession.browser,
+      operatingSystem: activeSession.operatingSystem,
+      ipAddress: activeSession.ipAddress,
+      userAgent: activeSession.userAgent,
+      lastSeenAt: activeSession.lastSeenAt,
+      createdAt: activeSession.createdAt,
+      updatedAt: activeSession.updatedAt,
+    };
+
+    void touchAuthSession(activeSession.id, activeSession.lastSeenAt);
+
+    next();
+  } catch (error) {
+    console.error("[requireAuth] Error:", error);
+    return res.status(500).json({
+      error: "InternalServerError",
+      message: "An error occurred during authentication",
+    });
+  }
+}
+
+export function requirePermission(permission: string) {
+  return (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): void | Response => {
+    if (!req.userId || !req.user) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Authentication required",
+      });
+    }
+
+    if (req.isAdmin || req.isSuperAdmin) {
+      return next();
+    }
+
+    const userPermissions = req.permissions || [];
+    if (!userPermissions.includes(permission)) {
+      return res.status(403).json({
+        error: "PermissionDenied",
+        message: `You do not have permission to perform this action. Required permission: ${permission}`,
+        requiredPermission: permission,
+      });
+    }
+
+    next();
+  };
+}
+
+export function requireAnyPermission(...permissions: string[]) {
+  return (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): void | Response => {
+    if (!req.userId || !req.user) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Authentication required",
+      });
+    }
+
+    if (req.isAdmin || req.isSuperAdmin) {
+      return next();
+    }
+
+    const userPermissions = req.permissions || [];
+    const hasPermission = permissions.some((permission) =>
+      userPermissions.includes(permission),
+    );
+
+    if (!hasPermission) {
+      return res.status(403).json({
+        error: "PermissionDenied",
+        message: `You do not have permission to perform this action. Required permissions: ${permissions.join(", ")}`,
+        requiredPermissions: permissions,
+      });
+    }
+
+    next();
+  };
+}
+
+export function requireAllPermissions(...permissions: string[]) {
+  return (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): void | Response => {
+    if (!req.userId || !req.user) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "Authentication required",
+      });
+    }
+
+    if (req.isAdmin || req.isSuperAdmin) {
+      return next();
+    }
+
+    const userPermissions = req.permissions || [];
+    const hasAllPermissions = permissions.every((permission) =>
+      userPermissions.includes(permission),
+    );
+
+    if (!hasAllPermissions) {
+      const missingPermissions = permissions.filter(
+        (permission) => !userPermissions.includes(permission),
+      );
+
+      return res.status(403).json({
+        error: "PermissionDenied",
+        message: `You do not have all required permissions. Missing: ${missingPermissions.join(", ")}`,
+        requiredPermissions: permissions,
+        missingPermissions,
+      });
+    }
+
+    next();
+  };
+}
+
+export async function requireSuperAdmin(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void | Response> {
+  if (!req.userId || !req.user) {
+    return res.status(401).json({
+      error: "AuthenticationError",
+      message: "Authentication required",
+    });
+  }
+
+  if (!req.isSuperAdmin) {
+    return res.status(403).json({
+      error: "PermissionDenied",
+      message: "This action is restricted to platform superadmins.",
+    });
+  }
+
+  next();
+}

@@ -3,3 +3,9 @@ node_modules
 .env
 
 /generated/prisma
+
+# node modules
+backend/node_modules
+
+# build
+backend/dist/*

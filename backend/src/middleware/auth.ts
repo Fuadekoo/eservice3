@@ -57,10 +57,9 @@ export interface AuthRequest extends Request {
   };
   permissions?: string[];
   isAdmin?: boolean;
-  isSuperAdmin?: boolean;
   isManager?: boolean;
-  isOfficer?: boolean;
-  isStoreKeeper?: boolean;
+  isStaff?: boolean;
+  isCustomer?: boolean;
 }
 
 const sessionUserInclude = {
@@ -257,17 +256,13 @@ export async function requireAuth(
     }
 
     const roleName = normalizeRoleName(authenticatedUser.role?.name);
-    const isSuperAdmin = roleName === "SUPERADMIN";
+    const isAdmin = roleName === "ADMIN";
     const isManager = roleName === "MANAGER";
-    const isAdmin = isSuperAdmin || isManager || roleName === "ADMIN";
-    const isStoreKeeper =
-      roleName === "STORE KEEPER" ||
-      roleName === "STOREKEEPER" ||
-      roleName === "STOREMAN";
+    const isStaff = roleName === "STAFF";
+    const isCustomer = roleName === "CUSTOMER";
     const primaryStaff = getPrimaryStaff(authenticatedUser);
-    const isOfficer = primaryStaff !== null;
 
-    if (!isSuperAdmin && primaryStaff?.office && !primaryStaff.office.status) {
+    if (!isAdmin && primaryStaff?.office && !primaryStaff.office.status) {
       return res.status(403).json({
         error: "AuthenticationError",
         message:
@@ -276,7 +271,7 @@ export async function requireAuth(
     }
 
     if (
-      roleRequiresOfficeAssignment(roleName, isSuperAdmin, isManager) &&
+      roleRequiresOfficeAssignment(roleName, isAdmin, isManager) &&
       !primaryStaff?.officeId
     ) {
       return res.status(403).json({
@@ -291,7 +286,7 @@ export async function requireAuth(
         (entry) => entry.permission.name,
       ) ?? [];
 
-    if (isSuperAdmin) {
+    if (isAdmin) {
       const allPermissions = await prisma.permission.findMany({
         select: {
           name: true,
@@ -304,10 +299,9 @@ export async function requireAuth(
     req.userId = authenticatedUser.id;
     req.permissions = permissions;
     req.isAdmin = isAdmin;
-    req.isSuperAdmin = isSuperAdmin;
     req.isManager = isManager;
-    req.isOfficer = isOfficer;
-    req.isStoreKeeper = isStoreKeeper;
+    req.isStaff = isStaff;
+    req.isCustomer = isCustomer;
     req.sessionId = activeSession.id;
     req.authSession = {
       id: activeSession.id,
@@ -348,7 +342,7 @@ export function requirePermission(permission: string) {
       });
     }
 
-    if (req.isAdmin || req.isSuperAdmin) {
+    if (req.isAdmin) {
       return next();
     }
 
@@ -378,7 +372,7 @@ export function requireAnyPermission(...permissions: string[]) {
       });
     }
 
-    if (req.isAdmin || req.isSuperAdmin) {
+    if (req.isAdmin) {
       return next();
     }
 
@@ -412,7 +406,7 @@ export function requireAllPermissions(...permissions: string[]) {
       });
     }
 
-    if (req.isAdmin || req.isSuperAdmin) {
+    if (req.isAdmin) {
       return next();
     }
 
@@ -438,7 +432,7 @@ export function requireAllPermissions(...permissions: string[]) {
   };
 }
 
-export async function requireSuperAdmin(
+export async function requireAdmin(
   req: AuthRequest,
   res: Response,
   next: NextFunction,
@@ -450,10 +444,10 @@ export async function requireSuperAdmin(
     });
   }
 
-  if (!req.isSuperAdmin) {
+  if (!req.isAdmin) {
     return res.status(403).json({
       error: "PermissionDenied",
-      message: "This action is restricted to platform superadmins.",
+      message: "This action is restricted to platform admins.",
     });
   }
 

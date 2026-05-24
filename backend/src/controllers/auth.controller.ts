@@ -11,7 +11,10 @@ import {
   validateTwoFactorLogin as verifyLoginTwoFactorHandler,
   verifyAndEnableTwoFactor as verifyTwoFactorSetupHandler,
 } from "./two-factor.controller.js";
-import { createAuthSession, serializeAuthSession } from "../lib/auth-session.js";
+import {
+  createAuthSession,
+  serializeAuthSession,
+} from "../lib/auth-session.js";
 import { prisma } from "../lib/db.js";
 import { generateToken } from "../lib/jwt.js";
 import { buildValidationError } from "../validators/security.validator.js";
@@ -26,10 +29,13 @@ const updateProfileSchema = z
     username: z.string().trim().min(1, "Username is required.").optional(),
     phone: z.string().trim().min(1, "Phone number is required.").optional(),
   })
-  .refine((value) => value.username !== undefined || value.phone !== undefined, {
-    message: "Provide at least one field to update.",
-    path: [],
-  });
+  .refine(
+    (value) => value.username !== undefined || value.phone !== undefined,
+    {
+      message: "Provide at least one field to update.",
+      path: [],
+    },
+  );
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required."),
@@ -83,7 +89,9 @@ async function findUserForAuthById(userId: string) {
   });
 }
 
-type AuthUserRecord = NonNullable<Awaited<ReturnType<typeof findUserForAuthById>>>;
+type AuthUserRecord = NonNullable<
+  Awaited<ReturnType<typeof findUserForAuthById>>
+>;
 
 function getPrimaryStaff(user: AuthUserRecord) {
   return user.staffs[0] ?? null;
@@ -143,7 +151,9 @@ function buildAuthResponse(
         }
       : null,
     permissions,
-    ...(session ? { currentSession: serializeAuthSession(session, session.id) } : {}),
+    ...(session
+      ? { currentSession: serializeAuthSession(session, session.id) }
+      : {}),
     ...(token ? { token } : {}),
   };
 }
@@ -180,8 +190,7 @@ function handleControllerError(
     error: "InternalServerError",
     message: fallbackMessage,
     details:
-      process.env.NODE_ENV === "development" &&
-      error instanceof Error
+      process.env.NODE_ENV === "development" && error instanceof Error
         ? error.message
         : undefined,
   });
@@ -396,11 +405,94 @@ export async function verifyLoginTwoFactor(
   return verifyLoginTwoFactorHandler(req, res);
 }
 
+const registerCustomerSchema = z.object({
+  name: z.string().trim().min(1, "Full name is required."),
+  username: z.string().trim().min(1, "Username is required."),
+  phone: z.string().trim().min(1, "Phone number is required."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+  officeId: z.string().min(1, "Office selection is required."),
+});
+
 export async function registerCustomer(
-  _req: Request,
+  req: Request,
   res: Response,
 ): Promise<Response | void> {
-  return respondNotImplemented(res, "Customer registration");
+  try {
+    const validationResult = registerCustomerSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json(buildValidationError(validationResult.error));
+    }
+
+    const { name, username, phone, password, officeId } = validationResult.data;
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ username: username.trim() }, { phoneNumber: phone.trim() }],
+      },
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        error: "ConflictError",
+        message: "Username or phone number is already in use.",
+      });
+    }
+
+    // Get Customer role
+    const customerRole = await prisma.role.findFirst({
+      where: { name: "CUSTOMER" },
+    });
+
+    if (!customerRole) {
+      return res.status(500).json({
+        error: "InternalServerError",
+        message: "Customer role not found in the system.",
+      });
+    }
+
+    // Create user and staff record (for office association)
+    const newUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name,
+          username: username.trim(),
+          phoneNumber: phone.trim(),
+          password: await hash(password, 12),
+          roleId: customerRole.id,
+          isActive: true,
+          phoneVerified: false,
+        },
+      });
+
+      // Customers are associated with an office via the Staff table in this schema
+      await tx.staff.create({
+        data: {
+          userId: user.id,
+          officeId,
+          roleId: customerRole.id,
+          status: "ACTIVE",
+        },
+      });
+
+      return user;
+    });
+
+    const userForAuth = await findUserForAuthById(newUser.id);
+    if (!userForAuth) {
+      throw new Error("Failed to retrieve created user");
+    }
+
+    const session = await createAuthSession(userForAuth.id, req);
+    const token = buildTokenForUser(userForAuth, session.id);
+
+    return res.status(201).json({
+      data: buildAuthResponse(userForAuth, token, session),
+      message: "Registration successful",
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to register customer");
+  }
 }
 
 export async function getUserSessions(

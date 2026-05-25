@@ -1,7 +1,6 @@
 import type { Response } from "express";
 import { Prisma } from "../lib/prisma-client.js";
 import { hash } from "bcryptjs";
-import { z } from "zod";
 
 import type { AuthRequest } from "../middleware/auth.js";
 import {
@@ -10,77 +9,65 @@ import {
   requestHasOfficeWideAccess,
 } from "../helper/myOffice.js";
 import { prisma } from "../lib/db.js";
-import { buildValidationError } from "../validators/security.validator.js";
+import {
+  createStaffSchema,
+  updateStaffSchema,
+  buildValidationError,
+} from "../validators/staff.validator.js";
 
-const createStaffSchema = z
-  .object({
-    username: z.string().trim().min(1, "Username is required."),
-    phone: z.string().trim().min(1, "Phone number is required.").optional(),
-    phoneNumber: z
-      .string()
-      .trim()
-      .min(1, "Phone number is required.")
-      .optional(),
-    password: z.string().min(6, "Password must be at least 6 characters."),
-    roleId: z.string().trim().min(1).optional(),
-    roleName: z.string().trim().min(1).optional(),
-    officeId: z.string().trim().min(1).optional(),
-    isActive: z.boolean().optional(),
-    phoneVerified: z.boolean().optional(),
-  })
-  .superRefine((value, ctx) => {
-    if (!value.phone && !value.phoneNumber) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Phone number is required.",
-        path: ["phoneNumber"],
-      });
-    }
+// ─── Query / param helpers ────────────────────────────────────────────────────
 
-    if (!value.roleId && !value.roleName) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Either roleId or roleName is required.",
-        path: ["roleId"],
-      });
-    }
-  });
+function parseQueryString(value: unknown): string | undefined {
+  const str = typeof value === "string" ? value.trim() : undefined;
+  return str || undefined;
+}
 
-const updateStaffSchema = z
-  .object({
-    username: z.string().trim().min(1, "Username is required.").optional(),
-    phone: z.string().trim().min(1, "Phone number is required.").optional(),
-    phoneNumber: z
-      .string()
-      .trim()
-      .min(1, "Phone number is required.")
-      .optional(),
-    password: z
-      .string()
-      .min(6, "Password must be at least 6 characters.")
-      .optional(),
-    roleId: z.string().trim().min(1).optional(),
-    roleName: z.string().trim().min(1).optional(),
-    officeId: z.string().trim().min(1).optional(),
-    isActive: z.boolean().optional(),
-    phoneVerified: z.boolean().optional(),
-  })
-  .refine(
-    (value) =>
-      Object.values(value).some((entry) => entry !== undefined && entry !== ""),
-    {
-      message: "Provide at least one field to update.",
-      path: [],
-    },
-  );
+function parseQueryInt(value: unknown, defaultValue: number): number {
+  const str = typeof value === "string" ? value : undefined;
+  if (!str) return defaultValue;
+  const parsed = parseInt(str, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
+
+function normalizeString(value?: string | null): string | undefined {
+  const normalized = value?.trim();
+  return normalized || undefined;
+}
+
+function getRequestedOfficeId(req: AuthRequest): string | undefined {
+  const fromBody =
+    req.body != null && typeof req.body.officeId === "string"
+      ? (req.body.officeId as string)
+      : undefined;
+  const fromQuery = parseQueryString(req.query["officeId"]);
+  return normalizeString(fromBody ?? fromQuery);
+}
+
+function getNormalizedPhone(input: {
+  phone?: string | undefined;
+  phoneNumber?: string | undefined;
+}): string | undefined {
+  return normalizeString(input.phoneNumber ?? input.phone);
+}
+
+/**
+ * Parses ?status= query param into a boolean filter value.
+ * Returns `null` when the value is present but unrecognized (caller should 400).
+ */
+function parseActiveFilter(value: unknown): boolean | undefined | null {
+  if (typeof value !== "string") return undefined;
+  const s = value.trim().toLowerCase();
+  if (!s) return undefined;
+  if (s === "true" || s === "1" || s === "active" || s === "enabled") return true;
+  if (s === "false" || s === "0" || s === "inactive" || s === "disabled") return false;
+  return null;
+}
+
+// ─── Prisma include / response shaping ───────────────────────────────────────
 
 const staffInclude = {
   office: {
-    select: {
-      id: true,
-      name: true,
-      status: true,
-    },
+    select: { id: true, name: true, status: true },
   },
   user: {
     select: {
@@ -99,12 +86,7 @@ const staffInclude = {
           officeId: true,
           rolePermissions: {
             select: {
-              permission: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
+              permission: { select: { id: true, name: true } },
             },
           },
         },
@@ -114,62 +96,6 @@ const staffInclude = {
 } as const;
 
 type StaffRecord = NonNullable<Awaited<ReturnType<typeof findStaffRecord>>>;
-type CreateStaffInput = z.infer<typeof createStaffSchema>;
-type UpdateStaffInput = z.infer<typeof updateStaffSchema>;
-
-function normalizeString(value?: string | null): string | undefined {
-  const normalized = value?.trim();
-  return normalized || undefined;
-}
-
-function getRequestedOfficeId(req: AuthRequest): string | undefined {
-  const officeIdFromBody =
-    req.body && typeof req.body.officeId === "string"
-      ? req.body.officeId
-      : undefined;
-  const officeIdFromQuery =
-    typeof req.query.officeId === "string" ? req.query.officeId : undefined;
-
-  return normalizeString(officeIdFromBody ?? officeIdFromQuery);
-}
-
-function getNormalizedPhoneNumber(input: {
-  phone?: string | undefined;
-  phoneNumber?: string | undefined;
-}): string | undefined {
-  return normalizeString(input.phoneNumber ?? input.phone);
-}
-
-function parseActiveFilter(status: unknown): boolean | undefined | null {
-  if (typeof status !== "string") {
-    return undefined;
-  }
-
-  const normalized = status.trim().toLowerCase();
-  if (!normalized) {
-    return undefined;
-  }
-
-  if (
-    normalized === "true" ||
-    normalized === "1" ||
-    normalized === "active" ||
-    normalized === "enabled"
-  ) {
-    return true;
-  }
-
-  if (
-    normalized === "false" ||
-    normalized === "0" ||
-    normalized === "inactive" ||
-    normalized === "disabled"
-  ) {
-    return false;
-  }
-
-  return null;
-}
 
 function buildStaffResponse(staff: StaffRecord) {
   return {
@@ -197,18 +123,18 @@ function buildStaffResponse(staff: StaffRecord) {
         }
       : null,
     permissions:
-      staff.user.role?.rolePermissions.map((entry) => ({
-        id: entry.permission.id,
-        name: entry.permission.name,
+      staff.user.role?.rolePermissions.map((rp) => ({
+        id: rp.permission.id,
+        name: rp.permission.name,
       })) ?? [],
   };
 }
 
+// ─── Database helpers ─────────────────────────────────────────────────────────
+
 async function findStaffRecord(id: string) {
   return prisma.staff.findFirst({
-    where: {
-      OR: [{ id }, { userId: id }],
-    },
+    where: { OR: [{ id }, { userId: id }] },
     orderBy: [{ createdAt: "asc" }],
     include: staffInclude,
   });
@@ -217,14 +143,14 @@ async function findStaffRecord(id: string) {
 async function ensureOfficeExists(officeId: string) {
   return prisma.office.findUnique({
     where: { id: officeId },
-    select: {
-      id: true,
-      name: true,
-      status: true,
-    },
+    select: { id: true, name: true, status: true },
   });
 }
 
+/**
+ * Looks up an existing role by id or name, or creates one scoped to the office.
+ * Must run inside a Prisma transaction.
+ */
 async function resolveRoleId(
   tx: Prisma.TransactionClient,
   officeId: string,
@@ -234,65 +160,44 @@ async function resolveRoleId(
   if (normalizedRoleId) {
     const role = await tx.role.findUnique({
       where: { id: normalizedRoleId },
-      select: {
-        id: true,
-        officeId: true,
-      },
+      select: { id: true, officeId: true },
     });
-
-    if (!role) {
-      throw new Error("Role not found.");
-    }
-
+    if (!role) throw new Error("Role not found.");
     if (role.officeId && role.officeId !== officeId) {
       throw new Error("Role belongs to a different office.");
     }
-
     return role.id;
   }
 
   const normalizedRoleName = normalizeString(input.roleName);
-  if (!normalizedRoleName) {
-    throw new Error("Either roleId or roleName is required.");
-  }
+  if (!normalizedRoleName) throw new Error("Either roleId or roleName is required.");
 
-  const officeRole =
+  // Prefer an office-scoped role, fall back to a global role, else create.
+  const existing =
     (await tx.role.findFirst({
-      where: {
-        name: normalizedRoleName,
-        officeId,
-      },
-      select: {
-        id: true,
-      },
+      where: { name: normalizedRoleName, officeId },
+      select: { id: true },
     })) ??
     (await tx.role.findFirst({
-      where: {
-        name: normalizedRoleName,
-        officeId: null,
-      },
-      select: {
-        id: true,
-      },
+      where: { name: normalizedRoleName, officeId: null },
+      select: { id: true },
     }));
 
-  if (officeRole) {
-    return officeRole.id;
-  }
+  if (existing) return existing.id;
 
-  const createdRole = await tx.role.create({
-    data: {
-      name: normalizedRoleName,
-      officeId,
-    },
-    select: {
-      id: true,
-    },
+  const created = await tx.role.create({
+    data: { name: normalizedRoleName, officeId },
+    select: { id: true },
   });
-
-  return createdRole.id;
+  return created.id;
 }
 
+// ─── Access-control guards ────────────────────────────────────────────────────
+
+/**
+ * Verifies the actor can target `scopedOfficeId`.
+ * Writes 403 and returns false when denied; returns true when allowed.
+ */
 function ensureRequestOfficeAccess(
   req: AuthRequest,
   res: Response,
@@ -325,15 +230,16 @@ function ensureRequestOfficeAccess(
   return true;
 }
 
+/**
+ * Verifies the actor can access the given staff record's office.
+ * Writes 403 and returns false when denied; returns true when allowed.
+ */
 function ensureStaffAccess(
   req: AuthRequest,
   res: Response,
   staff: StaffRecord,
 ): boolean {
-  if (canAccessOffice(req, staff.officeId)) {
-    return true;
-  }
-
+  if (canAccessOffice(req, staff.officeId)) return true;
   res.status(403).json({
     error: "Forbidden",
     message: "You do not have permission to access this staff member.",
@@ -341,8 +247,12 @@ function ensureStaffAccess(
   return false;
 }
 
+// ─── Controllers ─────────────────────────────────────────────────────────────
+
 /**
- * List all staff assignments.
+ * GET /staff
+ * Auth required. Paginated + filterable list of staff, scoped to the actor's office.
+ * Query params: page, pageSize, search, status, roleId, officeId
  */
 export async function listStaff(
   req: AuthRequest,
@@ -352,71 +262,47 @@ export async function listStaff(
     const requestedOfficeId = getRequestedOfficeId(req);
     const scopedOfficeId = getScopedOfficeId(req, requestedOfficeId);
 
-    if (
-      !ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedOfficeId)
-    ) {
+    if (!ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedOfficeId)) {
       return;
     }
 
-    const { page = "1", pageSize = "50", search, status, roleId } = req.query;
+    const search = parseQueryString(req.query["search"]);
+    const roleIdFilter = parseQueryString(req.query["roleId"]);
+    const page = Math.max(1, parseQueryInt(req.query["page"], 1));
+    const pageSize = Math.min(100, Math.max(1, parseQueryInt(req.query["pageSize"], 50)));
+    const skip = (page - 1) * pageSize;
 
-    const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
-    const pageSizeNum = Math.min(
-      100,
-      Math.max(1, parseInt(String(pageSize), 10) || 50),
-    );
-    const skip = (pageNum - 1) * pageSizeNum;
-    const take = pageSizeNum;
-
-    const filters: Prisma.staffWhereInput[] = [];
-    if (scopedOfficeId) {
-      filters.push({ officeId: scopedOfficeId });
-    }
-
-    if (typeof search === "string" && search.trim().length > 0) {
-      const searchTerm = search.trim();
-      filters.push({
-        OR: [
-          { user: { is: { username: { contains: searchTerm } } } },
-          { user: { is: { phoneNumber: { contains: searchTerm } } } },
-          { office: { is: { name: { contains: searchTerm } } } },
-          {
-            user: { is: { role: { is: { name: { contains: searchTerm } } } } },
-          },
-        ],
-      });
-    }
-
-    const isActiveFilter = parseActiveFilter(status);
+    const isActiveFilter = parseActiveFilter(req.query["status"]);
     if (isActiveFilter === null) {
       return res.status(400).json({
         error: "ValidationError",
-        message:
-          "Invalid status filter. Use active, inactive, true, false, 1, or 0.",
+        message: "Invalid status filter. Use: active, inactive, true, false, 1, or 0.",
+      });
+    }
+
+    const filters: Prisma.staffWhereInput[] = [];
+
+    if (scopedOfficeId) {
+      filters.push({ officeId: scopedOfficeId });
+    }
+    if (search) {
+      filters.push({
+        OR: [
+          { user: { is: { username: { contains: search } } } },
+          { user: { is: { phoneNumber: { contains: search } } } },
+          { office: { is: { name: { contains: search } } } },
+          { user: { is: { role: { is: { name: { contains: search } } } } } },
+        ],
       });
     }
     if (isActiveFilter !== undefined) {
-      filters.push({
-        user: {
-          is: {
-            isActive: isActiveFilter,
-          },
-        },
-      });
+      filters.push({ user: { is: { isActive: isActiveFilter } } });
+    }
+    if (roleIdFilter) {
+      filters.push({ user: { is: { roleId: roleIdFilter } } });
     }
 
-    if (typeof roleId === "string" && roleId.trim().length > 0) {
-      filters.push({
-        user: {
-          is: {
-            roleId: roleId.trim(),
-          },
-        },
-      });
-    }
-
-    const where: Prisma.staffWhereInput =
-      filters.length > 0 ? { AND: filters } : {};
+    const where: Prisma.staffWhereInput = filters.length > 0 ? { AND: filters } : {};
 
     const [staffMembers, total] = await Promise.all([
       prisma.staff.findMany({
@@ -424,22 +310,22 @@ export async function listStaff(
         include: staffInclude,
         orderBy: [{ createdAt: "desc" }],
         skip,
-        take,
+        take: pageSize,
       }),
       prisma.staff.count({ where }),
     ]);
 
-    const totalPages = Math.max(1, Math.ceil(total / pageSizeNum));
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
     return res.json({
       data: staffMembers.map(buildStaffResponse),
       pagination: {
-        page: pageNum,
-        pageSize: pageSizeNum,
+        page,
+        pageSize,
         totalItems: total,
         totalPages,
-        hasNextPage: pageNum < totalPages,
-        hasPreviousPage: pageNum > 1,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
     });
   } catch (error) {
@@ -452,36 +338,27 @@ export async function listStaff(
 }
 
 /**
- * Get a single staff assignment by staff id or user id.
+ * GET /staff/:id
+ * Auth required. Looks up a staff record by staff id or user id.
  */
 export async function getStaff(
   req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
   try {
-    const idParam = req.params.id;
-    if (!idParam || Array.isArray(idParam)) {
-      return res.status(400).json({
-        error: "ValidationError",
-        message: "Invalid or missing staff id.",
-      });
-    }
-    const staff = await findStaffRecord(idParam);
+    const id = req.params["id"] as string;
 
+    const staff = await findStaffRecord(id);
     if (!staff) {
       return res.status(404).json({
         error: "NotFound",
-        message: `Staff member with id '${idParam}' was not found.`,
+        message: `Staff member with id '${id}' was not found.`,
       });
     }
 
-    if (!ensureStaffAccess(req, res, staff)) {
-      return;
-    }
+    if (!ensureStaffAccess(req, res, staff)) return;
 
-    return res.json({
-      data: buildStaffResponse(staff),
-    });
+    return res.json({ data: buildStaffResponse(staff) });
   } catch (error) {
     console.error("[getStaff] Error:", error);
     return res.status(500).json({
@@ -492,7 +369,9 @@ export async function getStaff(
 }
 
 /**
- * Create a new staff user and staff assignment.
+ * POST /staff
+ * Auth required. Creates a User + Staff assignment atomically.
+ * Admins may specify any officeId; non-wide-access actors are auto-scoped to their office.
  */
 export async function createStaff(
   req: AuthRequest,
@@ -508,9 +387,7 @@ export async function createStaff(
       normalizeString(parsed.data.officeId) ?? getRequestedOfficeId(req);
     const scopedOfficeId = getScopedOfficeId(req, requestedOfficeId);
 
-    if (
-      !ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedOfficeId)
-    ) {
+    if (!ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedOfficeId)) {
       return;
     }
 
@@ -523,13 +400,10 @@ export async function createStaff(
 
     const office = await ensureOfficeExists(scopedOfficeId);
     if (!office) {
-      return res.status(404).json({
-        error: "NotFound",
-        message: "Office not found.",
-      });
+      return res.status(404).json({ error: "NotFound", message: "Office not found." });
     }
 
-    const phoneNumber = getNormalizedPhoneNumber(parsed.data);
+    const phoneNumber = getNormalizedPhone(parsed.data);
     if (!phoneNumber) {
       return res.status(400).json({
         error: "ValidationError",
@@ -538,19 +412,17 @@ export async function createStaff(
     }
 
     const createdStaff = await prisma.$transaction(async (tx) => {
-      const existingUser = await tx.user.findFirst({
+      // Fail fast on duplicate username or phone before hashing
+      const collision = await tx.user.findFirst({
         where: {
           OR: [{ username: parsed.data.username }, { phoneNumber }],
         },
-        select: {
-          username: true,
-          phoneNumber: true,
-        },
+        select: { username: true, phoneNumber: true },
       });
 
-      if (existingUser) {
+      if (collision) {
         throw new Error(
-          existingUser.username === parsed.data.username
+          collision.username === parsed.data.username
             ? "Username already exists."
             : "Phone number already exists.",
         );
@@ -570,23 +442,16 @@ export async function createStaff(
           isActive: parsed.data.isActive ?? true,
           phoneVerified: parsed.data.phoneVerified ?? false,
         },
-        select: {
-          id: true,
-        },
+        select: { id: true },
       });
 
       return tx.staff.create({
-        data: {
-          userId: newUser.id,
-          officeId: scopedOfficeId,
-        },
+        data: { userId: newUser.id, officeId: scopedOfficeId },
         include: staffInclude,
       });
     });
 
-    return res.status(201).json({
-      data: buildStaffResponse(createdStaff),
-    });
+    return res.status(201).json({ data: buildStaffResponse(createdStaff) });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
@@ -597,30 +462,18 @@ export async function createStaff(
       }
     }
 
-    const errorMessage = error instanceof Error ? error.message : "";
-    if (
-      errorMessage === "Username already exists." ||
-      errorMessage === "Phone number already exists."
-    ) {
-      return res.status(409).json({
-        error: "Conflict",
-        message: errorMessage,
-      });
+    const msg = error instanceof Error ? error.message : "";
+    if (msg === "Username already exists." || msg === "Phone number already exists.") {
+      return res.status(409).json({ error: "Conflict", message: msg });
     }
-    if (errorMessage === "Role not found.") {
-      return res.status(404).json({
-        error: "NotFound",
-        message: errorMessage,
-      });
+    if (msg === "Role not found.") {
+      return res.status(404).json({ error: "NotFound", message: msg });
     }
     if (
-      errorMessage === "Role belongs to a different office." ||
-      errorMessage === "Either roleId or roleName is required."
+      msg === "Role belongs to a different office." ||
+      msg === "Either roleId or roleName is required."
     ) {
-      return res.status(400).json({
-        error: "ValidationError",
-        message: errorMessage,
-      });
+      return res.status(400).json({ error: "ValidationError", message: msg });
     }
 
     console.error("[createStaff] Error:", error);
@@ -632,37 +485,33 @@ export async function createStaff(
 }
 
 /**
- * Update a staff assignment or the linked user account.
+ * PUT /staff/:id
+ * Auth required. Updates the User record and/or office assignment atomically.
+ * Providing a new officeId reassigns the staff member (subject to office-scope rules).
  */
 export async function updateStaff(
   req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
   try {
-    const { id } = req.params;
-    if (!id || typeof id !== "string") {
-      return res.status(400).json({
-        error: "BadRequest",
-        message: "Staff id is required.",
-      });
-    }
+    const id = req.params["id"] as string;
+
     const parsed = updateStaffSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json(buildValidationError(parsed.error));
     }
 
-    const existingStaff = await findStaffRecord(id);
-    if (!existingStaff) {
+    const existing = await findStaffRecord(id);
+    if (!existing) {
       return res.status(404).json({
         error: "NotFound",
         message: `Staff member with id '${id}' was not found.`,
       });
     }
 
-    if (!ensureStaffAccess(req, res, existingStaff)) {
-      return;
-    }
+    if (!ensureStaffAccess(req, res, existing)) return;
 
+    // Resolve target office (may be a reassignment)
     const requestedOfficeId =
       normalizeString(parsed.data.officeId) ?? getRequestedOfficeId(req);
     const scopedRequestedOfficeId = requestedOfficeId
@@ -670,41 +519,30 @@ export async function updateStaff(
       : undefined;
 
     if (
-      !ensureRequestOfficeAccess(
-        req,
-        res,
-        requestedOfficeId,
-        scopedRequestedOfficeId,
-      )
+      !ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedRequestedOfficeId)
     ) {
       return;
     }
 
-    const targetOfficeId = scopedRequestedOfficeId ?? existingStaff.officeId;
+    const targetOfficeId = scopedRequestedOfficeId ?? existing.officeId;
+
     const office = await ensureOfficeExists(targetOfficeId);
     if (!office) {
-      return res.status(404).json({
-        error: "NotFound",
-        message: "Office not found.",
-      });
+      return res.status(404).json({ error: "NotFound", message: "Office not found." });
     }
 
-    const phoneNumber = getNormalizedPhoneNumber(parsed.data);
+    // Pre-check for collisions before entering the transaction
+    const phoneNumber = getNormalizedPhone(parsed.data);
     if (phoneNumber || parsed.data.username) {
       const collision = await prisma.user.findFirst({
         where: {
-          id: { not: existingStaff.user.id },
+          id: { not: existing.user.id },
           OR: [
-            ...(parsed.data.username
-              ? [{ username: parsed.data.username }]
-              : []),
+            ...(parsed.data.username ? [{ username: parsed.data.username }] : []),
             ...(phoneNumber ? [{ phoneNumber }] : []),
           ],
         },
-        select: {
-          username: true,
-          phoneNumber: true,
-        },
+        select: { username: true, phoneNumber: true },
       });
 
       if (collision) {
@@ -728,13 +566,9 @@ export async function updateStaff(
       }
 
       const userData: Prisma.UserUpdateInput = {
-        ...(parsed.data.username !== undefined
-          ? { username: parsed.data.username }
-          : {}),
+        ...(parsed.data.username !== undefined ? { username: parsed.data.username } : {}),
         ...(phoneNumber !== undefined ? { phoneNumber } : {}),
-        ...(parsed.data.isActive !== undefined
-          ? { isActive: parsed.data.isActive }
-          : {}),
+        ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
         ...(parsed.data.phoneVerified !== undefined
           ? { phoneVerified: parsed.data.phoneVerified }
           : {}),
@@ -745,36 +579,29 @@ export async function updateStaff(
       };
 
       if (Object.keys(userData).length > 0) {
-        await tx.user.update({
-          where: { id: existingStaff.user.id },
-          data: userData,
-        });
+        await tx.user.update({ where: { id: existing.user.id }, data: userData });
       }
 
-      if (targetOfficeId !== existingStaff.officeId) {
+      if (targetOfficeId !== existing.officeId) {
         await tx.staff.update({
-          where: { id: existingStaff.id },
-          data: {
-            officeId: targetOfficeId,
-          },
+          where: { id: existing.id },
+          data: { officeId: targetOfficeId },
         });
       }
 
       return tx.staff.findUniqueOrThrow({
-        where: { id: existingStaff.id },
+        where: { id: existing.id },
         include: staffInclude,
       });
     });
 
-    return res.json({
-      data: buildStaffResponse(updatedStaff),
-    });
+    return res.json({ data: buildStaffResponse(updatedStaff) });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
         return res.status(404).json({
           error: "NotFound",
-          message: `Staff member with id '${req.params.id}' was not found.`,
+          message: `Staff member with id '${req.params["id"]}' was not found.`,
         });
       }
       if (error.code === "P2002") {
@@ -785,21 +612,15 @@ export async function updateStaff(
       }
     }
 
-    const errorMessage = error instanceof Error ? error.message : "";
-    if (errorMessage === "Role not found.") {
-      return res.status(404).json({
-        error: "NotFound",
-        message: errorMessage,
-      });
+    const msg = error instanceof Error ? error.message : "";
+    if (msg === "Role not found.") {
+      return res.status(404).json({ error: "NotFound", message: msg });
     }
     if (
-      errorMessage === "Role belongs to a different office." ||
-      errorMessage === "Either roleId or roleName is required."
+      msg === "Role belongs to a different office." ||
+      msg === "Either roleId or roleName is required."
     ) {
-      return res.status(400).json({
-        error: "ValidationError",
-        message: errorMessage,
-      });
+      return res.status(400).json({ error: "ValidationError", message: msg });
     }
 
     console.error("[updateStaff] Error:", error);
@@ -811,24 +632,18 @@ export async function updateStaff(
 }
 
 /**
- * Delete a staff assignment. If it is the user's last assignment, delete the user.
+ * DELETE /staff/:id
+ * Auth required. Removes the staff assignment.
+ * If this is the user's only office assignment the User record is also deleted (via transaction).
  */
 export async function deleteStaff(
   req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
   try {
-    const { id } = req.params;
-    
-    if (typeof id !== "string" || !id) {
-      return res.status(400).json({
-        error: "ValidationError",
-        message: "Staff id is required.",
-      });
-    }
-    
-    const staff = await findStaffRecord(id);
+    const id = req.params["id"] as string;
 
+    const staff = await findStaffRecord(id);
     if (!staff) {
       return res.status(404).json({
         error: "NotFound",
@@ -836,28 +651,20 @@ export async function deleteStaff(
       });
     }
 
-    if (!ensureStaffAccess(req, res, staff)) {
-      return;
-    }
+    if (!ensureStaffAccess(req, res, staff)) return;
 
     await prisma.$transaction(async (tx) => {
       const remainingAssignments = await tx.staff.count({
-        where: {
-          userId: staff.user.id,
-          id: { not: staff.id },
-        },
+        where: { userId: staff.user.id, id: { not: staff.id } },
       });
 
       if (remainingAssignments > 0) {
-        await tx.staff.delete({
-          where: { id: staff.id },
-        });
-        return;
+        // User still belongs to other offices — remove only this assignment
+        await tx.staff.delete({ where: { id: staff.id } });
+      } else {
+        // Last assignment — delete the user (cascades to the staff record)
+        await tx.user.delete({ where: { id: staff.user.id } });
       }
-
-      await tx.user.delete({
-        where: { id: staff.user.id },
-      });
     });
 
     return res.status(204).send();
@@ -866,14 +673,13 @@ export async function deleteStaff(
       if (error.code === "P2025") {
         return res.status(404).json({
           error: "NotFound",
-          message: `Staff member with id '${req.params.id}' was not found.`,
+          message: `Staff member with id '${req.params["id"]}' was not found.`,
         });
       }
       if (error.code === "P2003") {
         return res.status(409).json({
           error: "Conflict",
-          message:
-            "This staff member cannot be deleted because related records still exist.",
+          message: "Cannot delete: related records still exist.",
         });
       }
     }

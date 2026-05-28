@@ -91,7 +91,7 @@ export async function getUser(req: AuthRequest, res: Response) {
     if (!authUserId)
       return res.status(401).json({ success: false, error: "Unauthorized" });
 
-    const id = req.params.id;
+    const id = req.params.id as string;
     const user = await prisma.user.findUnique({
       where: { id: id },
       include: userInclude,
@@ -179,7 +179,7 @@ export async function createUser(req: AuthRequest, res: Response) {
       data: {
         id: randomUUID(),
         username,
-        phoneNumber: normalizedPhone || null,
+        phoneNumber: normalizedPhone,
         password: hashed,
         roleId: resolvedRoleId || null,
         isActive: isActive ?? true,
@@ -211,7 +211,7 @@ export async function updateUser(req: AuthRequest, res: Response) {
     if (!authUserId)
       return res.status(401).json({ success: false, error: "Unauthorized" });
 
-    const id = req.params.id;
+    const id = req.params.id as string;
 
     // Only admin or the user can update
     const roleName = await getUserRole(authUserId);
@@ -306,7 +306,7 @@ export async function deleteUser(req: AuthRequest, res: Response) {
     if (!authUserId)
       return res.status(401).json({ success: false, error: "Unauthorized" });
 
-    const id = req.params.id;
+    const id = req.params.id as string;
 
     // Only admin can delete users (or allow self-delete)
     const roleName = await getUserRole(authUserId);

@@ -4,6 +4,10 @@ import officeRoutes from "./office.route.js";
 import serviceRoutes from "./service.route.js";
 import aboutRoutes from "./about.route.js";
 import staffRoutes from "./staff.route.js";
+import appointmentRoutes from "./appointment.route.js";
+import feedbackRoutes from "./feedback.route.js";
+import requestRoutes from "./request.route.js";
+import userRoutes from "./user.route.js";
 
 const router = Router();
 
@@ -12,5 +16,9 @@ router.use("/offices", officeRoutes);
 router.use("/services", serviceRoutes);
 router.use("/about", aboutRoutes);
 router.use("/staff", staffRoutes);
+router.use("/appointments", appointmentRoutes);
+router.use("/feedback", feedbackRoutes);
+router.use("/requests", requestRoutes);
+router.use("/users", userRoutes);
 
 export default router;

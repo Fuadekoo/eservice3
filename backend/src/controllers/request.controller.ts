@@ -311,7 +311,7 @@ export async function getRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id;
+    const requestId = req.params.id as string;
 
     const request = await prisma.request.findUnique({
       where: { id: requestId },
@@ -431,18 +431,18 @@ export async function createRequest(req: AuthRequest, res: Response) {
         date: new Date(date),
         statusbystaff: "pending",
         statusbyadmin: "pending",
-        notes: notes || null,
-        fileData:
-          files.length > 0
-            ? {
+        ...(files.length > 0
+          ? {
+              fileData: {
                 create: files.map((file) => ({
                   id: randomUUID(),
                   name: file.name,
                   filepath: file.filepath,
                   description: file.description || notes || null,
                 })),
-              }
-            : undefined,
+              },
+            }
+          : {}),
       },
       include: requestInclude,
     });
@@ -527,7 +527,7 @@ export async function updateRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id;
+    const requestId = req.params.id as string;
 
     // Validate request body
     const validation = updateRequestSchema.safeParse(req.body);
@@ -572,12 +572,11 @@ export async function updateRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    const { currentAddress, date, notes, files } = validation.data;
+    const { currentAddress, date } = validation.data;
     const updateData: any = {};
 
     if (currentAddress) updateData.currentAddress = currentAddress;
     if (date) updateData.date = new Date(date);
-    if (notes !== undefined) updateData.notes = notes;
 
     // Update request
     const updatedRequest = await prisma.request.update({
@@ -613,7 +612,7 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id;
+    const requestId = req.params.id as string;
 
     // Validate request body
     const validation = approveRequestByStaffSchema.safeParse(req.body);
@@ -704,7 +703,7 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id;
+    const requestId = req.params.id as string;
 
     // Validate request body
     const validation = approveRequestByAdminSchema.safeParse(req.body);
@@ -795,7 +794,7 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id;
+    const requestId = req.params.id as string;
 
     // Validate request body
     const validation = rejectRequestSchema.safeParse(req.body);
@@ -874,7 +873,7 @@ export async function deleteRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id;
+    const requestId = req.params.id as string;
 
     // Get existing request
     const existingRequest = await prisma.request.findUnique({

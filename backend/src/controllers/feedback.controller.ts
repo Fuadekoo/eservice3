@@ -116,7 +116,7 @@ export async function getFeedback(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.requestId;
+    const requestId = req.params.requestId as string;
 
     // Get feedback for the request
     const feedback = await prisma.customerSatisfaction.findUnique({
@@ -168,7 +168,7 @@ export async function createFeedback(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.requestId;
+    const requestId = req.params.requestId as string;
 
     // Validate request body
     const validation = createFeedbackSchema.safeParse(req.body);
@@ -256,7 +256,7 @@ export async function upsertFeedback(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.requestId;
+    const requestId = req.params.requestId as string;
 
     // Validate request body
     const validation = createFeedbackSchema.safeParse(req.body);
@@ -354,7 +354,7 @@ export async function updateFeedback(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.requestId;
+    const requestId = req.params.requestId as string;
 
     // Validate request body
     const validation = updateFeedbackSchema.safeParse(req.body);
@@ -433,7 +433,7 @@ export async function deleteFeedback(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.requestId;
+    const requestId = req.params.requestId as string;
 
     // Get existing feedback
     const existingFeedback = await prisma.customerSatisfaction.findUnique({

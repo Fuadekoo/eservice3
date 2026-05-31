@@ -410,7 +410,7 @@ const registerCustomerSchema = z.object({
   username: z.string().trim().min(1, "Username is required."),
   phone: z.string().trim().min(1, "Phone number is required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
-  officeId: z.string().min(1, "Office selection is required."),
+  officeId: z.string().min(1).optional(),
 });
 
 export async function registerCustomer(
@@ -451,7 +451,7 @@ export async function registerCustomer(
       });
     }
 
-    // Create user and staff record (for office association)
+    // Create user; optionally associate with an office via Staff when officeId is provided
     const newUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -465,15 +465,16 @@ export async function registerCustomer(
         },
       });
 
-      // Customers are associated with an office via the Staff table in this schema
-      await tx.staff.create({
-        data: {
-          userId: user.id,
-          officeId,
-          roleId: customerRole.id,
-          status: "ACTIVE",
-        },
-      });
+      if (officeId) {
+        await tx.staff.create({
+          data: {
+            userId: user.id,
+            officeId,
+            roleId: customerRole.id,
+            status: "ACTIVE",
+          },
+        });
+      }
 
       return user;
     });

@@ -406,7 +406,6 @@ export async function verifyLoginTwoFactor(
 }
 
 const registerCustomerSchema = z.object({
-  name: z.string().trim().min(1, "Full name is required."),
   username: z.string().trim().min(1, "Username is required."),
   phone: z.string().trim().min(1, "Phone number is required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
@@ -423,7 +422,7 @@ export async function registerCustomer(
       return res.status(400).json(buildValidationError(validationResult.error));
     }
 
-    const { name, username, phone, password, officeId } = validationResult.data;
+    const { username, phone, password, officeId } = validationResult.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
@@ -455,7 +454,6 @@ export async function registerCustomer(
     const newUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          name,
           username: username.trim(),
           phoneNumber: phone.trim(),
           password: await hash(password, 12),
@@ -470,8 +468,6 @@ export async function registerCustomer(
           data: {
             userId: user.id,
             officeId,
-            roleId: customerRole.id,
-            status: "ACTIVE",
           },
         });
       }

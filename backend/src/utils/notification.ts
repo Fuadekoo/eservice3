@@ -6,7 +6,7 @@ import { prisma } from "../lib/db.js";
  */
 export async function generateRequestNumber(): Promise<string> {
   const today = new Date();
-  const dateStr = today.toISOString().split("T")[0].replace(/-/g, "");
+  const dateStr = (today.toISOString().split("T")[0] ?? "").replace(/-/g, "");
 
   // Get the count of requests created today
   const startOfDay = new Date(today);

@@ -43,10 +43,9 @@ export interface AuthRequest extends Request {
     };
     permissions?: string[];
     isAdmin?: boolean;
-    isSuperAdmin?: boolean;
     isManager?: boolean;
-    isOfficer?: boolean;
-    isStoreKeeper?: boolean;
+    isStaff?: boolean;
+    isCustomer?: boolean;
 }
 /**
  * Middleware to require authentication.
@@ -57,6 +56,6 @@ export declare function requireAuth(req: AuthRequest, res: Response, next: NextF
 export declare function requirePermission(permission: string): (req: AuthRequest, res: Response, next: NextFunction) => void | Response;
 export declare function requireAnyPermission(...permissions: string[]): (req: AuthRequest, res: Response, next: NextFunction) => void | Response;
 export declare function requireAllPermissions(...permissions: string[]): (req: AuthRequest, res: Response, next: NextFunction) => void | Response;
-export declare function requireSuperAdmin(req: AuthRequest, res: Response, next: NextFunction): Promise<void | Response>;
+export declare function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): Promise<void | Response>;
 export {};
 //# sourceMappingURL=auth.d.ts.map

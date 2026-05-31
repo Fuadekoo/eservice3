@@ -1,43 +1,26 @@
 import { z, type ZodError } from "zod";
-/**
- * Office creation schema
- */
 export declare const createOfficeSchema: z.ZodObject<{
     name: z.ZodString;
-    description: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    address: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    phone: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    email: z.ZodUnion<[z.ZodNullable<z.ZodOptional<z.ZodString>>, z.ZodLiteral<"">]>;
+    roomNumber: z.ZodString;
+    address: z.ZodString;
+    subdomain: z.ZodString;
+    phoneNumber: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     logo: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     slogan: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    status: z.ZodOptional<z.ZodEnum<{
-        ACTIVE: "ACTIVE";
-        SUSPENDED: "SUSPENDED";
-        TRIAL: "TRIAL";
-        EXPIRED: "EXPIRED";
-    }>>;
+    settings: z.ZodOptional<z.ZodAny>;
+    status: z.ZodOptional<z.ZodBoolean>;
 }, z.core.$strip>;
-/**
- * Office update schema - all fields are optional for partial updates
- */
 export declare const updateOfficeSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
-    description: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    address: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    phone: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    email: z.ZodUnion<[z.ZodNullable<z.ZodOptional<z.ZodString>>, z.ZodLiteral<"">]>;
-    logo: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    slogan: z.ZodNullable<z.ZodOptional<z.ZodString>>;
-    status: z.ZodOptional<z.ZodEnum<{
-        ACTIVE: "ACTIVE";
-        SUSPENDED: "SUSPENDED";
-        TRIAL: "TRIAL";
-        EXPIRED: "EXPIRED";
-    }>>;
+    roomNumber: z.ZodOptional<z.ZodString>;
+    address: z.ZodOptional<z.ZodString>;
+    subdomain: z.ZodOptional<z.ZodString>;
+    phoneNumber: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    logo: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    slogan: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    settings: z.ZodOptional<z.ZodOptional<z.ZodAny>>;
+    status: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
 }, z.core.$strip>;
-/**
- * Build validation error response
- */
 export declare function buildValidationError(error: ZodError): {
     error: string;
     message: string;

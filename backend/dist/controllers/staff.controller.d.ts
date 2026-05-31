@@ -1,23 +1,32 @@
 import type { Response } from "express";
 import type { AuthRequest } from "../middleware/auth.js";
 /**
- * List all staff assignments.
+ * GET /staff
+ * Auth required. Paginated + filterable list of staff, scoped to the actor's office.
+ * Query params: page, pageSize, search, status, roleId, officeId
  */
 export declare function listStaff(req: AuthRequest, res: Response): Promise<Response | void>;
 /**
- * Get a single staff assignment by staff id or user id.
+ * GET /staff/:id
+ * Auth required. Looks up a staff record by staff id or user id.
  */
 export declare function getStaff(req: AuthRequest, res: Response): Promise<Response | void>;
 /**
- * Create a new staff user and staff assignment.
+ * POST /staff
+ * Auth required. Creates a User + Staff assignment atomically.
+ * Admins may specify any officeId; non-wide-access actors are auto-scoped to their office.
  */
 export declare function createStaff(req: AuthRequest, res: Response): Promise<Response | void>;
 /**
- * Update a staff assignment or the linked user account.
+ * PUT /staff/:id
+ * Auth required. Updates the User record and/or office assignment atomically.
+ * Providing a new officeId reassigns the staff member (subject to office-scope rules).
  */
 export declare function updateStaff(req: AuthRequest, res: Response): Promise<Response | void>;
 /**
- * Delete a staff assignment. If it is the user's last assignment, delete the user.
+ * DELETE /staff/:id
+ * Auth required. Removes the staff assignment.
+ * If this is the user's only office assignment the User record is also deleted (via transaction).
  */
 export declare function deleteStaff(req: AuthRequest, res: Response): Promise<Response | void>;
 //# sourceMappingURL=staff.controller.d.ts.map

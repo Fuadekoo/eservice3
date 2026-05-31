@@ -2,7 +2,7 @@ import { Prisma } from "../lib/prisma-client.js";
 import { compare, hash } from "bcryptjs";
 import { z } from "zod";
 import { disableTwoFactor as disableTwoFactorHandler, generateTwoFactorSetup as beginTwoFactorSetupHandler, getTwoFactorStatus as getTwoFactorStatusHandler, validateTwoFactorLogin as verifyLoginTwoFactorHandler, verifyAndEnableTwoFactor as verifyTwoFactorSetupHandler, } from "./two-factor.controller.js";
-import { createAuthSession, serializeAuthSession } from "../lib/auth-session.js";
+import { createAuthSession, serializeAuthSession, } from "../lib/auth-session.js";
 import { prisma } from "../lib/db.js";
 import { generateToken } from "../lib/jwt.js";
 import { buildValidationError } from "../validators/security.validator.js";
@@ -117,7 +117,9 @@ function buildAuthResponse(user, token, session) {
             }
             : null,
         permissions,
-        ...(session ? { currentSession: serializeAuthSession(session, session.id) } : {}),
+        ...(session
+            ? { currentSession: serializeAuthSession(session, session.id) }
+            : {}),
         ...(token ? { token } : {}),
     };
 }
@@ -141,8 +143,7 @@ function handleControllerError(res, error, fallbackMessage) {
     return res.status(500).json({
         error: "InternalServerError",
         message: fallbackMessage,
-        details: process.env.NODE_ENV === "development" &&
-            error instanceof Error
+        details: process.env.NODE_ENV === "development" && error instanceof Error
             ? error.message
             : undefined,
     });
@@ -318,8 +319,77 @@ export async function changePassword(req, res) {
 export async function verifyLoginTwoFactor(req, res) {
     return verifyLoginTwoFactorHandler(req, res);
 }
-export async function registerCustomer(_req, res) {
-    return respondNotImplemented(res, "Customer registration");
+const registerCustomerSchema = z.object({
+    username: z.string().trim().min(1, "Username is required."),
+    phone: z.string().trim().min(1, "Phone number is required."),
+    password: z.string().min(6, "Password must be at least 6 characters."),
+    officeId: z.string().min(1).optional(),
+});
+export async function registerCustomer(req, res) {
+    try {
+        const validationResult = registerCustomerSchema.safeParse(req.body);
+        if (!validationResult.success) {
+            return res.status(400).json(buildValidationError(validationResult.error));
+        }
+        const { username, phone, password, officeId } = validationResult.data;
+        // Check if user already exists
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                OR: [{ username: username.trim() }, { phoneNumber: phone.trim() }],
+            },
+        });
+        if (existingUser) {
+            return res.status(409).json({
+                error: "ConflictError",
+                message: "Username or phone number is already in use.",
+            });
+        }
+        // Get Customer role
+        const customerRole = await prisma.role.findFirst({
+            where: { name: "CUSTOMER" },
+        });
+        if (!customerRole) {
+            return res.status(500).json({
+                error: "InternalServerError",
+                message: "Customer role not found in the system.",
+            });
+        }
+        // Create user; optionally associate with an office via Staff when officeId is provided
+        const newUser = await prisma.$transaction(async (tx) => {
+            const user = await tx.user.create({
+                data: {
+                    username: username.trim(),
+                    phoneNumber: phone.trim(),
+                    password: await hash(password, 12),
+                    roleId: customerRole.id,
+                    isActive: true,
+                    phoneVerified: false,
+                },
+            });
+            if (officeId) {
+                await tx.staff.create({
+                    data: {
+                        userId: user.id,
+                        officeId,
+                    },
+                });
+            }
+            return user;
+        });
+        const userForAuth = await findUserForAuthById(newUser.id);
+        if (!userForAuth) {
+            throw new Error("Failed to retrieve created user");
+        }
+        const session = await createAuthSession(userForAuth.id, req);
+        const token = buildTokenForUser(userForAuth, session.id);
+        return res.status(201).json({
+            data: buildAuthResponse(userForAuth, token, session),
+            message: "Registration successful",
+        });
+    }
+    catch (error) {
+        return handleControllerError(res, error, "Failed to register customer");
+    }
 }
 export async function getUserSessions(_req, res) {
     return respondNotImplemented(res, "Session listing");

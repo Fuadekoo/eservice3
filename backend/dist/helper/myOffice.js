@@ -1,10 +1,5 @@
 import { prisma } from "../lib/db.js";
-const OFFICE_WIDE_ACCESS_ROLES = new Set([
-    "SUPERADMIN",
-    "ADMIN",
-    "MANAGER",
-    "COMPANYR",
-]);
+const OFFICE_WIDE_ACCESS_ROLES = new Set(["ADMIN", "MANAGER", "STAFF"]);
 function normalizeId(value) {
     const normalizedValue = value?.trim();
     return normalizedValue || undefined;
@@ -21,7 +16,7 @@ export function normalizeRoleName(roleName) {
 export function getMyOfficeId(req) {
     const authRequest = req;
     return (normalizeId(getRequestStaff(authRequest)?.officeId) ??
-        normalizeId(getRequestOfficer(authRequest)?.companyId));
+        normalizeId(getRequestOfficer(authRequest)?.officeId));
 }
 export function getAssignedOfficeId(req) {
     const authRequest = req;
@@ -29,8 +24,8 @@ export function getAssignedOfficeId(req) {
         normalizeId(getRequestOfficer(authRequest)?.warehouseId) ??
         getMyOfficeId(req));
 }
-export function hasOfficeWideAccess(roleName, isSuperAdmin = false, isManager = false) {
-    return (isSuperAdmin ||
+export function hasOfficeWideAccess(roleName, isAdmin = false, isManager = false) {
+    return (isAdmin ||
         isManager ||
         OFFICE_WIDE_ACCESS_ROLES.has(normalizeRoleName(roleName)));
 }
@@ -38,12 +33,12 @@ export function requestHasOfficeWideAccess(req) {
     const authRequest = req;
     const roleName = getRequestStaff(authRequest)?.role?.name ??
         getRequestOfficer(authRequest)?.role?.name;
-    return hasOfficeWideAccess(roleName, req.isSuperAdmin === true, req.isManager === true);
+    return hasOfficeWideAccess(roleName, req.isAdmin === true, req.isManager === true);
 }
-export function roleRequiresOfficeAssignment(roleName, isSuperAdmin = false, isManager = false) {
+export function roleRequiresOfficeAssignment(roleName, isAdmin = false, isManager = false) {
     const normalizedRoleName = normalizeRoleName(roleName);
     return (normalizedRoleName.length > 0 &&
-        !hasOfficeWideAccess(normalizedRoleName, isSuperAdmin, isManager));
+        !hasOfficeWideAccess(normalizedRoleName, isAdmin, isManager));
 }
 export function getMyOfficeIds(req) {
     if (requestHasOfficeWideAccess(req)) {
@@ -113,13 +108,13 @@ export async function getDefaultOfficeId(preferredOfficeId) {
     });
     return defaultOffice?.id ?? null;
 }
-export async function resolveStaffOfficeAssignment({ actorRoleName, actorIsSuperAdmin = false, actorIsManager = false, actorOfficeId, requestedOfficeId, targetRoleName, }) {
-    if (!roleRequiresOfficeAssignment(targetRoleName, actorIsSuperAdmin, actorIsManager)) {
+export async function resolveStaffOfficeAssignment({ actorRoleName, actorIsAdmin = false, actorIsManager = false, actorOfficeId, requestedOfficeId, targetRoleName, }) {
+    if (!roleRequiresOfficeAssignment(targetRoleName, actorIsAdmin, actorIsManager)) {
         return null;
     }
     const normalizedRequestedOfficeId = normalizeId(requestedOfficeId);
     const normalizedActorOfficeId = normalizeId(actorOfficeId);
-    const actorHasOfficeWideAccess = hasOfficeWideAccess(actorRoleName, actorIsSuperAdmin, actorIsManager);
+    const actorHasOfficeWideAccess = hasOfficeWideAccess(actorRoleName, actorIsAdmin, actorIsManager);
     if (actorHasOfficeWideAccess) {
         if (normalizedRequestedOfficeId) {
             if (!(await officeExists(normalizedRequestedOfficeId))) {
@@ -148,14 +143,14 @@ export function getMyCompanyId(req) {
 export function getAssignedWarehouseId(req) {
     return getAssignedOfficeId(req);
 }
-export function hasCompanyWideWarehouseAccess(roleName, isSuperAdmin = false, isManager = false) {
-    return hasOfficeWideAccess(roleName, isSuperAdmin, isManager);
+export function hasCompanyWideWarehouseAccess(roleName, isAdmin = false, isManager = false) {
+    return hasOfficeWideAccess(roleName, isAdmin, isManager);
 }
 export function requestHasCompanyWideWarehouseAccess(req) {
     return requestHasOfficeWideAccess(req);
 }
-export function roleRequiresWarehouseAssignment(roleName, isSuperAdmin = false, isManager = false) {
-    return roleRequiresOfficeAssignment(roleName, isSuperAdmin, isManager);
+export function roleRequiresWarehouseAssignment(roleName, isAdmin = false, isManager = false) {
+    return roleRequiresOfficeAssignment(roleName, isAdmin, isManager);
 }
 export function getMyCompanyWarehouses(req) {
     return getMyOfficeIds(req);
@@ -172,10 +167,10 @@ export function applyTransferWarehouseScope(req, where, fromField = "fromWarehou
 export async function getDefaultWarehouseIdForCompany(_companyId, preferredWarehouseId) {
     return getDefaultOfficeId(preferredWarehouseId);
 }
-export async function resolveOfficerWarehouseAssignment({ actorRoleName, actorIsSuperAdmin = false, actorIsManager = false, actorWarehouseId, actorOfficeId, requestedWarehouseId, requestedOfficeId, targetRoleName, }) {
+export async function resolveOfficerWarehouseAssignment({ actorRoleName, actorIsAdmin = false, actorIsManager = false, actorWarehouseId, actorOfficeId, requestedWarehouseId, requestedOfficeId, targetRoleName, }) {
     return resolveStaffOfficeAssignment({
         actorRoleName,
-        actorIsSuperAdmin,
+        actorIsAdmin,
         actorIsManager,
         actorOfficeId: actorOfficeId ?? actorWarehouseId,
         requestedOfficeId: requestedOfficeId ?? requestedWarehouseId,

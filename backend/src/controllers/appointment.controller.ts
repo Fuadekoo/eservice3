@@ -130,7 +130,7 @@ export async function getAppointment(req: AuthRequest, res: Response) {
       });
     }
 
-    const appointmentId = req.params.id;
+    const appointmentId = req.params['id'] as string;
 
     const appointment = await prisma.appointment.findUnique({
       where: { id: appointmentId },
@@ -256,7 +256,7 @@ export async function updateAppointment(req: AuthRequest, res: Response) {
       });
     }
 
-    const appointmentId = req.params.id;
+    const appointmentId = req.params['id'] as string;
 
     // Validate request body
     const validation = updateAppointmentSchema.safeParse(req.body);
@@ -317,7 +317,7 @@ export async function updateAppointment(req: AuthRequest, res: Response) {
     if (time !== undefined) updateData.time = time;
     if (notes !== undefined) updateData.notes = notes;
     if (status) updateData.status = status;
-    if (approveStaffId) updateData.approveStaffId = approveStaffId;
+    if (approveStaffId) updateData.staffId = approveStaffId;
 
     // Update the appointment
     const updatedAppointment = await prisma.appointment.update({
@@ -353,7 +353,7 @@ export async function approveAppointment(req: AuthRequest, res: Response) {
       });
     }
 
-    const appointmentId = req.params.id;
+    const appointmentId = req.params['id'] as string;
 
     // Validate request body
     const validation = approveAppointmentSchema.safeParse(req.body);
@@ -396,7 +396,7 @@ export async function approveAppointment(req: AuthRequest, res: Response) {
       where: { id: appointmentId },
       data: {
         status: "approved",
-        approveStaffId: staffId,
+        staffId: staffId,
         notes: notes || appointment.notes,
       },
       include: appointmentInclude,
@@ -429,7 +429,7 @@ export async function deleteAppointment(req: AuthRequest, res: Response) {
       });
     }
 
-    const appointmentId = req.params.id;
+    const appointmentId = req.params['id'] as string;
 
     // Get the appointment
     const appointment = await prisma.appointment.findUnique({

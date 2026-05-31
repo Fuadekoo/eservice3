@@ -5,7 +5,7 @@ export interface JWTPayload {
     phone: string;
     roleId?: string;
     roleName?: string;
-    isSuperAdmin?: boolean;
+    isAdmin?: boolean;
 }
 /**
  * Generate a JWT token for a user

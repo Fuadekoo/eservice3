@@ -30,12 +30,10 @@ function handlePrismaError(
     }
   }
   console.error(`[${context}] Error:`, error);
-  return res
-    .status(500)
-    .json({
-      error: "InternalServerError",
-      message: "An unexpected error occurred.",
-    });
+  return res.status(500).json({
+    error: "InternalServerError",
+    message: "An unexpected error occurred.",
+  });
 }
 
 const officeListSelect = {
@@ -62,7 +60,12 @@ export async function listOffices(
       select: {
         ...officeListSelect,
         _count: {
-          select: { service: true },
+          select: {
+            service: true,
+            staffs: true,
+            requests: true,
+            appointments: true,
+          },
         },
         service: {
           select: {
@@ -90,6 +93,14 @@ export async function getOffice(
     const office = await prisma.office.findUnique({
       where: { id },
       include: {
+        _count: {
+          select: {
+            service: true,
+            staffs: true,
+            requests: true,
+            appointments: true,
+          },
+        },
         availability: true,
         service: {
           include: {

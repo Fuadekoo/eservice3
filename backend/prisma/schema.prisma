@@ -93,11 +93,14 @@ model Office {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 
-  roles        Role[]
-  staffs       staff[]
-  service      service[]
-  availability officeAvailability?
-  auditLogs    AuditLog[]
+  roles            Role[]
+  staffs           staff[]
+  service          service[]
+  availability     officeAvailability?
+  auditLogs        AuditLog[]
+  requests         request[]           @relation("OfficeRequests")
+  requestsForOther requestForOther[]   @relation("OfficeRequestsForOther")
+  appointments     appointment[]       @relation("OfficeAppointments")
 
   @@map("office")
 }
@@ -306,6 +309,8 @@ model request {
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   serviceId            String
   service              service               @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  officeId             String?
+  office               Office?               @relation("OfficeRequests", fields: [officeId], references: [id], onDelete: Cascade)
   currentAddress       String
   date                 DateTime
   statusbystaff        requestStatus
@@ -331,6 +336,8 @@ model requestForOther {
   user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   serviceId              String
   service                service               @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  officeId               String?
+  office                 Office?               @relation("OfficeRequestsForOther", fields: [officeId], references: [id], onDelete: Cascade)
   currentAddress         String
   name                   String
   phoneNumber            String
@@ -368,6 +375,8 @@ model appointment {
   id                String           @id @default(cuid())
   requestId         String
   request           request          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  officeId          String?
+  office            Office?          @relation("OfficeAppointments", fields: [officeId], references: [id], onDelete: Cascade)
   date              DateTime
   time              String?
   status            String           @default("pending")

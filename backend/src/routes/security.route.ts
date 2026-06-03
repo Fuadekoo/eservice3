@@ -125,7 +125,7 @@ router.get("/roles", requireAuth, requirePermission("role:read"), listRoles);
  *                 enum: [SUPER_ADMIN_ROLE, OFFICE_ROLE]
  *               systemRole:
  *                 type: string
- *                 enum: [admin, office, storekeeper]
+ *                 enum: [admin, manager, staff, customer]
  *                 nullable: true
  *               officeId:
  *                 type: string

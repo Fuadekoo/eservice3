@@ -156,6 +156,7 @@ function getAllPermissionNames(): string[] {
     "dashboard:customer",
     "page:admin:overview",
     "page:admin:office",
+    "audit:read",
     "page:manager:overview",
     "page:manager:staff",
     "page:staff:overview",

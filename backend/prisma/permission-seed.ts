@@ -79,7 +79,10 @@ async function main() {
     { name: "request:update", description: "Update service requests" },
     { name: "request:delete", description: "Delete service requests" },
     { name: "request:approve-staff", description: "Approve requests (Staff)" },
-    { name: "request:approve-manager", description: "Approve requests (Manager)" },
+    {
+      name: "request:approve-manager",
+      description: "Approve requests (Manager)",
+    },
     { name: "request:approve-admin", description: "Approve requests (Admin)" },
     { name: "request:view-all", description: "View all requests" },
 
@@ -110,7 +113,10 @@ async function main() {
     { name: "role:read", description: "View roles" },
     { name: "role:update", description: "Update roles" },
     { name: "role:delete", description: "Delete roles" },
-    { name: "role:assign-permissions", description: "Assign permissions to roles" },
+    {
+      name: "role:assign-permissions",
+      description: "Assign permissions to roles",
+    },
     { name: "role:manage", description: "Full role management" },
     { name: "permission:read", description: "View permissions" },
 
@@ -142,6 +148,7 @@ async function main() {
     { name: "page:manager:staff", description: "Manager staff page" },
     { name: "page:staff:overview", description: "Staff overview page" },
     { name: "page:customer:overview", description: "Customer overview page" },
+    { name: "audit:read", description: "View audit logs" },
   ];
 
   console.log(`📝 Creating ${permissions.length} permissions...\n`);

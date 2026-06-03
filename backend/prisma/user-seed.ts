@@ -51,10 +51,10 @@ async function main() {
       `🎭 Role created: ${role.name} (${roleData.isGlobal ? "Global" : "Office-specific"})`,
     );
 
-    // Assign Permissions
+    // Assign Permissions (Always re-run to update with new permissions like audit:read)
     const result = await assignDefaultPermissionsToRole(role.id, role.name);
     if (result.success) {
-      console.log(`✅ Permissions assigned to ${role.name}`);
+      console.log(`✅ Permissions updated for ${role.name}`);
     }
   }
 

@@ -19,7 +19,7 @@ export function buildValidationError(error) {
  */
 export const createRoleSchema = z.object({
     name: z.string().trim().min(1, "Role name is required."),
-    description: z.string().trim().optional().nullable(),
+    description: z.string().trim().nullable().optional(),
     permissions: z.array(z.string()).optional(),
 });
 export const updateRoleSchema = createRoleSchema.partial().extend({
@@ -33,7 +33,7 @@ export const updateRoleSchema = createRoleSchema.partial().extend({
 export const createPermissionSchema = z.object({
     code: z.string().trim().min(1, "Permission code is required."),
     name: z.string().trim().min(1, "Permission name is required."),
-    description: z.string().trim().optional().nullable(),
+    description: z.string().trim().nullable().optional(),
 });
 export const updatePermissionSchema = createPermissionSchema.partial().extend({
     code: z.string().trim().min(1, "Permission code is required.").optional(),
@@ -46,12 +46,12 @@ export const updatePermissionSchema = createPermissionSchema.partial().extend({
 export const createAuditLogSchema = z.object({
     timestamp: z.date().optional(),
     actor: z.string().trim().min(1, "Actor is required."),
-    role: z.string().trim().optional().nullable(),
+    role: z.string().trim().nullable().optional(),
     action: z.string().trim().min(1, "Action is required."),
     resource: z.string().trim().min(1, "Resource is required."),
     status: z.string().trim().min(1, "Status is required."),
-    metadata: z.record(z.string(), z.unknown()).optional().nullable(),
-    userId: z.string().trim().optional().nullable(),
+    metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+    userId: z.string().trim().nullable().optional(),
 });
 export const updateAuditLogSchema = createAuditLogSchema.partial();
 /**
@@ -62,7 +62,7 @@ export const updateAuditLogSchema = createAuditLogSchema.partial();
 export const createPermissionSetSchema = z
     .object({
     name: z.string().trim().min(1, "Permission set name is required."),
-    description: z.string().trim().optional().nullable(),
+    description: z.string().trim().nullable().optional(),
     permissions: z.array(z.string()).optional(),
 })
     .passthrough();

@@ -1,4 +1,4 @@
- import type { Response } from "express";
+import type { Response } from "express";
 import { Prisma } from "../lib/prisma-client.js";
 import { prisma } from "../lib/db.js";
 import type { AuthRequest } from "../middleware/auth.js";
@@ -20,10 +20,9 @@ function handlePrismaError(
         .json({ error: "NotFound", message: "Office not found." });
     }
     if (error.code === "P2002") {
-      const fields =
-        Array.isArray(error.meta?.target)
-          ? (error.meta.target as string[]).join(", ")
-          : "field";
+      const fields = Array.isArray(error.meta?.target)
+        ? (error.meta.target as string[]).join(", ")
+        : "field";
       return res.status(409).json({
         error: "Conflict",
         message: `An office with this ${fields} already exists.`,
@@ -33,7 +32,10 @@ function handlePrismaError(
   console.error(`[${context}] Error:`, error);
   return res
     .status(500)
-    .json({ error: "InternalServerError", message: "An unexpected error occurred." });
+    .json({
+      error: "InternalServerError",
+      message: "An unexpected error occurred.",
+    });
 }
 
 const officeListSelect = {
@@ -57,7 +59,19 @@ export async function listOffices(
 ): Promise<Response | void> {
   try {
     const offices = await prisma.office.findMany({
-      select: officeListSelect,
+      select: {
+        ...officeListSelect,
+        _count: {
+          select: { service: true },
+        },
+        service: {
+          select: {
+            id: true,
+            name: true,
+          },
+          take: 3,
+        },
+      },
       orderBy: { name: "asc" },
     });
     return res.json({ data: offices });
@@ -75,7 +89,15 @@ export async function getOffice(
 
     const office = await prisma.office.findUnique({
       where: { id },
-      include: { availability: true },
+      include: {
+        availability: true,
+        service: {
+          include: {
+            requirements: true,
+            serviceFors: true,
+          },
+        },
+      },
     });
 
     if (!office) {
@@ -100,8 +122,17 @@ export async function createOffice(
       return res.status(400).json(buildValidationError(validation.error));
     }
 
-    const { name, roomNumber, address, subdomain, phoneNumber, logo, slogan, settings, status } =
-      validation.data;
+    const {
+      name,
+      roomNumber,
+      address,
+      subdomain,
+      phoneNumber,
+      logo,
+      slogan,
+      settings,
+      status,
+    } = validation.data;
 
     const office = await prisma.office.create({
       data: {
@@ -135,8 +166,17 @@ export async function updateOffice(
       return res.status(400).json(buildValidationError(validation.error));
     }
 
-    const { name, roomNumber, address, subdomain, phoneNumber, logo, slogan, settings, status } =
-      validation.data;
+    const {
+      name,
+      roomNumber,
+      address,
+      subdomain,
+      phoneNumber,
+      logo,
+      slogan,
+      settings,
+      status,
+    } = validation.data;
 
     const office = await prisma.office.update({
       where: { id },

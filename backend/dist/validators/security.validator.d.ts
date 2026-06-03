@@ -17,11 +17,11 @@ export declare function buildValidationError(error: ZodError): {
  */
 export declare const createRoleSchema: z.ZodObject<{
     name: z.ZodString;
-    description: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     permissions: z.ZodOptional<z.ZodArray<z.ZodString>>;
 }, z.core.$strip>;
 export declare const updateRoleSchema: z.ZodObject<{
-    description: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    description: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     permissions: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodString>>>;
     name: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
@@ -33,11 +33,11 @@ export declare const updateRoleSchema: z.ZodObject<{
 export declare const createPermissionSchema: z.ZodObject<{
     code: z.ZodString;
     name: z.ZodString;
-    description: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, z.core.$strip>;
 export declare const updatePermissionSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
-    description: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    description: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     code: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 /**
@@ -48,22 +48,22 @@ export declare const updatePermissionSchema: z.ZodObject<{
 export declare const createAuditLogSchema: z.ZodObject<{
     timestamp: z.ZodOptional<z.ZodDate>;
     actor: z.ZodString;
-    role: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    role: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     action: z.ZodString;
     resource: z.ZodString;
     status: z.ZodString;
-    metadata: z.ZodNullable<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>>;
-    userId: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    metadata: z.ZodOptional<z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodUnknown>>>;
+    userId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, z.core.$strip>;
 export declare const updateAuditLogSchema: z.ZodObject<{
     timestamp: z.ZodOptional<z.ZodOptional<z.ZodDate>>;
     actor: z.ZodOptional<z.ZodString>;
-    role: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    role: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     action: z.ZodOptional<z.ZodString>;
     resource: z.ZodOptional<z.ZodString>;
     status: z.ZodOptional<z.ZodString>;
-    metadata: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>>>;
-    userId: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    metadata: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodUnknown>>>>;
+    userId: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
 }, z.core.$strip>;
 /**
  * =======================
@@ -72,12 +72,12 @@ export declare const updateAuditLogSchema: z.ZodObject<{
  */
 export declare const createPermissionSetSchema: z.ZodObject<{
     name: z.ZodString;
-    description: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     permissions: z.ZodOptional<z.ZodArray<z.ZodString>>;
 }, z.core.$loose>;
 export declare const updatePermissionSetSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
-    description: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    description: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     permissions: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodString>>>;
 }, z.core.$loose>;
 /**

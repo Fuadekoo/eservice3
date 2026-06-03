@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/db.js";
 import type { AuthRequest } from "../middleware/auth.js";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../lib/prisma-client.js";
 // import { Prisma } from "../../generated/prisma/client.js";
 
 // import { prisma } from "../lib/prisma.js";

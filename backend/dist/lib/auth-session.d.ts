@@ -55,7 +55,7 @@ export declare function serializeAuthSession(session: {
     createdAt: Date;
     updatedAt: Date;
 } | null | undefined, currentSessionId?: string): {
-    isCurrent?: boolean;
+    isCurrent?: boolean | undefined;
     id: string;
     deviceName: string | null;
     deviceType: string | null;

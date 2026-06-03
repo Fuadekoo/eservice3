@@ -6,10 +6,10 @@ export declare function updateProfile(req: AuthRequest, res: Response): Promise<
 export declare function changePassword(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function verifyLoginTwoFactor(req: Request, res: Response): Promise<Response | void>;
 export declare function registerCustomer(req: Request, res: Response): Promise<Response | void>;
-export declare function getUserSessions(_req: AuthRequest, res: Response): Promise<Response | void>;
-export declare function logout(_req: AuthRequest, res: Response): Promise<Response | void>;
-export declare function revokeSession(_req: AuthRequest, res: Response): Promise<Response | void>;
-export declare function revokeOtherSessions(_req: AuthRequest, res: Response): Promise<Response | void>;
+export declare function getUserSessions(req: AuthRequest, res: Response): Promise<Response | void>;
+export declare function logout(req: AuthRequest, res: Response): Promise<Response | void>;
+export declare function revokeSession(req: AuthRequest, res: Response): Promise<Response | void>;
+export declare function revokeOtherSessions(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function getTwoFactorStatus(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function beginTwoFactorSetup(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function verifyTwoFactorSetup(req: AuthRequest, res: Response): Promise<Response | void>;

@@ -17,6 +17,10 @@ enum role {
 
 model User {
   id               String   @id @default(uuid())
+  name             String?
+  firstName        String?
+  fatherName       String?
+  lastName         String?
   username         String   @unique
   phoneNumber      String   @unique
   password         String
@@ -198,6 +202,7 @@ model service {
   name             String
   description      String
   timeToTake       String
+  roomNumber       String?
   officeId         String
   office           Office                   @relation(fields: [officeId], references: [id], onDelete: Cascade)
   requests         request[]

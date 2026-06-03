@@ -13,6 +13,9 @@ import {
 } from "./two-factor.controller.js";
 import {
   createAuthSession,
+  deleteAuthSession,
+  listUserAuthSessions,
+  revokeOtherUserSessions,
   serializeAuthSession,
 } from "../lib/auth-session.js";
 import { prisma } from "../lib/db.js";
@@ -412,6 +415,9 @@ export async function verifyLoginTwoFactor(
 }
 
 const registerCustomerSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required."),
+  fatherName: z.string().trim().min(1, "Father's name is required."),
+  lastName: z.string().trim().min(1, "Last name is required."),
   username: z.string().trim().min(1, "Username is required."),
   phone: z.string().trim().min(1, "Phone number is required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
@@ -428,7 +434,15 @@ export async function registerCustomer(
       return res.status(400).json(buildValidationError(validationResult.error));
     }
 
-    const { username, phone, password, officeId } = validationResult.data;
+    const {
+      firstName,
+      fatherName,
+      lastName,
+      username,
+      phone,
+      password,
+      officeId,
+    } = validationResult.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
@@ -460,6 +474,10 @@ export async function registerCustomer(
     const newUser = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
+          name: `${firstName} ${fatherName} ${lastName}`.trim(),
+          firstName: firstName.trim(),
+          fatherName: fatherName.trim(),
+          lastName: lastName.trim(),
           username: username.trim(),
           phoneNumber: phone.trim(),
           password: await hash(password, 12),
@@ -499,31 +517,106 @@ export async function registerCustomer(
 }
 
 export async function getUserSessions(
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
-  return respondNotImplemented(res, "Session listing");
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "User not authenticated",
+      });
+    }
+
+    const sessions = await listUserAuthSessions(req.userId);
+
+    return res.json({
+      data: sessions.map((s) => serializeAuthSession(s, req.sessionId)),
+      message: "Sessions retrieved successfully",
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to list sessions");
+  }
 }
 
 export async function logout(
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
-  return respondNotImplemented(res, "Logout");
+  try {
+    if (req.sessionId) {
+      await deleteAuthSession(req.sessionId);
+    }
+
+    return res.json({
+      data: { success: true },
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to logout");
+  }
 }
 
 export async function revokeSession(
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
-  return respondNotImplemented(res, "Session revocation");
+  try {
+    const { sessionId } = req.params;
+
+    if (!sessionId) {
+      return res.status(400).json({
+        error: "ValidationError",
+        message: "Session ID is required",
+      });
+    }
+
+    if (!req.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "User not authenticated",
+      });
+    }
+
+    const count = await deleteAuthSession(sessionId as string, req.userId);
+
+    if (count === 0) {
+      return res.status(404).json({
+        error: "NotFoundError",
+        message: "Session not found or does not belong to you",
+      });
+    }
+
+    return res.json({
+      data: { success: true },
+      message: "Session revoked successfully",
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to revoke session");
+  }
 }
 
 export async function revokeOtherSessions(
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
-  return respondNotImplemented(res, "Revoking other sessions");
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "User not authenticated",
+      });
+    }
+
+    await revokeOtherUserSessions(req.userId, req.sessionId);
+
+    return res.json({
+      data: { success: true },
+      message: "Other sessions revoked successfully",
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to revoke other sessions");
+  }
 }
 
 export async function getTwoFactorStatus(

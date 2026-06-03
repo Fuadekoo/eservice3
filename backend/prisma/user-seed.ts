@@ -64,24 +64,28 @@ async function main() {
   const users = [
     {
       username: "admin_user",
+      name: "System Administrator",
       phoneNumber: "0900000000",
       role: "ADMIN",
       isStaff: false,
     },
     {
       username: "office_manager",
+      name: "Office Manager",
       phoneNumber: "0911111111",
       role: "MANAGER",
       isStaff: true,
     },
     {
       username: "office_staff",
+      name: "Office Staff",
       phoneNumber: "0922222222",
       role: "STAFF",
       isStaff: true,
     },
     {
       username: "test_customer",
+      name: "Test Customer",
       phoneNumber: "0933333333",
       role: "CUSTOMER",
       isStaff: false,
@@ -92,11 +96,13 @@ async function main() {
     const user = await prisma.user.upsert({
       where: { username: u.username },
       update: {
+        name: u.name,
         roleId: roleMap[u.role],
         password: passwordHash,
       },
       create: {
         username: u.username,
+        name: u.name,
         phoneNumber: u.phoneNumber,
         password: passwordHash,
         roleId: roleMap[u.role],
@@ -135,6 +141,49 @@ async function main() {
     },
   });
   console.log(`🛠️ Sample service created: ${service.name} for ${office.name}`);
+
+  // 5. Create Sample Administration Data
+  const adminSection = await prisma.administration.upsert({
+    where: { id: "sample-admin-id" },
+    update: {},
+    create: {
+      id: "sample-admin-id",
+      name: "Ababu Waqoo",
+      description: "Welcome and thank you for visiting our pages. Welcome to East Shoa Services.",
+      image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ababu", // Placeholder image
+    },
+  });
+  console.log(`👨‍💼 Administration created: ${adminSection.name}`);
+
+  // 6. Create Sample Gallery Data
+  const gallery = await prisma.gallery.upsert({
+    where: { id: "sample-gallery-id" },
+    update: {},
+    create: {
+      id: "sample-gallery-id",
+      name: "East Shoa Zone Overview",
+      description: "Pictures from across the East Shoa Zone.",
+    },
+  });
+
+  const galleryImages = [
+    { id: "img-1", filename: "east-shoa-1.jpg", order: 1 },
+    { id: "img-2", filename: "east-shoa-2.jpg", order: 2 },
+  ];
+
+  for (const img of galleryImages) {
+    await prisma.galleryImage.upsert({
+      where: { id: img.id },
+      update: {},
+      create: {
+        id: img.id,
+        galleryId: gallery.id,
+        filename: img.filename,
+        order: img.order,
+      },
+    });
+  }
+  console.log(`🖼️ Gallery and images created: ${gallery.name}`);
 
   console.log("\n🎉 Seed process completed! You now have:");
   console.log(`- 1 Office: ${office.name}`);

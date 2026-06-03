@@ -56,7 +56,7 @@ export const createAuditLogSchema = z.object({
 export const updateAuditLogSchema = createAuditLogSchema.partial();
 /**
  * =======================
- * PERMISSION SET VALIDATORS (Stub - may not be used in E-service )
+ * PERMISSION SET VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export const createPermissionSetSchema = z
@@ -69,35 +69,35 @@ export const createPermissionSetSchema = z
 export const updatePermissionSetSchema = createPermissionSetSchema.partial();
 /**
  * =======================
- * SECURITY PROGRAM VALIDATORS (Stub - may not be used in E-service )
+ * SECURITY PROGRAM VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export const createSecurityProgramSchema = z.object({}).passthrough();
 export const updateSecurityProgramSchema = z.object({}).passthrough();
 /**
  * =======================
- * SECURITY AUDIT VALIDATORS (Stub - may not be used in E-service )
+ * SECURITY AUDIT VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export const createSecurityAuditSchema = z.object({}).passthrough();
 export const updateSecurityAuditSchema = z.object({}).passthrough();
 /**
  * =======================
- * SECURITY INCIDENT VALIDATORS (Stub - may not be used in E-service )
+ * SECURITY INCIDENT VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export const createSecurityIncidentSchema = z.object({}).passthrough();
 export const updateSecurityIncidentSchema = z.object({}).passthrough();
 /**
  * =======================
- * SECURITY REMINDER VALIDATORS (Stub - may not be used in E-service )
+ * SECURITY REMINDER VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export const createSecurityReminderSchema = z.object({}).passthrough();
 export const updateSecurityReminderSchema = z.object({}).passthrough();
 /**
  * =======================
- * PERMISSION CHANGE REQUEST VALIDATORS (Stub - may not be used in E-service )
+ * PERMISSION CHANGE REQUEST VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export const createPermissionChangeRequestSchema = z.object({}).passthrough();

@@ -50,6 +50,7 @@ const userAuthInclude = {
           permission: {
             select: {
               id: true,
+              code: true,
               name: true,
             },
           },
@@ -98,7 +99,11 @@ function getPrimaryStaff(user: AuthUserRecord) {
 }
 
 function getPermissions(user: AuthUserRecord): string[] {
-  return user.role?.rolePermissions.map((entry) => entry.permission.name) ?? [];
+  return (
+    user.role?.rolePermissions.map(
+      (entry) => entry.permission.code ?? entry.permission.name,
+    ) ?? []
+  );
 }
 
 function buildTokenForUser(user: AuthUserRecord, sessionId: string): string {
@@ -278,6 +283,7 @@ export async function getCurrentUser(
       });
     }
 
+    res.setHeader("Cache-Control", "no-store");
     return res.json({
       data: buildAuthResponse(user),
     });

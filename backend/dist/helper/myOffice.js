@@ -35,8 +35,15 @@ export function requestHasOfficeWideAccess(req) {
         getRequestOfficer(authRequest)?.role?.name;
     return hasOfficeWideAccess(roleName, req.isAdmin === true, req.isManager === true);
 }
+const OFFICE_ASSIGNMENT_EXEMPT_ROLES = new Set(["ADMIN", "CUSTOMER"]);
 export function roleRequiresOfficeAssignment(roleName, isAdmin = false, isManager = false) {
     const normalizedRoleName = normalizeRoleName(roleName);
+    if (isAdmin || isManager) {
+        return false;
+    }
+    if (OFFICE_ASSIGNMENT_EXEMPT_ROLES.has(normalizedRoleName)) {
+        return false;
+    }
     return (normalizedRoleName.length > 0 &&
         !hasOfficeWideAccess(normalizedRoleName, isAdmin, isManager));
 }

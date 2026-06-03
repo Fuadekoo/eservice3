@@ -39,6 +39,7 @@ const loginUserInclude = {
           permission: {
             select: {
               id: true,
+              code: true,
               name: true,
             },
           },
@@ -78,7 +79,11 @@ function getPrimaryStaff(user: TwoFactorLoginUser) {
 }
 
 function getPermissions(user: TwoFactorLoginUser): string[] {
-  return user.role?.rolePermissions.map((entry) => entry.permission.name) ?? [];
+  return (
+    user.role?.rolePermissions.map(
+      (entry) => entry.permission.code ?? entry.permission.name,
+    ) ?? []
+  );
 }
 
 function buildLoginResponse(

@@ -70,6 +70,7 @@ const sessionUserInclude = {
           permission: {
             select: {
               id: true,
+              code: true,
               name: true,
             },
           },

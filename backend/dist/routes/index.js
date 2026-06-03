@@ -8,6 +8,7 @@ import appointmentRoutes from "./appointment.route.js";
 import feedbackRoutes from "./feedback.route.js";
 import requestRoutes from "./request.route.js";
 import userRoutes from "./user.route.js";
+import securityRoutes from "./security.route.js";
 const router = Router();
 router.use("/auth", authRoutes);
 router.use("/offices", officeRoutes);
@@ -18,5 +19,6 @@ router.use("/appointments", appointmentRoutes);
 router.use("/feedback", feedbackRoutes);
 router.use("/requests", requestRoutes);
 router.use("/users", userRoutes);
+router.use("/security", securityRoutes);
 export default router;
 //# sourceMappingURL=index.js.map

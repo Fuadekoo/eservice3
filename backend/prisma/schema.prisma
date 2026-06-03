@@ -35,6 +35,7 @@ model User {
   reportsSent      report[]          @relation("ReportSender")
   reportsReceived  report[]          @relation("ReportReceiver")
   sessions         session[]
+  auditLogs        AuditLog[]
 }
 
 model session {
@@ -91,6 +92,7 @@ model Office {
   staffs       staff[]
   service      service[]
   availability officeAvailability?
+  auditLogs    AuditLog[]
 
   @@map("office")
 }
@@ -126,11 +128,12 @@ model officeAvailability {
 }
 
 model Role {
-  id        String   @id @default(cuid())
-  name      String
-  officeId  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  officeId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 
   office          Office?          @relation(fields: [officeId], references: [id], onDelete: Cascade)
   users           User[]
@@ -141,7 +144,9 @@ model Role {
 
 model Permission {
   id              String           @id @default(cuid())
+  code            String?          @unique
   name            String
+  description     String?          @db.Text
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @default(now()) @updatedAt
   rolePermissions RolePermission[]
@@ -241,6 +246,32 @@ model customerSatisfaction {
   requestForOthers requestForOther[]
 
   @@map("customer_satisfaction")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  actor     String
+  role      String?
+  action    String
+  resource  String
+  status    String
+  metadata  Json?
+
+  // Office Relationship (NULL for super admin actions)
+  officeId String?
+  office   Office? @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([timestamp])
+  @@index([officeId])
+  @@map("audit_log")
 }
 
 enum requestStatus {

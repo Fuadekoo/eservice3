@@ -67,7 +67,7 @@ export declare const updateAuditLogSchema: z.ZodObject<{
 }, z.core.$strip>;
 /**
  * =======================
- * PERMISSION SET VALIDATORS (Stub - may not be used in E-service )
+ * PERMISSION SET VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export declare const createPermissionSetSchema: z.ZodObject<{
@@ -82,35 +82,35 @@ export declare const updatePermissionSetSchema: z.ZodObject<{
 }, z.core.$loose>;
 /**
  * =======================
- * SECURITY PROGRAM VALIDATORS (Stub - may not be used in E-service )
+ * SECURITY PROGRAM VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export declare const createSecurityProgramSchema: z.ZodObject<{}, z.core.$loose>;
 export declare const updateSecurityProgramSchema: z.ZodObject<{}, z.core.$loose>;
 /**
  * =======================
- * SECURITY AUDIT VALIDATORS (Stub - may not be used in E-service )
+ * SECURITY AUDIT VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export declare const createSecurityAuditSchema: z.ZodObject<{}, z.core.$loose>;
 export declare const updateSecurityAuditSchema: z.ZodObject<{}, z.core.$loose>;
 /**
  * =======================
- * SECURITY INCIDENT VALIDATORS (Stub - may not be used in E-service )
+ * SECURITY INCIDENT VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export declare const createSecurityIncidentSchema: z.ZodObject<{}, z.core.$loose>;
 export declare const updateSecurityIncidentSchema: z.ZodObject<{}, z.core.$loose>;
 /**
  * =======================
- * SECURITY REMINDER VALIDATORS (Stub - may not be used in E-service )
+ * SECURITY REMINDER VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export declare const createSecurityReminderSchema: z.ZodObject<{}, z.core.$loose>;
 export declare const updateSecurityReminderSchema: z.ZodObject<{}, z.core.$loose>;
 /**
  * =======================
- * PERMISSION CHANGE REQUEST VALIDATORS (Stub - may not be used in E-service )
+ * PERMISSION CHANGE REQUEST VALIDATORS (Stub - may not be used in DMS)
  * =======================
  */
 export declare const createPermissionChangeRequestSchema: z.ZodObject<{}, z.core.$loose>;

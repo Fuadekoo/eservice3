@@ -23,18 +23,18 @@ async function main() {
 
   // 2. Define and Create Roles for this Office
   const rolesToCreate = [
-    { name: "admin", isGlobal: true },
-    { name: "manager", isGlobal: false },
-    { name: "staff", isGlobal: false },
-    { name: "customer", isGlobal: true },
+    { name: "ADMIN", isGlobal: true },
+    { name: "MANAGER", isGlobal: false },
+    { name: "STAFF", isGlobal: false },
+    { name: "CUSTOMER", isGlobal: true },
   ];
 
   const roleMap: Record<string, string> = {};
 
   for (const roleData of rolesToCreate) {
     const roleId = roleData.isGlobal
-      ? `role-global-${roleData.name}`
-      : `role-${office.id}-${roleData.name}`;
+      ? `role-global-${roleData.name.toLowerCase()}`
+      : `role-${office.id}-${roleData.name.toLowerCase()}`;
 
     const role = await prisma.role.upsert({
       where: { id: roleId },
@@ -65,25 +65,25 @@ async function main() {
     {
       username: "admin_user",
       phoneNumber: "0900000000",
-      role: "admin",
+      role: "ADMIN",
       isStaff: false,
     },
     {
       username: "office_manager",
       phoneNumber: "0911111111",
-      role: "manager",
+      role: "MANAGER",
       isStaff: true,
     },
     {
       username: "office_staff",
       phoneNumber: "0922222222",
-      role: "staff",
+      role: "STAFF",
       isStaff: true,
     },
     {
       username: "test_customer",
       phoneNumber: "0933333333",
-      role: "customer",
+      role: "CUSTOMER",
       isStaff: false,
     },
   ];

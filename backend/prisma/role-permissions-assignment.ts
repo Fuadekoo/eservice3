@@ -13,213 +13,101 @@ import { prisma } from "../src/lib/db.ts";
  * @returns Array of permission names for that role
  */
 export function getRolePermissions(roleName: string): string[] {
-  const normalizedRoleName = roleName.toLowerCase().trim();
+  const normalizedRoleName = roleName.toUpperCase().trim();
 
   switch (normalizedRoleName) {
-    case "admin":
-    case "administrator":
+    case "ADMIN":
       // Admin gets ALL permissions
       return getAllPermissionNames();
 
-    case "manager":
-    case "office_manager":
+    case "MANAGER":
       return [
-        // Dashboard
-        "dashboard:manager",
         "dashboard:view",
-
-        // Manager Dashboard Pages
+        "dashboard:manager",
         "page:manager:overview",
-        "page:manager:services",
         "page:manager:staff",
-        "page:manager:request-management",
-        "page:manager:report",
-        "page:manager:appointment",
-        "page:manager:configuration",
-        "page:manager:availability",
-
-        // Office Management (read only for their office)
         "office:read",
         "office:configure",
-
-        // Service Management (for their office)
-        "service:create",
         "service:read",
         "service:update",
-        "service:delete",
-        "service:assign-staff",
         "service:manage",
-
-        // Staff Management (for their office)
-        "staff:create",
         "staff:read",
         "staff:update",
-        "staff:delete",
-        "staff:assign-office",
-        "staff:manage",
-
-        // Request Management (for their office)
         "request:read",
         "request:update",
-        "request:view-all",
         "request:approve-manager",
-
-        // Appointment Management (for their office)
         "appointment:read",
         "appointment:update",
-        "appointment:manage",
-
-        // Report Management (for their office)
-        "report:create",
         "report:read",
-        "report:update",
-        "report:delete",
-        "report:send",
-        "report:approve",
-        "report:view-all",
-
-        // Profile Management
+        "report:create",
         "profile:read",
         "profile:update",
         "profile:change-password",
-
-        // File Management
-        "file:upload",
-        "file:download",
-
-        // Configuration
-        "configuration:read",
-        "configuration:update",
+        "feedback:read",
       ];
 
-    case "staff":
+    case "STAFF":
       return [
-        // Dashboard
-        "dashboard:staff",
         "dashboard:view",
-
-        // Staff Dashboard Pages
+        "dashboard:staff",
         "page:staff:overview",
-        "page:staff:request-management",
-        "page:staff:appointment",
-        "page:staff:service-management",
-        "page:staff:report",
-        "page:staff:profile",
-
-        // Service Management (read only, for assigned services)
         "service:read",
-
-        // Request Management (for assigned services)
         "request:read",
         "request:update",
         "request:approve-staff",
-
-        // Appointment Management (for assigned services)
         "appointment:read",
         "appointment:update",
         "appointment:approve",
-
-        // Report Management (for their office)
-        "report:create",
-        "report:read",
-        "report:update",
-
-        // Staff Management (read only, to see manager)
-        "staff:read",
-
-        // Profile Management
         "profile:read",
         "profile:update",
         "profile:change-password",
-
-        // File Management
-        "file:upload",
-        "file:download",
       ];
 
-    case "customer":
+    case "CUSTOMER":
       return [
-        // Dashboard
-        "dashboard:customer",
         "dashboard:view",
-
-        // Customer Dashboard Pages
+        "dashboard:customer",
         "page:customer:overview",
-        "page:customer:apply-service",
-        "page:customer:request",
-        "page:customer:appointment",
-        "page:customer:feedback",
-        "page:customer:profile",
-
-        // Office & Service (read only, to browse)
         "office:read",
         "service:read",
-
-        // Request Management (own requests only)
         "request:create",
         "request:read",
-        "request:update",
-        "request:delete",
-
-        // Appointment Management (own appointments only)
         "appointment:create",
         "appointment:read",
-        "appointment:update",
-        "appointment:delete",
-
-        // Feedback Management (own feedback only)
-        "feedback:read",
         "feedback:create",
-
-        // Profile Management
         "profile:read",
         "profile:update",
         "profile:change-password",
-
-        // File Management (for request files)
-        "file:upload",
-        "file:download",
       ];
 
     default:
-      // Unknown role - return empty array (can be customized later)
-      console.warn(
-        `Unknown role type: ${roleName}. No default permissions assigned.`,
-      );
+      console.warn(`Unknown role: ${roleName}`);
       return [];
   }
 }
 
 /**
  * Get all permission names (for admin role)
- * @returns Array of all permission names
  */
 function getAllPermissionNames(): string[] {
   return [
-    // User Management
     "user:create",
     "user:read",
     "user:update",
     "user:delete",
     "user:manage",
-
-    // Office Management
     "office:create",
     "office:read",
     "office:update",
     "office:delete",
     "office:manage",
     "office:configure",
-
-    // Service Management
     "service:create",
     "service:read",
     "service:update",
     "service:delete",
     "service:manage",
     "service:assign-staff",
-
-    // Request Management
     "request:create",
     "request:read",
     "request:update",
@@ -228,41 +116,22 @@ function getAllPermissionNames(): string[] {
     "request:approve-manager",
     "request:approve-admin",
     "request:view-all",
-
-    // Appointment Management
     "appointment:create",
     "appointment:read",
     "appointment:update",
     "appointment:delete",
     "appointment:approve",
     "appointment:manage",
-
-    // Staff Management
     "staff:create",
     "staff:read",
     "staff:update",
     "staff:delete",
-    "staff:assign-office",
     "staff:manage",
-
-    // Report Management
     "report:create",
     "report:read",
     "report:update",
     "report:delete",
-    "report:send",
-    "report:approve",
     "report:view-all",
-
-    // Gallery Management
-    "gallery:create",
-    "gallery:read",
-    "gallery:update",
-    "gallery:delete",
-    "gallery:manage",
-    "gallery:upload-images",
-
-    // Role & Permission Management
     "role:create",
     "role:read",
     "role:update",
@@ -270,93 +139,27 @@ function getAllPermissionNames(): string[] {
     "role:assign-permissions",
     "role:manage",
     "permission:read",
-    "permission:manage",
-
-    // Language & Translation Management
     "language:read",
     "language:update",
     "language:manage",
-
-    // About Page Management
-    "about:read",
-    "about:update",
-    "about:manage",
-
-    // Administration Page Management
-    "administration:read",
-    "administration:update",
-    "administration:manage",
-
-    // Feedback Management
+    "configuration:read",
+    "configuration:update",
+    "profile:read",
+    "profile:update",
+    "profile:change-password",
     "feedback:read",
     "feedback:create",
-    "feedback:manage",
-
-    // File Management
-    "file:upload",
-    "file:download",
-    "file:delete",
-    "file:manage",
-
-    // Dashboard & Overview
     "dashboard:view",
     "dashboard:admin",
     "dashboard:manager",
     "dashboard:staff",
     "dashboard:customer",
-
-    // Admin Dashboard Pages
     "page:admin:overview",
-    "page:admin:user-management",
     "page:admin:office",
-    "page:admin:my-office",
-    "page:admin:request-management",
-    "page:admin:report",
-    "page:admin:languages",
-    "page:admin:gallery",
-    "page:admin:about",
-    "page:admin:profile",
-
-    // Manager Dashboard Pages
     "page:manager:overview",
-    "page:manager:services",
     "page:manager:staff",
-    "page:manager:request-management",
-    "page:manager:report",
-    "page:manager:appointment",
-    "page:manager:configuration",
-    "page:manager:availability",
-
-    // Staff Dashboard Pages
     "page:staff:overview",
-    "page:staff:request-management",
-    "page:staff:appointment",
-    "page:staff:service-management",
-    "page:staff:report",
-    "page:staff:profile",
-
-    // Customer Dashboard Pages
     "page:customer:overview",
-    "page:customer:apply-service",
-    "page:customer:request",
-    "page:customer:appointment",
-    "page:customer:feedback",
-    "page:customer:profile",
-
-    // Configuration
-    "configuration:read",
-    "configuration:update",
-    "configuration:manage",
-
-    // Profile Management
-    "profile:read",
-    "profile:update",
-    "profile:change-password",
-
-    // SMS & OTP
-    "sms:send",
-    "otp:send",
-    "otp:verify",
   ];
 }
 

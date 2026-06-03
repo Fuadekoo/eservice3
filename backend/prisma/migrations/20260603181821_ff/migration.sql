@@ -7,11 +7,32 @@ CREATE TABLE `User` (
     `roleId` VARCHAR(191) NULL,
     `isActive` BOOLEAN NOT NULL DEFAULT true,
     `phoneVerified` BOOLEAN NOT NULL DEFAULT false,
+    `twoFactorEnabled` BOOLEAN NOT NULL DEFAULT false,
+    `twoFactorSecret` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `User_username_key`(`username`),
     UNIQUE INDEX `User_phoneNumber_key`(`phoneNumber`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `session` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `deviceName` VARCHAR(191) NULL,
+    `deviceType` VARCHAR(191) NULL,
+    `browser` VARCHAR(191) NULL,
+    `operatingSystem` VARCHAR(191) NULL,
+    `ipAddress` VARCHAR(191) NULL,
+    `userAgent` TEXT NULL,
+    `lastSeenAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `session_userId_idx`(`userId`),
+    INDEX `session_lastSeenAt_idx`(`lastSeenAt`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -65,6 +86,7 @@ CREATE TABLE `office_availability` (
 CREATE TABLE `role` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
+    `description` TEXT NULL,
     `officeId` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -75,10 +97,13 @@ CREATE TABLE `role` (
 -- CreateTable
 CREATE TABLE `permission` (
     `id` VARCHAR(191) NOT NULL,
+    `code` VARCHAR(191) NULL,
     `name` VARCHAR(191) NOT NULL,
+    `description` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `permission_code_key`(`code`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -165,6 +190,25 @@ CREATE TABLE `customer_satisfaction` (
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `customer_satisfaction_requestId_key`(`requestId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `audit_log` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `timestamp` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `actor` VARCHAR(191) NOT NULL,
+    `role` VARCHAR(191) NULL,
+    `action` VARCHAR(191) NOT NULL,
+    `resource` VARCHAR(191) NOT NULL,
+    `status` VARCHAR(191) NOT NULL,
+    `metadata` JSON NULL,
+    `officeId` VARCHAR(191) NULL,
+    `userId` VARCHAR(191) NULL,
+
+    INDEX `audit_log_userId_idx`(`userId`),
+    INDEX `audit_log_timestamp_idx`(`timestamp`),
+    INDEX `audit_log_officeId_idx`(`officeId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -313,6 +357,9 @@ CREATE TABLE `report` (
 ALTER TABLE `User` ADD CONSTRAINT `User_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `role`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `session` ADD CONSTRAINT `session_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `staff` ADD CONSTRAINT `staff_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -344,6 +391,12 @@ ALTER TABLE `service_for` ADD CONSTRAINT `service_for_serviceId_fkey` FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE `customer_satisfaction` ADD CONSTRAINT `customer_satisfaction_requestId_fkey` FOREIGN KEY (`requestId`) REFERENCES `request`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `audit_log` ADD CONSTRAINT `audit_log_officeId_fkey` FOREIGN KEY (`officeId`) REFERENCES `office`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `audit_log` ADD CONSTRAINT `audit_log_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `request` ADD CONSTRAINT `request_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

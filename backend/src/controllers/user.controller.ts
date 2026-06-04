@@ -13,8 +13,14 @@ const userInclude = {
   role: {
     select: { id: true, name: true },
   },
-  staff: {
-    select: { id: true, officeId: true },
+  staffs: {
+    select: {
+      id: true,
+      officeId: true,
+      office: {
+        select: { id: true, name: true },
+      },
+    },
   },
 } as const;
 
@@ -22,9 +28,14 @@ function formatUser(user: any) {
   return {
     id: user.id,
     username: user.username,
+    firstName: user.firstName,
+    fatherName: user.fatherName,
+    lastName: user.lastName,
     phoneNumber: user.phoneNumber,
+    phoneVerified: user.phoneVerified,
     isActive: user.isActive,
     role: user.role ?? null,
+    staff: user.staffs?.[0] ?? null,
     createdAt: user.createdAt?.toISOString(),
     updatedAt: user.updatedAt?.toISOString(),
   };

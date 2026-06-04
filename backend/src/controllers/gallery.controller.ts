@@ -11,6 +11,18 @@ import {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+function parseQueryString(value: unknown): string | undefined {
+  const str = typeof value === "string" ? value.trim() : undefined;
+  return str || undefined;
+}
+
+function parseQueryInt(value: unknown, defaultValue: number): number {
+  const str = typeof value === "string" ? value : undefined;
+  if (!str) return defaultValue;
+  const parsed = parseInt(str, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
+
 function handlePrismaError(
   error: unknown,
   res: Response,
@@ -26,30 +38,64 @@ function handlePrismaError(
   console.error(`[${context}] Error:`, error);
   return res
     .status(500)
-    .json({ error: "InternalServerError", message: "An unexpected error occurred." });
+    .json({
+      error: "InternalServerError",
+      message: "An unexpected error occurred.",
+    });
 }
 
 // ─── Controllers ─────────────────────────────────────────────────────────────
 
 /**
  * GET /gallery
- * Public. Returns all galleries with their images.
+ * Public. Returns all galleries with their images with pagination and search.
  */
 export async function listGalleries(
-  _req: AuthRequest,
+  req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
   try {
-    const galleries = await prisma.gallery.findMany({
-      include: {
-        images: {
-          orderBy: { order: "asc" },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const search = parseQueryString(req.query["search"]);
+    const page = Math.max(1, parseQueryInt(req.query["page"], 1));
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseQueryInt(req.query["pageSize"], 12)),
+    );
+    const skip = (page - 1) * pageSize;
 
-    return res.json({ data: galleries });
+    const where = {
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search } },
+              { description: { contains: search } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, galleries] = await prisma.$transaction([
+      prisma.gallery.count({ where }),
+      prisma.gallery.findMany({
+        where,
+        include: {
+          images: {
+            orderBy: { order: "asc" },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+    ]);
+
+    return res.json({
+      data: galleries,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    });
   } catch (error) {
     return handlePrismaError(error, res, "listGalleries");
   }

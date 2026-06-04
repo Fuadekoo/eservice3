@@ -9,6 +9,9 @@ import feedbackRoutes from "./feedback.route.js";
 import requestRoutes from "./request.route.js";
 import userRoutes from "./user.route.js";
 import securityRoutes from "./security.route.js";
+import administrationRoutes from "./administration.route.js";
+import galleryRoutes from "./gallery.route.js";
+import uploadRoutes from "./upload.route.js";
 const router = Router();
 router.use("/auth", authRoutes);
 router.use("/offices", officeRoutes);
@@ -20,5 +23,8 @@ router.use("/feedback", feedbackRoutes);
 router.use("/requests", requestRoutes);
 router.use("/users", userRoutes);
 router.use("/security", securityRoutes);
+router.use("/administration", administrationRoutes);
+router.use("/gallery", galleryRoutes);
+router.use("/files", uploadRoutes);
 export default router;
 //# sourceMappingURL=index.js.map

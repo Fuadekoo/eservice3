@@ -37,6 +37,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 // Serve static files from uploads and filedata directories
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "../filedata")));
 app.use("/filedata", express.static(path.join(__dirname, "../filedata")));
 
 // Swagger API Documentation

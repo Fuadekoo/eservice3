@@ -116,7 +116,7 @@ const options = {
                         },
                         systemRole: {
                             type: "string",
-                            enum: ["admin", "office", "storekeeper"],
+                            enum: ["admin", "manager", "staff", "customer"],
                             nullable: true,
                         },
                         officeId: { type: "string", nullable: true },

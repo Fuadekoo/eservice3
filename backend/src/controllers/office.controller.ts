@@ -30,10 +30,12 @@ function handlePrismaError(
     }
   }
   console.error(`[${context}] Error:`, error);
-  return res.status(500).json({
-    error: "InternalServerError",
-    message: "An unexpected error occurred.",
-  });
+  return res
+    .status(500)
+    .json({
+      error: "InternalServerError",
+      message: "An unexpected error occurred.",
+    });
 }
 
 const officeListSelect = {

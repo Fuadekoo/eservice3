@@ -1,0 +1,248 @@
+"use client";
+
+import * as React from "react";
+import { Plus, Search, RotateCw, UserCog } from "lucide-react";
+import { toast } from "sonner";
+
+import { useUserStore, type User } from "@/lib/stores/user-store";
+import { useSecurityStore } from "@/lib/stores/security-store";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { UserTable } from "./_components/user-table";
+import { UserCreateDialog } from "@/components/dashboard/user-create-dialog";
+import { PaginationFooter } from "@/components/dashboard/pagination-footer";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+export default function UsersPage() {
+  const {
+    users,
+    isLoading,
+    fetchUsers,
+    deleteUser,
+    pagination,
+  } = useUserStore();
+  const { roles, fetchRoles } = useSecurityStore();
+
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = React.useState("all");
+
+  React.useEffect(() => {
+    void fetchRoles();
+  }, [fetchRoles]);
+
+  React.useEffect(() => {
+    void fetchUsers({
+      page: currentPage,
+      pageSize,
+      search: searchQuery || undefined,
+      roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+    });
+  }, [currentPage, fetchUsers, pageSize, searchQuery, selectedRoleId]);
+
+  React.useEffect(() => {
+    if (selectedRoleId === "all") return;
+    const selectedRoleStillExists = roles.some((role) => role.id === selectedRoleId);
+    if (!selectedRoleStillExists) {
+      setSelectedRoleId("all");
+      setCurrentPage(1);
+    }
+  }, [roles, selectedRoleId]);
+
+  const handleCreate = () => {
+    setSelectedUser(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
+    try {
+      await deleteUser(deletingId);
+      toast.success("User deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete user");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleRefresh = () => {
+    void fetchUsers({
+      page: currentPage,
+      pageSize,
+      search: searchQuery || undefined,
+      roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+    });
+    toast.success("User list refreshed");
+  };
+
+  return (
+    <div className="flex flex-col gap-8 p-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageHeader
+          title="User Management"
+          description="Manage users, assign roles, and assign offices"
+        />
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            className="bg-transparent border-gray-800 text-white hover:bg-gray-800 rounded-xl h-11"
+          >
+            <RotateCw className={`mr-2 size-4 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={handleCreate}
+            className="bg-primary hover:bg-primary/90 rounded-xl h-11 px-6 font-semibold"
+          >
+            <Plus className="mr-2 size-4" />
+            Add User
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-2xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-gray-500" />
+          <Input
+            placeholder="Search users by name, phone, role, or office..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="pl-11 bg-[#121212] border-gray-800 text-white focus:ring-primary rounded-xl h-11"
+          />
+        </div>
+        <div className="flex items-center gap-4">
+          <Select
+            value={selectedRoleId}
+            onValueChange={(value) => {
+              setSelectedRoleId(value);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[180px] bg-[#121212] border-gray-800 text-white h-11 rounded-xl">
+              <SelectValue placeholder="All Roles" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#121212] border-gray-800 text-white">
+              <SelectItem value="all">All Roles</SelectItem>
+              {roles.map((role) => (
+                <SelectItem key={role.id} value={role.id}>
+                  {role.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <span>Show:</span>
+            <Select 
+              value={pageSize.toString()} 
+              onValueChange={(v) => {
+                setPageSize(parseInt(v));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[80px] bg-[#121212] border-gray-800 text-white h-11 rounded-xl">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#121212] border-gray-800 text-white">
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      <UserTable
+        users={users}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+      />
+
+      {pagination && pagination.total > 0 && (
+        <div className="mt-4">
+          <PaginationFooter
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.total}
+            startIndex={(currentPage - 1) * pageSize}
+            endIndex={currentPage * pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+            canGoNext={currentPage < pagination.totalPages}
+            canGoPrevious={currentPage > 1}
+            itemLabel="users"
+          />
+        </div>
+      )}
+
+      <UserCreateDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        user={selectedUser}
+      />
+
+      <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <AlertDialogContent className="bg-[#121212] border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              This action cannot be undone. This will permanently delete the user
+              account and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-gray-800 text-white hover:bg-gray-800">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-[#f05252] hover:bg-[#d94444] text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

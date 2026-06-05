@@ -1,0 +1,504 @@
+"use client";
+
+import * as React from "react";
+import {
+  Plus,
+  Search,
+  Layers,
+  Loader2,
+  FileText,
+  Clock,
+  Building2,
+  MoreVertical,
+  Edit,
+  Trash2,
+  LayoutGrid,
+  List,
+  Filter,
+  CheckCircle2,
+  ChevronRight,
+  ArrowRight,
+  Users,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { useServiceStore, type Service } from "@/lib/stores/service-store";
+import { useTranslation } from "@/lib/i18n";
+import { useSession } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ServiceCreateDialog } from "@/components/dashboard/service-create-dialog";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import { PaginationFooter } from "@/components/dashboard/pagination-footer";
+
+export default function ServicesPage() {
+  const { t } = useTranslation();
+  const { data: sessionData, isPending: isSessionPending } = useSession();
+  const {
+    services,
+    fetchServices,
+    deleteService,
+    isLoading,
+    error,
+    pagination,
+  } = useServiceStore();
+
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [editingService, setEditingService] = React.useState<Service | null>(
+    null,
+  );
+  const [deletingService, setDeletingService] = React.useState<Service | null>(
+    null,
+  );
+  const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+
+  const isAdmin = sessionData?.session?.role?.name?.toUpperCase() === "ADMIN";
+  const isManager =
+    sessionData?.session?.role?.name?.toUpperCase() === "MANAGER";
+  const officeId = sessionData?.session?.officeId;
+
+  React.useEffect(() => {
+    if (!isSessionPending) {
+      fetchServices({
+        officeId: isAdmin ? undefined : officeId,
+        search: searchQuery || undefined,
+        page: currentPage,
+        pageSize,
+      });
+    }
+  }, [
+    fetchServices,
+    officeId,
+    isAdmin,
+    searchQuery,
+    isSessionPending,
+    currentPage,
+    pageSize,
+  ]);
+
+  const handleDelete = async () => {
+    if (!deletingService) return;
+    try {
+      await deleteService(deletingService.id);
+      toast.success(t("Service deleted successfully"));
+      setDeletingService(null);
+    } catch (error: any) {
+      toast.error(error?.message || t("Failed to delete service"));
+    }
+  };
+
+  const handleEdit = (service: Service) => {
+    setEditingService(service);
+    setIsCreateOpen(true);
+  };
+
+  if (isSessionPending) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 p-6 lg:p-8">
+      <PageHeader
+        title={t("Service Management")}
+        description={
+          isAdmin
+            ? t("Manage all government services across all offices.")
+            : t("Manage services provided by your office.")
+        }
+        icon={Layers}
+        actions={
+          <Button
+            onClick={() => {
+              setEditingService(null);
+              setIsCreateOpen(true);
+            }}
+            className="rounded-xl font-bold bg-primary shadow-lg shadow-primary/20"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {t("Create Service")}
+          </Button>
+        }
+      />
+
+      {/* Filters & Controls */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card/50 p-4 rounded-2xl border border-border/50 backdrop-blur-sm">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t("Search services...")}
+            className="pl-9 h-11 rounded-xl bg-background border-none ring-1 ring-border/50 focus-visible:ring-primary/50"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-lg bg-muted p-1">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-md"
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-md"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-xl border-border/50"
+          >
+            <Filter className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card
+              key={i}
+              className="border-none shadow-sm ring-1 ring-border/50 animate-pulse"
+            >
+              <CardContent className="h-[200px] bg-muted/20 rounded-2xl" />
+            </Card>
+          ))}
+        </div>
+      ) : services.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-3xl border-2 border-dashed border-border">
+          <div className="rounded-full bg-background p-6 shadow-sm mb-4">
+            <Layers className="h-12 w-12 text-primary/20" />
+          </div>
+          <h3 className="text-xl font-bold">{t("No services found")}</h3>
+          <p className="text-muted-foreground mt-2 max-w-sm text-center">
+            {searchQuery
+              ? t("Try adjusting your search query.")
+              : t("Start by creating the first service.")}
+          </p>
+          {!searchQuery && (
+            <Button
+              className="mt-8 rounded-xl font-bold"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {t("Create First Service")}
+            </Button>
+          )}
+        </div>
+      ) : viewMode === "grid" ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((service) => (
+            <ServiceCard
+              key={service.id}
+              service={service}
+              onEdit={() => handleEdit(service)}
+              onDelete={() => setDeletingService(service)}
+              isAdmin={isAdmin}
+              t={t}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-border/50 bg-muted/30">
+                <th className="p-4 font-bold text-sm">{t("Service Name")}</th>
+                {isAdmin && (
+                  <th className="p-4 font-bold text-sm">{t("Office")}</th>
+                )}
+                <th className="p-4 font-bold text-sm">{t("Time")}</th>
+                <th className="p-4 font-bold text-sm">{t("Stats")}</th>
+                <th className="p-4 font-bold text-sm text-right">
+                  {t("Actions")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {services.map((service) => (
+                <tr
+                  key={service.id}
+                  className="border-b border-border/50 hover:bg-muted/10 transition-colors"
+                >
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm">{service.name}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">
+                          {service.description}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  {isAdmin && (
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        {service.office?.name}
+                      </div>
+                    </td>
+                  )}
+                  <td className="p-4">
+                    <Badge
+                      variant="secondary"
+                      className="bg-muted/50 font-medium"
+                    >
+                      <Clock className="mr-1.5 h-3.5 w-3.5" />
+                      {service.timeToTake}
+                    </Badge>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex gap-2">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-bold border-emerald-500/20 text-emerald-600 bg-emerald-500/5"
+                      >
+                        {service.requirements?.length || 0} {t("Reqs")}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-bold border-blue-500/20 text-blue-600 bg-blue-500/5"
+                      >
+                        {service.serviceFors?.length || 0} {t("Target")}
+                      </Badge>
+                    </div>
+                  </td>
+                  <td className="p-4 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="rounded-xl">
+                        <DropdownMenuItem
+                          onClick={() => handleEdit(service)}
+                          className="gap-2"
+                        >
+                          <Edit className="h-4 w-4" /> {t("Edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setDeletingService(service)}
+                          className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/5"
+                        >
+                          <Trash2 className="h-4 w-4" /> {t("Delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && pagination.total > 0 && (
+        <PaginationFooter
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.total}
+          startIndex={(currentPage - 1) * pageSize}
+          endIndex={currentPage * pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          canGoNext={currentPage < pagination.totalPages}
+          canGoPrevious={currentPage > 1}
+          itemLabel={t("services")}
+        />
+      )}
+
+      {/* Dialogs */}
+      <ServiceCreateDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        service={editingService}
+        defaultOfficeId={officeId}
+        isAdmin={isAdmin}
+      />
+
+      <AlertDialog
+        open={!!deletingService}
+        onOpenChange={(open) => !open && setDeletingService(null)}
+      >
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("Are you absolutely sure?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                "This action cannot be undone. This will permanently delete the service and all associated data.",
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">
+              {t("Cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="rounded-xl bg-destructive hover:bg-destructive/90"
+            >
+              {t("Delete Service")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function ServiceCard({
+  service,
+  onEdit,
+  onDelete,
+  isAdmin,
+  t,
+}: {
+  service: Service;
+  onEdit: () => void;
+  onDelete: () => void;
+  isAdmin: boolean;
+  t: any;
+}) {
+  return (
+    <Card className="group border-none shadow-sm ring-1 ring-border/50 hover:ring-primary/30 transition-all duration-300 bg-card/50 backdrop-blur-sm overflow-hidden flex flex-col h-full">
+      <CardHeader className="p-6 pb-2">
+        <div className="flex items-start justify-between">
+          <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner group-hover:scale-110 transition-transform">
+            <FileText className="h-6 w-6" />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full h-8 w-8"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-xl">
+              <DropdownMenuItem onClick={onEdit} className="gap-2">
+                <Edit className="h-4 w-4" /> {t("Edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/5"
+              >
+                <Trash2 className="h-4 w-4" /> {t("Delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <CardTitle className="mt-4 text-xl font-black group-hover:text-primary transition-colors leading-tight">
+          {service.name}
+        </CardTitle>
+        <CardDescription className="line-clamp-2 min-h-[40px] mt-1 text-sm leading-relaxed">
+          {service.description || t("No description available.")}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="p-6 pt-4 flex-1 flex flex-col justify-between space-y-6">
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant="secondary"
+              className="bg-muted/50 text-muted-foreground border-none font-bold text-[10px] tracking-wider uppercase px-2.5 py-1"
+            >
+              <Clock className="mr-1.5 h-3 w-3" />
+              {service.timeToTake}
+            </Badge>
+            {isAdmin && (
+              <Badge
+                variant="outline"
+                className="border-primary/20 text-primary bg-primary/5 font-bold text-[10px] tracking-wider uppercase px-2.5 py-1"
+              >
+                <Building2 className="mr-1.5 h-3 w-3" />
+                {service.office?.name}
+              </Badge>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                {t("Requirements")}
+              </p>
+              <p className="text-sm font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                {service.requirements?.length || 0} {t("Items")}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                {t("Target")}
+              </p>
+              <p className="text-sm font-bold flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-blue-500" />
+                {service.serviceFors?.length || 0} {t("Groups")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          variant="ghost"
+          className="w-full mt-2 group/btn rounded-xl font-bold hover:bg-primary/5 hover:text-primary border border-transparent hover:border-primary/10"
+          onClick={onEdit}
+        >
+          {t("Manage Service")}
+          <ChevronRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}

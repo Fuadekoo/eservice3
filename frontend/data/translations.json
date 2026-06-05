@@ -1,0 +1,3357 @@
+{
+  "availableLanguages": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English"
+    },
+    {
+      "code": "am",
+      "name": "Amharic",
+      "nativeName": "አማርኛ"
+    },
+    {
+      "code": "om",
+      "name": "Oromo",
+      "nativeName": "Afaan Oromoo"
+    }
+  ],
+  "translations": [
+    {
+      "key": "Dashboard",
+      "translations": {
+        "en": "Dashboard",
+        "am": "ዳሽቦርድ",
+        "om": "Gabatee Too'annoo"
+      }
+    },
+    {
+      "key": "Bytes",
+      "translations": {
+        "en": "Bytes",
+        "am": "ባይት",
+        "om": "Bytes"
+      }
+    },
+    {
+      "key": "KB",
+      "translations": {
+        "en": "KB",
+        "am": "KB",
+        "om": "KB"
+      }
+    },
+    {
+      "key": "MB",
+      "translations": {
+        "en": "MB",
+        "am": "MB",
+        "om": "MB"
+      }
+    },
+    {
+      "key": "GB",
+      "translations": {
+        "en": "GB",
+        "am": "GB",
+        "om": "GB"
+      }
+    },
+    {
+      "key": "TB",
+      "translations": {
+        "en": "TB",
+        "am": "TB",
+        "om": "TB"
+      }
+    },
+    {
+      "key": "Folders Management",
+      "translations": {
+        "en": "Folders Management",
+        "am": "የፎልደሮች አስተዳደር",
+        "om": "Bulchiinsa Fooldarii"
+      }
+    },
+    {
+      "key": "Organize and manage folders to structure your documents.",
+      "translations": {
+        "en": "Organize and manage folders to structure your documents.",
+        "am": "ሰነዶችዎን ለማስተካከል ፎልደሮችን ያደራጁ እና ያስተዳድሩ።",
+        "om": "Galmeewwan keessan qindeesuuf fooldaroota qindeessaa fi bulchaa."
+      }
+    },
+    {
+      "key": "View All Folders",
+      "translations": {
+        "en": "View All Folders",
+        "am": "ሁሉንም ፎልደሮች ተመልከት",
+        "om": "Fooldaroota Hunda Ilaali"
+      }
+    },
+    {
+      "key": "Create Folder",
+      "translations": {
+        "en": "Create Folder",
+        "am": "ፎልደር ፍጠር",
+        "om": "Fooldarii Uumi"
+      }
+    },
+    {
+      "key": "Platform",
+      "translations": {
+        "en": "Platform",
+        "am": "ፕላትፎርም",
+        "om": "Platform"
+      }
+    },
+    {
+      "key": "Administration",
+      "translations": {
+        "en": "Administration",
+        "am": "አስተዳደር",
+        "om": "Bulchiinsa"
+      }
+    },
+    {
+      "key": "Office Operations",
+      "translations": {
+        "en": "Office Operations",
+        "am": "የቢሮ ስራዎች",
+        "om": "Hojiiwwan Waajjiraa"
+      }
+    },
+    {
+      "key": "Service Desk",
+      "translations": {
+        "en": "Service Desk",
+        "am": "የአገልግሎት መስጫ",
+        "om": "Service Desk"
+      }
+    },
+    {
+      "key": "Customer Portal",
+      "translations": {
+        "en": "Customer Portal",
+        "am": "የደንበኞች ፖርታል",
+        "om": "Customer Portal"
+      }
+    },
+    {
+      "key": "Content Management",
+      "translations": {
+        "en": "Content Management",
+        "am": "የይዘት አስተዳደር",
+        "om": "Content Management"
+      }
+    },
+    {
+      "key": "Personal",
+      "translations": {
+        "en": "Personal",
+        "am": "የግል",
+        "om": "Dhuunfaa"
+      }
+    },
+    {
+      "key": "Overview",
+      "translations": {
+        "en": "Overview",
+        "am": "አጠቃላይ እይታ",
+        "om": "Overview"
+      }
+    },
+    {
+      "key": "System Stats",
+      "translations": {
+        "en": "System Stats",
+        "am": "የስርዓት ስታቲስቲክስ",
+        "om": "System Stats"
+      }
+    },
+    {
+      "key": "User Management",
+      "translations": {
+        "en": "User Management",
+        "am": "የተጠቃሚዎች አስተዳደር",
+        "om": "Bulchiinsa Fayyadamtootaa"
+      }
+    },
+    {
+      "key": "Office Management",
+      "translations": {
+        "en": "Office Management",
+        "am": "የቢሮ አስተዳደር",
+        "om": "Bulchiinsa Waajjiraa"
+      }
+    },
+    {
+      "key": "Security & Roles",
+      "translations": {
+        "en": "Security & Roles",
+        "am": "ደህንነት እና ሚናዎች",
+        "om": "Security & Roles"
+      }
+    },
+    {
+      "key": "Roles",
+      "translations": {
+        "en": "Roles",
+        "am": "ሚናዎች",
+        "om": "Roles"
+      }
+    },
+    {
+      "key": "Permissions",
+      "translations": {
+        "en": "Permissions",
+        "am": "ፈቃዶች",
+        "om": "Permissions"
+      }
+    },
+    {
+      "key": "Audit Logs",
+      "translations": {
+        "en": "Audit Logs",
+        "am": "የኦዲት ምዝግብ ማስታወሻዎች",
+        "om": "Audit Logs"
+      }
+    },
+    {
+      "key": "Languages",
+      "translations": {
+        "en": "Languages",
+        "am": "ቋንቋዎች",
+        "om": "Qooqawwan"
+      }
+    },
+    {
+      "key": "System Settings",
+      "translations": {
+        "en": "System Settings",
+        "am": "የስርዓት ቅንብሮች",
+        "om": "System Settings"
+      }
+    },
+    {
+      "key": "My Office",
+      "translations": {
+        "en": "My Office",
+        "am": "የእኔ ቢሮ",
+        "om": "Waajjira Koo"
+      }
+    },
+    {
+      "key": "Services",
+      "translations": {
+        "en": "Services",
+        "am": "አገልግሎቶች",
+        "om": "Tajaajila"
+      }
+    },
+    {
+      "key": "Staff",
+      "translations": {
+        "en": "Staff",
+        "am": "ሰራተኞች",
+        "om": "Hojjettoota"
+      }
+    },
+    {
+      "key": "Availability",
+      "translations": {
+        "en": "Availability",
+        "am": "ተገኝነት",
+        "om": "Availability"
+      }
+    },
+    {
+      "key": "Requests",
+      "translations": {
+        "en": "Requests",
+        "am": "ጥያቄዎች",
+        "om": "Requests"
+      }
+    },
+    {
+      "key": "All Requests",
+      "translations": {
+        "en": "All Requests",
+        "am": "ሁሉንም ጥያቄዎች",
+        "om": "Requests Hunda"
+      }
+    },
+    {
+      "key": "My Queue",
+      "translations": {
+        "en": "My Queue",
+        "am": "የእኔ ወረፋ",
+        "om": "My Queue"
+      }
+    },
+    {
+      "key": "Appointments",
+      "translations": {
+        "en": "Appointments",
+        "am": "ቀጠሮዎች",
+        "om": "Appointments"
+      }
+    },
+    {
+      "key": "Reports",
+      "translations": {
+        "en": "Reports",
+        "am": "ሪፖርቶች",
+        "om": "Reports"
+      }
+    },
+    {
+      "key": "My Dashboard",
+      "translations": {
+        "en": "My Dashboard",
+        "am": "የእኔ ዳሽቦርድ",
+        "om": "Dashboard Koo"
+      }
+    },
+    {
+      "key": "Apply for Service",
+      "translations": {
+        "en": "Apply for Service",
+        "am": "ለአገልግሎት ያመልክቱ",
+        "om": "Tajaajilaaf Galmaa'aa"
+      }
+    },
+    {
+      "key": "My Requests",
+      "translations": {
+        "en": "My Requests",
+        "am": "የእኔ ጥያቄዎች",
+        "om": "Requests Koo"
+      }
+    },
+    {
+      "key": "My Appointments",
+      "translations": {
+        "en": "My Appointments",
+        "am": "የእኔ ቀጠሮዎች",
+        "om": "Appointments Koo"
+      }
+    },
+    {
+      "key": "Feedback",
+      "translations": {
+        "en": "Feedback",
+        "am": "አስተያየት",
+        "om": "Feedback"
+      }
+    },
+    {
+      "key": "Gallery",
+      "translations": {
+        "en": "Gallery",
+        "am": "ጋለሪ",
+        "om": "Gallery"
+      }
+    },
+    {
+      "key": "About Page",
+      "translations": {
+        "en": "About Page",
+        "am": "ስለ እኛ ገጽ",
+        "om": "Waa'ee Keenya"
+      }
+    },
+    {
+      "key": "My Profile",
+      "translations": {
+        "en": "My Profile",
+        "am": "የእኔ ፕሮፋይል",
+        "om": "Profile Koo"
+      }
+    },
+    {
+      "key": "Files",
+      "translations": {
+        "en": "Files",
+        "am": "ፋይሎች",
+        "om": "Galmeewwan"
+      }
+    },
+    {
+      "key": "Total Folders",
+      "translations": {
+        "en": "Total Folders",
+        "am": "ጠቅላላ ፎልደሮች",
+        "om": "Fooldaroota Waliigalaa"
+      }
+    },
+    {
+      "key": "{count} created in last 7 days",
+      "translations": {
+        "en": "{count} created in last 7 days",
+        "am": "{count} ባለፉት 7 ቀናት ተፈጥሯል",
+        "om": "Guyyoota 7 darban keessatti {count} uumaman"
+      }
+    },
+    {
+      "key": "Folders in system",
+      "translations": {
+        "en": "Folders in system",
+        "am": "በስርዓቱ ውስጥ ያሉ ፎልደሮች",
+        "om": "Fooldaroota sirna keessatti"
+      }
+    },
+    {
+      "key": "With Files",
+      "translations": {
+        "en": "With Files",
+        "am": "ከፋይሎች ጋር",
+        "om": "Faayiloota Waliin"
+      }
+    },
+    {
+      "key": "No folders",
+      "translations": {
+        "en": "No folders",
+        "am": "ፎልደር የለም",
+        "om": "Fooldarii hin jiru"
+      }
+    },
+    {
+      "key": "With Subfolders",
+      "translations": {
+        "en": "With Subfolders",
+        "am": "ንዑስ ፎልደሮች ያሉት",
+        "om": "Fooldaroota Xiqqaa Waliin"
+      }
+    },
+    {
+      "key": "Folders containing subfolders",
+      "translations": {
+        "en": "Folders containing subfolders",
+        "am": "ንዑስ ፎልደሮች የያዙ ፎልደሮች",
+        "om": "Fooldaroota foldarii xiqqaa of keessaa qaban"
+      }
+    },
+    {
+      "key": "Total Files",
+      "translations": {
+        "en": "Total Files",
+        "am": "ጠቅላላ ፋይሎች",
+        "om": "Faayiloota Waliigalaa"
+      }
+    },
+    {
+      "key": "Files in all folders",
+      "translations": {
+        "en": "Files in all folders",
+        "am": "በሁሉም ፎልደሮች ያሉ ፋይሎች",
+        "om": "Faayiloota fooldarii hunda keessatti"
+      }
+    },
+    {
+      "key": "Folders Overview",
+      "translations": {
+        "en": "Folders Overview",
+        "am": "የፎልደሮች አጠቃላይ መረጃ",
+        "om": "Cuunfaa Fooldarootaa"
+      }
+    },
+    {
+      "key": "Distribution of folders by content status.",
+      "translations": {
+        "en": "Distribution of folders by content status.",
+        "am": "ፎልደሮች በይዘት ሁኔታ መመደብ።",
+        "om": "Raabsa fooldarootaa haala qabiyyeen."
+      }
+    },
+    {
+      "key": "Folders containing files",
+      "translations": {
+        "en": "Folders containing files",
+        "am": "ፋይሎች የያዙ ፎልደሮች",
+        "om": "Fooldaroota faayiloota of keessaa qaban"
+      }
+    },
+    {
+      "key": "Folders with child folders",
+      "translations": {
+        "en": "Folders with child folders",
+        "am": "ንዑስ ፎልደሮች ያሉባቸው ፎልደሮች",
+        "om": "Fooldaroota fooldarii xiqqaa qaban"
+      }
+    },
+    {
+      "key": "Empty",
+      "translations": {
+        "en": "Empty",
+        "am": "ባዶ",
+        "om": "Duwwaa"
+      }
+    },
+    {
+      "key": "Empty folders",
+      "translations": {
+        "en": "Empty folders",
+        "am": "ባዶ ፎልደሮች",
+        "om": "Fooldaroota duwwaa"
+      }
+    },
+    {
+      "key": "Unable to load folders statistics.",
+      "translations": {
+        "en": "Unable to load folders statistics.",
+        "am": "የፎልደሮች ስታቲስቲክስ መጫን አልተቻለም።",
+        "om": "Istatistiksii fooldarootaa fe'uu hin dandeenye."
+      }
+    },
+    {
+      "key": "You don't have permission to view folders.",
+      "translations": {
+        "en": "You don't have permission to view folders.",
+        "am": "ፎልደሮችን ለማየት ፍቃድ የለህ/ሽም።",
+        "om": "Fooldaroota ilaaluuf hayyama hin qabdu."
+      }
+    },
+    {
+      "key": "All Folders",
+      "translations": {
+        "en": "All Folders",
+        "am": "ሁሉም ፎልደሮች",
+        "om": "Fooldaroota Hunda"
+      }
+    },
+    {
+      "key": "Organize files into folders",
+      "translations": {
+        "en": "Organize files into folders",
+        "am": "ፋይሎችን ወደ ፎልደሮች ያደራጁ",
+        "om": "Faayiloota gara fooldarootatti qindeessi"
+      }
+    },
+    {
+      "key": "Back to Folders",
+      "translations": {
+        "en": "Back to Folders",
+        "am": "ወደ ፎልደሮች ተመለስ",
+        "om": "Gara Fooldarootaatti Deebi'i"
+      }
+    },
+    {
+      "key": "{count} files in this folder",
+      "translations": {
+        "en": "{count} files in this folder",
+        "am": "{count} ፋይሎች በዚህ ፎልደር ውስጥ",
+        "om": "Fooldarii kana keessa faayiloota {count}"
+      }
+    },
+    {
+      "key": "Folder",
+      "translations": {
+        "en": "Folder",
+        "am": "ፎልደር",
+        "om": "Fooldarii"
+      }
+    },
+    {
+      "key": "Loading folder details...",
+      "translations": {
+        "en": "Loading folder details...",
+        "am": "የፎልደር ዝርዝሮች በመጫን ላይ...",
+        "om": "Ibsa fooldarii fe'aa jira..."
+      }
+    },
+    {
+      "key": "Access Denied",
+      "translations": {
+        "en": "Access Denied",
+        "am": "መዳረሻ ተከልክሏል",
+        "om": "Gahiinsi Dhorkamaadha"
+      }
+    },
+    {
+      "key": "You don't have permission to view files.",
+      "translations": {
+        "en": "You don't have permission to view files.",
+        "am": "ፋይሎችን ለማየት ፍቃድ የለህ/ሽም።",
+        "om": "Faayiloota ilaaluuf hayyama hin qabdu."
+      }
+    },
+    {
+      "key": "Manage and view all files in the system",
+      "translations": {
+        "en": "Manage and view all files in the system",
+        "am": "በስርዓቱ ያሉ ሁሉንም ፋይሎች አስተዳድር እና ተመልከት",
+        "om": "Faayiloota sirna keessatti hunda bulchii fi ilaali"
+      }
+    },
+    {
+      "key": "Shared Files",
+      "translations": {
+        "en": "Shared Files",
+        "am": "የተካፈሉ ፋይሎች",
+        "om": "Faayiloota Qoodaman"
+      }
+    },
+    {
+      "key": "Manage file shares and view shared file links.",
+      "translations": {
+        "en": "Manage file shares and view shared file links.",
+        "am": "የፋይል ማካፈልን አስተዳድር እና የተካፈሉ አገናኞችን ተመልከት።",
+        "om": "Faayiloota qooduu bulchii fi liinkii qoodamanii ilaali."
+      }
+    },
+    {
+      "key": "Share File",
+      "translations": {
+        "en": "Share File",
+        "am": "ፋይል አካፍል",
+        "om": "Faayilii Qoodi"
+      }
+    },
+    {
+      "key": "All Shared Files",
+      "translations": {
+        "en": "All Shared Files",
+        "am": "ሁሉም የተካፈሉ ፋይሎች",
+        "om": "Faayiloota Qoodaman Hunda"
+      }
+    },
+    {
+      "key": "View and manage all file shares. Copy links to share files with others.",
+      "translations": {
+        "en": "View and manage all file shares. Copy links to share files with others.",
+        "am": "ሁሉንም የፋይል ማካፈል ይመልከቱ እና ያስተዳድሩ። ፋይሎችን ለሌሎች ለመካፈል አገናኞችን ቅዳ።",
+        "om": "Faayiloota qoodaman hunda ilaali fi bulchi. Namoota birootti qooduuf liinkii waraabbadhu."
+      }
+    },
+    {
+      "key": "No shared files yet.",
+      "translations": {
+        "en": "No shared files yet.",
+        "am": "እስካሁን የተካፈሉ ፋይሎች የሉም።",
+        "om": "Hanga ammaa faayilii qoodamaa hin jiru."
+      }
+    },
+    {
+      "key": "Share Your First File",
+      "translations": {
+        "en": "Share Your First File",
+        "am": "የመጀመሪያውን ፋይልህ/ሽ አካፍል",
+        "om": "Faayilii Keessan Jalqabaa Qoodaa"
+      }
+    },
+    {
+      "key": "File",
+      "translations": {
+        "en": "File",
+        "am": "ፋይል",
+        "om": "Faayilii"
+      }
+    },
+    {
+      "key": "Shared By",
+      "translations": {
+        "en": "Shared By",
+        "am": "ያካፈለው",
+        "om": "Kan Qoode"
+      }
+    },
+    {
+      "key": "Expires",
+      "translations": {
+        "en": "Expires",
+        "am": "ጊዜው ያበቃ",
+        "om": "Yeroo Dhumaa"
+      }
+    },
+    {
+      "key": "Status",
+      "translations": {
+        "en": "Status",
+        "am": "ሁኔታ",
+        "om": "Haala"
+      }
+    },
+    {
+      "key": "Created",
+      "translations": {
+        "en": "Created",
+        "am": "የተፈጠረ",
+        "om": "Uumame"
+      }
+    },
+    {
+      "key": "Actions",
+      "translations": {
+        "en": "Actions",
+        "am": "ተግባራት",
+        "om": "Gocha"
+      }
+    },
+    {
+      "key": "Never",
+      "translations": {
+        "en": "Never",
+        "am": "በፍጹም",
+        "om": "Gonkumaa"
+      }
+    },
+    {
+      "key": "Inactive",
+      "translations": {
+        "en": "Inactive",
+        "am": "ያልተነሳ",
+        "om": "Hojii Irra Hin Jirre"
+      }
+    },
+    {
+      "key": "Expired",
+      "translations": {
+        "en": "Expired",
+        "am": "ጊዜው አልፎበታል",
+        "om": "Yeroon Darbe"
+      }
+    },
+    {
+      "key": "Expiring Soon",
+      "translations": {
+        "en": "Expiring Soon",
+        "am": "በቅርቡ የሚያበቃ",
+        "om": "Dhihootti Darba"
+      }
+    },
+    {
+      "key": "Active",
+      "translations": {
+        "en": "Active",
+        "am": "ንቁ",
+        "om": "Hojii Irra Jiru"
+      }
+    },
+    {
+      "key": "Copy Link",
+      "translations": {
+        "en": "Copy Link",
+        "am": "አገናኝ ቅዳ",
+        "om": "Liinkii Waraabbadhu"
+      }
+    },
+    {
+      "key": "Open Link",
+      "translations": {
+        "en": "Open Link",
+        "am": "አገናኝ ክፈት",
+        "om": "Liinkii Bani"
+      }
+    },
+    {
+      "key": "Delete Share",
+      "translations": {
+        "en": "Delete Share",
+        "am": "ማካፈል አስወግድ",
+        "om": "Qooduu Haqi"
+      }
+    },
+    {
+      "key": "Are you sure you want to delete this share? The link will no longer be accessible.",
+      "translations": {
+        "en": "Are you sure you want to delete this share? The link will no longer be accessible.",
+        "am": "ይህን ማካፈል ማጥፋት እንደሚፈልጉ እርግጠኛ ነዎት? አገናኙ ከዚያ በኋላ አይደረስበትም።",
+        "om": "Qooduu kana haquuf dhuguma mirkaneeffadhu? Liinkiin kun itti fufee hin hojjetu."
+      }
+    },
+    {
+      "key": "Cancel",
+      "translations": {
+        "en": "Cancel",
+        "am": "ይቅር",
+        "om": "Haqi"
+      }
+    },
+    {
+      "key": "Delete",
+      "translations": {
+        "en": "Delete",
+        "am": "ሰርዝ",
+        "om": "Haqi"
+      }
+    },
+    {
+      "key": "Share link copied to clipboard!",
+      "translations": {
+        "en": "Share link copied to clipboard!",
+        "am": "የማካፈል አገናኝ ወደ ቅንጥብ ሰሌዳ ተቀድቷል!",
+        "om": "Liinkiin qooduu gara kiilippuboordii waraabame!"
+      }
+    },
+    {
+      "key": "Share deleted successfully",
+      "translations": {
+        "en": "Share deleted successfully",
+        "am": "ማካፈል በተሳካ ሁኔታ ተሰርዟል",
+        "om": "Qoodachaan milkaa'inaan haqame"
+      }
+    },
+    {
+      "key": "Failed to delete share",
+      "translations": {
+        "en": "Failed to delete share",
+        "am": "ማካፈል ማጥፋት አልተሳካም",
+        "om": "Qooduu haquu hin dandeenye"
+      }
+    },
+    {
+      "key": "Trash Management",
+      "translations": {
+        "en": "Trash Management",
+        "am": "የቆሻሻ አስተዳደር",
+        "om": "Bulchiinsa Kosii"
+      }
+    },
+    {
+      "key": "View and manage deleted files. Restore items or delete them permanently.",
+      "translations": {
+        "en": "View and manage deleted files. Restore items or delete them permanently.",
+        "am": "የተሰረዙ ፋይሎችን ይመልከቱ እና ያስተዳድሩ። እቃዎችን መመለስ ወይም በቋሚነት ማጥፋት ይችላሉ።",
+        "om": "Faayiloota haqaman ilaali fi bulchi. Wantoota deebisi ykn guutummaatti haqi."
+      }
+    },
+    {
+      "key": "View All Trash",
+      "translations": {
+        "en": "View All Trash",
+        "am": "ሁሉንም ቆሻሻ ይመልከቱ",
+        "om": "Kosii Hunda Ilaali"
+      }
+    },
+    {
+      "key": "Total Items",
+      "translations": {
+        "en": "Total Items",
+        "am": "ጠቅላላ እቃዎች",
+        "om": "Wantoota Waliigalaa"
+      }
+    },
+    {
+      "key": "deleted in last 7 days",
+      "translations": {
+        "en": "deleted in last 7 days",
+        "am": "ባለፉት 7 ቀናት የተሰረዙ",
+        "om": "guyyoota 7 darban keessatti haqaman"
+      }
+    },
+    {
+      "key": "Items in trash",
+      "translations": {
+        "en": "Items in trash",
+        "am": "በቆሻሻ ውስጥ ያሉ እቃዎች",
+        "om": "Wantoota kosii keessatti"
+      }
+    },
+    {
+      "key": "Recent Deletions",
+      "translations": {
+        "en": "Recent Deletions",
+        "am": "የቅርብ ጊዜ ስረዛዎች",
+        "om": "Haqamuu Dhiyootti"
+      }
+    },
+    {
+      "key": "Deleted in last 7 days",
+      "translations": {
+        "en": "Deleted in last 7 days",
+        "am": "ባለፉት 7 ቀናት የተሰረዙ",
+        "om": "Guyyoota 7 darban keessatti haqaman"
+      }
+    },
+    {
+      "key": "Trash Overview",
+      "translations": {
+        "en": "Trash Overview",
+        "am": "የቆሻሻ እይታ",
+        "om": "Cuunfaa Kosii"
+      }
+    },
+    {
+      "key": "Overview of deleted files in trash.",
+      "translations": {
+        "en": "Overview of deleted files in trash.",
+        "am": "በቆሻሻ ውስጥ ያሉ የተሰረዙ ፋይሎች እይታ.",
+        "om": "Cuunfaa faayiloota kosii keessa haqamanii."
+      }
+    },
+    {
+      "key": "Deleted files in trash",
+      "translations": {
+        "en": "Deleted files in trash",
+        "am": "በቆሻሻ ውስጥ ያሉ የተሰረዙ ፋይሎች",
+        "om": "Faayiloota kosii keessa haqaman"
+      }
+    },
+    {
+      "key": "Files Management",
+      "translations": {
+        "en": "Files Management",
+        "am": "የፋይሎች አስተዳደር",
+        "om": "Bulchiinsa Faayilii"
+      }
+    },
+    {
+      "key": "Manage and organize files in the Mesob DMS system.",
+      "translations": {
+        "en": "Manage and organize files in the Mesob DMS system.",
+        "am": "ፋይሎችን በሰነድ አስተዳደር ስርዓት ውስጥ አስተዳድር እና አዘጋጅ.",
+        "om": "Faayiloota sirna bulchiinsa galmeetti bulchii fi qindeessi."
+      }
+    },
+    {
+      "key": "View All Files",
+      "translations": {
+        "en": "View All Files",
+        "am": "ሁሉንም ፋይሎች ይመልከቱ",
+        "om": "Faayiloota Hunda Ilaali"
+      }
+    },
+    {
+      "key": "Upload File",
+      "translations": {
+        "en": "Upload File",
+        "am": "ፋይል አስገባ",
+        "om": "Faayilii Olkaa'i"
+      }
+    },
+    {
+      "key": "uploaded in last 7 days",
+      "translations": {
+        "en": "uploaded in last 7 days",
+        "am": "ባለፉት 7 ቀናት ውስጥ የተጫኑ",
+        "om": "guyyoota 7 darban keessatti olkaa'aman"
+      }
+    },
+    {
+      "key": "Files in system",
+      "translations": {
+        "en": "Files in system",
+        "am": "ፋይሎች በስርዓት ውስጥ",
+        "om": "Faayiloota sirna keessatti"
+      }
+    },
+    {
+      "key": "In Folders",
+      "translations": {
+        "en": "In Folders",
+        "am": "በፎልደሮች ውስጥ",
+        "om": "Fooldarii Keessatti"
+      }
+    },
+    {
+      "key": "of total",
+      "translations": {
+        "en": "of total",
+        "am": "ከጠቅላላው",
+        "om": "waliigalaa keessaa"
+      }
+    },
+    {
+      "key": "No files",
+      "translations": {
+        "en": "No files",
+        "am": "ፋይሎች የሉም",
+        "om": "Faayilii hin jiru"
+      }
+    },
+    {
+      "key": "Without Folders",
+      "translations": {
+        "en": "Without Folders",
+        "am": "ያለ ፎልደሮች",
+        "om": "Fooldarii Malee"
+      }
+    },
+    {
+      "key": "Recent Uploads",
+      "translations": {
+        "en": "Recent Uploads",
+        "am": "የቅርብ ጊዜ መጫን",
+        "om": "Olkaa'uu Dhiyootti"
+      }
+    },
+    {
+      "key": "Uploaded in last 7 days",
+      "translations": {
+        "en": "Uploaded in last 7 days",
+        "am": "ባለፉት 7 ቀናት የተጫኑ",
+        "om": "Guyyoota 7 darban keessatti olkaa'aman"
+      }
+    },
+    {
+      "key": "Files Overview",
+      "translations": {
+        "en": "Files Overview",
+        "am": "የፋይሎች እይታ",
+        "om": "Cuunfaa Faayilootaa"
+      }
+    },
+    {
+      "key": "Distribution of files by organization status.",
+      "translations": {
+        "en": "Distribution of files by organization status.",
+        "am": "ፋይሎች በድርጅታዊ ሁኔታ መመደብ.",
+        "om": "Raabsa faayilootaa haala qindaa'inaan."
+      }
+    },
+    {
+      "key": "Files organized in folders",
+      "translations": {
+        "en": "Files organized in folders",
+        "am": "በፎልደሮች የተደረጉ ፋይሎች",
+        "om": "Faayiloota fooldarii keessatti qinda'an"
+      }
+    },
+    {
+      "key": "Files not in folders",
+      "translations": {
+        "en": "Files not in folders",
+        "am": "በፎልደር ውስጥ ያልሆኑ ፋይሎች",
+        "om": "Faayiloota fooldarii keessa hin jirre"
+      }
+    },
+    {
+      "key": "Overview",
+      "translations": {
+        "en": "Overview",
+        "am": "እይታእአዝዝ",
+        "om": "Cuunfaa"
+      }
+    },
+    {
+      "key": "Governance",
+      "translations": {
+        "en": "Governance",
+        "am": "መሪነት",
+        "om": "Bulchiinsa"
+      }
+    },
+    {
+      "key": "Core Operations",
+      "translations": {
+        "en": "Core Operations",
+        "am": "ዋና ስራዎች",
+        "om": "Hojiilee Ijoo"
+      }
+    },
+    {
+      "key": "Configuration",
+      "translations": {
+        "en": "Configuration",
+        "am": "አዋቅር",
+        "om": "Qindaa'ina"
+      }
+    },
+    {
+      "key": "Security",
+      "translations": {
+        "en": "Security",
+        "am": "ደህንነት",
+        "om": "Nageenya"
+      }
+    },
+    {
+      "key": "Students",
+      "translations": {
+        "en": "Students",
+        "am": "ተማሪዎች",
+        "om": "Barattota"
+      }
+    },
+    {
+      "key": "Staff",
+      "translations": {
+        "en": "Staff",
+        "am": "ሠራተኞች",
+        "om": "Hojjettoota"
+      }
+    },
+    {
+      "key": "Languages",
+      "translations": {
+        "en": "Languages",
+        "am": "ቋንቋዎች",
+        "om": "Afaanota"
+      }
+    },
+    {
+      "key": "Branch",
+      "translations": {
+        "en": "Branch",
+        "am": "ቅርንጫፍ",
+        "om": "Damee"
+      }
+    },
+    {
+      "key": "Classroom",
+      "translations": {
+        "en": "Classroom",
+        "am": "ክፍል",
+        "om": "Kutaa Barnootaa"
+      }
+    },
+    {
+      "key": "Academic Year",
+      "translations": {
+        "en": "Academic Year",
+        "am": "ዓመታዊ ዓመት",
+        "om": "Bara Barnootaa"
+      }
+    },
+    {
+      "key": "Grade & Level",
+      "translations": {
+        "en": "Grade & Level",
+        "am": "ደረጃ እና ደረጃ",
+        "om": "Sadarkaa fi Kutaa"
+      }
+    },
+    {
+      "key": "Section",
+      "translations": {
+        "en": "Section",
+        "am": "ክፍል",
+        "om": "Kutaa"
+      }
+    },
+    {
+      "key": "Roles",
+      "translations": {
+        "en": "Roles",
+        "am": "ሚናዎች",
+        "om": "Gahee"
+      }
+    },
+    {
+      "key": "Permissions",
+      "translations": {
+        "en": "Permissions",
+        "am": "ፍቃዶች",
+        "om": "Hayyamawwan"
+      }
+    },
+    {
+      "key": "Audit Trails",
+      "translations": {
+        "en": "Audit Trails",
+        "am": "የኦዲት አሻራዎች",
+        "om": "Cuunfaa Ooditii"
+      }
+    },
+    {
+      "key": "user_authentication_failed",
+      "translations": {
+        "en": "User Authentication Failed",
+        "am": "የተጠቃሚ ማረጋገጫ አልተሳካም",
+        "om": "Mirkaneessuu Fayyadamtootaa Hin Milkoofne"
+      }
+    },
+    {
+      "key": "The email or phone field is required",
+      "translations": {
+        "en": "The Email or Phone Field is Required",
+        "am": "የኢሜል ወይም ስልክ ቁጥር መስክ ያስፈልጋል",
+        "om": "Dirreen Imeelii ykn Bilbilaa Ni Barbaachisa"
+      }
+    },
+    {
+      "key": "The password field is required",
+      "translations": {
+        "en": "The Password Field is Required",
+        "am": "የይለፍ ቃል መስክ ያስፈልጋል",
+        "om": "Dirreen Jecha Darbii Ni Barbaachisa"
+      }
+    },
+    {
+      "key": "Documents",
+      "translations": {
+        "en": "Documents",
+        "am": "ሰነዶች",
+        "om": "Galmeewwan"
+      }
+    },
+    {
+      "key": "Management",
+      "translations": {
+        "en": "Management",
+        "am": "አስተዳደር",
+        "om": "Bulchiinsa"
+      }
+    },
+    {
+      "key": "Files",
+      "translations": {
+        "en": "Files",
+        "am": "ፋይሎች",
+        "om": "Faayiloota"
+      }
+    },
+    {
+      "key": "All Files",
+      "translations": {
+        "en": "All Files",
+        "am": "ሁሉም ፋይሎች",
+        "om": "Faayiloota Hunda"
+      }
+    },
+    {
+      "key": "Shared Files",
+      "translations": {
+        "en": "Shared Files",
+        "am": "የተካፈሉ ፋይሎች",
+        "om": "Faayiloota Qoodaman"
+      }
+    },
+    {
+      "key": "Folders",
+      "translations": {
+        "en": "Folders",
+        "am": "ፎልደሮች",
+        "om": "Fooldaroota"
+      }
+    },
+    {
+      "key": "All Folders",
+      "translations": {
+        "en": "All Folders",
+        "am": "ሁሉም ፎልደሮች",
+        "om": "Fooldaroota Hunda"
+      }
+    },
+    {
+      "key": "Search",
+      "translations": {
+        "en": "Search",
+        "am": "ፍለጋ",
+        "om": "Barbaacha"
+      }
+    },
+    {
+      "key": "Staff",
+      "translations": {
+        "en": "Staff",
+        "am": "ሰራተኞች",
+        "om": "Hojjettoota"
+      }
+    },
+    {
+      "key": "All Staff",
+      "translations": {
+        "en": "All Staff",
+        "am": "ሁሉም ሰራተኞች",
+        "om": "Hojjettoota Hunda"
+      }
+    },
+    {
+      "key": "Add Staff",
+      "translations": {
+        "en": "Add Staff",
+        "am": "ሰራተኛ አክል",
+        "om": "Hojjetaa Dabalata"
+      }
+    },
+    {
+      "key": "Tags",
+      "translations": {
+        "en": "Tags",
+        "am": "መለያዎች",
+        "om": "Taagii"
+      }
+    },
+    {
+      "key": "All Tags",
+      "translations": {
+        "en": "All Tags",
+        "am": "ሁሉም መለያዎች",
+        "om": "Taagii Hunda"
+      }
+    },
+    {
+      "key": "Trash",
+      "translations": {
+        "en": "Trash",
+        "am": "ቆሻሻ",
+        "om": "Kosii"
+      }
+    },
+    {
+      "key": "All Trash",
+      "translations": {
+        "en": "All Trash",
+        "am": "ሁሉም ቆሻሻ",
+        "om": "Kosii Hunda"
+      }
+    },
+    {
+      "key": "Audit Logs",
+      "translations": {
+        "en": "Audit Logs",
+        "am": "ኦዲት መዝገቦች",
+        "om": "Galmeewwan Ooditii"
+      }
+    },
+    {
+      "key": "Analytics",
+      "translations": {
+        "en": "Analytics",
+        "am": "ትንታኔ",
+        "om": "Xiinxala"
+      }
+    },
+    {
+      "key": "Settings",
+      "translations": {
+        "en": "Settings",
+        "am": "ቅንብሮች",
+        "om": "Qindaa'ina"
+      }
+    },
+    {
+      "key": "Users",
+      "translations": {
+        "en": "Users",
+        "am": "ተጠቃሚዎች",
+        "om": "Fayyadamtoota"
+      }
+    },
+    {
+      "key": "Mesob DMS",
+      "translations": {
+        "en": "Mesob DMS",
+        "am": "የሰነድ አስተዳደር",
+        "om": "Bulchiinsa Galmee"
+      }
+    },
+    {
+      "key": "System",
+      "translations": {
+        "en": "System",
+        "am": "ስርዓት",
+        "om": "Sirna"
+      }
+    },
+    {
+      "key": "System statistics and analytics",
+      "translations": {
+        "en": "System statistics and analytics",
+        "am": "የስርዓት ስታቲስቲክስ እና ትንታኔ",
+        "om": "Istatistiksii fi xiinxala sirnaa"
+      }
+    },
+    {
+      "key": "Try again",
+      "translations": {
+        "en": "Try again",
+        "am": "እንደገና ሞክር",
+        "om": "Irra deebi'ii yaali"
+      }
+    },
+    {
+      "key": "Total Files",
+      "translations": {
+        "en": "Total Files",
+        "am": "ጠቅላላ ፋይሎች",
+        "om": "Faayiloota Waliigalaa"
+      }
+    },
+    {
+      "key": "Total Folders",
+      "translations": {
+        "en": "Total Folders",
+        "am": "ጠቅላላ ፎልደሮች",
+        "om": "Fooldaroota Waliigalaa"
+      }
+    },
+    {
+      "key": "Total Users",
+      "translations": {
+        "en": "Total Users",
+        "am": "ጠቅላላ ተጠቃሚዎች",
+        "om": "Fayyadamtoota Waliigalaa"
+      }
+    },
+    {
+      "key": "Storage Used",
+      "translations": {
+        "en": "Storage Used",
+        "am": "የተጠቀሙ ማከማቻ",
+        "om": "Kuusaa Itti Fayyadaman"
+      }
+    },
+    {
+      "key": "File Versions",
+      "translations": {
+        "en": "File Versions",
+        "am": "የፋይል ስሪቶች",
+        "om": "Varshinii Faayilii"
+      }
+    },
+    {
+      "key": "Trash Items",
+      "translations": {
+        "en": "Trash Items",
+        "am": "ቆሻሻ ነገሮች",
+        "om": "Wantoota Kosii"
+      }
+    },
+    {
+      "key": "Files Distribution",
+      "translations": {
+        "en": "Files Distribution",
+        "am": "የፋይሎች መመደብ",
+        "om": "Raabsa Faayilootaa"
+      }
+    },
+    {
+      "key": "Files by folder assignment",
+      "translations": {
+        "en": "Files by folder assignment",
+        "am": "በፎልደር መመደብ የተከፋፈሉ ፋይሎች",
+        "om": "Faayiloota ramaddii fooldariitiin"
+      }
+    },
+    {
+      "key": "Total",
+      "translations": {
+        "en": "Total",
+        "am": "ጠቅላላ",
+        "om": "Waliigala"
+      }
+    },
+    {
+      "key": "files",
+      "translations": {
+        "en": "files",
+        "am": "ፋይሎች",
+        "om": "faayiloota"
+      }
+    },
+    {
+      "key": "with folder",
+      "translations": {
+        "en": "with folder",
+        "am": "ከፎልደር ጋር",
+        "om": "fooldarii waliin"
+      }
+    },
+    {
+      "key": "without folder",
+      "translations": {
+        "en": "without folder",
+        "am": "ያለ ፎልደር",
+        "om": "fooldarii malee"
+      }
+    },
+    {
+      "key": "Users Status",
+      "translations": {
+        "en": "Users Status",
+        "am": "የተጠቃሚዎች ሁኔታ",
+        "om": "Haala Fayyadamtootaa"
+      }
+    },
+    {
+      "key": "Active vs Inactive users",
+      "translations": {
+        "en": "Active vs Inactive users",
+        "am": "ንቁ እና ዝግ ተጠቃሚዎች",
+        "om": "Fayyadamtoota hojii irra jiranii fi hin jirre"
+      }
+    },
+    {
+      "key": "Users by Role",
+      "translations": {
+        "en": "Users by Role",
+        "am": "ተጠቃሚዎች በሚና",
+        "om": "Fayyadamtoota Gaheetiin"
+      }
+    },
+    {
+      "key": "User distribution by role",
+      "translations": {
+        "en": "User distribution by role",
+        "am": "ተጠቃሚዎች በሚና መመደብ",
+        "om": "Raabsa fayyadamtootaa gaheetiin"
+      }
+    },
+    {
+      "key": "Files Uploaded",
+      "translations": {
+        "en": "Files Uploaded",
+        "am": "የተጫኑ ፋይሎች",
+        "om": "Faayiloota Olkaa'aman"
+      }
+    },
+    {
+      "key": "Last 6 months",
+      "translations": {
+        "en": "Last 6 months",
+        "am": "ያለፉት 6 ወራት",
+        "om": "Ji'oota 6 darban"
+      }
+    },
+    {
+      "key": "File upload activity over time",
+      "translations": {
+        "en": "File upload activity over time",
+        "am": "የፋይል መጫን እንቅስቃሴ በጊዜ",
+        "om": "Sochii faayilii olkaa'uu yeroo yeroon"
+      }
+    },
+    {
+      "key": "Showing file uploads for the last 6 months",
+      "translations": {
+        "en": "Showing file uploads for the last 6 months",
+        "am": "ለያለፉት 6 ወራት የተጫኑ ፋይሎችን እያሳየ",
+        "om": "Faayiloota ji'oota 6 darbaniif olkaa'aman agarsiisaa jira"
+      }
+    },
+    {
+      "key": "Active Users",
+      "translations": {
+        "en": "Active Users",
+        "am": "ንቁ ተጠቃሚዎች",
+        "om": "Fayyadamtoota Hojii Irra Jiran"
+      }
+    },
+    {
+      "key": "Inactive Users",
+      "translations": {
+        "en": "Inactive Users",
+        "am": "ዝግ ተጠቃሚዎች",
+        "om": "Fayyadamtoota Hojii Irra Hin Jirre"
+      }
+    },
+    {
+      "key": "Files with Folder",
+      "translations": {
+        "en": "Files with Folder",
+        "am": "ከፎልደር ጋር ያሉ ፋይሎች",
+        "om": "Faayiloota Fooldarii Waliin"
+      }
+    },
+    {
+      "key": "Files without Folder",
+      "translations": {
+        "en": "Files without Folder",
+        "am": "ያለ ፎልደር ያሉ ፋይሎች",
+        "om": "Faayiloota Fooldarii Malee"
+      }
+    },
+    {
+      "key": "Welcome back, {name}!",
+      "translations": {
+        "en": "Welcome back, {name}!",
+        "am": "እንኳን ደህና መጣህ/ሽ {name}!",
+        "om": "Baga nagaan deebittan, {name}!"
+      }
+    },
+    {
+      "key": "User",
+      "translations": {
+        "en": "User",
+        "am": "ተጠቃሚ",
+        "om": "Fayyadamaa"
+      }
+    },
+    {
+      "key": "Total files in system",
+      "translations": {
+        "en": "Total files in system",
+        "am": "በስርዓቱ ያሉ ጠቅላላ ፋይሎች",
+        "om": "Faayiloota waliigala sirna keessa jiran"
+      }
+    },
+    {
+      "key": "Total folders",
+      "translations": {
+        "en": "Total folders",
+        "am": "ጠቅላላ ፎልደሮች",
+        "om": "Fooldaroota waliigala"
+      }
+    },
+    {
+      "key": "System users",
+      "translations": {
+        "en": "System users",
+        "am": "የስርዓት ተጠቃሚዎች",
+        "om": "Fayyadamtoota sirnaa"
+      }
+    },
+    {
+      "key": "User roles",
+      "translations": {
+        "en": "User roles",
+        "am": "የተጠቃሚ ሚናዎች",
+        "om": "Gahee fayyadamtootaa"
+      }
+    },
+    {
+      "key": "Your Permissions",
+      "translations": {
+        "en": "Your Permissions",
+        "am": "ፍቃዶችህ",
+        "om": "Hayyamawwan Keessan"
+      }
+    },
+    {
+      "key": "You have access to the following features",
+      "translations": {
+        "en": "You have access to the following features",
+        "am": "ለሚከተሉት ባህሪያት መዳረሻ አለህ/ሽ",
+        "om": "Amaloota armaan gadiitiif gahiinsa qabdu"
+      }
+    },
+    {
+      "key": "No permissions assigned",
+      "translations": {
+        "en": "No permissions assigned",
+        "am": "ምንም ፍቃድ አልተመደበም",
+        "om": "Hayyamni ramadame hin jiru"
+      }
+    },
+    {
+      "key": "Role Information",
+      "translations": {
+        "en": "Role Information",
+        "am": "የሚና መረጃ",
+        "om": "Odeeffannoo Gahee"
+      }
+    },
+    {
+      "key": "Role:",
+      "translations": {
+        "en": "Role:",
+        "am": "ሚና:",
+        "om": "Gahee:"
+      }
+    },
+    {
+      "key": "Username:",
+      "translations": {
+        "en": "Username:",
+        "am": "የተጠቃሚ ስም:",
+        "om": "Maqaa Fayyadamaa:"
+      }
+    },
+    {
+      "key": "Phone:",
+      "translations": {
+        "en": "Phone:",
+        "am": "ስልክ:",
+        "om": "Bilbila:"
+      }
+    },
+    {
+      "key": "N/A",
+      "translations": {
+        "en": "N/A",
+        "am": "አይፈልግም",
+        "om": "Hin Jiru"
+      }
+    },
+    {
+      "key": "Modern Mesob DMS Solution",
+      "translations": {
+        "en": "Modern Mesob DMS Solution",
+        "am": "ዘመናዊ የሰነድ አስተዳደር መፍትሄ",
+        "om": "Furmaata Bulchiinsa Galmee Hammayyaa"
+      }
+    },
+    {
+      "key": "Organize, Secure & Manage Your Documents",
+      "translations": {
+        "en": "Organize, Secure & Manage Your Documents",
+        "am": "ሰነዶችዎን ያደራጁ፣ ይጠብቁ እና ያስተዳድሩ",
+        "om": "Galmeewwan Keessan Qindessaa, Eegaa, fi Bulchaa"
+      }
+    },
+    {
+      "key": "Streamline your document workflow with our comprehensive Mesob DMS System. Store, organize, search, and share files with enterprise-grade security.",
+      "translations": {
+        "en": "Streamline your document workflow with our comprehensive Mesob DMS System. Store, organize, search, and share files with enterprise-grade security.",
+        "am": "ሰነዶችዎን በእኛ አጠቃላይ የሰነድ አስተዳደር ስርዓት ያቀላጥፉ። ፋይሎችን በከፍተኛ ደረጃ ደህንነት ያከማቹ፣ ያደራጁ፣ ይፈልጉ እና ያጋሩ።",
+        "om": "Hojiiwwan galmee keessan Sirna Bulchiinsa Galmee guutuu ta'een salphisaa. Faayiloota haala amansiisaa ta'een kuusaa, qindessaa, barbaadaa, fi qoodaa."
+      }
+    },
+    {
+      "key": "Get Started",
+      "translations": {
+        "en": "Get Started",
+        "am": "አሁኑኑ ይጀምሩ",
+        "om": "Jalqabaa"
+      }
+    },
+    {
+      "key": "Learn More",
+      "translations": {
+        "en": "Learn More",
+        "am": "ተጨማሪ ይወቁ",
+        "om": "Dabalata Baradhaa"
+      }
+    },
+    {
+      "key": "Secure",
+      "translations": {
+        "en": "Secure",
+        "am": "አስተማማኝ",
+        "om": "Eegumsa Qabu"
+      }
+    },
+    {
+      "key": "Access",
+      "translations": {
+        "en": "Access",
+        "am": "ተደራሽነት",
+        "om": "Gahiinsa"
+      }
+    },
+    {
+      "key": "Fast",
+      "translations": {
+        "en": "Fast",
+        "am": "ፈጣን",
+        "om": "Saffisaa"
+      }
+    },
+    {
+      "key": "Easy",
+      "translations": {
+        "en": "Easy",
+        "am": "ቀላል",
+        "om": "Salphaa"
+      }
+    },
+    {
+      "key": "To Use",
+      "translations": {
+        "en": "To Use",
+        "am": "ለመጠቀም",
+        "om": "Fayyadamuuf"
+      }
+    },
+    {
+      "key": "File Management",
+      "translations": {
+        "en": "File Management",
+        "am": "የፋይል አስተዳደር",
+        "om": "Bulchiinsa Faayilii"
+      }
+    },
+    {
+      "key": "Upload, organize, and manage all your documents in one secure location with advanced file versioning.",
+      "translations": {
+        "en": "Upload, organize, and manage all your documents in one secure location with advanced file versioning.",
+        "am": "ሁሉንም ሰነዶችዎን በአንድ ደህንነቱ የተጠበቀ ቦታ ይስቀሉ፣ ያደራጁ እና ያስተዳድሩ።",
+        "om": "Galmeewwan keessan hunda bakka amansiisaa tokkotti olkaa'aa, qindessaa, fi bulchaa."
+      }
+    },
+    {
+      "key": "Folder Organization",
+      "translations": {
+        "en": "Folder Organization",
+        "am": "የፎልደር አደረጃጀት",
+        "om": "Qindoomina Fooldarii"
+      }
+    },
+    {
+      "key": "Create nested folder structures to organize documents hierarchically for easy navigation and access.",
+      "translations": {
+        "en": "Create nested folder structures to organize documents hierarchically for easy navigation and access.",
+        "am": "ለቀላል ፍለጋ እና ተደራሽነት ሰነዶችን በቅደም ተከተል ለማደራጀት የፎልደር መዋቅሮችን ይፍጠሩ።",
+        "om": "Galmeewwan haalaan qindessuuf caasaa fooldarii uumaa."
+      }
+    },
+    {
+      "key": "Advanced Search",
+      "translations": {
+        "en": "Advanced Search",
+        "am": "የላቀ ፍለጋ",
+        "om": "Barbaacha Olaanaa"
+      }
+    },
+    {
+      "key": "Find documents instantly with powerful search capabilities across files, folders, and metadata.",
+      "translations": {
+        "en": "Find documents instantly with powerful search capabilities across files, folders, and metadata.",
+        "am": "በፋይሎች፣ ፎልደሮች እና መረጃዎች ላይ በኃይለኛ የፍለጋ ችሎታዎች ሰነዶችን ወዲያውኑ ያግኙ።",
+        "om": "Dandeettii barbaacha cimaa fayyadamuun galmeewwan yeruma sana argadhaa."
+      }
+    },
+    {
+      "key": "Role-Based Access",
+      "translations": {
+        "en": "Role-Based Access",
+        "am": "ሚና ላይ የተመሰረተ መዳረሻ",
+        "om": "Gahiinsa Gahee Irratti Hundaa'e"
+      }
+    },
+    {
+      "key": "Control access with granular permissions. Assign roles and manage who can view, edit, or delete documents.",
+      "translations": {
+        "en": "Control access with granular permissions. Assign roles and manage who can view, edit, or delete documents.",
+        "am": "መዳረሻን በዝርዝር ፈቃዶች ይቆጣጠሩ። ሚናዎችን ይስጡ እና ማን ሰነዶችን ማየት፣ ማርትዕ ወይም መሰረዝ እንደሚችል ያስተዳድሩ።",
+        "om": "Hayyama adda addaatiin gahiinsa to'adhaa. Eenyu galmeewwan akka ilaalu, sirreessu ykn haquu danda'u murteessaa."
+      }
+    },
+    {
+      "key": "Secure Storage",
+      "translations": {
+        "en": "Secure Storage",
+        "am": "አስተማማኝ ማከማቻ",
+        "om": "Kuusaa Eegumsa Qabu"
+      }
+    },
+    {
+      "key": "Enterprise-grade security with encrypted storage, audit logs, and comprehensive access controls.",
+      "translations": {
+        "en": "Enterprise-grade security with encrypted storage, audit logs, and comprehensive access controls.",
+        "am": "በምስጠራ የተጠበቀ ማከማቻ እና አጠቃላይ የመዳረሻ መቆጣጠሪያዎች ያለው የድርጅት ደረጃ ደህንነት።",
+        "om": "Eegumsa sadarkaa olaanaa qabu kan kuusaa iccitii fi to'annoo gahiinsa guutuu of keessaa qabu."
+      }
+    },
+    {
+      "key": "Analytics & Insights",
+      "translations": {
+        "en": "Analytics & Insights",
+        "am": "ትንታኔ እና ግንዛቤዎች",
+        "om": "Xiinxala fi Hubannoo"
+      }
+    },
+    {
+      "key": "Track document usage, storage statistics, and user activity with detailed analytics and reports.",
+      "translations": {
+        "en": "Track document usage, storage statistics, and user activity with detailed analytics and reports.",
+        "am": "የሰነድ አጠቃቀምን፣ የማከማቻ ስታቲስቲክስን እና የተጠቃሚ እንቅስቃሴን በዝርዝር ትንታኔዎች እና ሪፖርቶች ይከታተሉ።",
+        "om": "Itti fayyadama galmee, istatistiksii kuusaa fi sochii fayyadamtootaa xiinxalaan hordofaa."
+      }
+    },
+    {
+      "key": "Tagging System",
+      "translations": {
+        "en": "Tagging System",
+        "am": "መለያ መስጠት",
+        "om": "Sirna Taagii"
+      }
+    },
+    {
+      "key": "Organize documents with custom tags for flexible categorization and quick retrieval.",
+      "translations": {
+        "en": "Organize documents with custom tags for flexible categorization and quick retrieval.",
+        "am": "ሰነዶችን በተለዋዋጭ ምድቦች እና ለፈጣን ፍለጋ በብጁ መለያዎች ያደራጁ።",
+        "om": "Galmeewwan haala salphaan ramaduu fi argachuuf taagiiwwan fayyadamaa."
+      }
+    },
+    {
+      "key": "Trash & Recovery",
+      "translations": {
+        "en": "Trash & Recovery",
+        "am": "ቆሻሻ እና መልሶ ማግኘት",
+        "om": "Haquu fi Deebisuu"
+      }
+    },
+    {
+      "key": "Safely delete documents with trash functionality and easy recovery options for accidental deletions.",
+      "translations": {
+        "en": "Safely delete documents with trash functionality and easy recovery options for accidental deletions.",
+        "am": "ሰነዶችን በቆሻሻ ተግባራዊነት በጥንቃቄ ይሰርዙ እና ለአጋጣሚ ስረዛዎች ቀላል የመልሶ ማግኛ አማራጮች።",
+        "om": "Galmeewwan haala of-eeggannoo qabuun haquu fi yoo dogoggoraan haqaman deebisuu."
+      }
+    },
+    {
+      "key": "Version Control",
+      "translations": {
+        "en": "Version Control",
+        "am": "የዕትም ቁጥጥር (Version Control)",
+        "om": "To'annoo Varshinii"
+      }
+    },
+    {
+      "key": "Track document history with version control, allowing you to revert to previous versions when needed.",
+      "translations": {
+        "en": "Track document history with version control, allowing you to revert to previous versions when needed.",
+        "am": "አስፈላጊ በሚሆንበት ጊዜ ወደ ቀድሞ ስሪቶች ለመመለስ የሚያስችል የሰነድ ታሪክን ይከታተሉ።",
+        "om": "Seenaa galmee hordofaa, yeroo barbaachisetti gara varshinii duraatti deebi'uuf."
+      }
+    },
+    {
+      "key": "Powerful Features for Mesob DMS",
+      "translations": {
+        "en": "Powerful Features for Mesob DMS",
+        "am": "ለሰነድ አስተዳደር ኃይለኛ ባህሪዎች",
+        "om": "Amaloota Gurguddoo Bulchiinsa Galmeetiif"
+      }
+    },
+    {
+      "key": "Everything you need to manage, organize, and secure your documents efficiently",
+      "translations": {
+        "en": "Everything you need to manage, organize, and secure your documents efficiently",
+        "am": "ሰነዶችዎን በብቃት ለማስተዳደር፣ ለማደራጀት እና ለመጠበቅ የሚያስፈልግዎ ነገር ሁሉ።",
+        "om": "Galmeewwan keessan haalaan bulchuuf, qindessuu fi eeguuf wanti isin barbaachisu hundi jira."
+      }
+    },
+    {
+      "key": "Why Choose Our Mesob DMS System?",
+      "translations": {
+        "en": "Why Choose Our Mesob DMS System?",
+        "am": "የእኛን የሰነድ አስተዳደር ስርዓት ለምን ይመርጣሉ?",
+        "om": "Maaliif Sirna Bulchiinsa Galmee Keenya Filattu?"
+      }
+    },
+    {
+      "key": "Experience the difference with our comprehensive Mesob DMS platform",
+      "translations": {
+        "en": "Experience the difference with our comprehensive Mesob DMS platform",
+        "am": "በአጠቃላይ የሰነድ አስተዳደር መድረካችን ልዩነቱን ይለማመዱ",
+        "om": "Pilaatfoormii bulchiinsa galmee keenya waliin garaagarummaa isaa argaa."
+      }
+    },
+    {
+      "key": "Ready to Transform Your Mesob DMS?",
+      "translations": {
+        "en": "Ready to Transform Your Mesob DMS?",
+        "am": "የሰነድ አስተዳደርዎን ለመቀየር ዝግጁ ነዎት?",
+        "om": "Bulchiinsa Galmee Keessan Jijjiiruuf Qophiidhaa?"
+      }
+    },
+    {
+      "key": "Join organizations already using our Mesob DMS System to streamline their workflows and improve productivity.",
+      "translations": {
+        "en": "Join organizations already using our Mesob DMS System to streamline their workflows and improve productivity.",
+        "am": "የስራ ሂደታቸውን ለማቀላጠፍ እና ምርታማነትን ለማሻሻል የእኛን የሰነድ አስተዳደር ስርዓት የሚጠቀሙ ድርጅቶችን ይቀላቀሉ።",
+        "om": "Dhaabbilee sirna keenya fayyadamanii hojii isaanii salphisanitti makamaa."
+      }
+    },
+    {
+      "key": "Sign In to Your Account",
+      "translations": {
+        "en": "Sign In to Your Account",
+        "am": "ወደ መለያዎ ይግቡ",
+        "om": "Akkaawuntii Keessanitti Seenaa"
+      }
+    },
+    {
+      "key": "Explore Features",
+      "translations": {
+        "en": "Explore Features",
+        "am": "ባህሪያትን ያስሱ",
+        "om": "Amaloota Sakatta'aa"
+      }
+    },
+    {
+      "key": "Terms of Service",
+      "translations": {
+        "en": "Terms of Service",
+        "am": "የአገልግሎት ውል",
+        "om": "Waliigaltee Tajaajilaa"
+      }
+    },
+    {
+      "key": "Privacy Policy",
+      "translations": {
+        "en": "Privacy Policy",
+        "am": "የግላዊነት ፖሊሲ",
+        "om": "Imaammata Iccitii"
+      }
+    },
+    {
+      "key": "Designed and Developed by",
+      "translations": {
+        "en": "Designed and Developed by",
+        "am": "ዲዛይን እና ልማት በ",
+        "om": "Kan Diizaayinii fi Ijaare"
+      }
+    },
+    {
+      "key": "All rights reserved",
+      "translations": {
+        "en": "All rights reserved",
+        "am": "መብቱ በህግ የተጠበቀ ነው።",
+        "om": "Mirgi Isaa Seeraan Eegamaadha."
+      }
+    },
+    {
+      "key": "Sign In",
+      "translations": {
+        "en": "Sign In",
+        "am": "ግባ",
+        "om": "Seeni"
+      }
+    },
+    {
+      "key": "Logout",
+      "translations": {
+        "en": "Logout",
+        "am": "ውጣ",
+        "om": "Ba'aa"
+      }
+    },
+    {
+      "key": "Home",
+      "translations": {
+        "en": "Home",
+        "am": "ዋና ገጽ",
+        "om": "Mana"
+      }
+    },
+    {
+      "key": "Centralized document storage and organization",
+      "translations": {
+        "en": "Centralized document storage and organization",
+        "am": "ማዕከላዊ የሰነድ ማከማቻ እና አደረጃጀት",
+        "om": "Kuusaa fi qindoomina galmee giddu-galeessaa"
+      }
+    },
+    {
+      "key": "Fast and powerful search across all documents",
+      "translations": {
+        "en": "Fast and powerful search across all documents",
+        "am": "በሁሉም ሰነዶች ላይ ፈጣን እና ኃይለኛ ፍለጋ",
+        "om": "Barbaacha hatattamaa fi cimaa galmeewwan hunda irratti"
+      }
+    },
+    {
+      "key": "Role-based access control for security",
+      "translations": {
+        "en": "Role-based access control for security",
+        "am": "ለደህንነት ሲባል ሚና ላይ የተመሰረተ የመዳረሻ መቆጣጠሪያ",
+        "om": "To'annoo gahiinsa gahee irratti hundaa'e nageenyaaf"
+      }
+    },
+    {
+      "key": "Version control and document history",
+      "translations": {
+        "en": "Version control and document history",
+        "am": "የስሪት ቁጥጥር እና የሰነድ ታሪክ",
+        "om": "To'annoo varshinii fi seenaa galmee"
+      }
+    },
+    {
+      "key": "Secure file sharing and collaboration",
+      "translations": {
+        "en": "Secure file sharing and collaboration",
+        "am": "ደህንነቱ የተጠበቀ የፋይል ማጋራት እና ትብብር",
+        "om": "Faayilii qooduu fi wal-ta'iinsa eegumsa qabu"
+      }
+    },
+    {
+      "key": "Comprehensive audit logs and tracking",
+      "translations": {
+        "en": "Comprehensive audit logs and tracking",
+        "am": "አጠቃላይ የኦዲት መዝገቦች እና ክትትል",
+        "om": "Galmeewwan ooditii fi hordoffii guutuu"
+      }
+    },
+    {
+      "key": "Tagging and flexible categorization",
+      "translations": {
+        "en": "Tagging and flexible categorization",
+        "am": "መለያ መስጠት እና ተለዋዋጭ ምድብ",
+        "om": "Taagingii fi ramaddii salphaa"
+      }
+    },
+    {
+      "key": "Mobile-responsive design for anywhere access",
+      "translations": {
+        "en": "Mobile-responsive design for anywhere access",
+        "am": "ከየትኛውም ቦታ ሆነው ለመጠቀም ምላሽ የሚሰጥ የሞባይል ዲዛይን",
+        "om": "Diizaayinii mobaayila irratti nahaalee bakka kaminuu itti fayyadamuuf"
+      }
+    },
+    {
+      "key": "Automated backup and recovery",
+      "translations": {
+        "en": "Automated backup and recovery",
+        "am": "ራስ-ሰር ምትኬ እና ማግኛ",
+        "om": "Baakaappii fi deebisuu ofumaan"
+      }
+    },
+    {
+      "key": "Scalable storage for growing needs",
+      "translations": {
+        "en": "Scalable storage for growing needs",
+        "am": "እየጨመረ ለሚሄድ ፍላጎቶች ሊሰፋ የሚችል ማከማቻ",
+        "om": "Kuusaa dabaluu danda'u fedhii guddachaa deemuuf"
+      }
+    },
+    {
+      "key": "Welcome back",
+      "translations": {
+        "en": "Welcome back",
+        "am": "እንኳን ደህና መጡ",
+        "om": "Baga Nagaan Deebitan"
+      }
+    },
+    {
+      "key": "Sign in to your Mesob DMS System account to continue",
+      "translations": {
+        "en": "Sign in to your Mesob DMS System account to continue",
+        "am": "ለመቀጠል ወደ ሰነድ አስተዳደር ስርዓት መለያዎ ይግቡ",
+        "om": "Itti fufuuf gara akaawuntii Sirna Bulchiinsa Galmee keessanitti seenaa"
+      }
+    },
+    {
+      "key": "Forgot password?",
+      "translations": {
+        "en": "Forgot password?",
+        "am": "የይለፍ ቃል ረሱ?",
+        "om": "Jecha darbii dagattanii?"
+      }
+    },
+    {
+      "key": "Enter your password",
+      "translations": {
+        "en": "Enter your password",
+        "am": "የይለፍ ቃልዎን ያስገቡ",
+        "om": "Jecha darbii keessan galchaa"
+      }
+    },
+    {
+      "key": "Signing in...",
+      "translations": {
+        "en": "Signing in...",
+        "am": "በመግባት ላይ...",
+        "om": "Seenaa jira..."
+      }
+    },
+    {
+      "key": "By signing in, you agree to our",
+      "translations": {
+        "en": "By signing in, you agree to our",
+        "am": "በመግባትዎ፣ በሚከተለው ተስማምተዋል፡",
+        "om": "Seenuudhaan, kanneen armaan gadiitti walii galtu:"
+      }
+    },
+    {
+      "key": "and",
+      "translations": {
+        "en": "and",
+        "am": "እና",
+        "om": "fi"
+      }
+    },
+    {
+      "key": "Streamline your document operations with our comprehensive management system",
+      "translations": {
+        "en": "Streamline your document operations with our comprehensive management system",
+        "am": "የሰነድ ስራዎችዎን በአጠቃላይ የአስተዳደር ስርዓታችን ያቀላጥፉ",
+        "om": "Hojiiwwan galmee keessan sirna bulchiinsa guutuu keenyaan salphisaa"
+      }
+    },
+    {
+      "key": "Phone number is required",
+      "translations": {
+        "en": "Phone number is required",
+        "am": "ስልክ ቁጥር ያስፈልጋል",
+        "om": "Lakkoofsi bilbilaa ni barbaachisa"
+      }
+    },
+    {
+      "key": "Phone number must contain only numbers and valid characters",
+      "translations": {
+        "en": "Phone number must contain only numbers and valid characters",
+        "am": "ስልክ ቁጥር ቁጥሮችን እና ትክክለኛ ምልክቶችን ብቻ መያዝ አለበት",
+        "om": "Lakkoofsi bilbilaa lakkoofsa fi mallattoo sirrii qofa qabaachuu qaba"
+      }
+    },
+    {
+      "key": "Phone number must be at least 10 characters",
+      "translations": {
+        "en": "Phone number must be at least 10 characters",
+        "am": "ስልክ ቁጥር ቢያንስ 10 ቁምፊዎች መሆን አለበት",
+        "om": "Lakkoofsi bilbilaa yoo xiqqaate dijitii 10 ta'uu qaba"
+      }
+    },
+    {
+      "key": "Phone number must not exceed 20 characters",
+      "translations": {
+        "en": "Phone number must not exceed 20 characters",
+        "am": "ስልክ ቁጥር ከ 20 ቁምፊዎች መብለጥ የለበትም",
+        "om": "Lakkoofsi bilbilaa dijitii 20 caaluu hin qabu"
+      }
+    },
+    {
+      "key": "Password is required",
+      "translations": {
+        "en": "Password is required",
+        "am": "የይለፍ ቃል ያስፈልጋል",
+        "om": "Jechi darbii ni barbaachisa"
+      }
+    },
+    {
+      "key": "Password must be at least 6 characters long",
+      "translations": {
+        "en": "Password must be at least 6 characters long",
+        "am": "የይለፍ ቃል ቢያንስ 6 ቁምፊዎች ርዝመት ሊኖረው ይገባል",
+        "om": "Jechi darbii yoo xiqqaate dheerina qubee 6 qabaachuu qaba"
+      }
+    },
+    {
+      "key": "Password reset feature coming soon",
+      "translations": {
+        "en": "Password reset feature coming soon",
+        "am": "የይለፍ ቃል ዳግም ማስጀመር ባህሪ በቅርቡ ይመጣል",
+        "om": "Amalli jecha darbii haaromsuu dhihootti ni dhufa"
+      }
+    },
+    {
+      "key": "Success",
+      "translations": {
+        "en": "Success",
+        "am": "ተሳክቷል",
+        "om": "Milkaa'eera"
+      }
+    },
+    {
+      "key": "Signing in successful",
+      "translations": {
+        "en": "Signing in successful",
+        "am": "መግባት ተሳክቷል",
+        "om": "Seenuun milkaa'eera"
+      }
+    },
+    {
+      "key": "Error",
+      "translations": {
+        "en": "Error",
+        "am": "ስህተት",
+        "om": "Dogoggora"
+      }
+    },
+    {
+      "key": "Signing in failed",
+      "translations": {
+        "en": "Signing in failed",
+        "am": "መግባት አልተሳካም",
+        "om": "Seenuun hin milkoofne"
+      }
+    },
+    {
+      "key": "Two-Factor Authentication",
+      "translations": {
+        "en": "Two-Factor Authentication",
+        "am": "Two-Factor Authentication",
+        "om": "Two-Factor Authentication"
+      }
+    },
+    {
+      "key": "Enable 2FA",
+      "translations": {
+        "en": "Enable 2FA",
+        "am": "Enable 2FA",
+        "om": "Enable 2FA"
+      }
+    },
+    {
+      "key": "Disable 2FA",
+      "translations": {
+        "en": "Disable 2FA",
+        "am": "Disable 2FA",
+        "om": "Disable 2FA"
+      }
+    },
+    {
+      "key": "Set Up Authenticator",
+      "translations": {
+        "en": "Set Up Authenticator",
+        "am": "Set Up Authenticator",
+        "om": "Set Up Authenticator"
+      }
+    },
+    {
+      "key": "Scan the QR code with your authenticator app",
+      "translations": {
+        "en": "Scan the QR code with your authenticator app",
+        "am": "Scan the QR code with your authenticator app",
+        "om": "Scan the QR code with your authenticator app"
+      }
+    },
+    {
+      "key": "Scan QR code or enter key manually",
+      "translations": {
+        "en": "Scan QR code or enter key manually",
+        "am": "Scan QR code or enter key manually",
+        "om": "Scan QR code or enter key manually"
+      }
+    },
+    {
+      "key": "Open your authenticator app and scan this QR code",
+      "translations": {
+        "en": "Open your authenticator app and scan this QR code",
+        "am": "Open your authenticator app and scan this QR code",
+        "om": "Open your authenticator app and scan this QR code"
+      }
+    },
+    {
+      "key": "Or enter this key manually:",
+      "translations": {
+        "en": "Or enter this key manually:",
+        "am": "Or enter this key manually:",
+        "om": "Or enter this key manually:"
+      }
+    },
+    {
+      "key": "Recommended apps:",
+      "translations": {
+        "en": "Recommended apps:",
+        "am": "Recommended apps:",
+        "om": "Recommended apps:"
+      }
+    },
+    {
+      "key": "Enter the verification code from your app",
+      "translations": {
+        "en": "Enter the verification code from your app",
+        "am": "Enter the verification code from your app",
+        "om": "Enter the verification code from your app"
+      }
+    },
+    {
+      "key": "Verify & Enable",
+      "translations": {
+        "en": "Verify & Enable",
+        "am": "Verify & Enable",
+        "om": "Verify & Enable"
+      }
+    },
+    {
+      "key": "Setting up...",
+      "translations": {
+        "en": "Setting up...",
+        "am": "Setting up...",
+        "om": "Setting up..."
+      }
+    },
+    {
+      "key": "Verifying...",
+      "translations": {
+        "en": "Verifying...",
+        "am": "Verifying...",
+        "om": "Verifying..."
+      }
+    },
+    {
+      "key": "Enabled",
+      "translations": {
+        "en": "Enabled",
+        "am": "Enabled",
+        "om": "Enabled"
+      }
+    },
+    {
+      "key": "Disabled",
+      "translations": {
+        "en": "Disabled",
+        "am": "Disabled",
+        "om": "Disabled"
+      }
+    },
+    {
+      "key": "Your account is protected with an authenticator app",
+      "translations": {
+        "en": "Your account is protected with an authenticator app",
+        "am": "Your account is protected with an authenticator app",
+        "om": "Your account is protected with an authenticator app"
+      }
+    },
+    {
+      "key": "Add an extra layer of security to your account",
+      "translations": {
+        "en": "Add an extra layer of security to your account",
+        "am": "Add an extra layer of security to your account",
+        "om": "Add an extra layer of security to your account"
+      }
+    },
+    {
+      "key": "Your account is secured",
+      "translations": {
+        "en": "Your account is secured",
+        "am": "Your account is secured",
+        "om": "Your account is secured"
+      }
+    },
+    {
+      "key": "Your account could be more secure",
+      "translations": {
+        "en": "Your account could be more secure",
+        "am": "Your account could be more secure",
+        "om": "Your account could be more secure"
+      }
+    },
+    {
+      "key": "A verification code from your authenticator app is required every time you sign in.",
+      "translations": {
+        "en": "A verification code from your authenticator app is required every time you sign in.",
+        "am": "A verification code from your authenticator app is required every time you sign in.",
+        "om": "A verification code from your authenticator app is required every time you sign in."
+      }
+    },
+    {
+      "key": "Enable two-factor authentication to require a verification code from your authenticator app when signing in.",
+      "translations": {
+        "en": "Enable two-factor authentication to require a verification code from your authenticator app when signing in.",
+        "am": "Enable two-factor authentication to require a verification code from your authenticator app when signing in.",
+        "om": "Enable two-factor authentication to require a verification code from your authenticator app when signing in."
+      }
+    },
+    {
+      "key": "Disable Two-Factor Authentication",
+      "translations": {
+        "en": "Disable Two-Factor Authentication",
+        "am": "Disable Two-Factor Authentication",
+        "om": "Disable Two-Factor Authentication"
+      }
+    },
+    {
+      "key": "Enter the current code from your authenticator app to confirm disabling two-factor authentication. Your account will be less secure after this action.",
+      "translations": {
+        "en": "Enter the current code from your authenticator app to confirm disabling two-factor authentication. Your account will be less secure after this action.",
+        "am": "Enter the current code from your authenticator app to confirm disabling two-factor authentication. Your account will be less secure after this action.",
+        "om": "Enter the current code from your authenticator app to confirm disabling two-factor authentication. Your account will be less secure after this action."
+      }
+    },
+    {
+      "key": "Confirm Disable",
+      "translations": {
+        "en": "Confirm Disable",
+        "am": "Confirm Disable",
+        "om": "Confirm Disable"
+      }
+    },
+    {
+      "key": "Disabling...",
+      "translations": {
+        "en": "Disabling...",
+        "am": "Disabling...",
+        "om": "Disabling..."
+      }
+    },
+    {
+      "key": "Secret key copied to clipboard",
+      "translations": {
+        "en": "Secret key copied to clipboard",
+        "am": "Secret key copied to clipboard",
+        "om": "Secret key copied to clipboard"
+      }
+    },
+    {
+      "key": "Failed to start 2FA setup",
+      "translations": {
+        "en": "Failed to start 2FA setup",
+        "am": "Failed to start 2FA setup",
+        "om": "Failed to start 2FA setup"
+      }
+    },
+    {
+      "key": "Two-factor authentication enabled!",
+      "translations": {
+        "en": "Two-factor authentication enabled!",
+        "am": "Two-factor authentication enabled!",
+        "om": "Two-factor authentication enabled!"
+      }
+    },
+    {
+      "key": "Your account is now more secure.",
+      "translations": {
+        "en": "Your account is now more secure.",
+        "am": "Your account is now more secure.",
+        "om": "Your account is now more secure."
+      }
+    },
+    {
+      "key": "Verification failed",
+      "translations": {
+        "en": "Verification failed",
+        "am": "Verification failed",
+        "om": "Verification failed"
+      }
+    },
+    {
+      "key": "Invalid code. Make sure you're using the latest code.",
+      "translations": {
+        "en": "Invalid code. Make sure you're using the latest code.",
+        "am": "Invalid code. Make sure you're using the latest code.",
+        "om": "Invalid code. Make sure you're using the latest code."
+      }
+    },
+    {
+      "key": "Two-factor authentication disabled",
+      "translations": {
+        "en": "Two-factor authentication disabled",
+        "am": "Two-factor authentication disabled",
+        "om": "Two-factor authentication disabled"
+      }
+    },
+    {
+      "key": "You can re-enable it anytime from settings.",
+      "translations": {
+        "en": "You can re-enable it anytime from settings.",
+        "am": "You can re-enable it anytime from settings.",
+        "om": "You can re-enable it anytime from settings."
+      }
+    },
+    {
+      "key": "Failed to disable 2FA",
+      "translations": {
+        "en": "Failed to disable 2FA",
+        "am": "Failed to disable 2FA",
+        "om": "Failed to disable 2FA"
+      }
+    },
+    {
+      "key": "Invalid code. Please try again.",
+      "translations": {
+        "en": "Invalid code. Please try again.",
+        "am": "Invalid code. Please try again.",
+        "om": "Invalid code. Please try again."
+      }
+    },
+    {
+      "key": "Enter your full name",
+      "translations": {
+        "en": "Enter your full name",
+        "am": "Enter your full name",
+        "om": "Enter your full name"
+      }
+    },
+    {
+      "key": "Username",
+      "translations": {
+        "en": "Username",
+        "am": "Username",
+        "om": "Username"
+      }
+    },
+    {
+      "key": "Enter username",
+      "translations": {
+        "en": "Enter username",
+        "am": "Enter username",
+        "om": "Enter username"
+      }
+    },
+    {
+      "key": "Gender",
+      "translations": {
+        "en": "Gender",
+        "am": "Gender",
+        "om": "Gender"
+      }
+    },
+    {
+      "key": "Select gender",
+      "translations": {
+        "en": "Select gender",
+        "am": "Select gender",
+        "om": "Select gender"
+      }
+    },
+    {
+      "key": "Date of Birth",
+      "translations": {
+        "en": "Date of Birth",
+        "am": "Date of Birth",
+        "om": "Date of Birth"
+      }
+    },
+    {
+      "key": "Only PDF files are allowed",
+      "translations": {
+        "en": "Only PDF files are allowed",
+        "am": "Only PDF files are allowed",
+        "om": "Only PDF files are allowed"
+      }
+    },
+    {
+      "key": "PDF (MAX. 50MB per file)",
+      "translations": {
+        "en": "PDF (MAX. 50MB per file)",
+        "am": "PDF (MAX. 50MB per file)",
+        "om": "PDF (MAX. 50MB per file)"
+      }
+    },
+    {
+      "key": "Loading security settings...",
+      "translations": {
+        "en": "Loading security settings...",
+        "am": "Loading security settings...",
+        "om": "Loading security settings..."
+      }
+    },
+    {
+      "key": "Are you sure you want to delete this file?",
+      "translations": {
+        "en": "Are you sure you want to delete this file?",
+        "am": "Are you sure you want to delete this file?",
+        "om": "Are you sure you want to delete this file?"
+      }
+    },
+    {
+      "key": "This action cannot be undone. This will permanently delete the file.",
+      "translations": {
+        "en": "This action cannot be undone. This will permanently delete the file.",
+        "am": "This action cannot be undone. This will permanently delete the file.",
+        "om": "This action cannot be undone. This will permanently delete the file."
+      }
+    },
+    {
+      "key": "Verify & Sign In",
+      "translations": {
+        "en": "Verify & Sign In",
+        "am": "Verify & Sign In",
+        "om": "Verify & Sign In"
+      }
+    },
+    {
+      "key": "Back to login",
+      "translations": {
+        "en": "Back to login",
+        "am": "Back to login",
+        "om": "Back to login"
+      }
+    },
+    {
+      "key": "Enter the 6-digit code from your authenticator app",
+      "translations": {
+        "en": "Enter the 6-digit code from your authenticator app",
+        "am": "Enter the 6-digit code from your authenticator app",
+        "om": "Enter the 6-digit code from your authenticator app"
+      }
+    },
+    {
+      "key": "Please enter the code from your authenticator app",
+      "translations": {
+        "en": "Please enter the code from your authenticator app",
+        "am": "Please enter the code from your authenticator app",
+        "om": "Please enter the code from your authenticator app"
+      }
+    },
+    {
+      "key": "Retry",
+      "translations": {
+        "en": "Retry",
+        "am": "Retry",
+        "om": "Retry"
+      }
+    },
+    {
+      "key": "Search files...",
+      "translations": {
+        "en": "Search files...",
+        "am": "Search files...",
+        "om": "Search files..."
+      }
+    },
+    {
+      "key": "No files found",
+      "translations": {
+        "en": "No files found",
+        "am": "No files found",
+        "om": "No files found"
+      }
+    },
+    {
+      "key": "Try adjusting your search terms",
+      "translations": {
+        "en": "Try adjusting your search terms",
+        "am": "Try adjusting your search terms",
+        "om": "Try adjusting your search terms"
+      }
+    },
+    {
+      "key": "Get started by creating your first file",
+      "translations": {
+        "en": "Get started by creating your first file",
+        "am": "Get started by creating your first file",
+        "om": "Get started by creating your first file"
+      }
+    },
+    {
+      "key": "View Details",
+      "translations": {
+        "en": "View Details",
+        "am": "View Details",
+        "om": "View Details"
+      }
+    },
+    {
+      "key": "Edit",
+      "translations": {
+        "en": "Edit",
+        "am": "Edit",
+        "om": "Edit"
+      }
+    },
+    {
+      "key": "File created successfully",
+      "translations": {
+        "en": "File created successfully",
+        "am": "File created successfully",
+        "om": "File created successfully"
+      }
+    },
+    {
+      "key": "Failed to load file details",
+      "translations": {
+        "en": "Failed to load file details",
+        "am": "Failed to load file details",
+        "om": "Failed to load file details"
+      }
+    },
+    {
+      "key": "Maximum 10 versions allowed per file. Please delete an older version first.",
+      "translations": {
+        "en": "Maximum 10 versions allowed per file. Please delete an older version first.",
+        "am": "Maximum 10 versions allowed per file. Please delete an older version first.",
+        "om": "Maximum 10 versions allowed per file. Please delete an older version first."
+      }
+    },
+    {
+      "key": "History",
+      "translations": {
+        "en": "History",
+        "am": "History",
+        "om": "History"
+      }
+    },
+    {
+      "key": "Add Version",
+      "translations": {
+        "en": "Add Version",
+        "am": "Add Version",
+        "om": "Add Version"
+      }
+    },
+    {
+      "key": "View",
+      "translations": {
+        "en": "View",
+        "am": "View",
+        "om": "View"
+      }
+    },
+    {
+      "key": "Download",
+      "translations": {
+        "en": "Download",
+        "am": "Download",
+        "om": "Download"
+      }
+    },
+    {
+      "key": "Delete Version",
+      "translations": {
+        "en": "Delete Version",
+        "am": "Delete Version",
+        "om": "Delete Version"
+      }
+    },
+    {
+      "key": "Are you sure you want to delete this version?",
+      "translations": {
+        "en": "Are you sure you want to delete this version?",
+        "am": "Are you sure you want to delete this version?",
+        "om": "Are you sure you want to delete this version?"
+      }
+    },
+    {
+      "key": "This version will be permanently removed.",
+      "translations": {
+        "en": "This version will be permanently removed.",
+        "am": "This version will be permanently removed.",
+        "om": "This version will be permanently removed."
+      }
+    },
+    {
+      "key": "Add Tags",
+      "translations": {
+        "en": "Add Tags",
+        "am": "Add Tags",
+        "om": "Add Tags"
+      }
+    },
+    {
+      "key": "Search tags...",
+      "translations": {
+        "en": "Search tags...",
+        "am": "Search tags...",
+        "om": "Search tags..."
+      }
+    },
+    {
+      "key": "Edit File",
+      "translations": {
+        "en": "Edit File",
+        "am": "Edit File",
+        "om": "Edit File"
+      }
+    },
+    {
+      "key": "Update File",
+      "translations": {
+        "en": "Update File",
+        "am": "Update File",
+        "om": "Update File"
+      }
+    },
+    {
+      "key": "File updated successfully",
+      "translations": {
+        "en": "File updated successfully",
+        "am": "File updated successfully",
+        "om": "File updated successfully"
+      }
+    },
+    {
+      "key": "Failed to update file",
+      "translations": {
+        "en": "Failed to update file",
+        "am": "Failed to update file",
+        "om": "Failed to update file"
+      }
+    },
+    {
+      "key": "This action cannot be undone.",
+      "translations": {
+        "en": "This action cannot be undone.",
+        "am": "This action cannot be undone.",
+        "om": "This action cannot be undone."
+      }
+    },
+    {
+      "key": "Permanently delete the file",
+      "translations": {
+        "en": "Permanently delete the file",
+        "am": "Permanently delete the file",
+        "om": "Permanently delete the file"
+      }
+    },
+    {
+      "key": "File deleted successfully",
+      "translations": {
+        "en": "File deleted successfully",
+        "am": "File deleted successfully",
+        "om": "File deleted successfully"
+      }
+    },
+    {
+      "key": "Failed to delete file",
+      "translations": {
+        "en": "Failed to delete file",
+        "am": "Failed to delete file",
+        "om": "Failed to delete file"
+      }
+    },
+    {
+      "key": "Click to upload",
+      "translations": {
+        "en": "Click to upload",
+        "am": "Click to upload",
+        "om": "Click to upload"
+      }
+    },
+    {
+      "key": "or drag and drop",
+      "translations": {
+        "en": "or drag and drop",
+        "am": "or drag and drop",
+        "om": "or drag and drop"
+      }
+    },
+    {
+      "key": "File Details",
+      "translations": {
+        "en": "File Details",
+        "am": "File Details",
+        "om": "File Details"
+      }
+    },
+    {
+      "key": "View detailed information about this file",
+      "translations": {
+        "en": "View detailed information about this file",
+        "am": "View detailed information about this file",
+        "om": "View detailed information about this file"
+      }
+    },
+    {
+      "key": "File Number",
+      "translations": {
+        "en": "File Number",
+        "am": "File Number",
+        "om": "File Number"
+      }
+    },
+    {
+      "key": "Full Name",
+      "translations": {
+        "en": "Full Name",
+        "am": "Full Name",
+        "om": "Full Name"
+      }
+    },
+    {
+      "key": "FAN",
+      "translations": {
+        "en": "FAN",
+        "am": "FAN",
+        "om": "FAN"
+      }
+    },
+    {
+      "key": "Phone",
+      "translations": {
+        "en": "Phone",
+        "am": "Phone",
+        "om": "Phone"
+      }
+    },
+    {
+      "key": "Address",
+      "translations": {
+        "en": "Address",
+        "am": "Address",
+        "om": "Address"
+      }
+    },
+    {
+      "key": "Woreda",
+      "translations": {
+        "en": "Woreda",
+        "am": "Woreda",
+        "om": "Woreda"
+      }
+    },
+    {
+      "key": "Zone",
+      "translations": {
+        "en": "Zone",
+        "am": "Zone",
+        "om": "Zone"
+      }
+    },
+    {
+      "key": "City",
+      "translations": {
+        "en": "City",
+        "am": "City",
+        "om": "City"
+      }
+    },
+    {
+      "key": "State",
+      "translations": {
+        "en": "State",
+        "am": "State",
+        "om": "State"
+      }
+    },
+    {
+      "key": "Country",
+      "translations": {
+        "en": "Country",
+        "am": "Country",
+        "om": "Country"
+      }
+    },
+    {
+      "key": "Created By",
+      "translations": {
+        "en": "Created By",
+        "am": "Created By",
+        "om": "Created By"
+      }
+    },
+    {
+      "key": "No tags attached",
+      "translations": {
+        "en": "No tags attached",
+        "am": "No tags attached",
+        "om": "No tags attached"
+      }
+    },
+    {
+      "key": "Add New Version",
+      "translations": {
+        "en": "Add New Version",
+        "am": "Add New Version",
+        "om": "Add New Version"
+      }
+    },
+    {
+      "key": "Maximum 10 versions reached",
+      "translations": {
+        "en": "Maximum 10 versions reached",
+        "am": "Maximum 10 versions reached",
+        "om": "Maximum 10 versions reached"
+      }
+    },
+    {
+      "key": "Upload a new file version",
+      "translations": {
+        "en": "Upload a new file version",
+        "am": "Upload a new file version",
+        "om": "Upload a new file version"
+      }
+    },
+    {
+      "key": "Upload Version",
+      "translations": {
+        "en": "Upload Version",
+        "am": "Upload Version",
+        "om": "Upload Version"
+      }
+    },
+    {
+      "key": "Are you sure you want to delete version {version}?",
+      "translations": {
+        "en": "Are you sure you want to delete version {version}?",
+        "am": "Are you sure you want to delete version {version}?",
+        "om": "Are you sure you want to delete version {version}?"
+      }
+    },
+    {
+      "key": "Version {version} deleted successfully",
+      "translations": {
+        "en": "Version {version} deleted successfully",
+        "am": "Version {version} deleted successfully",
+        "om": "Version {version} deleted successfully"
+      }
+    },
+    {
+      "key": "Version",
+      "translations": {
+        "en": "Version",
+        "am": "Version",
+        "om": "Version"
+      }
+    },
+    {
+      "key": "Size",
+      "translations": {
+        "en": "Size",
+        "am": "Size",
+        "om": "Size"
+      }
+    },
+    {
+      "key": "No file versions found",
+      "translations": {
+        "en": "No file versions found",
+        "am": "No file versions found",
+        "om": "No file versions found"
+      }
+    },
+    {
+      "key": "File not found",
+      "translations": {
+        "en": "File not found",
+        "am": "File not found",
+        "om": "File not found"
+      }
+    },
+    {
+      "key": "Are you sure?",
+      "translations": {
+        "en": "Are you sure?",
+        "am": "Are you sure?",
+        "om": "Are you sure?"
+      }
+    },
+    {
+      "key": "This action cannot be undone. This will permanently delete the file and move it to trash.",
+      "translations": {
+        "en": "This action cannot be undone. This will permanently delete the file and move it to trash.",
+        "am": "This action cannot be undone. This will permanently delete the file and move it to trash.",
+        "om": "This action cannot be undone. This will permanently delete the file and move it to trash."
+      }
+    },
+    {
+      "key": "Deleting...",
+      "translations": {
+        "en": "Deleting...",
+        "am": "Deleting...",
+        "om": "Deleting..."
+      }
+    },
+    {
+      "key": "Browse and manage deleted files. Restore items or delete them permanently.",
+      "translations": {
+        "en": "Browse and manage deleted files. Restore items or delete them permanently.",
+        "am": "Browse and manage deleted files. Restore items or delete them permanently.",
+        "om": "Browse and manage deleted files. Restore items or delete them permanently."
+      }
+    },
+    {
+      "key": "Search for deleted files.",
+      "translations": {
+        "en": "Search for deleted files.",
+        "am": "Search for deleted files.",
+        "om": "Search for deleted files."
+      }
+    },
+    {
+      "key": "Search by name, file number…",
+      "translations": {
+        "en": "Search by name, file number…",
+        "am": "Search by name, file number…",
+        "om": "Search by name, file number…"
+      }
+    },
+    {
+      "key": "item",
+      "translations": {
+        "en": "item",
+        "am": "item",
+        "om": "item"
+      }
+    },
+    {
+      "key": "items",
+      "translations": {
+        "en": "items",
+        "am": "items",
+        "om": "items"
+      }
+    },
+    {
+      "key": "shown",
+      "translations": {
+        "en": "shown",
+        "am": "shown",
+        "om": "shown"
+      }
+    },
+    {
+      "key": "Reset filters",
+      "translations": {
+        "en": "Reset filters",
+        "am": "Reset filters",
+        "om": "Reset filters"
+      }
+    },
+    {
+      "key": "View deleted files. Restore items or delete them permanently.",
+      "translations": {
+        "en": "View deleted files. Restore items or delete them permanently.",
+        "am": "View deleted files. Restore items or delete them permanently.",
+        "om": "View deleted files. Restore items or delete them permanently."
+      }
+    },
+    {
+      "key": "No trash items found with the current filters.",
+      "translations": {
+        "en": "No trash items found with the current filters.",
+        "am": "No trash items found with the current filters.",
+        "om": "No trash items found with the current filters."
+      }
+    },
+    {
+      "key": "Item",
+      "translations": {
+        "en": "Item",
+        "am": "Item",
+        "om": "Item"
+      }
+    },
+    {
+      "key": "Deleted By",
+      "translations": {
+        "en": "Deleted By",
+        "am": "Deleted By",
+        "om": "Deleted By"
+      }
+    },
+    {
+      "key": "Deleted At",
+      "translations": {
+        "en": "Deleted At",
+        "am": "Deleted At",
+        "om": "Deleted At"
+      }
+    },
+    {
+      "key": "Item no longer exists",
+      "translations": {
+        "en": "Item no longer exists",
+        "am": "Item no longer exists",
+        "om": "Item no longer exists"
+      }
+    },
+    {
+      "key": "Restore",
+      "translations": {
+        "en": "Restore",
+        "am": "Restore",
+        "om": "Restore"
+      }
+    },
+    {
+      "key": "Delete permanently",
+      "translations": {
+        "en": "Delete permanently",
+        "am": "Delete permanently",
+        "om": "Delete permanently"
+      }
+    },
+    {
+      "key": "Are you sure you want to permanently delete this item? This action cannot be undone and the item will be lost forever.",
+      "translations": {
+        "en": "Are you sure you want to permanently delete this item? This action cannot be undone and the item will be lost forever.",
+        "am": "Are you sure you want to permanently delete this item? This action cannot be undone and the item will be lost forever.",
+        "om": "Are you sure you want to permanently delete this item? This action cannot be undone and the item will be lost forever."
+      }
+    },
+    {
+      "key": "Delete Permanently",
+      "translations": {
+        "en": "Delete Permanently",
+        "am": "Delete Permanently",
+        "om": "Delete Permanently"
+      }
+    },
+    {
+      "key": "Item restored successfully",
+      "translations": {
+        "en": "Item restored successfully",
+        "am": "Item restored successfully",
+        "om": "Item restored successfully"
+      }
+    },
+    {
+      "key": "Item permanently deleted",
+      "translations": {
+        "en": "Item permanently deleted",
+        "am": "Item permanently deleted",
+        "om": "Item permanently deleted"
+      }
+    },
+    {
+      "key": "Unable to load trash items.",
+      "translations": {
+        "en": "Unable to load trash items.",
+        "am": "Unable to load trash items.",
+        "om": "Unable to load trash items."
+      }
+    },
+    {
+      "key": "Details",
+      "translations": {
+        "en": "Details",
+        "am": "Details",
+        "om": "Details"
+      }
+    },
+    {
+      "key": "Update file information",
+      "translations": {
+        "en": "Update file information",
+        "am": "Update file information",
+        "om": "Update file information"
+      }
+    },
+    {
+      "key": "Select or create tags...",
+      "translations": {
+        "en": "Select or create tags...",
+        "am": "Select or create tags...",
+        "om": "Select or create tags..."
+      }
+    },
+    {
+      "key": "Search or create tag...",
+      "translations": {
+        "en": "Search or create tag...",
+        "am": "Search or create tag...",
+        "om": "Search or create tag..."
+      }
+    },
+    {
+      "key": "Create tag \"{tagName}\"",
+      "translations": {
+        "en": "Create tag \"{tagName}\"",
+        "am": "Create tag \"{tagName}\"",
+        "om": "Create tag \"{tagName}\""
+      }
+    },
+    {
+      "key": "First Name",
+      "translations": {
+        "en": "First Name",
+        "am": "First Name",
+        "om": "First Name"
+      }
+    },
+    {
+      "key": "Father Name",
+      "translations": {
+        "en": "Father Name",
+        "am": "Father Name",
+        "om": "Father Name"
+      }
+    },
+    {
+      "key": "Last Name",
+      "translations": {
+        "en": "Last Name",
+        "am": "Last Name",
+        "om": "Last Name"
+      }
+    },
+    {
+      "key": "Updating...",
+      "translations": {
+        "en": "Updating...",
+        "am": "Updating...",
+        "om": "Updating..."
+      }
+    },
+    {
+      "key": "Failed to load file",
+      "translations": {
+        "en": "Failed to load file",
+        "am": "Failed to load file",
+        "om": "Failed to load file"
+      }
+    },
+    {
+      "key": "Tag \"{tagName}\" created!",
+      "translations": {
+        "en": "Tag \"{tagName}\" created!",
+        "am": "Tag \"{tagName}\" created!",
+        "om": "Tag \"{tagName}\" created!"
+      }
+    },
+    {
+      "key": "Failed to create tag",
+      "translations": {
+        "en": "Failed to create tag",
+        "am": "Failed to create tag",
+        "om": "Failed to create tag"
+      }
+    },
+    {
+      "key": "Authentication required",
+      "translations": {
+        "en": "Authentication required",
+        "am": "Authentication required",
+        "om": "Authentication required"
+      }
+    },
+    {
+      "key": "Action failed",
+      "translations": {
+        "en": "Action failed",
+        "am": "Action failed",
+        "om": "Action failed"
+      }
+    }
+  ]
+}

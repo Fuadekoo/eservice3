@@ -22,27 +22,48 @@ export function getRolePermissions(roleName: string): string[] {
 
     case "MANAGER":
       return [
+        // Dashboard & page access
         "dashboard:view",
         "dashboard:manager",
         "page:manager:overview",
         "page:manager:staff",
+        // Office management (own office only — enforced server-side)
         "office:read",
+        "office:update",
         "office:configure",
+        // Service management (own office)
+        "service:create",
         "service:read",
         "service:update",
+        "service:delete",
         "service:manage",
+        "service:assign-staff",
+        // Staff management (own office)
+        "staff:create",
         "staff:read",
         "staff:update",
+        "staff:delete",
+        "staff:manage",
+        // Request management
         "request:read",
         "request:update",
         "request:approve-manager",
+        "request:view-all",
+        // Appointments
         "appointment:read",
         "appointment:update",
-        "report:read",
+        "appointment:approve",
+        // Reports
         "report:create",
+        "report:read",
+        // Configuration
+        "configuration:read",
+        "configuration:update",
+        // Profile
         "profile:read",
         "profile:update",
         "profile:change-password",
+        // Feedback
         "feedback:read",
       ];
 

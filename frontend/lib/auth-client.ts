@@ -18,6 +18,7 @@ export interface AuthUser {
   email?: string;
   userType?: string;
   officeId?: string;
+  staffId?: string;
   isAdmin?: boolean;
 }
 

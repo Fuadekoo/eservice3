@@ -14,7 +14,6 @@ import { toast } from "sonner";
 
 import { useRequestStore, type ServiceRequest } from "@/lib/stores/request-store";
 import { useSession } from "@/hooks/use-session";
-import { axiosInstance } from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -67,8 +66,8 @@ function StatusBadge({ status }: { status: string }) {
 export default function RequestManagementPage() {
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const session = sessionData?.session;
-  const officeId = session?.officeId;
-  const userId = session?.user?.id;
+  // staffId is returned by /auth/me and stored in session.user
+  const managerStaffId = (session?.user as any)?.staffId ?? null;
 
   const { requests, isLoading, pagination, fetchRequests, approveRequest, rejectRequest } =
     useRequestStore();
@@ -77,26 +76,12 @@ export default function RequestManagementPage() {
   const [statusFilter, setStatusFilter] = React.useState("");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize] = React.useState(10);
-  const [managerStaffId, setManagerStaffId] = React.useState<string | null>(null);
 
   const [approvingId, setApprovingId] = React.useState<string | null>(null);
   const [isApproving, setIsApproving] = React.useState(false);
   const [rejectingId, setRejectingId] = React.useState<string | null>(null);
   const [rejectReason, setRejectReason] = React.useState("");
   const [isRejecting, setIsRejecting] = React.useState(false);
-
-  // Resolve the manager's own staff record ID (required for approve-admin endpoint)
-  React.useEffect(() => {
-    if (!officeId || !userId || isSessionPending) return;
-    axiosInstance
-      .get(`/staff?officeId=${officeId}`)
-      .then((res: any) => {
-        const list: any[] = res?.data ?? [];
-        const mine = list.find((s: any) => s?.user?.id === userId);
-        if (mine?.id) setManagerStaffId(mine.id);
-      })
-      .catch(() => {});
-  }, [officeId, userId, isSessionPending]);
 
   const refresh = React.useCallback(() => {
     fetchRequests({

@@ -9,6 +9,11 @@ import {
   buildValidationError,
 } from "../validators/user.validator.js";
 
+function parseQueryString(value: unknown): string | undefined {
+  const str = typeof value === "string" ? value.trim() : undefined;
+  return str || undefined;
+}
+
 const userInclude = {
   role: {
     select: { id: true, name: true },
@@ -57,15 +62,35 @@ export async function listUsers(req: AuthRequest, res: Response) {
 
     const page = parseInt((req.query.page as string) || "1", 10) || 1;
     const pageSize = parseInt((req.query.pageSize as string) || "10", 10) || 10;
-    const search = (req.query.search as string) || "";
+    const search = parseQueryString(req.query.search);
+    const roleId = parseQueryString(req.query.roleId);
+    const officeId = parseQueryString(req.query.officeId);
 
-    const where: any = {};
+    const filters: any[] = [];
     if (search) {
-      where.OR = [
+      filters.push({
+        OR: [
         { username: { contains: search, mode: "insensitive" as const } },
         { phoneNumber: { contains: search, mode: "insensitive" as const } },
-      ];
+        { firstName: { contains: search, mode: "insensitive" as const } },
+        { fatherName: { contains: search, mode: "insensitive" as const } },
+        { lastName: { contains: search, mode: "insensitive" as const } },
+        { role: { is: { name: { contains: search, mode: "insensitive" as const } } } },
+        {
+          staffs: {
+            some: {
+              office: {
+                is: { name: { contains: search, mode: "insensitive" as const } },
+              },
+            },
+          },
+        },
+      ]});
     }
+    if (roleId) filters.push({ roleId });
+    if (officeId) filters.push({ staffs: { some: { officeId } } });
+
+    const where: any = filters.length > 0 ? { AND: filters } : {};
 
     const total = await prisma.user.count({ where });
     const users = await prisma.user.findMany({

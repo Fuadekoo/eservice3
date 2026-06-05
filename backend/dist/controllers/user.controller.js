@@ -2,6 +2,10 @@ import { hash } from "bcryptjs";
 import { randomUUID } from "crypto";
 import { prisma } from "../lib/db.js";
 import { createUserSchema, updateUserSchema, buildValidationError, } from "../validators/user.validator.js";
+function parseQueryString(value) {
+    const str = typeof value === "string" ? value.trim() : undefined;
+    return str || undefined;
+}
 const userInclude = {
     role: {
         select: { id: true, name: true },
@@ -46,14 +50,36 @@ export async function listUsers(req, res) {
             return res.status(401).json({ success: false, error: "Unauthorized" });
         const page = parseInt(req.query.page || "1", 10) || 1;
         const pageSize = parseInt(req.query.pageSize || "10", 10) || 10;
-        const search = req.query.search || "";
-        const where = {};
+        const search = parseQueryString(req.query.search);
+        const roleId = parseQueryString(req.query.roleId);
+        const officeId = parseQueryString(req.query.officeId);
+        const filters = [];
         if (search) {
-            where.OR = [
-                { username: { contains: search, mode: "insensitive" } },
-                { phoneNumber: { contains: search, mode: "insensitive" } },
-            ];
+            filters.push({
+                OR: [
+                    { username: { contains: search, mode: "insensitive" } },
+                    { phoneNumber: { contains: search, mode: "insensitive" } },
+                    { firstName: { contains: search, mode: "insensitive" } },
+                    { fatherName: { contains: search, mode: "insensitive" } },
+                    { lastName: { contains: search, mode: "insensitive" } },
+                    { role: { is: { name: { contains: search, mode: "insensitive" } } } },
+                    {
+                        staffs: {
+                            some: {
+                                office: {
+                                    is: { name: { contains: search, mode: "insensitive" } },
+                                },
+                            },
+                        },
+                    },
+                ]
+            });
         }
+        if (roleId)
+            filters.push({ roleId });
+        if (officeId)
+            filters.push({ staffs: { some: { officeId } } });
+        const where = filters.length > 0 ? { AND: filters } : {};
         const total = await prisma.user.count({ where });
         const users = await prisma.user.findMany({
             where,

@@ -526,13 +526,24 @@ export async function listRoles(
   req: AuthRequest,
   res: Response,
 ): Promise<void> {
-  const officeId = getOfficeId(req, res);
-  if (officeId === null) return;
+  const scopedOfficeId = getOfficeId(req, res);
+  const requestedOfficeId =
+    typeof req.query.officeId === "string" ? req.query.officeId.trim() : "";
+  const search =
+    typeof req.query.search === "string" ? req.query.search.trim() : "";
 
   const where: Prisma.RoleWhereInput = {};
 
-  if (officeId) {
-    where.officeId = officeId;
+  if (scopedOfficeId) {
+    where.officeId = scopedOfficeId;
+  } else if (requestedOfficeId) {
+    where.officeId = requestedOfficeId;
+  }
+
+  if (search) {
+    where.name = {
+      contains: search,
+    };
   }
 
   const roles = (await prisma.role.findMany({

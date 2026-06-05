@@ -15,23 +15,38 @@ enum role {
   customer
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  BLOCKED
+}
+
 model User {
-  id               String   @id @default(uuid())
+  id               String      @id @default(uuid())
   name             String?
   firstName        String?
   fatherName       String?
   lastName         String?
-  username         String   @unique
-  phoneNumber      String   @unique
+  gender           Gender?     @default(OTHER)
+  status           UserStatus? @default(ACTIVE)
+  username         String      @unique
+  phoneNumber      String      @unique
   password         String
   roleId           String?
-  role             Role?    @relation(fields: [roleId], references: [id])
-  isActive         Boolean  @default(true)
-  phoneVerified    Boolean  @default(false)
-  twoFactorEnabled Boolean  @default(false)
+  role             Role?       @relation(fields: [roleId], references: [id])
+  isActive         Boolean     @default(true)
+  phoneVerified    Boolean     @default(false)
+  twoFactorEnabled Boolean     @default(false)
   twoFactorSecret  String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   staffs           staff[]
   requests         request[]

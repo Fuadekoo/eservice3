@@ -58,8 +58,10 @@ function parseActiveFilter(value: unknown): boolean | undefined | null {
   if (typeof value !== "string") return undefined;
   const s = value.trim().toLowerCase();
   if (!s) return undefined;
-  if (s === "true" || s === "1" || s === "active" || s === "enabled") return true;
-  if (s === "false" || s === "0" || s === "inactive" || s === "disabled") return false;
+  if (s === "true" || s === "1" || s === "active" || s === "enabled")
+    return true;
+  if (s === "false" || s === "0" || s === "inactive" || s === "disabled")
+    return false;
   return null;
 }
 
@@ -73,6 +75,12 @@ const staffInclude = {
     select: {
       id: true,
       username: true,
+      name: true,
+      firstName: true,
+      fatherName: true,
+      lastName: true,
+      gender: true,
+      status: true,
       phoneNumber: true,
       isActive: true,
       phoneVerified: true,
@@ -107,6 +115,12 @@ function buildStaffResponse(staff: StaffRecord) {
     user: {
       id: staff.user.id,
       username: staff.user.username,
+      name: staff.user.name,
+      firstName: staff.user.firstName,
+      fatherName: staff.user.fatherName,
+      lastName: staff.user.lastName,
+      gender: staff.user.gender,
+      status: staff.user.status,
       phone: staff.user.phoneNumber,
       phoneNumber: staff.user.phoneNumber,
       isActive: staff.user.isActive,
@@ -115,6 +129,20 @@ function buildStaffResponse(staff: StaffRecord) {
       createdAt: staff.user.createdAt,
       updatedAt: staff.user.updatedAt,
     },
+    // Adding top-level fields for convenience
+    name:
+      staff.user.name ||
+      [staff.user.firstName, staff.user.fatherName, staff.user.lastName]
+        .filter(Boolean)
+        .join(" ") ||
+      staff.user.username,
+    firstName: staff.user.firstName,
+    fatherName: staff.user.fatherName,
+    lastName: staff.user.lastName,
+    phone: staff.user.phoneNumber,
+    username: staff.user.username,
+    gender: staff.user.gender,
+    status: staff.user.status,
     role: staff.user.role
       ? {
           id: staff.user.role.id,
@@ -170,7 +198,8 @@ async function resolveRoleId(
   }
 
   const normalizedRoleName = normalizeString(input.roleName);
-  if (!normalizedRoleName) throw new Error("Either roleId or roleName is required.");
+  if (!normalizedRoleName)
+    throw new Error("Either roleId or roleName is required.");
 
   // Prefer an office-scoped role, fall back to a global role, else create.
   const existing =
@@ -262,21 +291,27 @@ export async function listStaff(
     const requestedOfficeId = getRequestedOfficeId(req);
     const scopedOfficeId = getScopedOfficeId(req, requestedOfficeId);
 
-    if (!ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedOfficeId)) {
+    if (
+      !ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedOfficeId)
+    ) {
       return;
     }
 
     const search = parseQueryString(req.query["search"]);
     const roleIdFilter = parseQueryString(req.query["roleId"]);
     const page = Math.max(1, parseQueryInt(req.query["page"], 1));
-    const pageSize = Math.min(100, Math.max(1, parseQueryInt(req.query["pageSize"], 50)));
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseQueryInt(req.query["pageSize"], 50)),
+    );
     const skip = (page - 1) * pageSize;
 
     const isActiveFilter = parseActiveFilter(req.query["status"]);
     if (isActiveFilter === null) {
       return res.status(400).json({
         error: "ValidationError",
-        message: "Invalid status filter. Use: active, inactive, true, false, 1, or 0.",
+        message:
+          "Invalid status filter. Use: active, inactive, true, false, 1, or 0.",
       });
     }
 
@@ -302,7 +337,8 @@ export async function listStaff(
       filters.push({ user: { is: { roleId: roleIdFilter } } });
     }
 
-    const where: Prisma.staffWhereInput = filters.length > 0 ? { AND: filters } : {};
+    const where: Prisma.staffWhereInput =
+      filters.length > 0 ? { AND: filters } : {};
 
     const [staffMembers, total] = await Promise.all([
       prisma.staff.findMany({
@@ -387,7 +423,9 @@ export async function createStaff(
       normalizeString(parsed.data.officeId) ?? getRequestedOfficeId(req);
     const scopedOfficeId = getScopedOfficeId(req, requestedOfficeId);
 
-    if (!ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedOfficeId)) {
+    if (
+      !ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedOfficeId)
+    ) {
       return;
     }
 
@@ -400,7 +438,9 @@ export async function createStaff(
 
     const office = await ensureOfficeExists(scopedOfficeId);
     if (!office) {
-      return res.status(404).json({ error: "NotFound", message: "Office not found." });
+      return res
+        .status(404)
+        .json({ error: "NotFound", message: "Office not found." });
     }
 
     const phoneNumber = getNormalizedPhone(parsed.data);
@@ -436,10 +476,21 @@ export async function createStaff(
       const newUser = await tx.user.create({
         data: {
           username: parsed.data.username,
+          firstName: parsed.data.firstName,
+          fatherName: parsed.data.fatherName,
+          lastName: parsed.data.lastName,
+          name: parsed.data.name,
+          gender: parsed.data.gender as any,
+          status: parsed.data.status as any,
           phoneNumber,
           password: await hash(parsed.data.password, 10),
           roleId: resolvedRoleId,
-          isActive: parsed.data.isActive ?? true,
+          isActive:
+            parsed.data.isActive ??
+            (parsed.data.status === "INACTIVE" ||
+            parsed.data.status === "BLOCKED"
+              ? false
+              : true),
           phoneVerified: parsed.data.phoneVerified ?? false,
         },
         select: { id: true },
@@ -463,7 +514,10 @@ export async function createStaff(
     }
 
     const msg = error instanceof Error ? error.message : "";
-    if (msg === "Username already exists." || msg === "Phone number already exists.") {
+    if (
+      msg === "Username already exists." ||
+      msg === "Phone number already exists."
+    ) {
       return res.status(409).json({ error: "Conflict", message: msg });
     }
     if (msg === "Role not found.") {
@@ -519,7 +573,12 @@ export async function updateStaff(
       : undefined;
 
     if (
-      !ensureRequestOfficeAccess(req, res, requestedOfficeId, scopedRequestedOfficeId)
+      !ensureRequestOfficeAccess(
+        req,
+        res,
+        requestedOfficeId,
+        scopedRequestedOfficeId,
+      )
     ) {
       return;
     }
@@ -528,7 +587,9 @@ export async function updateStaff(
 
     const office = await ensureOfficeExists(targetOfficeId);
     if (!office) {
-      return res.status(404).json({ error: "NotFound", message: "Office not found." });
+      return res
+        .status(404)
+        .json({ error: "NotFound", message: "Office not found." });
     }
 
     // Pre-check for collisions before entering the transaction
@@ -538,7 +599,9 @@ export async function updateStaff(
         where: {
           id: { not: existing.user.id },
           OR: [
-            ...(parsed.data.username ? [{ username: parsed.data.username }] : []),
+            ...(parsed.data.username
+              ? [{ username: parsed.data.username }]
+              : []),
             ...(phoneNumber ? [{ phoneNumber }] : []),
           ],
         },
@@ -566,9 +629,36 @@ export async function updateStaff(
       }
 
       const userData: Prisma.UserUpdateInput = {
-        ...(parsed.data.username !== undefined ? { username: parsed.data.username } : {}),
+        ...(parsed.data.username !== undefined
+          ? { username: parsed.data.username }
+          : {}),
+        ...(parsed.data.firstName !== undefined
+          ? { firstName: parsed.data.firstName }
+          : {}),
+        ...(parsed.data.fatherName !== undefined
+          ? { fatherName: parsed.data.fatherName }
+          : {}),
+        ...(parsed.data.lastName !== undefined
+          ? { lastName: parsed.data.lastName }
+          : {}),
+        ...(parsed.data.name !== undefined ? { name: parsed.data.name } : {}),
+        ...(parsed.data.gender !== undefined
+          ? { gender: parsed.data.gender as any }
+          : {}),
+        ...(parsed.data.status !== undefined
+          ? { status: parsed.data.status as any }
+          : {}),
         ...(phoneNumber !== undefined ? { phoneNumber } : {}),
-        ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
+        ...(parsed.data.isActive !== undefined
+          ? { isActive: parsed.data.isActive }
+          : parsed.data.status !== undefined
+            ? {
+                isActive: !(
+                  parsed.data.status === "INACTIVE" ||
+                  parsed.data.status === "BLOCKED"
+                ),
+              }
+            : {}),
         ...(parsed.data.phoneVerified !== undefined
           ? { phoneVerified: parsed.data.phoneVerified }
           : {}),
@@ -579,7 +669,10 @@ export async function updateStaff(
       };
 
       if (Object.keys(userData).length > 0) {
-        await tx.user.update({ where: { id: existing.user.id }, data: userData });
+        await tx.user.update({
+          where: { id: existing.user.id },
+          data: userData,
+        });
       }
 
       if (targetOfficeId !== existing.officeId) {

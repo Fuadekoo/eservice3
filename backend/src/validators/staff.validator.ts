@@ -7,6 +7,15 @@ import { z, type ZodError } from "zod";
 export const createStaffSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required."),
+    firstName: z.string().trim().min(1, "First name is required.").optional(),
+    fatherName: z.string().trim().min(1, "Father name is required.").optional(),
+    lastName: z.string().trim().min(1, "Last name is required.").optional(),
+    name: z.string().trim().optional(),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+    status: z
+      .enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"])
+      .optional()
+      .default("ACTIVE"),
     phone: z.string().trim().min(1, "Phone number is required.").optional(),
     phoneNumber: z
       .string()
@@ -43,6 +52,12 @@ export const createStaffSchema = z
 export const updateStaffSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
+    firstName: z.string().trim().min(1, "First name is required.").optional(),
+    fatherName: z.string().trim().min(1, "Father name is required.").optional(),
+    lastName: z.string().trim().min(1, "Last name is required.").optional(),
+    name: z.string().trim().optional(),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+    status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"]).optional(),
     phone: z.string().trim().min(1, "Phone number is required.").optional(),
     phoneNumber: z
       .string()

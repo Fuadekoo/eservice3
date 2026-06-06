@@ -1,18 +1,12 @@
 "use client";
 
-import * as React from "react";
 import {
-  MoreVertical,
   Phone,
   CheckCircle2,
-  XCircle,
-  Shield,
   Building2,
   Edit,
   Trash2,
   Eye,
-  GraduationCap,
-  Plus,
 } from "lucide-react";
 import {
   Table,
@@ -24,12 +18,6 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import type { User } from "@/lib/stores/user-store";
 
@@ -188,22 +176,6 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
                         title="Edit"
                       >
                         <Edit className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Credentials"
-                      >
-                        <GraduationCap className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Add"
-                      >
-                        <Plus className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"

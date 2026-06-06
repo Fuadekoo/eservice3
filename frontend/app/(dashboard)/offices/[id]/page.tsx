@@ -15,7 +15,6 @@ import {
   Edit,
   ExternalLink,
   CheckCircle2,
-  XCircle,
   Loader2,
   Info,
   Plus,
@@ -23,9 +22,9 @@ import {
   Clock,
   ChevronRight,
 } from "lucide-react";
+
 import { useOfficeStore } from "@/lib/stores/office-store";
 import { useTranslation } from "@/lib/i18n";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -41,11 +40,14 @@ import { ServiceCreateDialog } from "@/components/dashboard/service-create-dialo
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
+type TabValue = "overview" | "staff" | "services" | "security";
+
 export default function OfficeDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
   const { t } = useTranslation();
   const { currentOffice, isLoading, getOffice, error } = useOfficeStore();
+  const [activeTab, setActiveTab] = React.useState<TabValue>("overview");
   const [isServiceCreateOpen, setIsServiceCreateOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -56,7 +58,7 @@ export default function OfficeDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
+      <div className="flex h-100 items-center justify-center">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
@@ -69,7 +71,7 @@ export default function OfficeDetailsPage() {
 
   if (error || !currentOffice) {
     return (
-      <div className="flex h-[400px] flex-col items-center justify-center gap-4">
+      <div className="flex h-100 flex-col items-center justify-center gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
           <Info className="h-6 w-6" />
         </div>
@@ -86,6 +88,23 @@ export default function OfficeDetailsPage() {
       </div>
     );
   }
+
+  const tabs: { value: TabValue; label: string; icon: React.ElementType; badge?: number }[] = [
+    { value: "overview", label: t("Overview"), icon: LayoutDashboard },
+    {
+      value: "staff",
+      label: t("Staff"),
+      icon: Users,
+      badge: currentOffice._count?.staffs,
+    },
+    {
+      value: "services",
+      label: t("Services"),
+      icon: FileText,
+      badge: currentOffice._count?.service,
+    },
+    { value: "security", label: t("Access"), icon: Shield },
+  ];
 
   const stats = [
     {
@@ -119,323 +138,342 @@ export default function OfficeDetailsPage() {
   ];
 
   return (
-    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-      {/* Header Section */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            className="shrink-0 lg:mt-1 self-start sm:self-center"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex flex-col items-center sm:items-start gap-4 sm:flex-row sm:gap-6 text-center sm:text-left">
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-border bg-muted shadow-sm sm:h-24 sm:w-24">
-              {currentOffice.logo ? (
-                <img
-                  src={currentOffice.logo}
-                  alt={currentOffice.name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-primary/5">
-                  <Building2 className="h-10 w-10 text-primary/40" />
+    <div className="flex flex-col min-h-full">
+      {/* ── Page Header ─────────────────────────────────── */}
+      <div className="border-b border-border/60 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="px-6 lg:px-8 pt-6 pb-0">
+
+          {/* Title row */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-5">
+            {/* Left: back + logo + meta */}
+            <div className="flex items-start gap-4 min-w-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.back()}
+                className="shrink-0 mt-0.5 h-9 w-9"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Office logo */}
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-muted shadow-sm">
+                {currentOffice.logo ? (
+                  <img
+                    src={currentOffice.logo}
+                    alt={currentOffice.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary/5">
+                    <Building2 className="h-7 w-7 text-primary/40" />
+                  </div>
+                )}
+              </div>
+
+              {/* Name + meta */}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                  <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl truncate">
+                    {currentOffice.name}
+                  </h1>
+                  <Badge
+                    variant={currentOffice.status ? "default" : "secondary"}
+                    className={cn(
+                      "h-5 px-2 text-[10px] font-bold uppercase tracking-wider shrink-0",
+                      currentOffice.status && "bg-emerald-500 hover:bg-emerald-600",
+                    )}
+                  >
+                    {currentOffice.status ? t("Active") : t("Inactive")}
+                  </Badge>
                 </div>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
-                  {currentOffice.name}
-                </h1>
-                <Badge
-                  variant={currentOffice.status ? "default" : "secondary"}
-                  className={cn(
-                    "h-6 px-3 text-[10px] font-bold uppercase tracking-wider",
-                    currentOffice.status &&
-                      "bg-emerald-500 hover:bg-emerald-600",
+                {currentOffice.slogan && (
+                  <p className="mt-0.5 text-sm text-muted-foreground italic line-clamp-1">
+                    {currentOffice.slogan}
+                  </p>
+                )}
+                <div className="flex flex-wrap items-center gap-3 mt-1">
+                  {currentOffice.address && (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      {currentOffice.address}
+                    </span>
                   )}
-                >
-                  {currentOffice.status ? t("Active") : t("Inactive")}
-                </Badge>
-              </div>
-              <p className="text-base sm:text-lg font-medium text-muted-foreground/80 italic">
-                {currentOffice.slogan || t("Government Excellence")}
-              </p>
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-1">
-                <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{currentOffice.address || t("No address")}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
-                  <Globe className="h-4 w-4" />
-                  <span>{currentOffice.subdomain}.gov.et</span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Globe className="h-3.5 w-3.5 shrink-0" />
+                    {currentOffice.subdomain}.gov.et
+                  </span>
                 </div>
               </div>
+            </div>
+
+            {/* Right: action buttons */}
+            <div className="flex items-center gap-2.5 shrink-0 sm:self-start">
+              <Button variant="outline" size="sm" className="h-9 px-4">
+                <Edit className="mr-2 h-4 w-4" />
+                {t("Edit")}
+              </Button>
+              <Button
+                size="sm"
+                className="h-9 px-4 bg-primary shadow-md shadow-primary/20"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                {t("View Portal")}
+              </Button>
             </div>
           </div>
-        </div>
-        <div className="flex items-center justify-center sm:justify-end gap-3 lg:self-center">
-          <Button variant="outline" className="h-10 px-4">
-            <Edit className="mr-2 h-4 w-4" />
-            {t("Edit")}
-          </Button>
-          <Button className="h-10 px-6 bg-primary shadow-lg shadow-primary/20">
-            <ExternalLink className="mr-2 h-4 w-4" />
-            {t("View Portal")}
-          </Button>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
-          <Card
-            key={i}
-            className="overflow-hidden border-none shadow-sm ring-1 ring-border/50 bg-card/50 backdrop-blur-sm"
+          {/* ── Tab bar ─────────────────────────────────── */}
+          <div
+            className="flex gap-0 overflow-x-auto scrollbar-hide -mb-px"
+            role="tablist"
+            aria-label="Office navigation"
           >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className={cn("rounded-2xl p-3 shadow-inner", stat.bg)}>
-                  <stat.icon className={cn("h-6 w-6", stat.color)} />
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-1">
-                    {stat.label}
-                  </p>
-                  <p className="text-3xl font-black tabular-nums">
-                    {stat.value}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    "relative flex items-center gap-2 shrink-0 px-4 py-3 text-sm font-medium transition-all duration-150 border-b-2 whitespace-nowrap",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-0",
+                    isActive
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
+                  )}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                  {tab.badge !== undefined && tab.badge > 0 && (
+                    <span
+                      className={cn(
+                        "inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-[10px] font-bold",
+                        isActive
+                          ? "bg-primary/15 text-primary"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Tabs Content */}
-      <Tabs defaultValue="overview" className="space-y-8">
-        <div className="sticky top-0 z-10 -mx-6 bg-background/80 px-6 py-4 backdrop-blur-md lg:-mx-8 lg:px-8">
-          <TabsList className="inline-flex h-12 w-full justify-start gap-2 rounded-xl bg-muted/50 p-1.5 sm:w-auto">
-            <TabsTrigger
-              value="overview"
-              className="rounded-lg px-6 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md"
-            >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              {t("Overview")}
-            </TabsTrigger>
-            <TabsTrigger
-              value="staff"
-              className="rounded-lg px-6 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md"
-            >
-              <Users className="mr-2 h-4 w-4" />
-              {t("Staff")}
-            </TabsTrigger>
-            <TabsTrigger
-              value="services"
-              className="rounded-lg px-6 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md"
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              {t("Services")}
-            </TabsTrigger>
-            <TabsTrigger
-              value="security"
-              className="rounded-lg px-6 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md"
-            >
-              <Shield className="mr-2 h-4 w-4" />
-              {t("Access")}
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* ── Page Body ───────────────────────────────────── */}
+      <div className="flex-1 px-6 lg:px-8 py-6">
+        {/* Overview */}
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            {/* Stats */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {stats.map((stat, i) => (
+                <Card
+                  key={i}
+                  className="overflow-hidden border-none shadow-sm ring-1 ring-border/50 bg-card/50"
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className={cn("rounded-xl p-2.5 shadow-inner", stat.bg)}>
+                        <stat.icon className={cn("h-5 w-5", stat.color)} />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-0.5">
+                          {stat.label}
+                        </p>
+                        <p className="text-3xl font-black tabular-nums">
+                          {stat.value}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-        <TabsContent
-          value="overview"
-          className="mt-0 focus-visible:outline-none"
-        >
-          <div className="grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-8">
-              <Card className="border-none shadow-sm ring-1 ring-border/50">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Info className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-xl font-bold">
-                      {t("Office Description")}
-                    </CardTitle>
-                  </div>
-                  <CardDescription>
-                    {t(
-                      "The official purpose and mission of this government entity.",
-                    )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <p className="text-base leading-relaxed text-muted-foreground">
+            {/* Info grid */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2 space-y-6">
+                <Card className="border-none shadow-sm ring-1 ring-border/50">
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Info className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-lg font-bold">
+                        {t("Office Description")}
+                      </CardTitle>
+                    </div>
+                    <CardDescription>
+                      {t("The official purpose and mission of this government entity.")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
                       {currentOffice.description ||
                         t("No detailed description available for this office.")}
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="grid gap-6 sm:grid-cols-2">
-                <Card className="border-none shadow-sm ring-1 ring-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold">
-                      {t("Contact Details")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-primary/5 p-2">
-                        <Phone className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {t("Phone")}
-                        </p>
-                        <p className="text-sm font-semibold">
-                          {currentOffice.phoneNumber || t("N/A")}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-primary/5 p-2">
-                        <Globe className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {t("Domain")}
-                        </p>
-                        <p className="text-sm font-semibold">
-                          {currentOffice.subdomain}.gov.et
-                        </p>
-                      </div>
-                    </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-none shadow-sm ring-1 ring-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-bold">
-                      {t("Location Info")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-primary/5 p-2">
-                        <MapPin className="h-4 w-4 text-primary" />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Card className="border-none shadow-sm ring-1 ring-border/50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-bold">
+                        {t("Contact Details")}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-primary/5 p-2">
+                          <Phone className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">
+                            {t("Phone")}
+                          </p>
+                          <p className="text-sm font-semibold">
+                            {currentOffice.phoneNumber || t("N/A")}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {t("Address")}
-                        </p>
-                        <p className="text-sm font-semibold">
-                          {currentOffice.address || t("N/A")}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-primary/5 p-2">
+                          <Globe className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">
+                            {t("Domain")}
+                          </p>
+                          <p className="text-sm font-semibold">
+                            {currentOffice.subdomain}.gov.et
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-primary/5 p-2">
-                        <Building2 className="h-4 w-4 text-primary" />
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-none shadow-sm ring-1 ring-border/50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-bold">
+                        {t("Location Info")}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-primary/5 p-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">
+                            {t("Address")}
+                          </p>
+                          <p className="text-sm font-semibold">
+                            {currentOffice.address || t("N/A")}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {t("Room/Unit")}
-                        </p>
-                        <p className="text-sm font-semibold">
-                          {currentOffice.roomNumber || t("N/A")}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-primary/5 p-2">
+                          <Building2 className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">
+                            {t("Room/Unit")}
+                          </p>
+                          <p className="text-sm font-semibold">
+                            {currentOffice.roomNumber || t("N/A")}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-8">
-              <Card className="border-none shadow-sm ring-1 ring-border/50 bg-primary/5">
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold">
-                    {t("Operations")}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {t("Started Date")}
+              <div className="space-y-6">
+                <Card className="border-none shadow-sm ring-1 ring-border/50 bg-primary/5">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-bold">
+                      {t("Operations")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {t("Started Date")}
+                        </span>
+                      </div>
+                      <span className="text-sm font-bold">
+                        {currentOffice.startedAt
+                          ? format(new Date(currentOffice.startedAt), "MMM dd, yyyy")
+                          : t("N/A")}
                       </span>
                     </div>
-                    <span className="text-sm font-bold">
-                      {currentOffice.startedAt
-                        ? format(
-                            new Date(currentOffice.startedAt),
-                            "MMM dd, yyyy",
-                          )
-                        : t("N/A")}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {t("System Status")}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {t("System Status")}
+                        </span>
+                      </div>
+                      <Badge
+                        variant={currentOffice.status ? "default" : "secondary"}
+                        className="rounded-full text-xs"
+                      >
+                        {currentOffice.status ? t("Online") : t("Offline")}
+                      </Badge>
                     </div>
-                    <Badge
-                      variant={currentOffice.status ? "default" : "secondary"}
-                      className="rounded-full"
+                  </CardContent>
+                </Card>
+
+                <div className="rounded-2xl bg-linear-to-br from-primary to-primary/80 p-5 text-primary-foreground shadow-lg">
+                  <h3 className="text-base font-bold mb-1">{t("Quick Actions")}</h3>
+                  <p className="text-xs text-primary-foreground/80 mb-4">
+                    {t("Perform administrative tasks for this office.")}
+                  </p>
+                  <div className="grid gap-2.5">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full justify-start font-semibold"
                     >
-                      {currentOffice.status ? t("Online") : t("Offline")}
-                    </Badge>
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t("New Staff Member")}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full justify-start font-semibold"
+                      onClick={() => setIsServiceCreateOpen(true)}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      {t("Configure Services")}
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-
-              <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-xl">
-                <h3 className="text-lg font-bold mb-2">{t("Quick Actions")}</h3>
-                <p className="text-sm text-primary-foreground/80 mb-6">
-                  {t("Perform administrative tasks for this office.")}
-                </p>
-                <div className="grid gap-3">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full justify-start font-bold"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t("New Staff Member")}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full justify-start font-bold"
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    {t("Configure Services")}
-                  </Button>
                 </div>
               </div>
             </div>
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="staff" className="mt-0 focus-visible:outline-none">
+        {/* Staff */}
+        {activeTab === "staff" && (
           <OfficeStaffTab officeId={currentOffice.id} />
-        </TabsContent>
+        )}
 
-        <TabsContent
-          value="services"
-          className="mt-0 focus-visible:outline-none"
-        >
+        {/* Services */}
+        {activeTab === "services" && (
           <Card className="border-none shadow-sm ring-1 ring-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div>
-                <CardTitle className="text-xl font-bold">
+                <CardTitle className="text-lg font-bold">
                   {t("Service Catalog")}
                 </CardTitle>
                 <CardDescription>
@@ -460,14 +498,14 @@ export default function OfficeDetailsPage() {
                       className="group flex flex-col justify-between gap-4 p-5 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer shadow-sm"
                     >
                       <div className="space-y-1.5">
-                        <h4 className="text-base font-bold group-hover:text-primary transition-colors leading-tight">
+                        <h4 className="text-sm font-bold group-hover:text-primary transition-colors leading-tight">
                           {service.name}
                         </h4>
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {service.description || t("No description provided.")}
                         </p>
                       </div>
-                      <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center justify-between">
                         <Badge
                           variant="secondary"
                           className="bg-background/50 font-medium"
@@ -488,17 +526,15 @@ export default function OfficeDetailsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30">
+                <div className="flex min-h-90 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30">
                   <div className="rounded-full bg-background p-4 shadow-sm mb-4">
-                    <FileText className="h-10 w-10 text-primary/40" />
+                    <FileText className="h-9 w-9 text-primary/40" />
                   </div>
-                  <h3 className="text-lg font-bold text-foreground">
+                  <h3 className="text-base font-bold text-foreground">
                     {t("No services configured")}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-xs text-center mt-1">
-                    {t(
-                      "Start by adding the first service this office provides to citizens.",
-                    )}
+                    {t("Start by adding the first service this office provides to citizens.")}
                   </p>
                   <Button
                     variant="outline"
@@ -511,15 +547,13 @@ export default function OfficeDetailsPage() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
 
-        <TabsContent
-          value="security"
-          className="mt-0 focus-visible:outline-none"
-        >
+        {/* Access */}
+        {activeTab === "security" && (
           <OfficeAccessTab officeId={currentOffice.id} />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
 
       <ServiceCreateDialog
         open={isServiceCreateOpen}

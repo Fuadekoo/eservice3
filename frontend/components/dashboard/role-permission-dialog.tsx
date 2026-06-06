@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Search, Shield, ShieldCheck } from "lucide-react";
+import { Loader2, Search, ShieldCheck } from "lucide-react";
 import {
   useSecurityStore,
   type Role,
@@ -43,7 +42,7 @@ export function RolePermissionDialog({
   >([]);
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const { permissions, fetchPermissions, getRole, updateRole } =
+  const { roles, permissions, fetchPermissions, updateRole } =
     useSecurityStore();
 
   React.useEffect(() => {
@@ -56,22 +55,20 @@ export function RolePermissionDialog({
     setLoading(true);
     try {
       await fetchPermissions();
-      const roleData = await getRole(roleId!);
-      if (roleData) {
-        setRole(roleData);
-        setSelectedPermissionCodes(
-          roleData.permissions?.map((p) => p.code) || [],
-        );
-      }
+      const roleData = roles.find((r) => r.id === roleId) ?? null;
+      setRole(roleData);
+      setSelectedPermissionCodes(
+        roleData?.permissions?.map((p) => p.code) ?? [],
+      );
     } catch (error) {
-      console.error("Error loading role data:", error);
-      toast.error("Failed to load role details");
+      console.error("Error loading permissions:", error);
+      toast.error("Failed to load permissions");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!roleId) return;
 
@@ -101,7 +98,7 @@ export function RolePermissionDialog({
   const groupedPermissions = React.useMemo(() => {
     const groups: Record<string, Permission[]> = {};
     permissions.forEach((p) => {
-      const groupName = p.code.split(".")[0] || "General";
+      const groupName = (p.code ?? "").split(".")[0] || "General";
       const formattedGroup =
         groupName.charAt(0).toUpperCase() + groupName.slice(1);
       if (!groups[formattedGroup]) groups[formattedGroup] = [];

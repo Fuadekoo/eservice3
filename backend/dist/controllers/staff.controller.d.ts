@@ -29,4 +29,17 @@ export declare function updateStaff(req: AuthRequest, res: Response): Promise<Re
  * If this is the user's only office assignment the User record is also deleted (via transaction).
  */
 export declare function deleteStaff(req: AuthRequest, res: Response): Promise<Response | void>;
+/**
+ * GET /staff/:id/services
+ * Auth required. Returns all services assigned to a staff member,
+ * plus all available services for the staff member's office (for toggle UI).
+ */
+export declare function getStaffServices(req: AuthRequest, res: Response): Promise<Response | void>;
+/**
+ * PUT /staff/:id/services
+ * Auth required. Bulk-sync service assignments for a staff member.
+ * Body: { serviceIds: string[] }
+ * Replaces all current assignments with the provided list.
+ */
+export declare function syncStaffServices(req: AuthRequest, res: Response): Promise<Response | void>;
 //# sourceMappingURL=staff.controller.d.ts.map

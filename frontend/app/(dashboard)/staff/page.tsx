@@ -19,6 +19,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StaffTable } from "./_components/staff-table";
+import { AssignServicesDialog } from "./_components/assign-services-dialog";
 import { StaffCreateDialog } from "@/components/dashboard/staff-create-dialog";
 import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,6 +64,8 @@ export default function StaffPage() {
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [selectedOfficeId, setSelectedOfficeId] = React.useState<string>("all");
   const [selectedRoleId, setSelectedRoleId] = React.useState<string>("all");
+  const [assignServicesMember, setAssignServicesMember] =
+    React.useState<StaffMember | null>(null);
 
   React.useEffect(() => {
     if (isSessionPending) return;
@@ -299,6 +302,7 @@ export default function StaffPage() {
             staff={staff}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
+            onAssignServices={(member) => setAssignServicesMember(member)}
           />
 
           {pagination && pagination.totalItems > 0 && (
@@ -331,6 +335,31 @@ export default function StaffPage() {
         officeId={
           selectedOfficeId !== "all" ? selectedOfficeId : sessionOfficeId
         }
+      />
+
+      <AssignServicesDialog
+        open={!!assignServicesMember}
+        onOpenChange={(open) => {
+          if (!open) setAssignServicesMember(null);
+        }}
+        staffId={assignServicesMember?.id ?? null}
+        staffName={assignServicesMember?.name ?? ""}
+        onSuccess={() => {
+          const effectiveOfficeId =
+            selectedOfficeId !== "all"
+              ? selectedOfficeId
+              : !isAdmin
+                ? sessionOfficeId
+                : undefined;
+
+          void fetchStaff({
+            page: currentPage,
+            pageSize,
+            search: searchQuery || undefined,
+            roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+            officeId: effectiveOfficeId,
+          });
+        }}
       />
 
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>

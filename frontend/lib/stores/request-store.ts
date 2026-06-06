@@ -36,8 +36,10 @@ type RequestStore = {
     search?: string;
     status?: string;
   }) => Promise<void>;
-  approveRequest: (id: string, approverId: string, notes?: string) => Promise<void>;
+  approveRequestStaff: (id: string, staffId: string, notes?: string) => Promise<void>;
+  approveRequestManager: (id: string, approverId: string, notes?: string) => Promise<void>;
   rejectRequest: (id: string, rejectionReason: string) => Promise<void>;
+  createAppointment: (requestId: string, date: string, time?: string, notes?: string) => Promise<void>;
 };
 
 export const useRequestStore = create<RequestStore>((set) => ({
@@ -69,11 +71,19 @@ export const useRequestStore = create<RequestStore>((set) => ({
     }
   },
 
-  approveRequest: async (id, approverId, notes) => {
+  approveRequestStaff: async (id, staffId, notes) => {
+    await axiosInstance.patch(`/requests/${id}/approve-staff`, { staffId, notes });
+  },
+
+  approveRequestManager: async (id, approverId, notes) => {
     await axiosInstance.patch(`/requests/${id}/approve-admin`, { approverId, notes });
   },
 
   rejectRequest: async (id, rejectionReason) => {
     await axiosInstance.patch(`/requests/${id}/reject`, { rejectionReason });
+  },
+
+  createAppointment: async (requestId, date, time, notes) => {
+    await axiosInstance.post(`/appointments`, { requestId, date, time, notes });
   },
 }));

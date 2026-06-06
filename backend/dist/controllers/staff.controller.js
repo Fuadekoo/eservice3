@@ -50,10 +50,19 @@ const staffInclude = {
     office: {
         select: { id: true, name: true, status: true },
     },
+    serviceAssignments: {
+        select: { serviceId: true },
+    },
     user: {
         select: {
             id: true,
             username: true,
+            name: true,
+            firstName: true,
+            fatherName: true,
+            lastName: true,
+            gender: true,
+            status: true,
             phoneNumber: true,
             isActive: true,
             phoneVerified: true,
@@ -82,9 +91,16 @@ function buildStaffResponse(staff) {
         createdAt: staff.createdAt,
         updatedAt: staff.updatedAt,
         office: staff.office,
+        assignedServicesCount: staff.serviceAssignments?.length ?? 0,
         user: {
             id: staff.user.id,
             username: staff.user.username,
+            name: staff.user.name,
+            firstName: staff.user.firstName,
+            fatherName: staff.user.fatherName,
+            lastName: staff.user.lastName,
+            gender: staff.user.gender,
+            status: staff.user.status,
             phone: staff.user.phoneNumber,
             phoneNumber: staff.user.phoneNumber,
             isActive: staff.user.isActive,
@@ -93,6 +109,19 @@ function buildStaffResponse(staff) {
             createdAt: staff.user.createdAt,
             updatedAt: staff.user.updatedAt,
         },
+        // Adding top-level fields for convenience
+        name: staff.user.name ||
+            [staff.user.firstName, staff.user.fatherName, staff.user.lastName]
+                .filter(Boolean)
+                .join(" ") ||
+            staff.user.username,
+        firstName: staff.user.firstName,
+        fatherName: staff.user.fatherName,
+        lastName: staff.user.lastName,
+        phone: staff.user.phoneNumber,
+        username: staff.user.username,
+        gender: staff.user.gender,
+        status: staff.user.status,
         role: staff.user.role
             ? {
                 id: staff.user.role.id,
@@ -324,7 +353,9 @@ export async function createStaff(req, res) {
         }
         const office = await ensureOfficeExists(scopedOfficeId);
         if (!office) {
-            return res.status(404).json({ error: "NotFound", message: "Office not found." });
+            return res
+                .status(404)
+                .json({ error: "NotFound", message: "Office not found." });
         }
         const phoneNumber = getNormalizedPhone(parsed.data);
         if (!phoneNumber) {
@@ -353,10 +384,20 @@ export async function createStaff(req, res) {
             const newUser = await tx.user.create({
                 data: {
                     username: parsed.data.username,
+                    firstName: parsed.data.firstName,
+                    fatherName: parsed.data.fatherName,
+                    lastName: parsed.data.lastName,
+                    name: parsed.data.name,
+                    gender: parsed.data.gender,
+                    status: parsed.data.status,
                     phoneNumber,
                     password: await hash(parsed.data.password, 10),
                     roleId: resolvedRoleId,
-                    isActive: parsed.data.isActive ?? true,
+                    isActive: parsed.data.isActive ??
+                        (parsed.data.status === "INACTIVE" ||
+                            parsed.data.status === "BLOCKED"
+                            ? false
+                            : true),
                     phoneVerified: parsed.data.phoneVerified ?? false,
                 },
                 select: { id: true },
@@ -378,7 +419,8 @@ export async function createStaff(req, res) {
             }
         }
         const msg = error instanceof Error ? error.message : "";
-        if (msg === "Username already exists." || msg === "Phone number already exists.") {
+        if (msg === "Username already exists." ||
+            msg === "Phone number already exists.") {
             return res.status(409).json({ error: "Conflict", message: msg });
         }
         if (msg === "Role not found.") {
@@ -427,7 +469,9 @@ export async function updateStaff(req, res) {
         const targetOfficeId = scopedRequestedOfficeId ?? existing.officeId;
         const office = await ensureOfficeExists(targetOfficeId);
         if (!office) {
-            return res.status(404).json({ error: "NotFound", message: "Office not found." });
+            return res
+                .status(404)
+                .json({ error: "NotFound", message: "Office not found." });
         }
         // Pre-check for collisions before entering the transaction
         const phoneNumber = getNormalizedPhone(parsed.data);
@@ -436,7 +480,9 @@ export async function updateStaff(req, res) {
                 where: {
                     id: { not: existing.user.id },
                     OR: [
-                        ...(parsed.data.username ? [{ username: parsed.data.username }] : []),
+                        ...(parsed.data.username
+                            ? [{ username: parsed.data.username }]
+                            : []),
                         ...(phoneNumber ? [{ phoneNumber }] : []),
                     ],
                 },
@@ -460,9 +506,34 @@ export async function updateStaff(req, res) {
                 });
             }
             const userData = {
-                ...(parsed.data.username !== undefined ? { username: parsed.data.username } : {}),
+                ...(parsed.data.username !== undefined
+                    ? { username: parsed.data.username }
+                    : {}),
+                ...(parsed.data.firstName !== undefined
+                    ? { firstName: parsed.data.firstName }
+                    : {}),
+                ...(parsed.data.fatherName !== undefined
+                    ? { fatherName: parsed.data.fatherName }
+                    : {}),
+                ...(parsed.data.lastName !== undefined
+                    ? { lastName: parsed.data.lastName }
+                    : {}),
+                ...(parsed.data.name !== undefined ? { name: parsed.data.name } : {}),
+                ...(parsed.data.gender !== undefined
+                    ? { gender: parsed.data.gender }
+                    : {}),
+                ...(parsed.data.status !== undefined
+                    ? { status: parsed.data.status }
+                    : {}),
                 ...(phoneNumber !== undefined ? { phoneNumber } : {}),
-                ...(parsed.data.isActive !== undefined ? { isActive: parsed.data.isActive } : {}),
+                ...(parsed.data.isActive !== undefined
+                    ? { isActive: parsed.data.isActive }
+                    : parsed.data.status !== undefined
+                        ? {
+                            isActive: !(parsed.data.status === "INACTIVE" ||
+                                parsed.data.status === "BLOCKED"),
+                        }
+                        : {}),
                 ...(parsed.data.phoneVerified !== undefined
                     ? { phoneVerified: parsed.data.phoneVerified }
                     : {}),
@@ -472,7 +543,10 @@ export async function updateStaff(req, res) {
                     : {}),
             };
             if (Object.keys(userData).length > 0) {
-                await tx.user.update({ where: { id: existing.user.id }, data: userData });
+                await tx.user.update({
+                    where: { id: existing.user.id },
+                    data: userData,
+                });
             }
             if (targetOfficeId !== existing.officeId) {
                 await tx.staff.update({
@@ -568,6 +642,155 @@ export async function deleteStaff(req, res) {
         return res.status(500).json({
             error: "InternalServerError",
             message: "Unable to delete staff member.",
+        });
+    }
+}
+// ─── Staff Service Assignment Controllers ────────────────────────────────────
+/**
+ * GET /staff/:id/services
+ * Auth required. Returns all services assigned to a staff member,
+ * plus all available services for the staff member's office (for toggle UI).
+ */
+export async function getStaffServices(req, res) {
+    try {
+        const id = req.params["id"];
+        const staff = await findStaffRecord(id);
+        if (!staff) {
+            return res.status(404).json({
+                error: "NotFound",
+                message: `Staff member with id '${id}' was not found.`,
+            });
+        }
+        if (!ensureStaffAccess(req, res, staff))
+            return;
+        // Get all services for the staff member's office
+        const allServices = await prisma.service.findMany({
+            where: { officeId: staff.officeId },
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                timeToTake: true,
+            },
+            orderBy: { name: "asc" },
+        });
+        // Get currently assigned service IDs
+        const assignments = await prisma.serviceStaffAssignment.findMany({
+            where: { staffId: staff.id },
+            select: { serviceId: true },
+        });
+        const assignedServiceIds = new Set(assignments.map((a) => a.serviceId));
+        const services = allServices.map((service) => ({
+            ...service,
+            isAssigned: assignedServiceIds.has(service.id),
+        }));
+        return res.json({
+            data: {
+                staffId: staff.id,
+                staffName: staff.user.name ||
+                    [staff.user.firstName, staff.user.fatherName, staff.user.lastName]
+                        .filter(Boolean)
+                        .join(" ") ||
+                    staff.user.username,
+                officeId: staff.officeId,
+                officeName: staff.office.name,
+                services,
+                assignedCount: assignedServiceIds.size,
+                totalCount: allServices.length,
+            },
+        });
+    }
+    catch (error) {
+        console.error("[getStaffServices] Error:", error);
+        return res.status(500).json({
+            error: "InternalServerError",
+            message: "Unable to fetch staff services.",
+        });
+    }
+}
+/**
+ * PUT /staff/:id/services
+ * Auth required. Bulk-sync service assignments for a staff member.
+ * Body: { serviceIds: string[] }
+ * Replaces all current assignments with the provided list.
+ */
+export async function syncStaffServices(req, res) {
+    try {
+        if (!req.isAdmin && !req.isManager) {
+            return res.status(403).json({
+                error: "Forbidden",
+                message: "Only admins and managers can manage service assignments.",
+            });
+        }
+        const id = req.params["id"];
+        const { serviceIds } = req.body;
+        if (!Array.isArray(serviceIds)) {
+            return res.status(400).json({
+                error: "ValidationError",
+                message: "serviceIds must be an array of strings.",
+            });
+        }
+        const staff = await findStaffRecord(id);
+        if (!staff) {
+            return res.status(404).json({
+                error: "NotFound",
+                message: `Staff member with id '${id}' was not found.`,
+            });
+        }
+        if (!ensureStaffAccess(req, res, staff))
+            return;
+        // Verify all services belong to the same office
+        if (serviceIds.length > 0) {
+            const validServices = await prisma.service.count({
+                where: {
+                    id: { in: serviceIds },
+                    officeId: staff.officeId,
+                },
+            });
+            if (validServices !== serviceIds.length) {
+                return res.status(400).json({
+                    error: "ValidationError",
+                    message: "One or more services do not exist or belong to a different office.",
+                });
+            }
+        }
+        // Replace all assignments atomically
+        await prisma.$transaction(async (tx) => {
+            // Remove all current assignments
+            await tx.serviceStaffAssignment.deleteMany({
+                where: { staffId: staff.id },
+            });
+            // Create new assignments
+            if (serviceIds.length > 0) {
+                await tx.serviceStaffAssignment.createMany({
+                    data: serviceIds.map((serviceId) => ({
+                        serviceId,
+                        staffId: staff.id,
+                    })),
+                });
+            }
+        });
+        return res.json({
+            data: {
+                staffId: staff.id,
+                assignedServiceIds: serviceIds,
+                message: `Successfully updated service assignments. ${serviceIds.length} service(s) assigned.`,
+            },
+        });
+    }
+    catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2002") {
+                return res.status(409).json({
+                    error: "Conflict",
+                    message: "Duplicate service assignment detected.",
+                });
+            }
+        }
+        console.error("[syncStaffServices] Error:", error);
+        return res.status(500).json({
+            error: "InternalServerError",
+            message: "Unable to update service assignments.",
         });
     }
 }

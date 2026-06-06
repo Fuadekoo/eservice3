@@ -7,6 +7,8 @@ import {
   createStaff,
   updateStaff,
   deleteStaff,
+  getStaffServices,
+  syncStaffServices,
 } from "../controllers/staff.controller.js";
 
 const router = Router();
@@ -18,5 +20,9 @@ router.get("/:id", requireAuth, asyncHandler(getStaff));
 router.post("/", requireAuth, asyncHandler(createStaff));
 router.put("/:id", requireAuth, asyncHandler(updateStaff));
 router.delete("/:id", requireAuth, asyncHandler(deleteStaff));
+
+// Staff-centric service assignment management
+router.get("/:id/services", requireAuth, asyncHandler(getStaffServices));
+router.put("/:id/services", requireAuth, asyncHandler(syncStaffServices));
 
 export default router;

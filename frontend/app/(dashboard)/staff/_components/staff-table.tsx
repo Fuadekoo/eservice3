@@ -37,9 +37,10 @@ interface StaffTableProps {
   staff: StaffMember[];
   onEdit: (member: StaffMember) => void;
   onDelete: (id: string) => void;
+  onAssignServices: (member: StaffMember) => void;
 }
 
-export function StaffTable({ staff, onEdit, onDelete }: StaffTableProps) {
+export function StaffTable({ staff, onEdit, onDelete, onAssignServices }: StaffTableProps) {
   const getInitials = (username?: string, fallbackName?: string) => {
     const source = (username || fallbackName || "?").trim();
     return source.substring(0, 1).toUpperCase();
@@ -96,6 +97,9 @@ export function StaffTable({ staff, onEdit, onDelete }: StaffTableProps) {
                 Role
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-center">
+                Services
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-center">
                 Status
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-right pr-6">
@@ -107,7 +111,7 @@ export function StaffTable({ staff, onEdit, onDelete }: StaffTableProps) {
             {staff.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="h-32 text-center text-muted-foreground"
                 >
                   No staff members found.
@@ -156,6 +160,14 @@ export function StaffTable({ staff, onEdit, onDelete }: StaffTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center py-5">
+                    <Badge
+                      variant="secondary"
+                      className="rounded-full px-3 py-0.5 font-bold border-none text-[10px] uppercase tracking-wider bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                    >
+                      {member.assignedServicesCount ?? 0} Assigned
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center py-5">
                     {getStatusBadge(member.status)}
                   </TableCell>
                   <TableCell className="text-right pr-6 py-5">
@@ -180,8 +192,9 @@ export function StaffTable({ staff, onEdit, onDelete }: StaffTableProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Credentials"
+                        className="size-8 rounded-full text-muted-foreground hover:text-violet-600 hover:bg-violet-500/10 transition-colors"
+                        onClick={() => onAssignServices(member)}
+                        title="Assign Services"
                       >
                         <GraduationCap className="size-4" />
                       </Button>

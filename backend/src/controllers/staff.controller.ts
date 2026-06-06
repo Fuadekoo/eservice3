@@ -71,6 +71,9 @@ const staffInclude = {
   office: {
     select: { id: true, name: true, status: true },
   },
+  serviceAssignments: {
+    select: { serviceId: true },
+  },
   user: {
     select: {
       id: true,
@@ -112,6 +115,7 @@ function buildStaffResponse(staff: StaffRecord) {
     createdAt: staff.createdAt,
     updatedAt: staff.updatedAt,
     office: staff.office,
+    assignedServicesCount: staff.serviceAssignments?.length ?? 0,
     user: {
       id: staff.user.id,
       username: staff.user.username,
@@ -781,6 +785,179 @@ export async function deleteStaff(
     return res.status(500).json({
       error: "InternalServerError",
       message: "Unable to delete staff member.",
+    });
+  }
+}
+
+// ─── Staff Service Assignment Controllers ────────────────────────────────────
+
+/**
+ * GET /staff/:id/services
+ * Auth required. Returns all services assigned to a staff member,
+ * plus all available services for the staff member's office (for toggle UI).
+ */
+export async function getStaffServices(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    const id = req.params["id"] as string;
+
+    const staff = await findStaffRecord(id);
+    if (!staff) {
+      return res.status(404).json({
+        error: "NotFound",
+        message: `Staff member with id '${id}' was not found.`,
+      });
+    }
+
+    if (!ensureStaffAccess(req, res, staff)) return;
+
+    // Get all services for the staff member's office
+    const allServices = await prisma.service.findMany({
+      where: { officeId: staff.officeId },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        timeToTake: true,
+      },
+      orderBy: { name: "asc" },
+    });
+
+    // Get currently assigned service IDs
+    const assignments = await prisma.serviceStaffAssignment.findMany({
+      where: { staffId: staff.id },
+      select: { serviceId: true },
+    });
+
+    const assignedServiceIds = new Set(assignments.map((a) => a.serviceId));
+
+    const services = allServices.map((service) => ({
+      ...service,
+      isAssigned: assignedServiceIds.has(service.id),
+    }));
+
+    return res.json({
+      data: {
+        staffId: staff.id,
+        staffName:
+          staff.user.name ||
+          [staff.user.firstName, staff.user.fatherName, staff.user.lastName]
+            .filter(Boolean)
+            .join(" ") ||
+          staff.user.username,
+        officeId: staff.officeId,
+        officeName: staff.office.name,
+        services,
+        assignedCount: assignedServiceIds.size,
+        totalCount: allServices.length,
+      },
+    });
+  } catch (error) {
+    console.error("[getStaffServices] Error:", error);
+    return res.status(500).json({
+      error: "InternalServerError",
+      message: "Unable to fetch staff services.",
+    });
+  }
+}
+
+/**
+ * PUT /staff/:id/services
+ * Auth required. Bulk-sync service assignments for a staff member.
+ * Body: { serviceIds: string[] }
+ * Replaces all current assignments with the provided list.
+ */
+export async function syncStaffServices(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    if (!req.isAdmin && !req.isManager) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "Only admins and managers can manage service assignments.",
+      });
+    }
+
+    const id = req.params["id"] as string;
+    const { serviceIds } = req.body;
+
+    if (!Array.isArray(serviceIds)) {
+      return res.status(400).json({
+        error: "ValidationError",
+        message: "serviceIds must be an array of strings.",
+      });
+    }
+
+    const staff = await findStaffRecord(id);
+    if (!staff) {
+      return res.status(404).json({
+        error: "NotFound",
+        message: `Staff member with id '${id}' was not found.`,
+      });
+    }
+
+    if (!ensureStaffAccess(req, res, staff)) return;
+
+    // Verify all services belong to the same office
+    if (serviceIds.length > 0) {
+      const validServices = await prisma.service.count({
+        where: {
+          id: { in: serviceIds },
+          officeId: staff.officeId,
+        },
+      });
+
+      if (validServices !== serviceIds.length) {
+        return res.status(400).json({
+          error: "ValidationError",
+          message:
+            "One or more services do not exist or belong to a different office.",
+        });
+      }
+    }
+
+    // Replace all assignments atomically
+    await prisma.$transaction(async (tx) => {
+      // Remove all current assignments
+      await tx.serviceStaffAssignment.deleteMany({
+        where: { staffId: staff.id },
+      });
+
+      // Create new assignments
+      if (serviceIds.length > 0) {
+        await tx.serviceStaffAssignment.createMany({
+          data: serviceIds.map((serviceId: string) => ({
+            serviceId,
+            staffId: staff.id,
+          })),
+        });
+      }
+    });
+
+    return res.json({
+      data: {
+        staffId: staff.id,
+        assignedServiceIds: serviceIds,
+        message: `Successfully updated service assignments. ${serviceIds.length} service(s) assigned.`,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return res.status(409).json({
+          error: "Conflict",
+          message: "Duplicate service assignment detected.",
+        });
+      }
+    }
+
+    console.error("[syncStaffServices] Error:", error);
+    return res.status(500).json({
+      error: "InternalServerError",
+      message: "Unable to update service assignments.",
     });
   }
 }

@@ -33,6 +33,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
+import { ReviewRequestDialog } from "./_components/review-request-dialog";
+import { ScheduleAppointmentDialog } from "./_components/schedule-appointment-dialog";
+
 const STATUS_TABS = [
   { label: "All", value: "" },
   { label: "Pending", value: "pending" },
@@ -69,19 +72,20 @@ export default function RequestManagementPage() {
   // staffId is returned by /auth/me and stored in session.user
   const managerStaffId = (session?.user as any)?.staffId ?? null;
 
-  const { requests, isLoading, pagination, fetchRequests, approveRequest, rejectRequest } =
-    useRequestStore();
+  const userRole = (session?.user as any)?.role?.name?.toLowerCase() || null;
+  const isManager = userRole === "manager";
+  const isStaff = userRole === "staff";
+  const activeRole = isStaff ? "staff" : isManager ? "manager" : null;
+
+  const { requests, isLoading, pagination, fetchRequests } = useRequestStore();
 
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize] = React.useState(10);
 
-  const [approvingId, setApprovingId] = React.useState<string | null>(null);
-  const [isApproving, setIsApproving] = React.useState(false);
-  const [rejectingId, setRejectingId] = React.useState<string | null>(null);
-  const [rejectReason, setRejectReason] = React.useState("");
-  const [isRejecting, setIsRejecting] = React.useState(false);
+  const [reviewingRequest, setReviewingRequest] = React.useState<ServiceRequest | null>(null);
+  const [schedulingRequest, setSchedulingRequest] = React.useState<ServiceRequest | null>(null);
 
   const refresh = React.useCallback(() => {
     fetchRequests({
@@ -96,44 +100,6 @@ export default function RequestManagementPage() {
     if (isSessionPending) return;
     refresh();
   }, [isSessionPending, currentPage, pageSize, search, statusFilter]);
-
-  const handleApprove = async (id: string) => {
-    if (!managerStaffId) {
-      toast.error("Could not resolve your staff record. Please refresh the page.");
-      return;
-    }
-    setApprovingId(id);
-    setIsApproving(true);
-    try {
-      await approveRequest(id, managerStaffId);
-      toast.success("Request approved");
-      refresh();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to approve request");
-    } finally {
-      setIsApproving(false);
-      setApprovingId(null);
-    }
-  };
-
-  const handleReject = async () => {
-    if (!rejectingId || !rejectReason.trim()) {
-      toast.error("Please enter a rejection reason");
-      return;
-    }
-    setIsRejecting(true);
-    try {
-      await rejectRequest(rejectingId, rejectReason.trim());
-      toast.success("Request rejected");
-      setRejectingId(null);
-      setRejectReason("");
-      refresh();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to reject request");
-    } finally {
-      setIsRejecting(false);
-    }
-  };
 
   const stats = React.useMemo(
     () => ({
@@ -289,37 +255,14 @@ export default function RequestManagementPage() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2 justify-end">
-                          {canApprove && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(req.id)}
-                              disabled={isThisApproving}
-                              className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3"
-                            >
-                              {isThisApproving ? (
-                                <Loader2 className="size-3 animate-spin" />
-                              ) : (
-                                <>
-                                  <CheckCircle className="size-3 mr-1" />
-                                  Approve
-                                </>
-                              )}
-                            </Button>
-                          )}
-                          {canReject && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setRejectingId(req.id)}
-                              className="h-8 rounded-lg text-destructive border-destructive/30 hover:bg-destructive/5 text-xs font-bold px-3"
-                            >
-                              <XCircle className="size-3 mr-1" />
-                              Reject
-                            </Button>
-                          )}
-                          {!canApprove && !canReject && (
-                            <span className="text-xs text-muted-foreground pr-2">—</span>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setReviewingRequest(req)}
+                            className="h-8 rounded-lg text-xs font-bold px-3 border-primary/30 text-primary hover:bg-primary/5"
+                          >
+                            Review Application
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -347,42 +290,26 @@ export default function RequestManagementPage() {
         />
       )}
 
-      {/* Reject Dialog */}
-      <AlertDialog
-        open={!!rejectingId}
-        onOpenChange={(open) => {
-          if (!open) {
-            setRejectingId(null);
-            setRejectReason("");
-          }
+      {/* Modals */}
+      <ReviewRequestDialog
+        request={reviewingRequest}
+        open={!!reviewingRequest}
+        onOpenChange={(o) => !o && setReviewingRequest(null)}
+        staffId={managerStaffId}
+        role={activeRole}
+        onSuccess={refresh}
+        onApproveSuccess={(req) => setSchedulingRequest(req)}
+      />
+
+      <ScheduleAppointmentDialog
+        request={schedulingRequest}
+        open={!!schedulingRequest}
+        onOpenChange={(o) => !o && setSchedulingRequest(null)}
+        onSuccess={() => {
+          setSchedulingRequest(null);
+          refresh();
         }}
-      >
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reject This Request</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please provide a reason. The customer will be notified via SMS.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Textarea
-            placeholder="Enter rejection reason..."
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            className="rounded-xl resize-none min-h-20"
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleReject}
-              disabled={isRejecting || !rejectReason.trim()}
-              className="rounded-xl bg-destructive hover:bg-destructive/90"
-            >
-              {isRejecting && <Loader2 className="size-4 animate-spin mr-2" />}
-              Reject Request
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      />
     </div>
   );
 }

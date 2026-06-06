@@ -16,6 +16,7 @@ export type StaffMember = {
     name: string;
     description?: string | null;
   };
+  assignedServicesCount?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -46,6 +47,7 @@ function normalizeStaffMember(raw: any): StaffMember {
       name: "Unassigned",
       description: null,
     },
+    assignedServicesCount: raw?.assignedServicesCount ?? 0,
     createdAt: raw?.createdAt ?? user?.createdAt ?? "",
     updatedAt: raw?.updatedAt ?? user?.updatedAt ?? "",
   };

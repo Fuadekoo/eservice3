@@ -70,10 +70,11 @@ function StatusBadge({ status }: { status: string }) {
 export default function RequestManagementPage() {
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const session = sessionData?.session;
-  // staffId is returned by /auth/me and stored in session.user
-  const managerStaffId = (session?.user as any)?.staffId ?? null;
+  // staffId is stored on session.user (from /auth/me)
+  const managerStaffId = session?.user?.staffId ?? null;
 
-  const userRole = (session?.user as any)?.role?.name?.toLowerCase() || null;
+  // role is at the top level of AuthSession, not inside user
+  const userRole = session?.role?.name?.toLowerCase() || null;
   const isManager = userRole === "manager";
   const isStaff = userRole === "staff";
   const activeRole = isStaff ? "staff" : isManager ? "manager" : null;
@@ -108,19 +109,26 @@ export default function RequestManagementPage() {
   }, [isSessionPending, currentPage, pageSize, search, statusFilter]);
 
   const handleApprove = async (id: string) => {
-    if (!managerStaffId) return;
     setApprovingId(id);
     try {
       if (activeRole === "staff") {
+        if (!managerStaffId) {
+          toast.error("Your staff record was not found. Please re-login.");
+          return;
+        }
         await useRequestStore.getState().approveRequestStaff(id, managerStaffId, "");
-      } else {
-        await useRequestStore.getState().approveRequestManager(id, managerStaffId, "");
-      }
-      toast.success("Request approved");
-      refresh();
-      if (activeRole === "staff") {
+        toast.success("Request approved by staff");
+        refresh();
         const req = requests.find((r) => r.id === id);
         if (req) setSchedulingRequest(req);
+      } else if (activeRole === "manager") {
+        if (!managerStaffId) {
+          toast.error("Your manager record was not found. Please re-login.");
+          return;
+        }
+        await useRequestStore.getState().approveRequestManager(id, managerStaffId, "");
+        toast.success("Request approved by manager");
+        refresh();
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to approve request");
@@ -269,10 +277,10 @@ export default function RequestManagementPage() {
                   const overall = req.statusbyadmin === "rejected" || req.statusbystaff === "rejected" ? "rejected" : req.statusbyadmin === "approved" ? "approved" : "pending";
                   const canApprove =
                     activeRole === "staff" ? req.statusbystaff === "pending" :
-                    activeRole === "manager" ? req.statusbyadmin === "pending" : false;
+                    activeRole === "manager" ? req.statusbyadmin === "pending" && req.statusbystaff === "approved" : false;
                   const canReject =
-                    activeRole === "staff" ? req.statusbystaff !== "rejected" :
-                    activeRole === "manager" ? req.statusbyadmin !== "rejected" : false;
+                    activeRole === "staff" ? req.statusbystaff === "pending" :
+                    activeRole === "manager" ? req.statusbyadmin === "pending" : false;
                   const isThisApproving = approvingId === req.id;
 
                   return (

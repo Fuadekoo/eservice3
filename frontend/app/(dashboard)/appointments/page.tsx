@@ -19,6 +19,8 @@ import {
   User,
   ChevronRight,
   CheckCheck,
+  Paperclip,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -38,8 +40,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { PdfViewerModal } from "@/components/ui/pdf-viewer-modal";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
+type FileData = { id: string; name: string; filepath: string; description?: string | null };
+
 type Appointment = {
   id: string;
   date: string;
@@ -52,6 +57,7 @@ type Appointment = {
     id: string;
     statusbystaff: string;
     statusbyadmin: string;
+    fileData?: FileData[];
     service?: {
       id: string;
       name: string;
@@ -566,130 +572,178 @@ function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: 
 
 // ── Detail Dialog ──────────────────────────────────────────────────────────────
 function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: () => void }) {
+  const [viewingFile, setViewingFile] = React.useState<FileData | null>(null);
+
   if (!apt) return null;
   const cfg = getStatusCfg(apt.status);
   const Icon = cfg.icon;
   const today = isToday(apt.date);
   const upcoming = isUpcoming(apt.date);
+  const files = apt.request?.fileData ?? [];
 
   return (
-    <Dialog open={!!apt} onOpenChange={o => !o && onClose()}>
-      <DialogContent className="max-w-lg rounded-2xl p-0 gap-0 overflow-hidden">
-        {/* Header */}
-        <div className="bg-primary px-6 py-5">
-          <DialogHeader>
-            <DialogTitle className="text-white font-black text-xl leading-snug">
-              {apt.request?.service?.name ?? "Appointment"}
-            </DialogTitle>
-            <p className="text-primary-foreground/70 text-sm mt-0.5 flex items-center gap-1.5">
-              <Building2 className="size-3.5" />
-              {apt.request?.service?.office?.name ?? "—"}
-            </p>
-          </DialogHeader>
-        </div>
-
-        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-          {/* Status + date highlight */}
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className={cn("font-bold text-sm gap-1.5 px-3 py-1", cfg.badge)}>
-              <Icon className="size-4" /> {cfg.label}
-            </Badge>
-            <div className="flex gap-2">
-              {today && <Badge className="bg-primary text-primary-foreground font-black text-xs">TODAY</Badge>}
-              {upcoming && !today && <Badge variant="outline" className="text-muted-foreground text-xs">Upcoming</Badge>}
-            </div>
-          </div>
-
-          {/* Date / time card */}
-          <div className="rounded-xl bg-primary/5 border border-primary/10 p-4 flex items-center gap-4">
-            <div className="size-16 rounded-xl bg-primary/10 flex flex-col items-center justify-center shrink-0">
-              <p className="text-xs font-bold text-primary uppercase">
-                {new Date(apt.date).toLocaleDateString("en-US", { month: "short" })}
+    <>
+      <Dialog open={!!apt} onOpenChange={o => !o && onClose()}>
+        <DialogContent className="max-w-lg rounded-2xl p-0 gap-0 overflow-hidden">
+          {/* Header */}
+          <div className="bg-primary px-6 py-5">
+            <DialogHeader>
+              <DialogTitle className="text-white font-black text-xl leading-snug">
+                {apt.request?.service?.name ?? "Appointment"}
+              </DialogTitle>
+              <p className="text-primary-foreground/70 text-sm mt-0.5 flex items-center gap-1.5">
+                <Building2 className="size-3.5" />
+                {apt.request?.service?.office?.name ?? "—"}
               </p>
-              <p className="text-3xl font-black text-primary leading-none">{new Date(apt.date).getDate()}</p>
-              <p className="text-xs text-primary/70">{new Date(apt.date).getFullYear()}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="font-bold text-base">{fmtDate(apt.date)}</p>
-              {apt.time && (
-                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Clock className="size-4 text-primary" /> {apt.time}
-                </p>
-              )}
-              {apt.request?.service?.office?.roomNumber && (
-                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin className="size-4 text-primary" /> Room {apt.request.service.office.roomNumber}
-                </p>
-              )}
-            </div>
+            </DialogHeader>
           </div>
 
-          {/* Office info */}
-          {apt.request?.service?.office && (
-            <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Office Details</p>
-              <div className="space-y-1.5 text-sm">
-                <p className="font-semibold">{apt.request.service.office.name}</p>
-                {apt.request.service.office.address && (
-                  <p className="flex items-center gap-1.5 text-muted-foreground">
-                    <MapPin className="size-3.5 shrink-0" /> {apt.request.service.office.address}
+          <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            {/* Status + date highlight */}
+            <div className="flex items-center justify-between">
+              <Badge variant="outline" className={cn("font-bold text-sm gap-1.5 px-3 py-1", cfg.badge)}>
+                <Icon className="size-4" /> {cfg.label}
+              </Badge>
+              <div className="flex gap-2">
+                {today && <Badge className="bg-primary text-primary-foreground font-black text-xs">TODAY</Badge>}
+                {upcoming && !today && <Badge variant="outline" className="text-muted-foreground text-xs">Upcoming</Badge>}
+              </div>
+            </div>
+
+            {/* Date / time card */}
+            <div className="rounded-xl bg-primary/5 border border-primary/10 p-4 flex items-center gap-4">
+              <div className="size-16 rounded-xl bg-primary/10 flex flex-col items-center justify-center shrink-0">
+                <p className="text-xs font-bold text-primary uppercase">
+                  {new Date(apt.date).toLocaleDateString("en-US", { month: "short" })}
+                </p>
+                <p className="text-3xl font-black text-primary leading-none">{new Date(apt.date).getDate()}</p>
+                <p className="text-xs text-primary/70">{new Date(apt.date).getFullYear()}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="font-bold text-base">{fmtDate(apt.date)}</p>
+                {apt.time && (
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Clock className="size-4 text-primary" /> {apt.time}
+                  </p>
+                )}
+                {apt.request?.service?.office?.roomNumber && (
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="size-4 text-primary" /> Room {apt.request.service.office.roomNumber}
                   </p>
                 )}
               </div>
             </div>
-          )}
 
-          {/* Request pipeline */}
-          {apt.request && (
-            <div className="rounded-xl border border-border p-4 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Related Request</p>
-              <div className="space-y-2">
-                {[
-                  { label: "Staff Review",   status: apt.request.statusbystaff },
-                  { label: "Manager Review", status: apt.request.statusbyadmin },
-                ].map(({ label, status }) => (
-                  <div key={label} className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{label}</span>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-xs font-semibold",
-                        status === "approved" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
-                        status === "rejected" ? "bg-red-500/10 text-red-600 border-red-500/20" :
-                        "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                      )}
-                    >
-                      {status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Approver */}
-          {apt.approveStaff && (
-            <div className="rounded-xl border border-border p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Confirmed By</p>
-              <div className="flex items-center gap-2 text-sm">
-                <div className="size-7 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <User className="size-3.5 text-emerald-600" />
+            {/* Office info */}
+            {apt.request?.service?.office && (
+              <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Office Details</p>
+                <div className="space-y-1.5 text-sm">
+                  <p className="font-semibold">{apt.request.service.office.name}</p>
+                  {apt.request.service.office.address && (
+                    <p className="flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin className="size-3.5 shrink-0" /> {apt.request.service.office.address}
+                    </p>
+                  )}
                 </div>
-                <span className="font-semibold">{apt.approveStaff.user.username}</span>
-                <span className="text-muted-foreground text-xs">{apt.approveStaff.user.phoneNumber}</span>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Notes */}
-          {apt.notes && (
-            <div className="rounded-xl border border-border p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Notes</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">{apt.notes}</p>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+            {/* Request pipeline */}
+            {apt.request && (
+              <div className="rounded-xl border border-border p-4 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Related Request</p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Staff Review",   status: apt.request.statusbystaff },
+                    { label: "Manager Review", status: apt.request.statusbyadmin },
+                  ].map(({ label, status }) => (
+                    <div key={label} className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{label}</span>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs font-semibold",
+                          status === "approved" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
+                          status === "rejected" ? "bg-red-500/10 text-red-600 border-red-500/20" :
+                          "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                        )}
+                      >
+                        {status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Submitted Documents */}
+            {files.length > 0 && (
+              <div className="rounded-xl border border-border p-4 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Paperclip className="size-3.5" />
+                  Submitted Documents ({files.length})
+                </p>
+                <div className="space-y-2">
+                  {files.map((file) => (
+                    <button
+                      key={file.id}
+                      onClick={() => setViewingFile(file)}
+                      className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group text-left"
+                    >
+                      <div className="size-8 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+                        <FileText className="size-4 text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                          {file.name}
+                        </p>
+                        {file.description && (
+                          <p className="text-xs text-muted-foreground truncate">{file.description}</p>
+                        )}
+                      </div>
+                      <Eye className="size-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Approver */}
+            {apt.approveStaff && (
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Confirmed By</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="size-7 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <User className="size-3.5 text-emerald-600" />
+                  </div>
+                  <span className="font-semibold">{apt.approveStaff.user.username}</span>
+                  <span className="text-muted-foreground text-xs">{apt.approveStaff.user.phoneNumber}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            {apt.notes && (
+              <div className="rounded-xl border border-border p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Notes</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{apt.notes}</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF Viewer Modal for selected file */}
+      {viewingFile && (
+        <PdfViewerModal
+          open={!!viewingFile}
+          onOpenChange={(o) => !o && setViewingFile(null)}
+          fileId=""
+          fileName={viewingFile.name}
+          filepath={viewingFile.filepath}
+        />
+      )}
+    </>
   );
 }

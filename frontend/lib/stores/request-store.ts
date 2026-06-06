@@ -84,6 +84,9 @@ export const useRequestStore = create<RequestStore>((set) => ({
   },
 
   createAppointment: async (requestId, date, time, notes) => {
-    await axiosInstance.post(`/appointments`, { requestId, date, time, notes });
+    // Backend expects a full ISO 8601 datetime string for `date`
+    const timeStr = time || "09:00";
+    const isoDate = new Date(`${date}T${timeStr}:00`).toISOString();
+    await axiosInstance.post(`/appointments`, { requestId, date: isoDate, time, notes });
   },
 }));

@@ -35,6 +35,14 @@ const appointmentInclude = {
       id: true,
       statusbystaff: true,
       statusbyadmin: true,
+      fileData: {
+        select: {
+          id: true,
+          name: true,
+          filepath: true,
+          description: true,
+        },
+      },
       service: {
         select: {
           id: true,
@@ -53,6 +61,7 @@ const appointmentInclude = {
     },
   },
 } as const;
+
 
 /**
  * Format appointment response with ISO date strings

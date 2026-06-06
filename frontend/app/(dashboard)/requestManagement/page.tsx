@@ -15,11 +15,11 @@ import { toast } from "sonner";
 
 import { useRequestStore, type ServiceRequest } from "@/lib/stores/request-store";
 import { useSession } from "@/hooks/use-session";
+import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/dashboard/page-header";
 import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -36,13 +36,6 @@ import { cn } from "@/lib/utils";
 
 import { ReviewRequestDialog } from "./_components/review-request-dialog";
 import { ScheduleAppointmentDialog } from "./_components/schedule-appointment-dialog";
-
-const STATUS_TABS = [
-  { label: "All", value: "" },
-  { label: "Pending", value: "pending" },
-  { label: "Approved", value: "approved" },
-  { label: "Rejected", value: "rejected" },
-];
 
 function getOverallStatus(req: ServiceRequest) {
   const { statusbystaff, statusbyadmin } = req;
@@ -67,13 +60,18 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+const STATUS_TABS: PageTab[] = [
+  { label: "All", value: "" },
+  { label: "Pending", value: "pending" },
+  { label: "Approved", value: "approved" },
+  { label: "Rejected", value: "rejected" },
+];
+
 export default function RequestManagementPage() {
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const session = sessionData?.session;
-  // staffId is stored on session.user (from /auth/me)
   const managerStaffId = session?.user?.staffId ?? null;
 
-  // role is at the top level of AuthSession, not inside user
   const userRole = session?.role?.name?.toLowerCase() || null;
   const isManager = userRole === "manager";
   const isStaff = userRole === "staff";
@@ -172,64 +170,53 @@ export default function RequestManagementPage() {
     [requests, pagination]
   );
 
+  const tabsWithBadges: PageTab[] = [
+    { label: "All", value: "", badge: stats.total },
+    { label: "Pending", value: "pending", badge: stats.pending || undefined },
+    { label: "Approved", value: "approved", badge: stats.approved || undefined },
+    { label: "Rejected", value: "rejected", badge: stats.rejected || undefined },
+  ];
+
   return (
-    <div className="space-y-6 p-6 lg:p-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeader
-          title="Request Management"
-          description="Review and process service requests for your office"
-          icon={ClipboardList}
-        />
-        <Button variant="outline" onClick={refresh} className="h-10 rounded-xl shrink-0">
+    <PageLayout
+      title="Request Management"
+      description="Review and process service requests for your office"
+      icon={ClipboardList}
+      tabs={tabsWithBadges}
+      activeTab={statusFilter}
+      onTabChange={(value) => { setStatusFilter(value); setCurrentPage(1); }}
+      actions={
+        <Button variant="outline" onClick={refresh} className="h-10 rounded-xl">
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
           Refresh
         </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Total Requests", value: stats.total, icon: ClipboardList, color: "text-primary", bg: "bg-primary/10" },
-          { label: "Pending Review", value: stats.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-500/10" },
-          { label: "Approved", value: stats.approved, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-500/10" },
-          { label: "Rejected", value: stats.rejected, icon: XCircle, color: "text-red-600", bg: "bg-red-500/10" },
-        ].map(({ label, value, icon: Icon, color, bg }) => (
-          <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className={cn("p-2.5 rounded-xl shrink-0", bg)}>
-                <Icon className={cn("size-5", color)} />
-              </div>
-              <div>
-                <p className="text-2xl font-black">{value}</p>
-                <p className="text-xs text-muted-foreground font-medium">{label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 border border-border/50">
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => {
-                setStatusFilter(tab.value);
-                setCurrentPage(1);
-              }}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-                statusFilter === tab.value
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {tab.label}
-            </button>
+      }
+    >
+      <div className="space-y-6">
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "Total Requests", value: stats.total, icon: ClipboardList, color: "text-primary", bg: "bg-primary/10" },
+            { label: "Pending Review", value: stats.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-500/10" },
+            { label: "Approved", value: stats.approved, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-500/10" },
+            { label: "Rejected", value: stats.rejected, icon: XCircle, color: "text-red-600", bg: "bg-red-500/10" },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className={cn("p-2.5 rounded-xl shrink-0", bg)}>
+                  <Icon className={cn("size-5", color)} />
+                </div>
+                <div>
+                  <p className="text-2xl font-black">{value}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{label}</p>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
-        <div className="relative flex-1 max-w-sm">
+
+        {/* Search */}
+        <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             placeholder="Search by customer or service..."
@@ -241,143 +228,139 @@ export default function RequestManagementPage() {
             className="pl-9 rounded-xl h-10"
           />
         </div>
-      </div>
 
-      {/* Requests Table */}
-      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-48">
-            <Loader2 className="size-6 animate-spin text-primary" />
-          </div>
-        ) : requests.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="p-4 rounded-full bg-muted/30 mb-4">
-              <ClipboardList className="size-10 text-muted-foreground/30" />
+        {/* Requests Table */}
+        <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="size-6 animate-spin text-primary" />
             </div>
-            <p className="font-semibold text-lg">No requests found</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {search || statusFilter ? "Try adjusting your filters" : "No requests have been submitted yet"}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Customer</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Service</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Date</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Staff</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Manager</th>
-                  <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map((req) => {
-                  const overall = req.statusbyadmin === "rejected" || req.statusbystaff === "rejected" ? "rejected" : req.statusbyadmin === "approved" ? "approved" : "pending";
-                  const canApprove =
-                    activeRole === "staff" ? req.statusbystaff === "pending" :
-                    activeRole === "manager" ? req.statusbyadmin === "pending" && req.statusbystaff === "approved" : false;
-                  const canReject =
-                    activeRole === "staff" ? req.statusbystaff === "pending" :
-                    activeRole === "manager" ? req.statusbyadmin === "pending" : false;
-                  const isThisApproving = approvingId === req.id;
+          ) : requests.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="p-4 rounded-full bg-muted/30 mb-4">
+                <ClipboardList className="size-10 text-muted-foreground/30" />
+              </div>
+              <p className="font-semibold text-lg">No requests found</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {search || statusFilter ? "Try adjusting your filters" : "No requests have been submitted yet"}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border/50 bg-muted/30">
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Customer</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Service</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Date</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Staff</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Manager</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((req) => {
+                    const canApprove =
+                      activeRole === "staff" ? req.statusbystaff === "pending" :
+                      activeRole === "manager" ? req.statusbyadmin === "pending" && req.statusbystaff === "approved" : false;
+                    const canReject =
+                      activeRole === "staff" ? req.statusbystaff === "pending" :
+                      activeRole === "manager" ? req.statusbyadmin === "pending" : false;
+                    const isThisApproving = approvingId === req.id;
 
-                  return (
-                    <tr
-                      key={req.id}
-                      className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors"
-                    >
-                      <td className="p-4">
-                        <p className="font-semibold">{req.user?.username}</p>
-                        <p className="text-xs text-muted-foreground">{req.user?.phoneNumber}</p>
-                      </td>
-                      <td className="p-4">
-                        <p className="font-medium">{req.service?.name}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-45">
-                          {req.currentAddress}
-                        </p>
-                      </td>
-                      <td className="p-4 whitespace-nowrap text-muted-foreground">
-                        {new Date(req.date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </td>
-                      <td className="p-4">
-                        <StatusBadge status={req.statusbystaff} />
-                      </td>
-                      <td className="p-4">
-                        <StatusBadge status={req.statusbyadmin} />
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 justify-end">
-                          {canApprove && (
+                    return (
+                      <tr
+                        key={req.id}
+                        className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors"
+                      >
+                        <td className="p-4">
+                          <p className="font-semibold">{req.user?.username}</p>
+                          <p className="text-xs text-muted-foreground">{req.user?.phoneNumber}</p>
+                        </td>
+                        <td className="p-4">
+                          <p className="font-medium">{req.service?.name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-45">
+                            {req.currentAddress}
+                          </p>
+                        </td>
+                        <td className="p-4 whitespace-nowrap text-muted-foreground">
+                          {new Date(req.date).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </td>
+                        <td className="p-4">
+                          <StatusBadge status={req.statusbystaff} />
+                        </td>
+                        <td className="p-4">
+                          <StatusBadge status={req.statusbyadmin} />
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2 justify-end">
+                            {canApprove && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleApprove(req.id)}
+                                disabled={isThisApproving}
+                                className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3"
+                              >
+                                {isThisApproving ? (
+                                  <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                  <>
+                                    <CheckCircle className="size-3 mr-1" />
+                                    Approve
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                            {canReject && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setRejectingId(req.id)}
+                                className="h-8 rounded-lg text-destructive border-destructive/30 hover:bg-destructive/5 text-xs font-bold px-3"
+                              >
+                                <XCircle className="size-3 mr-1" />
+                                Reject
+                              </Button>
+                            )}
                             <Button
-                              size="sm"
-                              onClick={() => handleApprove(req.id)}
-                              disabled={isThisApproving}
-                              className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3"
-                              title="Approve immediately"
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setReviewingRequest(req)}
+                              className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10 shrink-0"
                             >
-                              {isThisApproving ? (
-                                <Loader2 className="size-3 animate-spin" />
-                              ) : (
-                                <>
-                                  <CheckCircle className="size-3 mr-1" />
-                                  Approve
-                                </>
-                              )}
+                              <Eye className="size-4" />
                             </Button>
-                          )}
-                          {canReject && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setRejectingId(req.id)}
-                              className="h-8 rounded-lg text-destructive border-destructive/30 hover:bg-destructive/5 text-xs font-bold px-3"
-                              title="Reject immediately"
-                            >
-                              <XCircle className="size-3 mr-1" />
-                              Reject
-                            </Button>
-                          )}
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setReviewingRequest(req)}
-                            className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10 shrink-0"
-                            title="View & Review Application Details"
-                          >
-                            <Eye className="size-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {pagination && pagination.total > pageSize && (
+          <PaginationFooter
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.total}
+            startIndex={(currentPage - 1) * pageSize}
+            endIndex={Math.min(currentPage * pageSize, pagination.total)}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
+            canGoNext={currentPage < pagination.totalPages}
+            canGoPrevious={currentPage > 1}
+            itemLabel="requests"
+          />
         )}
       </div>
-
-      {pagination && pagination.total > pageSize && (
-        <PaginationFooter
-          currentPage={currentPage}
-          pageSize={pageSize}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.total}
-          startIndex={(currentPage - 1) * pageSize}
-          endIndex={Math.min(currentPage * pageSize, pagination.total)}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
-          canGoNext={currentPage < pagination.totalPages}
-          canGoPrevious={currentPage > 1}
-          itemLabel="requests"
-        />
-      )}
 
       {/* Modals */}
       <ReviewRequestDialog
@@ -435,6 +418,6 @@ export default function RequestManagementPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

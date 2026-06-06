@@ -2,13 +2,13 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { PageHeader } from "@/components/dashboard/page-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings } from "lucide-react";
 import { OfficeInfoTab } from "./_tabs/office-info-tab";
 import { ProfileTab } from "./_tabs/profile-tab";
 import { PreferencesTab } from "./_tabs/preferences-tab";
 import { SecurityTab } from "./_tabs/security-tab";
 import { useSession } from "@/hooks/use-session";
+import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
 
 export default function SettingsPage() {
   return (
@@ -34,39 +34,30 @@ function SettingsContent() {
   const userType = (session?.user as any)?.userType || "";
   const isOfficeAdmin = roleName === "admin" && userType === "OFFICE_USER";
 
-  const defaultTab = searchParams.get("tab") || "profile";
+  const [activeTab, setActiveTab] = React.useState(
+    searchParams.get("tab") || "profile",
+  );
+
+  const tabs: PageTab[] = [
+    { label: "Profile", value: "profile" },
+    { label: "Preferences", value: "preferences" },
+    { label: "Security", value: "security" },
+    ...(isOfficeAdmin ? [{ label: "Company Info", value: "office-info" }] : []),
+  ];
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Settings"
-        description="Manage your application settings and preferences"
-      />
-
-      <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          {isOfficeAdmin && (
-            <TabsTrigger value="office-info">Office</TabsTrigger>
-          )}
-        </TabsList>
-        <TabsContent value="profile" className="mt-6">
-          <ProfileTab />
-        </TabsContent>
-        <TabsContent value="preferences" className="mt-6">
-          <PreferencesTab />
-        </TabsContent>
-        <TabsContent value="security" className="mt-6">
-          <SecurityTab />
-        </TabsContent>
-        {isOfficeAdmin && (
-          <TabsContent value="office-info" className="mt-6">
-            <OfficeInfoTab />
-          </TabsContent>
-        )}
-      </Tabs>
-    </div>
+    <PageLayout
+      title="Settings"
+      description="Manage your application settings and preferences"
+      icon={Settings}
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      {activeTab === "profile" && <ProfileTab />}
+      {activeTab === "preferences" && <PreferencesTab />}
+      {activeTab === "security" && <SecurityTab />}
+      {activeTab === "office-info" && isOfficeAdmin && <OfficeInfoTab />}
+    </PageLayout>
   );
 }

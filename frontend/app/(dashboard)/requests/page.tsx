@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { useRequestStore, type ServiceRequest } from "@/lib/stores/request-store";
 import { useSession } from "@/hooks/use-session";
 import { axiosInstance } from "@/lib/axios";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
 import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,96 +153,90 @@ export default function MyRequestsPage() {
     }
   };
 
+  const tabs: PageTab[] = TABS.map(tab => ({
+    label: tab.label,
+    value: tab.value,
+    badge: tab.value === "" ? stats.total :
+           tab.value === "pending" ? stats.pending :
+           tab.value === "processing" ? stats.processing :
+           tab.value === "approved" ? stats.approved :
+           tab.value === "rejected" ? stats.rejected : undefined
+  }));
+
   return (
-    <div className="space-y-6 p-6 lg:p-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeader
-          title="My Requests"
-          description="Track and manage your service applications"
-          icon={FileText}
-        />
+    <PageLayout
+      title="My Requests"
+      description="Track and manage your service applications"
+      icon={FileText}
+      tabs={tabs}
+      activeTab={statusTab}
+      onTabChange={(val) => { setStatusTab(val); setCurrentPage(1); }}
+      actions={
         <Button variant="outline" onClick={refresh} className="h-10 rounded-xl shrink-0">
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
           Refresh
         </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {[
-          { label: "Total",      value: stats.total,      icon: FileText,      color: "text-primary",     bg: "bg-primary/10" },
-          { label: "Pending",    value: stats.pending,    icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
-          { label: "Processing", value: stats.processing, icon: Activity,      color: "text-blue-600",    bg: "bg-blue-500/10" },
-          { label: "Approved",   value: stats.approved,   icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
-          { label: "Rejected",   value: stats.rejected,   icon: XCircle,       color: "text-red-600",     bg: "bg-red-500/10" },
-        ].map(({ label, value, icon: Icon, color, bg }) => (
-          <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className={cn("p-2 rounded-lg shrink-0", bg)}>
-                <Icon className={cn("size-4", color)} />
-              </div>
-              <div>
-                <p className="text-xl font-black leading-none">{value}</p>
-                <p className="text-xs text-muted-foreground font-medium mt-0.5">{label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Status tabs */}
-        <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 border border-border/50 overflow-x-auto">
-          {TABS.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => { setStatusTab(tab.value); setCurrentPage(1); }}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap shrink-0",
-                statusTab === tab.value
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {tab.label}
-            </button>
+      }
+    >
+      <div className="space-y-6">
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[
+            { label: "Total",      value: stats.total,      icon: FileText,      color: "text-primary",     bg: "bg-primary/10" },
+            { label: "Pending",    value: stats.pending,    icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
+            { label: "Processing", value: stats.processing, icon: Activity,      color: "text-blue-600",    bg: "bg-blue-500/10" },
+            { label: "Approved",   value: stats.approved,   icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
+            { label: "Rejected",   value: stats.rejected,   icon: XCircle,       color: "text-red-600",     bg: "bg-red-500/10" },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className={cn("p-2 rounded-lg shrink-0", bg)}>
+                  <Icon className={cn("size-4", color)} />
+                </div>
+                <div>
+                  <p className="text-xl font-black leading-none">{value}</p>
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5">{label}</p>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Search */}
-          <div className="relative flex-1 sm:w-60">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              placeholder="Search requests..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              className="pl-9 h-10 rounded-xl"
-            />
-          </div>
+        {/* Toolbar */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <div className="relative flex-1 sm:w-60">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Search requests..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                className="pl-9 h-10 rounded-xl"
+              />
+            </div>
 
-          {/* View toggle */}
-          <div className="flex items-center gap-0.5 bg-muted/50 rounded-xl p-1 border border-border/50">
-            <Button
-              variant={view === "table" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8 rounded-lg"
-              onClick={() => setView("table")}
-              title="Table view"
-            >
-              <List className="size-4" />
-            </Button>
-            <Button
-              variant={view === "card" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8 rounded-lg"
-              onClick={() => setView("card")}
-              title="Card view"
-            >
-              <LayoutGrid className="size-4" />
-            </Button>
+            {/* View toggle */}
+            <div className="flex items-center gap-0.5 bg-muted/50 rounded-xl p-1 border border-border/50">
+              <Button
+                variant={view === "table" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8 rounded-lg"
+                onClick={() => setView("table")}
+                title="Table view"
+              >
+                <List className="size-4" />
+              </Button>
+              <Button
+                variant={view === "card" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8 rounded-lg"
+                onClick={() => setView("card")}
+                title="Card view"
+              >
+                <LayoutGrid className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -313,7 +307,7 @@ export default function MyRequestsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }
 

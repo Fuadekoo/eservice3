@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { useUserStore, type User } from "@/lib/stores/user-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageLayout } from "@/components/dashboard/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserTable } from "./_components/user-table";
@@ -107,113 +107,115 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 p-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <PageHeader
-          title="User Management"
-          description="Manage users, assign roles, and assign offices"
-        />
-        <div className="flex items-center gap-3">
+    <PageLayout
+      title="User Management"
+      description="Manage users, assign roles, and assign offices"
+      icon={UserCog}
+      actions={
+        <>
           <Button
             variant="outline"
             onClick={handleRefresh}
-            className="bg-transparent border-gray-800 text-white hover:bg-gray-800 rounded-xl h-11"
+            className="rounded-xl h-10"
           >
             <RotateCw className={`mr-2 size-4 ${isLoading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
           <Button
             onClick={handleCreate}
-            className="bg-primary hover:bg-primary/90 rounded-xl h-11 px-6 font-semibold"
+            className="bg-primary hover:bg-primary/90 rounded-xl h-10 px-6 font-semibold"
           >
             <Plus className="mr-2 size-4" />
             Add User
           </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-2xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-gray-500" />
-          <Input
-            placeholder="Search users by name, phone, role, or office..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="pl-11 bg-[#121212] border-gray-800 text-white focus:ring-primary rounded-xl h-11"
-          />
-        </div>
-        <div className="flex items-center gap-4">
-          <Select
-            value={selectedRoleId}
-            onValueChange={(value) => {
-              setSelectedRoleId(value);
-              setCurrentPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[180px] bg-[#121212] border-gray-800 text-white h-11 rounded-xl">
-              <SelectValue placeholder="All Roles" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#121212] border-gray-800 text-white">
-              <SelectItem value="all">All Roles</SelectItem>
-              {roles.map((role) => (
-                <SelectItem key={role.id} value={role.id}>
-                  {role.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <span>Show:</span>
-            <Select 
-              value={pageSize.toString()} 
-              onValueChange={(v) => {
-                setPageSize(parseInt(v));
+        </>
+      }
+    >
+      <div className="space-y-6">
+        {/* Filters */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1 max-w-2xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search users by name, phone, role, or office..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-11 border-border focus:ring-primary rounded-xl h-11"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <Select
+              value={selectedRoleId}
+              onValueChange={(value) => {
+                setSelectedRoleId(value);
                 setCurrentPage(1);
               }}
             >
-              <SelectTrigger className="w-[80px] bg-[#121212] border-gray-800 text-white h-11 rounded-xl">
-                <SelectValue />
+              <SelectTrigger className="w-[180px] h-11 rounded-xl">
+                <SelectValue placeholder="All Roles" />
               </SelectTrigger>
-              <SelectContent className="bg-[#121212] border-gray-800 text-white">
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Show:</span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(v) => {
+                  setPageSize(parseInt(v));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[80px] h-11 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
+
+        <UserTable
+          users={users}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+        />
+
+        {pagination && pagination.total > 0 && (
+          <div className="mt-4">
+            <PaginationFooter
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.total}
+              startIndex={(currentPage - 1) * pageSize}
+              endIndex={currentPage * pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              canGoNext={currentPage < pagination.totalPages}
+              canGoPrevious={currentPage > 1}
+              itemLabel="users"
+            />
+          </div>
+        )}
       </div>
-
-      <UserTable
-        users={users}
-        onEdit={handleEdit}
-        onDelete={handleDeleteClick}
-      />
-
-      {pagination && pagination.total > 0 && (
-        <div className="mt-4">
-          <PaginationFooter
-            currentPage={currentPage}
-            pageSize={pageSize}
-            totalPages={pagination.totalPages}
-            totalItems={pagination.total}
-            startIndex={(currentPage - 1) * pageSize}
-            endIndex={currentPage * pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setCurrentPage(1);
-            }}
-            canGoNext={currentPage < pagination.totalPages}
-            canGoPrevious={currentPage > 1}
-            itemLabel="users"
-          />
-        </div>
-      )}
 
       <UserCreateDialog
         open={isDialogOpen}
@@ -222,27 +224,25 @@ export default function UsersPage() {
       />
 
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
-        <AlertDialogContent className="bg-[#121212] border-gray-800 text-white">
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogDescription className="text-muted-foreground">
               This action cannot be undone. This will permanently delete the user
               account and remove their data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-gray-800 text-white hover:bg-gray-800">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              className="bg-[#f05252] hover:bg-[#d94444] text-white"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl"
             >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

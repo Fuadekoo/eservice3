@@ -60,6 +60,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { PageLayout } from "@/components/dashboard/page-layout";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -108,18 +109,25 @@ export default function OfficesPage() {
   };
 
   return (
-    <div className="space-y-6 p-6 max-w-7xl mx-auto">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-black tracking-tight">
-          {t("Government Offices")}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t("Create and manage your office locations and information.")}
-        </p>
-      </div>
-
+    <PageLayout
+      title={t("Government Offices")}
+      description={t("Create and manage your office locations and information.")}
+      icon={Building2}
+      actions={
+        <Button
+          className="h-10 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+          onClick={() => {
+            setEditingOffice(null);
+            setIsCreateOpen(true);
+          }}
+        >
+          <Plus className="size-4" />
+          {t("New Office")}
+        </Button>
+      }
+    >
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-card/50 p-4 rounded-2xl border border-border/50">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-card/50 p-4 rounded-2xl border border-border/50 mb-6">
         <div className="relative w-full md:w-[400px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
@@ -166,17 +174,7 @@ export default function OfficesPage() {
             </Button>
           </div>
 
-          <Button
-            className="h-10 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
-            onClick={() => {
-              setEditingOffice(null);
-              setIsCreateOpen(true);
-            }}
-          >
-            <Plus className="size-4" />
-            {t("New Office")}
-          </Button>
-        </div>
+          </div>
       </div>
 
       {isLoading ? (
@@ -363,7 +361,7 @@ export default function OfficesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }
 

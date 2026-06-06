@@ -543,7 +543,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <UserAvatarDropdown />
         </header>
 
-        <main className="p-5 grid overflow-x-hidden overflow-y-auto">
+        <main className="grid overflow-x-hidden overflow-y-auto">
           {children}
         </main>
       </SidebarInset>

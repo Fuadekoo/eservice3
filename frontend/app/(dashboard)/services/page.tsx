@@ -42,7 +42,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ServiceCreateDialog } from "@/components/dashboard/service-create-dialog";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageLayout } from "@/components/dashboard/page-layout";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -130,28 +130,28 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="space-y-8 p-6 lg:p-8">
-      <PageHeader
-        title={t("Service Management")}
-        description={
-          isAdmin
-            ? t("Manage all government services across all offices.")
-            : t("Manage services provided by your office.")
-        }
-        icon={Layers}
-        actions={
-          <Button
-            onClick={() => {
-              setEditingService(null);
-              setIsCreateOpen(true);
-            }}
-            className="rounded-xl font-bold bg-primary shadow-lg shadow-primary/20"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {t("Create Service")}
-          </Button>
-        }
-      />
+    <PageLayout
+      title={t("Service Management")}
+      description={
+        isAdmin
+          ? t("Manage all government services across all offices.")
+          : t("Manage services provided by your office.")
+      }
+      icon={Layers}
+      actions={
+        <Button
+          onClick={() => {
+            setEditingService(null);
+            setIsCreateOpen(true);
+          }}
+          className="rounded-xl font-bold bg-primary shadow-lg shadow-primary/20 h-10 px-5"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          {t("Create Service")}
+        </Button>
+      }
+    >
+      <div className="space-y-6">
 
       {/* Filters & Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-card/50 p-4 rounded-2xl border border-border/50 backdrop-blur-sm">
@@ -500,5 +500,7 @@ function ServiceCard({
         </Button>
       </CardContent>
     </Card>
+      </div>
+    </PageLayout>
   );
 }

@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 import { useRequestStore } from "@/lib/stores/request-store";
 import { useSession } from "@/hooks/use-session";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageLayout } from "@/components/dashboard/page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,25 +115,23 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="space-y-8 p-6 lg:p-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeader
-          title="Office Report"
-          description="Analytics and performance summary for your office"
-          icon={BarChart2}
-        />
-        <Button variant="outline" onClick={refresh} className="h-10 rounded-xl shrink-0">
+    <PageLayout
+      title="Office Report"
+      description="Analytics and performance summary for your office"
+      icon={BarChart2}
+      actions={
+        <Button variant="outline" onClick={refresh} className="h-10 rounded-xl">
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
           Refresh
         </Button>
-      </div>
-
+      }
+    >
       {isLoading ? (
         <div className="flex items-center justify-center h-60">
           <Loader2 className="size-8 animate-spin text-primary" />
         </div>
       ) : (
-        <>
+        <div className="space-y-8">
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
@@ -315,8 +313,8 @@ export default function ReportPage() {
               )}
             </CardContent>
           </Card>
-        </>
+        </div>
       )}
-    </div>
+    </PageLayout>
   );
 }

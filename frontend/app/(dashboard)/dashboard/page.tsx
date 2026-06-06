@@ -3,6 +3,8 @@
 import { useSession } from "@/lib/auth-client";
 import { usePermissions } from "@/lib/hooks/use-permissions";
 import { useTranslation } from "@/lib/i18n";
+import { PageLayout } from "@/components/dashboard/page-layout";
+import { LayoutDashboard } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -54,18 +56,11 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("Dashboard")}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {t("Welcome back, ")}
-          {user?.name}
-          {t(". Here is an overview of your account and organization.")}
-        </p>
-      </div>
+    <PageLayout
+      title={t("Dashboard")}
+      description={`${t("Welcome back, ")}${user?.name}${t(". Here is an overview of your account and organization.")}`}
+      icon={LayoutDashboard}
+    >
 
       {/* Quick Stats / Highlights */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -305,6 +300,6 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageLayout>
   );
 }

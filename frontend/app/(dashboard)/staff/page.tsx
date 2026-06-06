@@ -15,7 +15,7 @@ import { useStaffStore, type StaffMember } from "@/lib/stores/staff-store";
 import { useOfficeStore } from "@/lib/stores/office-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
 import { useSession } from "@/hooks/use-session";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageLayout } from "@/components/dashboard/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StaffTable } from "./_components/staff-table";
@@ -181,13 +181,12 @@ export default function StaffPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 sm:p-8 bg-background min-h-screen">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <PageHeader
-          title="Staff Management"
-          description="Manage your office staff members and roles"
-        />
-        <div className="flex items-center gap-3">
+    <PageLayout
+      title="Staff Management"
+      description="Manage your office staff members and roles"
+      icon={Users}
+      actions={
+        <>
           <Button
             variant="outline"
             onClick={handleRefresh}
@@ -205,128 +204,127 @@ export default function StaffPage() {
             <Plus className="mr-2 size-4" />
             Add Staff
           </Button>
-        </div>
-      </div>
-
-      <Card className="border-none shadow-none bg-transparent">
-        <CardContent className="p-0 space-y-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative flex-1 max-w-2xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Search staff by office, role, phone, or username..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="pl-11 bg-card border-border text-foreground focus:ring-primary rounded-xl h-11 transition-all"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
-                <Filter className="size-4 text-muted-foreground" />
-                <Select
-                  value={selectedOfficeId}
-                  onValueChange={(value) => {
-                    setSelectedOfficeId(value);
-                    setSelectedRoleId("all");
-                    setCurrentPage(1);
-                  }}
-                  disabled={!isAdmin}
-                >
-                  <SelectTrigger className="w-[160px] border-none bg-transparent h-8 focus:ring-0">
-                    <SelectValue placeholder="All Offices" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Offices</SelectItem>
-                    {offices.map((office) => (
-                      <SelectItem key={office.id} value={office.id}>
-                        {office.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
-                <SlidersHorizontal className="size-4 text-muted-foreground" />
-                <Select
-                  value={selectedRoleId}
-                  onValueChange={(value) => {
-                    setSelectedRoleId(value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[140px] border-none bg-transparent h-8 focus:ring-0">
-                    <SelectValue placeholder="All Roles" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    {roles.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-2 ml-auto lg:ml-0">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Show:
-                </span>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(v) => {
-                    setPageSize(parseInt(v));
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[70px] bg-muted/50 border-border h-9 rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        </>
+      }
+    >
+      <div className="space-y-6">
+        {/* Filters */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative flex-1 max-w-2xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search staff by office, role, phone, or username..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-11 bg-card border-border text-foreground focus:ring-primary rounded-xl h-11 transition-all"
+            />
           </div>
 
-          <StaffTable
-            staff={staff}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-            onAssignServices={(member) => setAssignServicesMember(member)}
-          />
-
-          {pagination && pagination.totalItems > 0 && (
-            <div className="pt-2">
-              <PaginationFooter
-                currentPage={currentPage}
-                pageSize={pageSize}
-                totalPages={pagination.totalPages}
-                totalItems={pagination.totalItems}
-                startIndex={(currentPage - 1) * pageSize}
-                endIndex={currentPage * pageSize}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={(size) => {
-                  setPageSize(size);
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
+              <Filter className="size-4 text-muted-foreground" />
+              <Select
+                value={selectedOfficeId}
+                onValueChange={(value) => {
+                  setSelectedOfficeId(value);
+                  setSelectedRoleId("all");
                   setCurrentPage(1);
                 }}
-                canGoNext={pagination.hasNextPage}
-                canGoPrevious={pagination.hasPreviousPage}
-                itemLabel="staff"
-              />
+                disabled={!isAdmin}
+              >
+                <SelectTrigger className="w-[160px] border-none bg-transparent h-8 focus:ring-0">
+                  <SelectValue placeholder="All Offices" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Offices</SelectItem>
+                  {offices.map((office) => (
+                    <SelectItem key={office.id} value={office.id}>
+                      {office.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
+              <SlidersHorizontal className="size-4 text-muted-foreground" />
+              <Select
+                value={selectedRoleId}
+                onValueChange={(value) => {
+                  setSelectedRoleId(value);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[140px] border-none bg-transparent h-8 focus:ring-0">
+                  <SelectValue placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto lg:ml-0">
+              <span className="text-xs font-medium text-muted-foreground">
+                Show:
+              </span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(v) => {
+                  setPageSize(parseInt(v));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[70px] bg-muted/50 border-border h-9 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        <StaffTable
+          staff={staff}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+          onAssignServices={(member) => setAssignServicesMember(member)}
+        />
+
+        {pagination && pagination.totalItems > 0 && (
+          <div className="pt-2">
+            <PaginationFooter
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              startIndex={(currentPage - 1) * pageSize}
+              endIndex={currentPage * pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+              canGoNext={pagination.hasNextPage}
+              canGoPrevious={pagination.hasPreviousPage}
+              itemLabel="staff"
+            />
+          </div>
+        )}
+      </div>
 
       <StaffCreateDialog
         open={isDialogOpen}
@@ -386,6 +384,6 @@ export default function StaffPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PageLayout>
   );
 }

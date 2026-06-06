@@ -26,8 +26,7 @@ import { toast } from "sonner";
 import axios from "axios";
 
 import { axiosInstance } from "@/lib/axios";
-import { useSession } from "@/hooks/use-session";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -216,67 +215,52 @@ export default function AppointmentsPage() {
     }
   };
 
+  const tabs: PageTab[] = TABS.map(t => ({
+    label: t.label,
+    value: t.value,
+    badge: t.value === "today" && stats.today > 0 ? stats.today : undefined
+  }));
+
   return (
-    <div className="space-y-6 p-6 lg:p-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeader
-          title="My Appointments"
-          description="View and manage your scheduled service appointments"
-          icon={CalendarDays}
-        />
+    <PageLayout
+      title="My Appointments"
+      description="View and manage your scheduled service appointments"
+      icon={CalendarDays}
+      tabs={tabs}
+      activeTab={tab}
+      onTabChange={setTab}
+      actions={
         <Button variant="outline" onClick={load} className="h-10 rounded-xl shrink-0" disabled={isLoading}>
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
           Refresh
         </Button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-        {[
-          { label: "Total",     value: stats.total,     icon: Calendar,      color: "text-primary",     bg: "bg-primary/10" },
-          { label: "Upcoming",  value: stats.upcoming,  icon: ChevronRight,  color: "text-violet-600",  bg: "bg-violet-500/10" },
-          { label: "Today",     value: stats.today,     icon: CalendarDays,  color: "text-orange-600",  bg: "bg-orange-500/10" },
-          { label: "Pending",   value: stats.pending,   icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
-          { label: "Confirmed", value: stats.confirmed, icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
-          { label: "Completed", value: stats.completed, icon: CheckCheck,    color: "text-blue-600",    bg: "bg-blue-500/10" },
-        ].map(({ label, value, icon: Icon, color, bg }) => (
-          <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50">
-            <CardContent className="p-3 sm:p-4 text-center">
-              <div className={cn("size-8 rounded-lg mx-auto mb-2 flex items-center justify-center", bg)}>
-                <Icon className={cn("size-4", color)} />
-              </div>
-              <p className="text-xl font-black leading-none">{value}</p>
-              <p className="text-xs text-muted-foreground font-medium mt-0.5">{label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Tabs */}
-        <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 border border-border/50 overflow-x-auto">
-          {TABS.map(t => (
-            <button
-              key={t.value}
-              onClick={() => setTab(t.value)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0",
-                tab === t.value ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {t.label}
-              {t.value === "today" && stats.today > 0 && (
-                <span className="ml-1.5 size-4 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-black">
-                  {stats.today}
-                </span>
-              )}
-            </button>
+      }
+    >
+      <div className="space-y-6">
+        {/* Stats */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {[
+            { label: "Total",     value: stats.total,     icon: Calendar,      color: "text-primary",     bg: "bg-primary/10" },
+            { label: "Upcoming",  value: stats.upcoming,  icon: ChevronRight,  color: "text-violet-600",  bg: "bg-violet-500/10" },
+            { label: "Today",     value: stats.today,     icon: CalendarDays,  color: "text-orange-600",  bg: "bg-orange-500/10" },
+            { label: "Pending",   value: stats.pending,   icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
+            { label: "Confirmed", value: stats.confirmed, icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
+            { label: "Completed", value: stats.completed, icon: CheckCheck,    color: "text-blue-600",    bg: "bg-blue-500/10" },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50">
+              <CardContent className="p-3 sm:p-4 text-center">
+                <div className={cn("size-8 rounded-lg mx-auto mb-2 flex items-center justify-center", bg)}>
+                  <Icon className={cn("size-4", color)} />
+                </div>
+                <p className="text-xl font-black leading-none">{value}</p>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">{label}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Toolbar */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
@@ -369,7 +353,7 @@ export default function AppointmentsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }
 

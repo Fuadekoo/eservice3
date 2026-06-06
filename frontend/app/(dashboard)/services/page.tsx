@@ -500,7 +500,5 @@ function ServiceCard({
         </Button>
       </CardContent>
     </Card>
-      </div>
-    </PageLayout>
   );
 }

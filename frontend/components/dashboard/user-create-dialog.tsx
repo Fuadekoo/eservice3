@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -42,7 +42,7 @@ const userSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
   roleId: z.string().min(1, "Role is required"),
   officeId: z.string().optional().or(z.literal("")),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -64,7 +64,7 @@ export function UserCreateDialog({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(userSchema) as Resolver<UserFormValues>,
     defaultValues: {
       username: "",
       phoneNumber: "",
@@ -135,10 +135,10 @@ export function UserCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-[#121212] text-white border-gray-800">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{user ? "Edit User" : "Add User"}</DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription>
             {user ? "Update user details and permissions." : "Create a new user account."}
           </DialogDescription>
         </DialogHeader>
@@ -152,7 +152,7 @@ export function UserCreateDialog({
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="johndoe" className="bg-[#1e1e1e] border-gray-800" />
+                    <Input {...field} placeholder="johndoe" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -166,7 +166,7 @@ export function UserCreateDialog({
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251..." className="bg-[#1e1e1e] border-gray-800" />
+                    <Input {...field} placeholder="+251..." />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -180,7 +180,7 @@ export function UserCreateDialog({
                 <FormItem>
                   <FormLabel>{user ? "New Password (optional)" : "Password"}</FormLabel>
                   <FormControl>
-                    <Input {...field} type="password" placeholder="******" className="bg-[#1e1e1e] border-gray-800" />
+                    <Input {...field} type="password" placeholder="******" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -196,11 +196,11 @@ export function UserCreateDialog({
                     <FormLabel>Role</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-[#1e1e1e] border-gray-800">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select role" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-[#1e1e1e] border-gray-800 text-white">
+                      <SelectContent>
                         {roles.map((role) => (
                           <SelectItem key={role.id} value={role.id}>
                             {role.name}
@@ -221,11 +221,11 @@ export function UserCreateDialog({
                     <FormLabel>Office (Optional)</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-[#1e1e1e] border-gray-800">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select office" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-[#1e1e1e] border-gray-800 text-white">
+                      <SelectContent>
                         <SelectItem value="none">No office</SelectItem>
                         {offices.map((office) => (
                           <SelectItem key={office.id} value={office.id}>
@@ -244,12 +244,12 @@ export function UserCreateDialog({
               control={form.control}
               name="isActive"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800 p-4">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Active Status</FormLabel>
-                    <div className="text-sm text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       Enable or disable this user account.
-                    </div>
+                    </p>
                   </div>
                   <FormControl>
                     <Switch
@@ -266,14 +266,12 @@ export function UserCreateDialog({
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="bg-transparent border-gray-800 text-white hover:bg-gray-800"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-primary hover:bg-primary/90"
               >
                 {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
                 {user ? "Update User" : "Create User"}

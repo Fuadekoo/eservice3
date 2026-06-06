@@ -4,12 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  BookOpen,
-  Eye,
-  EyeOff,
-  Lock,
   Phone,
-  Plus,
   Loader2,
   ShieldCheck,
   ArrowLeft,
@@ -24,18 +19,15 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
 } from "@/components/ui/field";
 import z from "zod";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   InputGroup,
   InputGroupAddon,
-  InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
 import {
@@ -43,10 +35,8 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Separator } from "@/components/ui/separator";
@@ -55,7 +45,7 @@ import Image from "next/image";
 import {
   login as authLogin,
   verifyTwoFactor,
-  TwoFactorRequired,
+  isAuthenticated,
 } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
@@ -129,7 +119,6 @@ const DEMO_CREDENTIALS = [
 
 export default function SignInPage() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = React.useState(false);
   const [twoFactorState, setTwoFactorState] = React.useState<{
     required: boolean;
     userId: string;
@@ -137,6 +126,13 @@ export default function SignInPage() {
   const [otpValue, setOtpValue] = React.useState("");
   const [isVerifying2FA, setIsVerifying2FA] = React.useState(false);
   const { loadTranslations, getTranslationForKey } = useLanguagesStore();
+
+  // Redirect already-authenticated users away from the sign-in page
+  React.useEffect(() => {
+    if (isAuthenticated()) {
+      router.replace("/dashboard");
+    }
+  }, [router]);
 
   React.useEffect(() => {
     loadTranslations();

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { uploadFile } from "../controllers/upload.controller.js";
+import { uploadFile, serveByFilepath } from "../controllers/upload.controller.js";
 import { upload } from "../middleware/upload.js";
 import { requireAuth } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -13,6 +13,14 @@ router.post(
   requireAuth,
   upload.single("file"),
   asyncHandler(uploadFile),
+);
+
+// GET /back-api/files/by-path/:filepath
+// Serves static files by relative filepath (under uploadDir or filedataDir)
+router.get(
+  "/by-path/:filepath",
+  requireAuth,
+  asyncHandler(serveByFilepath as any),
 );
 
 export default router;

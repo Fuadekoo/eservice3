@@ -9,6 +9,7 @@ import {
   Clock,
   Loader2,
   RefreshCw,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -82,10 +83,15 @@ export default function RequestManagementPage() {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [pageSize] = React.useState(10);
+  const [pageSize, setPageSize] = React.useState(10);
 
   const [reviewingRequest, setReviewingRequest] = React.useState<ServiceRequest | null>(null);
   const [schedulingRequest, setSchedulingRequest] = React.useState<ServiceRequest | null>(null);
+
+  const [approvingId, setApprovingId] = React.useState<string | null>(null);
+  const [rejectingId, setRejectingId] = React.useState<string | null>(null);
+  const [rejectReason, setRejectReason] = React.useState("");
+  const [isRejecting, setIsRejecting] = React.useState(false);
 
   const refresh = React.useCallback(() => {
     fetchRequests({
@@ -100,6 +106,47 @@ export default function RequestManagementPage() {
     if (isSessionPending) return;
     refresh();
   }, [isSessionPending, currentPage, pageSize, search, statusFilter]);
+
+  const handleApprove = async (id: string) => {
+    if (!managerStaffId) return;
+    setApprovingId(id);
+    try {
+      if (activeRole === "staff") {
+        await useRequestStore.getState().approveRequestStaff(id, managerStaffId, "");
+      } else {
+        await useRequestStore.getState().approveRequestManager(id, managerStaffId, "");
+      }
+      toast.success("Request approved");
+      refresh();
+      if (activeRole === "staff") {
+        const req = requests.find((r) => r.id === id);
+        if (req) setSchedulingRequest(req);
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to approve request");
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectingId || !rejectReason.trim()) {
+      toast.error("Please enter a rejection reason");
+      return;
+    }
+    setIsRejecting(true);
+    try {
+      await useRequestStore.getState().rejectRequest(rejectingId, rejectReason.trim());
+      toast.success("Request rejected");
+      setRejectingId(null);
+      setRejectReason("");
+      refresh();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to reject request");
+    } finally {
+      setIsRejecting(false);
+    }
+  };
 
   const stats = React.useMemo(
     () => ({
@@ -219,11 +266,14 @@ export default function RequestManagementPage() {
               </thead>
               <tbody>
                 {requests.map((req) => {
-                  const overall = getOverallStatus(req);
+                  const overall = req.statusbyadmin === "rejected" || req.statusbystaff === "rejected" ? "rejected" : req.statusbyadmin === "approved" ? "approved" : "pending";
                   const canApprove =
-                    req.statusbystaff === "approved" && req.statusbyadmin === "pending";
-                  const canReject = overall !== "approved" && overall !== "rejected";
-                  const isThisApproving = isApproving && approvingId === req.id;
+                    activeRole === "staff" ? req.statusbystaff === "pending" :
+                    activeRole === "manager" ? req.statusbyadmin === "pending" : false;
+                  const canReject =
+                    activeRole === "staff" ? req.statusbystaff !== "rejected" :
+                    activeRole === "manager" ? req.statusbyadmin !== "rejected" : false;
+                  const isThisApproving = approvingId === req.id;
 
                   return (
                     <tr
@@ -255,13 +305,44 @@ export default function RequestManagementPage() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2 justify-end">
+                          {canApprove && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleApprove(req.id)}
+                              disabled={isThisApproving}
+                              className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3"
+                              title="Approve immediately"
+                            >
+                              {isThisApproving ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <CheckCircle className="size-3 mr-1" />
+                                  Approve
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          {canReject && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setRejectingId(req.id)}
+                              className="h-8 rounded-lg text-destructive border-destructive/30 hover:bg-destructive/5 text-xs font-bold px-3"
+                              title="Reject immediately"
+                            >
+                              <XCircle className="size-3 mr-1" />
+                              Reject
+                            </Button>
+                          )}
                           <Button
-                            size="sm"
-                            variant="outline"
+                            size="icon"
+                            variant="ghost"
                             onClick={() => setReviewingRequest(req)}
-                            className="h-8 rounded-lg text-xs font-bold px-3 border-primary/30 text-primary hover:bg-primary/5"
+                            className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10 shrink-0"
+                            title="View & Review Application Details"
                           >
-                            Review Application
+                            <Eye className="size-4" />
                           </Button>
                         </div>
                       </td>
@@ -283,7 +364,7 @@ export default function RequestManagementPage() {
           startIndex={(currentPage - 1) * pageSize}
           endIndex={Math.min(currentPage * pageSize, pagination.total)}
           onPageChange={setCurrentPage}
-          onPageSizeChange={() => {}}
+          onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
           canGoNext={currentPage < pagination.totalPages}
           canGoPrevious={currentPage > 1}
           itemLabel="requests"
@@ -310,6 +391,42 @@ export default function RequestManagementPage() {
           refresh();
         }}
       />
+
+      <AlertDialog
+        open={!!rejectingId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRejectingId(null);
+            setRejectReason("");
+          }
+        }}
+      >
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject This Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please provide a reason. The customer will be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Enter rejection reason..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            className="rounded-xl resize-none min-h-20"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReject}
+              disabled={isRejecting || !rejectReason.trim()}
+              className="rounded-xl bg-destructive hover:bg-destructive/90"
+            >
+              {isRejecting && <Loader2 className="size-4 animate-spin mr-2" />}
+              Reject Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

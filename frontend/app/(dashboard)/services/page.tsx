@@ -341,12 +341,12 @@ export default function ServicesPage() {
       )}
 
       {/* Pagination */}
-      {pagination && pagination.total > 0 && (
+      {pagination && pagination.totalItems > 0 && (
         <PaginationFooter
           currentPage={currentPage}
           pageSize={pageSize}
           totalPages={pagination.totalPages}
-          totalItems={pagination.total}
+          totalItems={pagination.totalItems}
           startIndex={(currentPage - 1) * pageSize}
           endIndex={currentPage * pageSize}
           onPageChange={setCurrentPage}

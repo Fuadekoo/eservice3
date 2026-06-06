@@ -340,7 +340,7 @@ export default function ApplyServicePage() {
 
       {/* ── SERVICE DETAIL DIALOG ── */}
       <Dialog open={!!detailService} onOpenChange={(o) => !o && setDetailService(null)}>
-        <DialogContent className="max-w-lg rounded-2xl p-0 overflow-hidden gap-0">
+        <DialogContent className="sm:max-w-xl rounded-2xl p-0 overflow-hidden gap-0">
           {detailService && (
             <>
               <div className="bg-primary px-6 py-5">
@@ -413,62 +413,56 @@ export default function ApplyServicePage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── APPLY FORM DIALOG (enhanced) ── */}
+      {/* ── APPLY FORM DIALOG ── */}
       <Dialog open={!!applyService} onOpenChange={(o) => { if (!o && !isSubmitting) { setApplyService(null); } }}>
-        <DialogContent className="max-w-2xl rounded-2xl p-0 overflow-hidden gap-0">
+        <DialogContent className="sm:max-w-5xl w-[95vw] rounded-2xl p-0 overflow-hidden gap-0">
           {applyService && (
-            <>
-              {/* Blue header */}
-              <div className="bg-primary px-6 py-5">
-                <DialogHeader>
-                  <DialogTitle className="text-white font-black text-xl leading-snug">
-                    Submit Application
-                  </DialogTitle>
-                  <p className="text-primary-foreground/70 text-sm mt-0.5">
-                    {applyService.name} · {selectedOffice?.name}
-                  </p>
-                </DialogHeader>
+            <div className="flex flex-col h-full max-h-[90vh]">
+              {/* ── Gradient header ── */}
+              <div className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 px-8 py-5 shrink-0">
+                <div className="flex items-start justify-between gap-4">
+                  <DialogHeader>
+                    <DialogTitle className="text-white font-black text-2xl leading-snug">
+                      Apply for Service
+                    </DialogTitle>
+                    <p className="text-primary-foreground/70 text-sm mt-1">
+                      Fill in the details to apply for a service
+                    </p>
+                  </DialogHeader>
+                  <Badge className="bg-white/20 text-white border-white/30 font-semibold shrink-0 mt-1">
+                    {uploadedFiles.length} file{uploadedFiles.length !== 1 ? "s" : ""} attached
+                  </Badge>
+                </div>
               </div>
 
-              <div className="max-h-[80vh] overflow-y-auto">
-                <div className="p-6 space-y-6">
+              {/* ── Two-column body ── */}
+              <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
 
-                  {/* ── Section 1: Service Information ── */}
-                  <FormSection step={1} title="Service Information" icon={Info}>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <InfoTile icon={FileText} label="Service" value={applyService.name} />
-                      <InfoTile icon={Building2} label="Office" value={selectedOffice?.name ?? "—"} />
-                      <InfoTile icon={Clock} label="Processing Time" value={applyService.timeToTake} />
-                      {applyService.roomNumber && (
-                        <InfoTile icon={MapPin} label="Room" value={`Room ${applyService.roomNumber}`} />
-                      )}
+                {/* LEFT — Service info, availability, requirements */}
+                <div className="md:w-2/5 border-b md:border-b-0 md:border-r border-border/50 bg-muted/20 overflow-y-auto">
+                  <div className="p-6 space-y-5">
+
+                    {/* Service info tiles */}
+                    <div>
+                      <SectionLabel step={1} title="Service Information" icon={Info} />
+                      <div className="mt-3 space-y-2">
+                        <InfoTile icon={FileText} label="Service" value={applyService.name} />
+                        <InfoTile icon={Building2} label="Office" value={selectedOffice?.name ?? "—"} />
+                        <InfoTile icon={Clock} label="Processing Time" value={applyService.timeToTake} />
+                        {applyService.roomNumber && (
+                          <InfoTile icon={MapPin} label="Room" value={`Room ${applyService.roomNumber}`} />
+                        )}
+                        {selectedOffice?.address && (
+                          <InfoTile icon={MapPin} label="Address" value={selectedOffice.address} />
+                        )}
+                      </div>
                     </div>
 
-                    {/* Requirements */}
-                    {applyService.requirements && applyService.requirements.length > 0 && (
-                      <div className="mt-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
-                        <p className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2.5 flex items-center gap-1.5">
-                          <CheckCircle2 className="size-3.5" /> Required Documents
-                        </p>
-                        <ul className="space-y-1.5">
-                          {applyService.requirements.map((r) => (
-                            <li key={r.id} className="flex items-start gap-2 text-sm">
-                              <span className="size-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                              <span className="font-medium">{r.name}{r.description ? <span className="text-muted-foreground font-normal"> — {r.description}</span> : ""}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </FormSection>
-
-                  <Separator />
-
-                  {/* ── Section 2: Office Availability ── */}
-                  {weeklySchedule && (
-                    <>
-                      <FormSection step={2} title="Office Availability" icon={CalendarDays}>
-                        <div className="grid grid-cols-7 gap-1.5">
+                    {/* Office availability */}
+                    {weeklySchedule && (
+                      <div>
+                        <SectionLabel step={2} title="Office Availability" icon={CalendarDays} />
+                        <div className="mt-3 grid grid-cols-7 gap-1">
                           {DAY_NAMES.map((name, idx) => {
                             const day = weeklySchedule[String(idx)];
                             const enabled = day?.enabled ?? false;
@@ -476,19 +470,19 @@ export default function ApplyServicePage() {
                               <div
                                 key={idx}
                                 className={cn(
-                                  "rounded-xl p-2 text-center border transition-all",
+                                  "rounded-lg p-1.5 text-center border transition-all",
                                   enabled
                                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                    : "bg-muted/30 border-border/40 text-muted-foreground/50"
+                                    : "bg-muted/40 border-border/30 text-muted-foreground/40"
                                 )}
                               >
-                                <p className="text-[10px] font-black uppercase">{name}</p>
+                                <p className="text-[9px] font-black uppercase leading-none">{name}</p>
                                 {enabled ? (
-                                  <p className="text-[9px] mt-1 font-semibold leading-tight">
-                                    {day.start}–{day.end}
+                                  <p className="text-[8px] mt-1 font-semibold leading-tight opacity-90">
+                                    {day.start}<br />{day.end}
                                   </p>
                                 ) : (
-                                  <p className="text-[9px] mt-1">Closed</p>
+                                  <p className="text-[8px] mt-1 opacity-50">Closed</p>
                                 )}
                               </div>
                             );
@@ -496,126 +490,195 @@ export default function ApplyServicePage() {
                         </div>
                         {slotDuration && (
                           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
-                            <Clock className="size-3.5" /> Slot duration: <span className="font-semibold">{slotDuration} minutes</span>
+                            <Clock className="size-3" /> Slot: <span className="font-semibold">{slotDuration} min</span>
                           </p>
                         )}
-                      </FormSection>
-                      <Separator />
-                    </>
-                  )}
-
-                  {/* ── Section 3: Application Details ── */}
-                  <FormSection step={weeklySchedule ? 3 : 2} title="Application Details" icon={CalendarIcon}>
-                    <div className="space-y-4">
-                      {/* Address */}
-                      <div className="space-y-1.5">
-                        <label className="text-sm font-bold flex items-center gap-1.5">
-                          <MapPin className="size-3.5 text-primary" />
-                          Current Address <span className="text-destructive">*</span>
-                        </label>
-                        <Input
-                          placeholder="Enter your current address"
-                          value={form.address}
-                          onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-                          className="h-11 rounded-xl"
-                        />
-                      </div>
-
-                      {/* Date */}
-                      <div className="space-y-1.5">
-                        <label className="text-sm font-bold flex items-center gap-1.5">
-                          <CalendarIcon className="size-3.5 text-primary" />
-                          Preferred Date <span className="text-destructive">*</span>
-                        </label>
-                        <Input
-                          type="date"
-                          value={form.date}
-                          min={new Date().toISOString().split("T")[0]}
-                          onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-                          className="h-11 rounded-xl"
-                        />
-                      </div>
-
-                      {/* Notes */}
-                      <div className="space-y-1.5">
-                        <label className="text-sm font-bold">Notes (Optional)</label>
-                        <textarea
-                          placeholder="Add any additional notes or information..."
-                          value={form.notes}
-                          onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
-                          rows={3}
-                          className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                      </div>
-                    </div>
-                  </FormSection>
-
-                  <Separator />
-
-                  {/* ── Section 4: Attach Files ── */}
-                  <FormSection step={weeklySchedule ? 4 : 3} title="Attach Files" icon={Paperclip}>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Upload PDF files or images (Max 10 MB per file). Attach required documents listed above.
-                    </p>
-
-                    {/* Drop zone / picker */}
-                    <label className={cn(
-                      "flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed border-border cursor-pointer transition-colors",
-                      "hover:border-primary/50 hover:bg-primary/5",
-                      isUploading && "pointer-events-none opacity-60"
-                    )}>
-                      {isUploading ? (
-                        <Loader2 className="size-7 animate-spin text-primary" />
-                      ) : (
-                        <Upload className="size-7 text-muted-foreground/50" />
-                      )}
-                      <p className="text-sm font-semibold text-muted-foreground">
-                        {isUploading ? "Uploading…" : "Click to choose files (PDF or Images)"}
-                      </p>
-                      <input
-                        type="file"
-                        multiple
-                        accept=".pdf,image/*"
-                        className="hidden"
-                        onChange={handleFileChange}
-                        disabled={isUploading}
-                      />
-                    </label>
-
-                    {/* Attached files list */}
-                    {uploadedFiles.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {uploadedFiles.map((file, idx) => (
-                          <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
-                            <Paperclip className="size-4 text-primary shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate">{file.name}</p>
-                              <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
-                            </div>
-                            <button type="button" onClick={() => removeFile(idx)} className="size-6 flex items-center justify-center rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                              <X className="size-3.5" />
-                            </button>
-                          </div>
-                        ))}
                       </div>
                     )}
-                  </FormSection>
 
-                  {/* ── Actions ── */}
-                  <Separator />
-                  <div className="flex gap-3 pb-1">
-                    <Button variant="outline" className="flex-1 rounded-xl h-12 font-bold" onClick={() => setApplyService(null)} disabled={isSubmitting || isUploading}>
-                      Cancel
-                    </Button>
-                    <Button className="flex-1 rounded-xl h-12 font-bold text-base" onClick={handleApply} disabled={isSubmitting || isUploading}>
-                      {isSubmitting ? <Loader2 className="size-4 animate-spin mr-2" /> : <Send className="size-4 mr-2" />}
-                      Submit Application
-                    </Button>
+                    {/* Requirements */}
+                    {applyService.requirements && applyService.requirements.length > 0 && (
+                      <div>
+                        <SectionLabel
+                          step={weeklySchedule ? 3 : 2}
+                          title="Required Documents"
+                          icon={CheckCircle2}
+                        />
+                        <div className="mt-3 p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                          <ul className="space-y-2">
+                            {applyService.requirements.map((r) => (
+                              <li key={r.id} className="flex items-start gap-2 text-sm">
+                                <span className="size-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                                <div>
+                                  <span className="font-semibold text-foreground">{r.name}</span>
+                                  {r.description && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">{r.description}</p>
+                                  )}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Service For */}
+                    {applyService.serviceFors && applyService.serviceFors.length > 0 && (
+                      <div>
+                        <SectionLabel title="This Service Is For" icon={Users} />
+                        <ul className="mt-3 space-y-1.5">
+                          {applyService.serviceFors.map((item) => (
+                            <li key={item.id} className="flex items-start gap-2 text-sm">
+                              <span className="size-1.5 rounded-full bg-primary/60 mt-1.5 shrink-0" />
+                              <span className="text-muted-foreground">{item.name}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-
                 </div>
+
+                {/* RIGHT — Form fields */}
+                <div className="md:w-3/5 overflow-y-auto">
+                  <div className="p-6 space-y-5">
+
+                    {/* Application details */}
+                    <div>
+                      <SectionLabel
+                        step={weeklySchedule ? (applyService.requirements?.length ? 4 : 3) : (applyService.requirements?.length ? 3 : 2)}
+                        title="Application Details"
+                        icon={CalendarIcon}
+                      />
+                      <div className="mt-3 space-y-3">
+                        {/* Address */}
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-bold flex items-center gap-1.5">
+                            <MapPin className="size-3.5 text-primary" />
+                            Current Address <span className="text-destructive ml-0.5">*</span>
+                          </label>
+                          <Input
+                            placeholder="Enter your current address"
+                            value={form.address}
+                            onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
+                            className="h-11 rounded-xl"
+                          />
+                        </div>
+
+                        {/* Date */}
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-bold flex items-center gap-1.5">
+                            <CalendarIcon className="size-3.5 text-primary" />
+                            Preferred Date <span className="text-destructive ml-0.5">*</span>
+                          </label>
+                          <Input
+                            type="date"
+                            value={form.date}
+                            min={new Date().toISOString().split("T")[0]}
+                            onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+                            className="h-11 rounded-xl"
+                          />
+                        </div>
+
+                        {/* Notes */}
+                        <div className="space-y-1.5">
+                          <label className="text-sm font-bold flex items-center gap-1.5">
+                            <Info className="size-3.5 text-primary" />
+                            Notes <span className="text-muted-foreground font-normal">(Optional)</span>
+                          </label>
+                          <textarea
+                            placeholder="Add any additional notes or information..."
+                            value={form.notes}
+                            onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+                            rows={3}
+                            className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* File upload */}
+                    <div>
+                      <SectionLabel title="Attach Files" icon={Paperclip} />
+                      <p className="text-xs text-muted-foreground mt-1 mb-3">
+                        PDF or images · max 10 MB each
+                      </p>
+
+                      <label className={cn(
+                        "flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-border cursor-pointer transition-all",
+                        "hover:border-primary/50 hover:bg-primary/5",
+                        isUploading && "pointer-events-none opacity-60"
+                      )}>
+                        {isUploading ? (
+                          <Loader2 className="size-8 animate-spin text-primary" />
+                        ) : (
+                          <Upload className="size-8 text-muted-foreground/40" />
+                        )}
+                        <div className="text-center">
+                          <p className="text-sm font-semibold text-muted-foreground">
+                            {isUploading ? "Uploading…" : "Click to choose files"}
+                          </p>
+                          <p className="text-xs text-muted-foreground/60 mt-0.5">PDF, PNG, JPG, WEBP</p>
+                        </div>
+                        <input type="file" multiple accept=".pdf,image/*" className="hidden" onChange={handleFileChange} disabled={isUploading} />
+                      </label>
+
+                      {uploadedFiles.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {uploadedFiles.map((file, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                              <div className="size-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                                <Paperclip className="size-4 text-emerald-600" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold truncate">{file.name}</p>
+                                <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeFile(idx)}
+                                className="size-7 flex items-center justify-center rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                              >
+                                <X className="size-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Submit actions */}
+                    <div className="flex gap-3 pb-1">
+                      <Button
+                        variant="outline"
+                        className="flex-1 rounded-xl h-12 font-bold"
+                        onClick={() => setApplyService(null)}
+                        disabled={isSubmitting || isUploading}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        className="flex-[2] rounded-xl h-12 font-black text-base"
+                        onClick={handleApply}
+                        disabled={isSubmitting || isUploading}
+                      >
+                        {isSubmitting
+                          ? <Loader2 className="size-4 animate-spin mr-2" />
+                          : <Send className="size-4 mr-2" />
+                        }
+                        Submit Application
+                      </Button>
+                    </div>
+
+                  </div>
+                </div>
+
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -687,20 +750,25 @@ function AvailabilityBanner({ schedule, slotDuration }: { schedule: Record<strin
   );
 }
 
-// ── Form Section ──────────────────────────────────────────────────────────────
-function FormSection({ step, title, icon: Icon, children }: { step: number; title: string; icon: React.ElementType; children: React.ReactNode }) {
+// ── Section Label ─────────────────────────────────────────────────────────────
+function SectionLabel({
+  step,
+  title,
+  icon: Icon,
+}: {
+  step?: number;
+  title: string;
+  icon: React.ElementType;
+}) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="size-7 rounded-full bg-primary flex items-center justify-center shrink-0">
-          <span className="text-xs font-black text-primary-foreground">{step}</span>
+    <div className="flex items-center gap-2">
+      {step !== undefined && (
+        <div className="size-5 rounded-full bg-primary flex items-center justify-center shrink-0">
+          <span className="text-[10px] font-black text-primary-foreground">{step}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Icon className="size-4 text-primary" />
-          <h3 className="font-bold text-sm">{title}</h3>
-        </div>
-      </div>
-      {children}
+      )}
+      <Icon className="size-3.5 text-primary" />
+      <h3 className="font-bold text-xs uppercase tracking-wider text-foreground/80">{title}</h3>
     </div>
   );
 }

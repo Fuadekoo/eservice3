@@ -3,7 +3,7 @@
 import { PageHeader } from "@/components/dashboard/page-header";
 import axios from "axios";
 import { axiosInstance } from "@/lib/axios";
-import * as React from "react";
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,13 +20,6 @@ type Service = {
   office: { id: string; name: string };
 };
 
-type ServiceListResponse = {
-  data: Service[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-};
 
 export default function ApplyServicePage() {
   const router = useRouter();
@@ -39,20 +32,18 @@ export default function ApplyServicePage() {
 
     const loadServices = async () => {
       try {
-        const response = await axiosInstance.get<ServiceListResponse>(
-          "/services",
-          {
-            params: { page: 1, pageSize: 100 },
-            signal: controller.signal,
-          },
-        );
+        // Interceptor already unwraps AxiosResponse → body: { data: [], pagination: {} }
+        const body = (await axiosInstance.get("/services", {
+          params: { page: 1, pageSize: 100 },
+          signal: controller.signal,
+        })) as unknown as { data: Service[] };
 
-        setServices(response.data?.data ?? []);
+        setServices(body.data ?? []);
       } catch (error) {
-        if (axios.isCancel(error)) {
+        // Silently ignore AbortController cancellations (unmount cleanup)
+        if (axios.isCancel(error) || (error as any)?.code === "ERR_CANCELED") {
           return;
         }
-
         console.error("Failed to fetch services", error);
         toast.error("Failed to load services.");
       } finally {

@@ -102,6 +102,12 @@ axiosInstance.interceptors.response.use(
     return response.data;
   },
   (error: AxiosError) => {
+    // Let AbortController / axios cancellations pass through unchanged so
+    // callers can detect them with axios.isCancel() or error.name checks.
+    if (axios.isCancel(error) || (error as any).code === "ERR_CANCELED") {
+      return Promise.reject(error);
+    }
+
     // Handle error responses (server responded with error status)
     if (error.response) {
       const status = error.response.status;

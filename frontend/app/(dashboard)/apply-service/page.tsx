@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Building2,
   ChevronRight,
@@ -22,7 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { axiosInstance } from "@/lib/axios";
+import { axiosInstance, getUploadUrl } from "@/lib/axios";
 import { useOfficeStore } from "@/lib/stores/office-store";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,10 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ApplyServicePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const serviceIdParam = searchParams.get("serviceId");
+
   const { offices, fetchOffices, isLoading: loadingOffices } = useOfficeStore();
 
   const [officeSearch, setOfficeSearch] = React.useState("");
@@ -109,6 +114,48 @@ export default function ApplyServicePage() {
   React.useEffect(() => {
     void fetchOffices();
   }, [fetchOffices]);
+
+  // ── Auto-select service from URL ──────────────────────────────────────────
+  React.useEffect(() => {
+    if (serviceIdParam && offices.length > 0) {
+      // Find which office has this service
+      const findAndLoad = async () => {
+        setIsFetchingOffice(true);
+        try {
+          // We need to find which office contains this serviceId
+          // First, search in the basic offices list if possible
+          let targetOfficeId = "";
+          for (const office of offices) {
+            if (office.service?.some((s) => s.id === serviceIdParam)) {
+              targetOfficeId = office.id;
+              break;
+            }
+          }
+
+          // If not found in local list, we might need a dedicated API call or just try loading offices one by one
+          // But usually, offices list has services. If not, we'll try the /offices/find-by-service endpoint if it exists
+          if (targetOfficeId) {
+            const res = (await axiosInstance.get(
+              `/offices/${targetOfficeId}`,
+            )) as unknown as { data: OfficeDetail };
+            setSelectedOffice(res.data);
+
+            const service = res.data.service?.find(
+              (s) => s.id === serviceIdParam,
+            );
+            if (service) {
+              setDetailService(service);
+            }
+          }
+        } catch (error) {
+          console.error("Error auto-loading service:", error);
+        } finally {
+          setIsFetchingOffice(false);
+        }
+      };
+      void findAndLoad();
+    }
+  }, [serviceIdParam, offices]);
 
   // ── Fetch full office ─────────────────────────────────────────────────────
   const handleSelectOffice = async (officeId: string) => {
@@ -303,7 +350,7 @@ export default function ApplyServicePage() {
                         {office.logo ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={office.logo}
+                            src={getUploadUrl(office.logo)}
                             alt={office.name}
                             className="size-full object-contain p-1.5"
                           />
@@ -365,7 +412,7 @@ export default function ApplyServicePage() {
                   {selectedOffice.logo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={selectedOffice.logo}
+                      src={getUploadUrl(selectedOffice.logo)}
                       alt={selectedOffice.name}
                       className="size-full object-contain p-1"
                     />

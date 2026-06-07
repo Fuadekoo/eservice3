@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   Phone,
@@ -141,6 +141,8 @@ function StepIndicator({ current }: { current: number }) {
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const { t } = useTranslation();
   const [step, setStep] = React.useState(1);
   const [phone, setPhone] = React.useState("");
@@ -255,7 +257,7 @@ export default function SignupPage() {
       }
 
       toast.success(message || t("Registration successful!"));
-      router.push("/customer-overview");
+      router.push(callbackUrl || "/customer-overview");
     } catch (error: any) {
       toast.error(
         error?.message || t("Registration failed. Please try again."),
@@ -272,7 +274,11 @@ export default function SignupPage() {
       {/* Top bar */}
       <div className="w-full max-w-lg flex items-center justify-between mb-6">
         <Link
-          href="/signin"
+          href={
+            callbackUrl
+              ? `/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
+              : "/signin"
+          }
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronLeft className="size-4" />
@@ -367,7 +373,11 @@ export default function SignupPage() {
                 <p className="text-center text-sm text-muted-foreground">
                   {t("Already have an account?")}{" "}
                   <Link
-                    href="/signin"
+                    href={
+                      callbackUrl
+                        ? `/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
+                        : "/signin"
+                    }
                     className="text-primary hover:underline underline-offset-4 font-semibold"
                   >
                     {t("Sign In")}

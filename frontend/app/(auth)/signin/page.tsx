@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   Phone,
@@ -18,10 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  FieldDescription,
-  FieldGroup,
-} from "@/components/ui/field";
+import { FieldDescription, FieldGroup } from "@/components/ui/field";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -119,6 +116,8 @@ const DEMO_CREDENTIALS = [
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const [twoFactorState, setTwoFactorState] = React.useState<{
     required: boolean;
     userId: string;
@@ -130,9 +129,9 @@ export default function SignInPage() {
   // Redirect already-authenticated users away from the sign-in page
   React.useEffect(() => {
     if (isAuthenticated()) {
-      router.replace("/dashboard");
+      router.replace(callbackUrl || "/dashboard");
     }
-  }, [router]);
+  }, [router, callbackUrl]);
 
   React.useEffect(() => {
     loadTranslations();
@@ -174,7 +173,7 @@ export default function SignInPage() {
       }
 
       // Normal login success
-      router.replace("/dashboard");
+      router.replace(callbackUrl || "/dashboard");
       toast.success(getTranslationForKey("Success"), {
         description: getTranslationForKey("Signing in successful"),
       });
@@ -194,7 +193,7 @@ export default function SignInPage() {
       setIsVerifying2FA(true);
       try {
         await verifyTwoFactor(twoFactorState.userId, code);
-        router.replace("/dashboard");
+        router.replace(callbackUrl || "/dashboard");
         toast.success(getTranslationForKey("Success"), {
           description: getTranslationForKey("Signing in successful"),
         });
@@ -451,7 +450,11 @@ export default function SignInPage() {
                           {getTranslationForKey("Don't have an account?")}{" "}
                         </span>
                         <Link
-                          href="/signup"
+                          href={
+                            callbackUrl
+                              ? `/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`
+                              : "/signup"
+                          }
                           className="text-primary hover:underline underline-offset-4 font-medium transition-colors"
                         >
                           {getTranslationForKey("Create an account")}

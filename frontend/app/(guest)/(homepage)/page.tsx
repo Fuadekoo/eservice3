@@ -17,9 +17,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import { useOfficeStore } from "@/lib/stores/office-store";
 import { useAdministrationStore } from "@/lib/stores/administration-store";
-import { useGalleryStore } from "@/lib/stores/gallery-store";
+import { useGalleryStore, type Gallery } from "@/lib/stores/gallery-store";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { Logo } from "@/components/logo";
 import { GovernmentOffices } from "@/components/guest/government-offices";
@@ -142,44 +150,93 @@ export default function Page() {
           {loadingGallery ? (
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
               <Loader2 className="size-10 animate-spin mb-4" />
-              <p>{getTranslationForKey("Loading gallery...")}</p>
+              <p className="font-bold">
+                {getTranslationForKey("Loading gallery...")}
+              </p>
+            </div>
+          ) : galleries.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {galleries.map((gallery) => (
+                <GalleryCard
+                  key={gallery.id}
+                  gallery={gallery}
+                  getTranslationForKey={getTranslationForKey}
+                />
+              ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {galleries
-                .flatMap((g) =>
-                  g.images.map((img) => ({ ...img, galleryName: g.name })),
-                )
-                .slice(0, 8)
-                .map((image, i) => (
-                  <div
-                    key={image.id}
-                    className="group relative aspect-square rounded-2xl overflow-hidden bg-muted border border-border"
-                  >
-                    <img
-                      src={getUploadUrl(image.filename)}
-                      alt={image.galleryName}
-                      className="size-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-50"
-                    />
-                    <div className="absolute inset-0 p-6 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <p className="text-white font-bold text-lg leading-tight">
-                        {image.galleryName}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              {galleries.length === 0 && (
-                <div className="col-span-full py-20 text-center border-2 border-dashed rounded-[2rem] border-muted-foreground/20">
-                  <ImageIcon className="size-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <p className="text-muted-foreground font-medium">
-                    {getTranslationForKey("No photos available yet.")}
-                  </p>
-                </div>
-              )}
+            <div className="col-span-full py-20 text-center border-4 border-dashed rounded-[3rem] border-muted/20 bg-muted/5">
+              <ImageIcon className="size-16 text-muted/30 mx-auto mb-6" />
+              <p className="text-muted-foreground text-xl font-bold">
+                {getTranslationForKey("No photos available yet.")}
+              </p>
             </div>
           )}
         </section>
       </main>
+    </div>
+  );
+}
+
+function GalleryCard({
+  gallery,
+  getTranslationForKey,
+}: {
+  gallery: Gallery;
+  getTranslationForKey: (key: string) => string;
+}) {
+  const images = gallery.images || [];
+
+  return (
+    <div className="group flex flex-col bg-card rounded-xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="relative aspect-video w-full overflow-hidden bg-muted">
+        {images.length > 0 ? (
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 4000 + Math.random() * 2000,
+              }),
+            ]}
+            className="size-full"
+          >
+            <CarouselContent className="-ml-0">
+              {images.map((image) => (
+                <CarouselItem key={image.id} className="pl-0 basis-full">
+                  <img
+                    src={getUploadUrl(image.filename)}
+                    alt={gallery.name}
+                    className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {images.length > 1 && (
+              <div className="absolute top-2 right-2 z-10">
+                <div className="bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-white border border-white/10">
+                  +{images.length - 1}
+                </div>
+              </div>
+            )}
+          </Carousel>
+        ) : (
+          <div className="size-full flex flex-col items-center justify-center text-muted-foreground/30">
+            <ImageIcon className="size-10 mb-1" />
+            <p className="text-[10px] font-bold uppercase tracking-widest">
+              No Images
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4">
+        <h3 className="text-sm font-bold text-foreground truncate leading-none">
+          {gallery.name}
+        </h3>
+      </div>
     </div>
   );
 }

@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useOfficeStore, type Office } from "@/lib/stores/office-store";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
-import { axiosInstance } from "@/lib/axios";
+import { axiosInstance, getUploadUrl } from "@/lib/axios";
+import { useSession } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,7 +42,8 @@ type OfficeDetail = Office & {
 export function GovernmentOffices() {
   const { offices, fetchOffices, isLoading } = useOfficeStore();
   const { getTranslationForKey: t } = useLanguagesStore();
-  const [selectedOffice, setSelectedOffice] = React.useState<OfficeDetail | null>(null);
+  const [selectedOffice, setSelectedOffice] =
+    React.useState<OfficeDetail | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isFetching, setIsFetching] = React.useState(false);
 
@@ -53,7 +55,9 @@ export function GovernmentOffices() {
     setIsFetching(true);
     try {
       // Interceptor unwraps one level → response = { data: office, ... }
-      const response = (await axiosInstance.get(`/offices/${office.id}`)) as unknown as {
+      const response = (await axiosInstance.get(
+        `/offices/${office.id}`,
+      )) as unknown as {
         data: OfficeDetail;
       };
       setSelectedOffice(response.data);
@@ -82,7 +86,9 @@ export function GovernmentOffices() {
         <Building2 className="size-8 text-primary" />
         <h2 className="text-3xl font-black tracking-tight text-foreground">
           {t("Government Offices")}{" "}
-          <span className="text-primary/70 text-xl font-bold">({offices.length})</span>
+          <span className="text-primary/70 text-xl font-bold">
+            ({offices.length})
+          </span>
         </h2>
       </div>
 
@@ -99,7 +105,9 @@ export function GovernmentOffices() {
         {offices.length === 0 && (
           <div className="col-span-full py-20 text-center rounded-3xl border-2 border-dashed border-white/10">
             <Building2 className="size-12 text-white/20 mx-auto mb-3" />
-            <p className="text-white/40 font-medium">{t("No offices found.")}</p>
+            <p className="text-white/40 font-medium">
+              {t("No offices found.")}
+            </p>
           </div>
         )}
       </div>
@@ -133,48 +141,60 @@ function OfficeCard({
       type="button"
       onClick={onClick}
       disabled={isLoading}
-      className="group text-left w-full rounded-2xl bg-[#0f1629] border border-white/5 hover:border-blue-500/40 hover:bg-[#111d3a] transition-all duration-300 overflow-hidden shadow-lg hover:shadow-blue-500/10 hover:shadow-xl"
+      className="group text-left w-full rounded-[2rem] bg-card border border-border hover:border-primary/40 hover:bg-accent/50 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-xl flex flex-col h-full"
     >
       {/* Card Header */}
-      <div className="p-6 flex items-start gap-4">
+      <div className="p-6 flex items-center gap-5">
         {/* Logo */}
-        <div className="size-16 rounded-xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-md group-hover:shadow-blue-500/20 transition-shadow">
+        <div className="size-20 rounded-2xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-border/50 group-hover:scale-105 transition-transform duration-300">
           {office.logo ? (
-            <img src={office.logo} alt={office.name} className="size-full object-contain p-1.5" />
+            <img
+              src={getUploadUrl(office.logo)}
+              alt={office.name}
+              className="size-full object-contain p-2"
+            />
           ) : (
-            <Building2 className="size-8 text-blue-600" />
+            <Building2 className="size-10 text-primary" />
           )}
         </div>
 
-        {/* Name + count */}
+        {/* Name */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-bold text-blue-100 group-hover:text-blue-300 transition-colors leading-snug line-clamp-2">
+          <h3 className="text-lg font-black text-foreground group-hover:text-primary transition-colors leading-tight line-clamp-2">
             {office.name}
           </h3>
-          <p className="mt-1.5 text-xs font-bold text-blue-400/70 uppercase tracking-wider">
-            {office._count?.service ?? 0} {t("services")}
-          </p>
         </div>
 
-        <ChevronRight className="size-5 text-white/20 group-hover:text-blue-400 transition-colors shrink-0 mt-0.5" />
+        <ChevronRight className="size-5 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
       </div>
 
       {/* Service list preview */}
-      <div className="px-6 pb-6 space-y-2">
-        {office.service?.slice(0, 3).map((s) => (
-          <div key={s.id} className="flex items-center gap-2.5 text-sm text-gray-400">
-            <span className="size-1.5 rounded-full bg-blue-500/50 shrink-0" />
-            <span className="line-clamp-1">{s.name}</span>
-          </div>
-        ))}
-        {(office._count?.service ?? 0) > 3 && (
-          <p className="text-xs text-blue-400/50 font-bold pl-4">
-            +{(office._count?.service ?? 0) - 3} {t("more")}
-          </p>
-        )}
-        {(!office.service || office.service.length === 0) && (
-          <p className="text-xs text-gray-500 italic">{t("No services listed.")}</p>
-        )}
+      <div className="px-6 pb-8 space-y-4 flex-1">
+        <p className="text-sm font-bold text-muted-foreground">
+          {office._count?.service ?? 0} {t("tajajila")}
+        </p>
+
+        <div className="space-y-2">
+          {office.service?.slice(0, 3).map((s) => (
+            <div
+              key={s.id}
+              className="flex items-start gap-2.5 text-sm text-muted-foreground"
+            >
+              <span className="text-primary font-bold mt-0.5">•</span>
+              <span className="line-clamp-1 leading-relaxed">{s.name}</span>
+            </div>
+          ))}
+          {(office._count?.service ?? 0) > 3 && (
+            <p className="text-xs text-primary font-bold pl-3 mt-2">
+              +{(office._count?.service ?? 0) - 3} {t("kan biraa")}
+            </p>
+          )}
+          {(!office.service || office.service.length === 0) && (
+            <p className="text-xs text-muted-foreground/50 italic">
+              {t("No services listed.")}
+            </p>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -192,7 +212,10 @@ function OfficeDialog({
   onOpenChange: (v: boolean) => void;
   t: (k: string) => string;
 }) {
-  const [selectedService, setSelectedService] = React.useState<ServiceItem | null>(null);
+  const [selectedService, setSelectedService] =
+    React.useState<ServiceItem | null>(null);
+  const { data: sessionData } = useSession();
+  const isLoggedIn = !!sessionData?.session;
 
   // Reset selected service when dialog closes
   React.useEffect(() => {
@@ -201,55 +224,62 @@ function OfficeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 gap-0 border-none bg-[#0d1117] text-white overflow-hidden rounded-2xl">
+      <DialogContent className="max-w-[600px] p-0 gap-0 border-none bg-background text-foreground overflow-hidden rounded-[1.5rem] shadow-2xl">
         {!selectedService ? (
           // ── Service List View ──
           <>
             {/* Blue header */}
-            <div className="relative bg-blue-600 px-8 py-7 flex items-center gap-5">
+            <div className="relative bg-[#0047FF] px-8 py-10 flex items-center gap-5">
               {/* Logo */}
-              <div className="size-[72px] rounded-xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-xl">
+              <div className="size-20 rounded-2xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-xl border border-white/10">
                 {office.logo ? (
-                  <img src={office.logo} alt={office.name} className="size-full object-contain p-2" />
+                  <img
+                    src={getUploadUrl(office.logo)}
+                    alt={office.name}
+                    className="size-full object-contain p-2"
+                  />
                 ) : (
-                  <Building2 className="size-9 text-blue-600" />
+                  <Building2 className="size-10 text-[#0047FF]" />
                 )}
               </div>
 
               {/* Name */}
               <div className="flex-1 min-w-0">
-                <DialogTitle className="text-xl font-black text-white leading-tight">
+                <DialogTitle className="text-xl font-bold text-white leading-tight">
                   {office.name}
                 </DialogTitle>
-                {office.slogan && (
-                  <p className="text-blue-100/70 text-sm font-medium mt-0.5 italic">{office.slogan}</p>
-                )}
+                <p className="text-white/70 text-sm font-medium mt-1 italic opacity-80">
+                  {office.slogan || "Excellence in Public Service"}
+                </p>
               </div>
 
               {/* Close */}
               <button
                 onClick={() => onOpenChange(false)}
-                className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/15 transition-all"
+                className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full text-white/60 hover:text-white transition-all"
               >
-                <X className="size-4" />
+                <X className="size-5" />
               </button>
             </div>
 
-            {/* Services */}
-            <div className="max-h-[65vh] overflow-y-auto divide-y divide-white/5">
+            {/* Services Grid/List */}
+            <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4 bg-[#F8FAFC]">
               {office.service && office.service.length > 0 ? (
                 office.service.map((service) => (
                   <ServiceRow
                     key={service.id}
                     service={service}
+                    isLoggedIn={isLoggedIn}
                     onDetail={() => setSelectedService(service)}
                     t={t}
                   />
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-                  <Info className="size-10 text-white/20 mb-3" />
-                  <p className="text-white/50 font-medium">{t("No services available for this office.")}</p>
+                <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                  <Info className="size-16 text-muted-foreground/20 mb-4" />
+                  <p className="text-muted-foreground font-bold text-lg">
+                    {t("No services available for this office.")}
+                  </p>
                 </div>
               )}
             </div>
@@ -259,7 +289,7 @@ function OfficeDialog({
           <ServiceDetailView
             service={selectedService}
             officeName={office.name}
-            officeLogo={office.logo}
+            isLoggedIn={isLoggedIn}
             onBack={() => setSelectedService(null)}
             onClose={() => onOpenChange(false)}
             t={t}
@@ -273,36 +303,43 @@ function OfficeDialog({
 // ─── Service Row in list ──────────────────────────────────────────────────────
 function ServiceRow({
   service,
+  isLoggedIn,
   onDetail,
   t,
 }: {
   service: ServiceItem;
+  isLoggedIn: boolean;
   onDetail: () => void;
   t: (k: string) => string;
 }) {
+  const applyUrl = isLoggedIn
+    ? `/apply-service?serviceId=${service.id}`
+    : `/signin?callbackUrl=${encodeURIComponent(`/apply-service?serviceId=${service.id}`)}`;
+
   return (
-    <div className="flex items-center gap-4 px-7 py-5 hover:bg-white/[0.04] transition-colors">
+    <div
+      onClick={onDetail}
+      className="flex items-center gap-6 px-6 py-6 bg-white border border-slate-200/60 rounded-2xl hover:shadow-md transition-all cursor-pointer group"
+    >
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-white leading-snug">{service.name}</p>
-        <p className="text-sm text-gray-400 mt-0.5 line-clamp-1">{service.description}</p>
+        <p className="text-lg font-bold text-slate-900 leading-tight group-hover:text-[#0047FF] transition-colors">
+          {service.name}
+        </p>
+        <p className="text-sm text-slate-400 mt-1 line-clamp-1 font-medium">
+          {service.description}
+        </p>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
         <Button
           asChild
           size="sm"
-          className="rounded-full px-5 h-9 font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20 text-sm"
+          className="rounded-xl px-6 h-10 font-bold bg-[#0047FF] hover:bg-[#0036C1] text-white shadow-lg shadow-blue-500/20 text-sm"
           onClick={(e) => e.stopPropagation()}
         >
-          <Link href="/signin">{t("Apply Now")}</Link>
+          <Link href={applyUrl}>{t("Apply Now")}</Link>
         </Button>
-        <button
-          type="button"
-          onClick={onDetail}
-          className="size-9 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-500 hover:text-white transition-all"
-        >
-          <ChevronRight className="size-5" />
-        </button>
+        <ChevronRight className="size-5 text-slate-300 group-hover:text-[#0047FF] group-hover:translate-x-1 transition-all" />
       </div>
     </div>
   );
@@ -312,134 +349,105 @@ function ServiceRow({
 function ServiceDetailView({
   service,
   officeName,
-  officeLogo,
+  isLoggedIn,
   onBack,
   onClose,
   t,
 }: {
   service: ServiceItem;
   officeName: string;
-  officeLogo?: string | null;
+  isLoggedIn: boolean;
   onBack: () => void;
   onClose: () => void;
   t: (k: string) => string;
 }) {
+  const applyUrl = isLoggedIn
+    ? `/apply-service?serviceId=${service.id}`
+    : `/signin?callbackUrl=${encodeURIComponent(`/apply-service?serviceId=${service.id}`)}`;
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full bg-[#F8FAFC]">
       {/* Blue header */}
-      <div className="relative bg-blue-600 px-8 py-6">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-blue-100 hover:text-white font-semibold text-sm transition-colors mb-3"
-        >
-          <ArrowLeft className="size-4" />
-          {t("Back to Services")}
-        </button>
-        <DialogTitle className="text-xl font-black text-white leading-snug">
-          {service.name}
-        </DialogTitle>
+      <div className="relative bg-[#0047FF] px-8 py-8">
+        <div className="flex items-start gap-4 pr-8">
+          <button
+            onClick={onBack}
+            className="size-8 flex items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all shrink-0 mt-0.5"
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <div className="flex-1">
+            <DialogTitle className="text-lg font-bold text-white leading-tight">
+              {service.name}
+            </DialogTitle>
+          </div>
+        </div>
+
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/15 transition-all"
+          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full text-white/60 hover:text-white transition-all"
         >
-          <X className="size-4" />
+          <X className="size-5" />
         </button>
       </div>
 
       {/* Content */}
-      <div className="max-h-[65vh] overflow-y-auto p-6 space-y-4">
-        {/* Main service card */}
-        <div className="rounded-2xl bg-[#161b27] border border-white/5 p-5">
-          {/* Icon + name + office */}
-          <div className="flex items-start gap-4 mb-5">
-            <div className="size-12 rounded-xl bg-blue-600/20 flex items-center justify-center shrink-0">
-              <FileText className="size-6 text-blue-400" />
-            </div>
-            <div>
-              <p className="font-black text-white text-base leading-tight">{service.name}</p>
-              <div className="flex items-center gap-1.5 mt-1">
-                <Building2 className="size-3.5 text-blue-400/70 shrink-0" />
-                <p className="text-sm text-blue-300/70 font-medium">{officeName}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-1.5">
-              {t("Description")}
+      <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
+        {/* Main info card */}
+        <div className="rounded-2xl bg-white border border-slate-200/60 p-6 shadow-sm space-y-6">
+          <div className="space-y-4">
+            <p className="text-sm text-slate-500 font-medium leading-relaxed">
+              {service.description}
             </p>
-            <p className="text-gray-300 text-sm leading-relaxed">{service.description}</p>
-          </div>
 
-          {/* Meta row */}
-          <div className="flex flex-wrap gap-5 mb-6">
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="size-4 text-blue-400 shrink-0" />
-              <div>
-                <p className="text-xs text-gray-500">{t("Time to take")}</p>
-                <p className="font-bold text-white">{service.timeToTake}</p>
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-3 text-slate-600">
+                <Clock className="size-5 text-slate-400 shrink-0" />
+                <span className="text-sm font-medium">
+                  {t("Time to take")}: {service.timeToTake}
+                </span>
               </div>
-            </div>
-            {service.roomNumber && (
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="size-4 text-blue-400 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">{t("Room")}</p>
-                  <p className="font-bold text-white">{service.roomNumber}</p>
-                </div>
+              <div className="flex items-center gap-3 text-slate-600">
+                <FileText className="size-5 text-slate-400 shrink-0" />
+                <span className="text-sm font-medium">
+                  {t("Room")}: {service.roomNumber || "001"}
+                </span>
               </div>
-            )}
-            <div className="flex items-center gap-2 text-sm">
-              <Building2 className="size-4 text-blue-400 shrink-0" />
-              <div>
-                <p className="text-xs text-gray-500">{t("Office")}</p>
-                <p className="font-bold text-white line-clamp-1 max-w-36">{officeName}</p>
+              <div className="flex items-center gap-3 text-slate-600">
+                <Building2 className="size-5 text-slate-400 shrink-0" />
+                <span className="text-sm font-medium">
+                  {t("Office")}: {t("Waajjira Mummee")}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Apply button */}
           <Button
             asChild
-            className="w-full h-11 rounded-xl font-black bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25"
+            className="w-full h-12 rounded-xl font-bold text-base bg-[#0047FF] hover:bg-[#0036C1] text-white shadow-lg shadow-blue-500/20"
           >
-            <Link href="/signin">{t("Apply Now")}</Link>
+            <Link href={applyUrl}>{t("Apply Now")}</Link>
           </Button>
         </div>
 
         {/* Requirements */}
         {service.requirements && service.requirements.length > 0 && (
-          <div className="rounded-2xl bg-[#161b27] border border-white/5 p-5">
-            <p className="font-bold text-white mb-4">{t("Requirements")}</p>
-            <ul className="space-y-3">
+          <div className="rounded-2xl bg-white border border-slate-200/60 p-6 shadow-sm">
+            <h4 className="text-base font-bold text-slate-900 mb-4">
+              {t("Requirements")}
+            </h4>
+            <ul className="space-y-4">
               {service.requirements.map((req) => (
-                <li key={req.id} className="flex items-start gap-3">
-                  <span className="size-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-200">{req.name}</p>
+                <li key={req.id} className="flex items-start gap-3 group">
+                  <div className="size-2 rounded-full bg-[#0047FF] mt-2 shrink-0" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-slate-800 leading-tight">
+                      {req.name}
+                    </p>
                     {req.description && (
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{req.description}</p>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Service For */}
-        {service.serviceFors && service.serviceFors.length > 0 && (
-          <div className="rounded-2xl bg-[#161b27] border border-white/5 p-5">
-            <p className="font-bold text-white mb-4">{t("This Service is For")}</p>
-            <ul className="space-y-3">
-              {service.serviceFors.map((item) => (
-                <li key={item.id} className="flex items-start gap-3">
-                  <span className="size-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-200">{item.name}</p>
-                    {item.description && (
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{item.description}</p>
+                      <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                        {req.description}
+                      </p>
                     )}
                   </div>
                 </li>

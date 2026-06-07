@@ -135,12 +135,18 @@ export async function listServices(
       }),
     ]);
 
+    const totalPages = Math.ceil(total / pageSize);
+
     return res.json({
       data: services,
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      pagination: {
+        page,
+        pageSize,
+        totalItems: total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
     });
   } catch (error) {
     return handlePrismaError(error, res, "listServices");

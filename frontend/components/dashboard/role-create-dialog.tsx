@@ -55,6 +55,7 @@ export function RoleCreateDialog({
       const result = await createRole({
         name: name.trim(),
         description: description.trim(),
+        officeId,
       });
 
       if (result) {

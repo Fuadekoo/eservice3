@@ -564,7 +564,7 @@ export async function listRoles(
 }
 
 export async function createRole(
-  req: Request,
+  req: AuthRequest,
   res: Response,
 ): Promise<Response | void> {
   const parsed = createRoleSchema.safeParse(req.body);
@@ -572,9 +572,19 @@ export async function createRole(
     return res.status(400).json(buildValidationError(parsed.error));
   }
 
-  const { permissions, ...data } = parsed.data;
+  const { permissions, officeId, ...data } = parsed.data;
+
+  // Determine the officeId to use
+  // For office staff, getOfficeId returns their officeId
+  // For super admin, getOfficeId returns null, so we use the officeId from request if provided
+  const scopedOfficeId = getOfficeId(req, res);
+  const targetOfficeId = scopedOfficeId || officeId;
+
   const created = await prisma.role.create({
-    data: data as any,
+    data: {
+      ...(data as any),
+      officeId: targetOfficeId || null,
+    },
   });
 
   if (permissions?.length) {

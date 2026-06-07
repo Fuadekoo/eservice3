@@ -18,10 +18,12 @@ export declare function buildValidationError(error: ZodError): {
 export declare const createRoleSchema: z.ZodObject<{
     name: z.ZodString;
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    officeId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     permissions: z.ZodOptional<z.ZodArray<z.ZodString>>;
 }, z.core.$strip>;
 export declare const updateRoleSchema: z.ZodObject<{
     description: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+    officeId: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     permissions: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodString>>>;
     name: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;

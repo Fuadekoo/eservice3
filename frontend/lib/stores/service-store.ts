@@ -49,6 +49,8 @@ type ServiceStore = {
     pageSize: number;
     totalItems: number;
     totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
   } | null;
 
   // Actions

@@ -23,6 +23,7 @@ export type Permission = {
 export type CreateRolePayload = {
   name: string;
   description?: string;
+  officeId?: string;
   permissions?: string[];
 };
 

@@ -35,6 +35,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OfficeStaffTab } from "@/components/dashboard/office-staff-tab";
+import { OfficeServicesTab } from "@/components/dashboard/office-services-tab";
 import { OfficeAccessTab } from "@/components/dashboard/office-access-tab";
 import { ServiceCreateDialog } from "@/components/dashboard/service-create-dialog";
 import { format } from "date-fns";
@@ -89,7 +90,12 @@ export default function OfficeDetailsPage() {
     );
   }
 
-  const tabs: { value: TabValue; label: string; icon: React.ElementType; badge?: number }[] = [
+  const tabs: {
+    value: TabValue;
+    label: string;
+    icon: React.ElementType;
+    badge?: number;
+  }[] = [
     { value: "overview", label: t("Overview"), icon: LayoutDashboard },
     {
       value: "staff",
@@ -142,7 +148,6 @@ export default function OfficeDetailsPage() {
       {/* ── Page Header ─────────────────────────────────── */}
       <div className="border-b border-border/60 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="px-6 lg:px-8 pt-6 pb-0">
-
           {/* Title row */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-5">
             {/* Left: back + logo + meta */}
@@ -181,7 +186,8 @@ export default function OfficeDetailsPage() {
                     variant={currentOffice.status ? "default" : "secondary"}
                     className={cn(
                       "h-5 px-2 text-[10px] font-bold uppercase tracking-wider shrink-0",
-                      currentOffice.status && "bg-emerald-500 hover:bg-emerald-600",
+                      currentOffice.status &&
+                        "bg-emerald-500 hover:bg-emerald-600",
                     )}
                   >
                     {currentOffice.status ? t("Active") : t("Inactive")}
@@ -280,7 +286,9 @@ export default function OfficeDetailsPage() {
                 >
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between">
-                      <div className={cn("rounded-xl p-2.5 shadow-inner", stat.bg)}>
+                      <div
+                        className={cn("rounded-xl p-2.5 shadow-inner", stat.bg)}
+                      >
                         <stat.icon className={cn("h-5 w-5", stat.color)} />
                       </div>
                       <div className="text-right">
@@ -309,7 +317,9 @@ export default function OfficeDetailsPage() {
                       </CardTitle>
                     </div>
                     <CardDescription>
-                      {t("The official purpose and mission of this government entity.")}
+                      {t(
+                        "The official purpose and mission of this government entity.",
+                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -412,7 +422,10 @@ export default function OfficeDetailsPage() {
                       </div>
                       <span className="text-sm font-bold">
                         {currentOffice.startedAt
-                          ? format(new Date(currentOffice.startedAt), "MMM dd, yyyy")
+                          ? format(
+                              new Date(currentOffice.startedAt),
+                              "MMM dd, yyyy",
+                            )
                           : t("N/A")}
                       </span>
                     </div>
@@ -434,7 +447,9 @@ export default function OfficeDetailsPage() {
                 </Card>
 
                 <div className="rounded-2xl bg-linear-to-br from-primary to-primary/80 p-5 text-primary-foreground shadow-lg">
-                  <h3 className="text-base font-bold mb-1">{t("Quick Actions")}</h3>
+                  <h3 className="text-base font-bold mb-1">
+                    {t("Quick Actions")}
+                  </h3>
                   <p className="text-xs text-primary-foreground/80 mb-4">
                     {t("Perform administrative tasks for this office.")}
                   </p>
@@ -464,94 +479,16 @@ export default function OfficeDetailsPage() {
         )}
 
         {/* Staff */}
-        {activeTab === "staff" && (
-          <OfficeStaffTab officeId={currentOffice.id} />
-        )}
+        {activeTab === "staff" && <OfficeStaffTab officeId={id as string} />}
 
         {/* Services */}
         {activeTab === "services" && (
-          <Card className="border-none shadow-sm ring-1 ring-border/50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle className="text-lg font-bold">
-                  {t("Service Catalog")}
-                </CardTitle>
-                <CardDescription>
-                  {t("All public services provided by this office.")}
-                </CardDescription>
-              </div>
-              <Button
-                size="sm"
-                className="shadow-md"
-                onClick={() => setIsServiceCreateOpen(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                {t("Add Service")}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {currentOffice.service && currentOffice.service.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {currentOffice.service.map((service) => (
-                    <div
-                      key={service.id}
-                      className="group flex flex-col justify-between gap-4 p-5 rounded-2xl bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer shadow-sm"
-                    >
-                      <div className="space-y-1.5">
-                        <h4 className="text-sm font-bold group-hover:text-primary transition-colors leading-tight">
-                          {service.name}
-                        </h4>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {service.description || t("No description provided.")}
-                        </p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Badge
-                          variant="secondary"
-                          className="bg-background/50 font-medium"
-                        >
-                          <Clock className="mr-1 h-3 w-3" />
-                          {service.timeToTake || t("N/A")}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-xs font-bold hover:text-primary"
-                        >
-                          {t("Details")}
-                          <ChevronRight className="ml-1 h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex min-h-90 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30">
-                  <div className="rounded-full bg-background p-4 shadow-sm mb-4">
-                    <FileText className="h-9 w-9 text-primary/40" />
-                  </div>
-                  <h3 className="text-base font-bold text-foreground">
-                    {t("No services configured")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-xs text-center mt-1">
-                    {t("Start by adding the first service this office provides to citizens.")}
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-6 border-primary/20 hover:bg-primary/5"
-                    onClick={() => setIsServiceCreateOpen(true)}
-                  >
-                    {t("Create First Service")}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <OfficeServicesTab officeId={id as string} />
         )}
 
         {/* Access */}
         {activeTab === "security" && (
-          <OfficeAccessTab officeId={currentOffice.id} />
+          <OfficeAccessTab officeId={id as string} />
         )}
       </div>
 

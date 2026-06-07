@@ -20,6 +20,7 @@ export function buildValidationError(error) {
 export const createRoleSchema = z.object({
     name: z.string().trim().min(1, "Role name is required."),
     description: z.string().trim().nullable().optional(),
+    officeId: z.string().trim().nullable().optional(),
     permissions: z.array(z.string()).optional(),
 });
 export const updateRoleSchema = createRoleSchema.partial().extend({

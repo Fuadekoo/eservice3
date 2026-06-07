@@ -255,16 +255,46 @@ export function OfficeCreateDialog({
               control={form.control}
               name="status"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel>{t("Active Status")}</FormLabel>
+                <FormItem className="flex flex-col gap-3 rounded-2xl border bg-muted/20 p-4 transition-all hover:bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-sm font-bold">
+                        {t("Office Status")}
+                      </FormLabel>
+                      <p className="text-[11px] text-muted-foreground font-medium">
+                        {field.value
+                          ? t("This office will be visible and active for citizens.")
+                          : t("This office will be hidden and inactive for citizens.")}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center p-1 bg-muted/40 rounded-xl border border-border/50 w-fit shadow-inner">
+                      <button
+                        type="button"
+                        onClick={() => field.value && field.onChange(false)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all duration-200",
+                          !field.value
+                            ? "bg-white text-destructive shadow-sm scale-100"
+                            : "text-muted-foreground/40 hover:text-muted-foreground scale-95",
+                        )}
+                      >
+                        {t("Inactive")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => !field.value && field.onChange(true)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all duration-200",
+                          field.value
+                            ? "bg-blue-600 text-white shadow-sm scale-100"
+                            : "text-muted-foreground/40 hover:text-muted-foreground scale-95",
+                        )}
+                      >
+                        {t("Active")}
+                      </button>
+                    </div>
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

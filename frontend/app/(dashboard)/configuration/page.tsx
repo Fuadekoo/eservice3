@@ -10,8 +10,7 @@ import {
   Globe,
   Loader2,
   Save,
-  ToggleLeft,
-  ToggleRight,
+  Power,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type OfficeData = {
@@ -181,7 +182,11 @@ export default function ConfigurationPage() {
         />
         <div className="flex items-center gap-2 shrink-0">
           {isDirty && (
-            <Button variant="ghost" onClick={handleReset} className="h-10 rounded-xl">
+            <Button
+              variant="ghost"
+              onClick={handleReset}
+              className="h-10 rounded-xl"
+            >
               Reset
             </Button>
           )}
@@ -280,24 +285,37 @@ export default function ConfigurationPage() {
 
           <Separator />
 
-          <FieldRow icon={form.status ? ToggleRight : ToggleLeft} label="Office Status">
-            <button
-              type="button"
-              onClick={() => handleChange("status", !form.status)}
-              className={cn(
-                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none",
-                form.status ? "bg-primary" : "bg-muted"
-              )}
-            >
-              <span
+          <FieldRow icon={Power} label="Office Status">
+            <div className="flex items-center p-1 bg-muted/40 rounded-xl border border-border/50 w-fit shadow-inner">
+              <button
+                type="button"
+                onClick={() => form.status && handleChange("status", false)}
                 className={cn(
-                  "pointer-events-none inline-block size-5 rounded-full bg-white shadow-lg transform transition-transform duration-200",
-                  form.status ? "translate-x-5" : "translate-x-0"
+                  "px-4 py-2 rounded-lg text-xs font-black uppercase transition-all duration-200",
+                  !form.status
+                    ? "bg-white text-destructive shadow-sm scale-100"
+                    : "text-muted-foreground/40 hover:text-muted-foreground scale-95",
                 )}
-              />
-            </button>
-            <p className="text-xs text-muted-foreground mt-1.5">
-              {form.status ? "Office is active and accepting requests" : "Office is inactive"}
+              >
+                Inactive
+              </button>
+              <button
+                type="button"
+                onClick={() => !form.status && handleChange("status", true)}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-xs font-black uppercase transition-all duration-200",
+                  form.status
+                    ? "bg-blue-600 text-white shadow-sm scale-100"
+                    : "text-muted-foreground/40 hover:text-muted-foreground scale-95",
+                )}
+              >
+                Active
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3 font-medium">
+              {form.status
+                ? "This office is currently active and visible to citizens. They can browse services and submit requests."
+                : "This office is currently inactive. It will be hidden from the public website and no new requests can be submitted."}
             </p>
           </FieldRow>
         </CardContent>
@@ -307,12 +325,22 @@ export default function ConfigurationPage() {
       <Card className="border-none shadow-sm ring-1 ring-border/50 bg-muted/20">
         <CardContent className="p-5 flex flex-wrap gap-6 text-sm">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Office ID</p>
-            <p className="font-mono text-xs text-foreground/70">{office?.id ?? "—"}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              Office ID
+            </p>
+            <p className="font-mono text-xs text-foreground/70">
+              {office?.id ?? "—"}
+            </p>
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">Started</p>
-            <p className="font-medium">{office ? new Date((office as any).startedAt).toLocaleDateString() : "—"}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              Started
+            </p>
+            <p className="font-medium">
+              {office
+                ? new Date((office as any).startedAt).toLocaleDateString()
+                : "—"}
+            </p>
           </div>
         </CardContent>
       </Card>

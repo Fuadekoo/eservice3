@@ -111,7 +111,9 @@ export default function OfficesPage() {
   return (
     <PageLayout
       title={t("Government Offices")}
-      description={t("Create and manage your office locations and information.")}
+      description={t(
+        "Create and manage your office locations and information.",
+      )}
       icon={Building2}
       actions={
         <Button
@@ -173,8 +175,7 @@ export default function OfficesPage() {
               <List className="size-4" />
             </Button>
           </div>
-
-          </div>
+        </div>
       </div>
 
       {isLoading ? (
@@ -253,12 +254,34 @@ export default function OfficesPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={office.status ? "default" : "secondary"}
-                      className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase"
-                    >
-                      {office.status ? t("Active") : t("Inactive")}
-                    </Badge>
+                    <div className="flex items-center p-1 bg-muted/40 rounded-xl border border-border/50 w-fit shadow-inner">
+                      <button
+                        onClick={() =>
+                          office.status && handleStatusToggle(office)
+                        }
+                        className={cn(
+                          "px-2 py-1 rounded-lg text-[9px] font-black uppercase transition-all duration-200",
+                          !office.status
+                            ? "bg-white text-destructive shadow-sm scale-100"
+                            : "text-muted-foreground/40 hover:text-muted-foreground scale-95",
+                        )}
+                      >
+                        {t("Inactive")}
+                      </button>
+                      <button
+                        onClick={() =>
+                          !office.status && handleStatusToggle(office)
+                        }
+                        className={cn(
+                          "px-2 py-1 rounded-lg text-[9px] font-black uppercase transition-all duration-200",
+                          office.status
+                            ? "bg-blue-600 text-white shadow-sm scale-100"
+                            : "text-muted-foreground/40 hover:text-muted-foreground scale-95",
+                        )}
+                      >
+                        {t("Active")}
+                      </button>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -463,30 +486,29 @@ function OfficeCard({
         </div>
 
         <div className="mt-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Badge
+          <div className="flex items-center p-1 bg-muted/40 rounded-xl border border-border/50 w-fit shadow-inner">
+            <button
+              onClick={() => office.status && onStatusToggle()}
               className={cn(
-                "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider border-none shadow-sm",
-                office.status
-                  ? "bg-blue-600 text-white"
-                  : "bg-muted text-muted-foreground",
+                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all duration-200",
+                !office.status
+                  ? "bg-white text-destructive shadow-sm scale-100"
+                  : "text-muted-foreground/40 hover:text-muted-foreground scale-95",
               )}
             >
-              {office.status ? t("Active") : t("Inactive")}
-            </Badge>
-
-            <div className="flex items-center gap-2">
-              <Power
-                className={cn(
-                  "size-3.5 transition-colors",
-                  office.status ? "text-emerald-500" : "text-muted-foreground",
-                )}
-              />
-              <Switch
-                checked={office.status}
-                onCheckedChange={onStatusToggle}
-              />
-            </div>
+              {t("Inactive")}
+            </button>
+            <button
+              onClick={() => !office.status && onStatusToggle()}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all duration-200",
+                office.status
+                  ? "bg-blue-600 text-white shadow-sm scale-100"
+                  : "text-muted-foreground/40 hover:text-muted-foreground scale-95",
+              )}
+            >
+              {t("Active")}
+            </button>
           </div>
 
           <div className="flex items-center gap-4">

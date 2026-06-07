@@ -51,6 +51,12 @@ export function GovernmentOffices() {
     void fetchOffices();
   }, [fetchOffices]);
 
+  // Only show active offices to guests
+  const activeOffices = React.useMemo(
+    () => offices.filter((office) => office.status !== false),
+    [offices],
+  );
+
   const handleOfficeClick = async (office: Office) => {
     setIsFetching(true);
     try {
@@ -71,7 +77,7 @@ export function GovernmentOffices() {
     }
   };
 
-  if (isLoading && offices.length === 0) {
+  if (isLoading && activeOffices.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
         <Loader2 className="size-10 animate-spin mb-4 text-primary" />
@@ -87,13 +93,13 @@ export function GovernmentOffices() {
         <h2 className="text-3xl font-black tracking-tight text-foreground">
           {t("Government Offices")}{" "}
           <span className="text-primary/70 text-xl font-bold">
-            ({offices.length})
+            ({activeOffices.length})
           </span>
         </h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {offices.map((office) => (
+        {activeOffices.map((office) => (
           <OfficeCard
             key={office.id}
             office={office}
@@ -102,7 +108,7 @@ export function GovernmentOffices() {
             t={t}
           />
         ))}
-        {offices.length === 0 && (
+        {activeOffices.length === 0 && (
           <div className="col-span-full py-20 text-center rounded-3xl border-2 border-dashed border-white/10">
             <Building2 className="size-12 text-white/20 mx-auto mb-3" />
             <p className="text-white/40 font-medium">

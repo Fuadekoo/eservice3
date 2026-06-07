@@ -23,6 +23,7 @@ import { useGalleryStore } from "@/lib/stores/gallery-store";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { Logo } from "@/components/logo";
 import { GovernmentOffices } from "@/components/guest/government-offices";
+import { getUploadUrl } from "@/lib/axios";
 
 export default function Page() {
   const { offices, fetchOffices, isLoading: loadingOffices } = useOfficeStore();
@@ -52,54 +53,75 @@ export default function Page() {
         <GovernmentOffices />
 
         {/* Administration Section */}
-        {adminSections.length > 0 && (
+        {loadingAdmin ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-primary/5 rounded-[2rem] border border-primary/10">
+            <Loader2 className="size-10 animate-spin mb-4 text-primary" />
+            <p className="font-bold">
+              {getTranslationForKey("Loading administration...")}
+            </p>
+          </div>
+        ) : adminSections.length > 0 ? (
           <section id="administration" className="space-y-12">
-            <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
-              <Users className="size-8 text-primary" />
-              {getTranslationForKey("Administration")}
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-black tracking-tight flex items-center gap-3 text-foreground">
+                <Users className="size-8 text-primary" />
+                {getTranslationForKey("Administration")}
+              </h2>
+            </div>
 
-            <div className="grid lg:grid-cols-2 gap-12 items-center bg-primary/5 rounded-[2rem] p-8 md:p-12 border border-primary/10">
-              <div className="space-y-6 order-2 lg:order-1">
-                <div>
-                  <h3 className="text-4xl md:text-5xl font-black tracking-tighter">
-                    {adminSections[0].name}
-                  </h3>
-                  <div className="text-primary font-black uppercase tracking-[0.2em] text-sm mt-2">
+            <div className="grid lg:grid-cols-2 gap-12 items-center bg-card rounded-[2rem] p-8 md:p-12 border border-border shadow-xl">
+              <div className="space-y-8 order-2 lg:order-1">
+                <div className="space-y-2">
+                  <div className="text-primary font-black uppercase tracking-[0.2em] text-sm">
                     {getTranslationForKey("ADMINISTRATION")}
                   </div>
+                  <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-foreground">
+                    {adminSections[0].name}
+                  </h3>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                <div className="space-y-4 relative">
+                  <div className="absolute -left-4 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
+                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground pl-2">
                     {getTranslationForKey("Administration Message:")}
                   </div>
-                  <p className="text-lg md:text-xl text-muted-foreground leading-relaxed italic font-medium">
+                  <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed italic font-medium pl-2">
                     "{adminSections[0].description}"
                   </p>
                 </div>
 
-                <div className="pt-4 flex flex-wrap gap-4">
-                  <Button className="rounded-full px-8 h-12 font-bold" asChild>
+                <div className="pt-6 flex flex-wrap gap-4">
+                  <Button
+                    className="rounded-xl px-8 h-14 font-bold text-lg shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+                    asChild
+                  >
                     <Link href="/about">
                       {getTranslationForKey("Read Full Profile")}
+                      <ArrowRight className="ml-2 size-5" />
                     </Link>
                   </Button>
                 </div>
               </div>
 
-              <div className="relative order-1 lg:order-2">
-                <div className="absolute -inset-4 bg-primary/20 rounded-3xl blur-2xl opacity-50" />
-                <div className="relative aspect-[4/5] md:aspect-square rounded-2xl overflow-hidden border-4 border-background shadow-2xl shadow-primary/20">
+              <div className="relative order-1 lg:order-2 group">
+                <div className="absolute -inset-4 bg-primary/10 rounded-[2.5rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative aspect-[4/5] md:aspect-square rounded-3xl overflow-hidden border-8 border-background shadow-2xl shadow-black/20">
                   <img
-                    src={adminSections[0].image}
+                    src={getUploadUrl(adminSections[0].image)}
                     alt={adminSections[0].name}
-                    className="size-full object-cover object-top hover:scale-105 transition-transform duration-700"
+                    className="size-full object-cover object-top transition-transform duration-700 group-hover:scale-110"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8">
+                    <p className="text-white font-bold text-xl">
+                      {adminSections[0].name}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </section>
+        ) : (
+          <div className="hidden">{/* No administration data found */}</div>
         )}
 
         {/* Gallery Section */}
@@ -135,7 +157,7 @@ export default function Page() {
                     className="group relative aspect-square rounded-2xl overflow-hidden bg-muted border border-border"
                   >
                     <img
-                      src={`/api/uploads/${image.filename}`}
+                      src={getUploadUrl(image.filename)}
                       alt={image.galleryName}
                       className="size-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-50"
                     />

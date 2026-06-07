@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAboutStore, type AboutSection } from "../_stores/about-store";
 import { uploadFileOnly } from "@/lib/file-upload";
+import { getUploadUrl } from "@/lib/axios";
 
 const aboutSectionSchema = z.object({
   name: z.string().min(2, "Title is required"),
@@ -108,7 +109,7 @@ export function AboutSectionDialog({
       toast.error(
         section
           ? "Failed to update about section"
-          : "Failed to create about section"
+          : "Failed to create about section",
       );
     } finally {
       setIsSubmitting(false);
@@ -117,12 +118,12 @@ export function AboutSectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-[#121212] text-white border-gray-800">
+      <DialogContent className="sm:max-w-[500px] bg-card text-foreground border-border">
         <DialogHeader>
           <DialogTitle>
             {section ? "Edit About Section" : "Add About Section"}
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-muted-foreground">
             {section
               ? "Update about section details."
               : "Add a new content section to the about page."}
@@ -132,15 +133,11 @@ export function AboutSectionDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="flex flex-col items-center gap-4">
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-[#1e1e1e] border-2 border-dashed border-gray-700 flex items-center justify-center">
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-muted border-2 border-dashed border-border flex items-center justify-center">
                 {form.watch("image") ? (
                   <>
                     <Image
-                      src={
-                        form.watch("image").startsWith("http")
-                          ? form.watch("image")
-                          : `/api/uploads/${form.watch("image")}`
-                      }
+                      src={getUploadUrl(form.watch("image"))}
                       alt="Preview"
                       fill
                       className="object-cover"
@@ -148,7 +145,7 @@ export function AboutSectionDialog({
                     <button
                       type="button"
                       onClick={() => form.setValue("image", "")}
-                      className="absolute top-2 right-2 p-1 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+                      className="absolute top-2 right-2 p-1 bg-destructive/80 rounded-full hover:bg-destructive transition-colors"
                     >
                       <X className="size-5 text-white" />
                     </button>
@@ -156,7 +153,7 @@ export function AboutSectionDialog({
                 ) : isUploading ? (
                   <Loader2 className="size-10 animate-spin text-primary" />
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Upload className="size-10" />
                     <span className="text-sm">Upload Cover Image</span>
                   </div>
@@ -169,9 +166,7 @@ export function AboutSectionDialog({
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
               </div>
-              <FormMessage>
-                {form.formState.errors.image?.message}
-              </FormMessage>
+              <FormMessage>{form.formState.errors.image?.message}</FormMessage>
             </div>
 
             <FormField
@@ -184,7 +179,7 @@ export function AboutSectionDialog({
                     <Input
                       {...field}
                       placeholder="e.g. Our Mission"
-                      className="bg-[#1e1e1e] border-gray-800 focus:ring-primary"
+                      className="bg-muted border-border focus:ring-primary text-foreground"
                     />
                   </FormControl>
                   <FormMessage />
@@ -202,7 +197,7 @@ export function AboutSectionDialog({
                     <Textarea
                       {...field}
                       placeholder="Enter content details..."
-                      className="bg-[#1e1e1e] border-gray-800 focus:ring-primary min-h-[150px]"
+                      className="bg-muted border-border focus:ring-primary text-foreground min-h-[150px]"
                     />
                   </FormControl>
                   <FormMessage />
@@ -215,14 +210,14 @@ export function AboutSectionDialog({
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="bg-transparent border-gray-800 text-white hover:bg-gray-800"
+                className="bg-transparent border-border text-foreground hover:bg-muted"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting || isUploading}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isSubmitting && (
                   <Loader2 className="mr-2 size-4 animate-spin" />

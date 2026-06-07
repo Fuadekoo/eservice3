@@ -95,7 +95,7 @@ export default function GalleryPage() {
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           placeholder="Search galleries..."
           value={searchQuery}
@@ -103,26 +103,26 @@ export default function GalleryPage() {
             setSearchQuery(e.target.value);
             setCurrentPage(1); // Reset to first page on search
           }}
-          className="pl-10 bg-[#121212] border-gray-800 text-white focus:ring-primary rounded-xl"
+          className="pl-10 bg-card border-border text-foreground focus:ring-primary rounded-xl"
         />
       </div>
 
       {isLoading && galleries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <Loader2 className="size-10 animate-spin mb-4 text-primary" />
           <p>Loading galleries...</p>
         </div>
       ) : galleries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-gray-800 rounded-3xl bg-[#121212]">
-          <div className="size-16 rounded-full bg-gray-800/50 flex items-center justify-center mb-4">
-            <Images className="size-8 text-gray-600" />
+        <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-3xl bg-card">
+          <div className="size-16 rounded-full bg-muted flex items-center justify-center mb-4">
+            <Images className="size-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium text-white mb-1">
+          <h3 className="text-lg font-medium text-foreground mb-1">
             {searchQuery
               ? "No galleries match your search"
               : "No galleries found"}
           </h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-muted-foreground mb-6">
             {searchQuery
               ? "Try a different search term."
               : "Start by creating your first gallery collection."}
@@ -131,7 +131,7 @@ export default function GalleryPage() {
             <Button
               onClick={handleCreate}
               variant="outline"
-              className="border-gray-700 text-white"
+              className="border-border text-foreground"
             >
               <Plus className="mr-2 size-4" />
               Create Gallery
@@ -188,21 +188,21 @@ export default function GalleryPage() {
       />
 
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
-        <AlertDialogContent className="bg-[#121212] border-gray-800 text-white">
+        <AlertDialogContent className="bg-card border-border text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogDescription className="text-muted-foreground">
               This action cannot be undone. This will permanently delete the
               gallery and all its associated images.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-gray-800 text-white hover:bg-gray-800">
+            <AlertDialogCancel className="bg-transparent border-border text-foreground hover:bg-muted">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              className="bg-[#f05252] hover:bg-[#d94444] text-white"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               Delete
             </AlertDialogAction>

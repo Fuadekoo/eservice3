@@ -10,11 +10,23 @@ import { getToken, removeToken } from "./auth-client";
 // 1) NEXT_PUBLIC_API_BASE_URL (explicit config)
 // 2) Browser: same-origin `/back-api` (behind nginx or reverse proxy)
 // 3) Server-side: local dev backend `http://localhost:4000/back-api`
-const NEXT_PUBLIC_API_BASE_URL =
+export const NEXT_PUBLIC_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   (typeof window !== "undefined"
     ? "/back-api"
     : process.env.API_BASE_URL || "http://localhost:4000/back-api");
+
+/**
+ * Get the base URL for uploaded files
+ */
+export const getUploadUrl = (filename?: string) => {
+  if (!filename) return "";
+  // If it's already a full URL, return it
+  if (filename.startsWith("http")) return filename;
+
+  // Use the local API proxy route to stream images
+  return `/api/uploads/${filename}`;
+};
 
 export class ApiError extends Error {
   status: number;

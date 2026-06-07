@@ -144,7 +144,7 @@ export function GalleryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-[#0a0a0a] text-white border-gray-800 p-0 overflow-hidden rounded-2xl">
+      <DialogContent className="sm:max-w-[600px] bg-card text-foreground border-border p-0 overflow-hidden rounded-2xl">
         <div className="p-6 space-y-6">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0">
             <DialogTitle className="text-xl font-bold">
@@ -159,14 +159,14 @@ export function GalleryDialog({
                 name="name"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-medium text-gray-200">
+                    <FormLabel className="text-sm font-medium">
                       Gallery Name
                     </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         placeholder="Enter gallery name"
-                        className="bg-[#121212] border-gray-800 focus:ring-primary text-white h-11 rounded-lg"
+                        className="bg-muted border-border focus:ring-primary text-foreground h-11 rounded-lg"
                       />
                     </FormControl>
                     <FormMessage />
@@ -179,14 +179,14 @@ export function GalleryDialog({
                 name="description"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-medium text-gray-200">
+                    <FormLabel className="text-sm font-medium">
                       Description (Optional)
                     </FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
                         placeholder="Enter gallery description"
-                        className="bg-[#121212] border-gray-800 focus:ring-primary text-white min-h-[120px] rounded-lg resize-none"
+                        className="bg-muted border-border focus:ring-primary text-foreground min-h-[120px] rounded-lg resize-none"
                       />
                     </FormControl>
                     <FormMessage />
@@ -195,7 +195,7 @@ export function GalleryDialog({
               />
 
               <div className="space-y-3">
-                <FormLabel className="text-sm font-medium text-gray-200">
+                <FormLabel className="text-sm font-medium">
                   Images *
                 </FormLabel>
 
@@ -214,7 +214,7 @@ export function GalleryDialog({
                       <button
                         type="button"
                         onClick={() => removeFile(index)}
-                        className="absolute top-1 right-1 p-1 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1 right-1 p-1 bg-destructive/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="size-3 text-white" />
                       </button>
@@ -222,9 +222,9 @@ export function GalleryDialog({
                   ))}
 
                   {selectedFiles.length < 10 && (
-                    <label className="relative aspect-square rounded-xl border-2 border-dashed border-gray-800 bg-[#121212] flex flex-col items-center justify-center cursor-pointer hover:bg-gray-800/50 transition-colors">
-                      <ImageIcon className="size-6 text-gray-500 mb-1" />
-                      <span className="text-[10px] text-gray-400 text-center px-1 leading-tight">
+                    <label className="relative aspect-square rounded-xl border-2 border-dashed border-border bg-muted flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition-colors">
+                      <ImageIcon className="size-6 text-muted-foreground mb-1" />
+                      <span className="text-[10px] text-muted-foreground text-center px-1 leading-tight">
                         Add Images
                         <br />
                         (Multiple)
@@ -239,17 +239,17 @@ export function GalleryDialog({
                     </label>
                   )}
                 </div>
-                <p className="text-[11px] text-gray-500">
-                  {selectedFiles.length} / 10 images uploaded
+                <p className="text-[11px] text-muted-foreground">
+                  {selectedFiles.length} / 10 images selected
                 </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => onOpenChange(false)}
-                  className="bg-[#1a1a1a] border-none text-white hover:bg-gray-800 px-6 h-11 rounded-xl"
+                  className="px-6 h-11 rounded-xl"
                 >
                   Cancel
                 </Button>
@@ -258,7 +258,7 @@ export function GalleryDialog({
                   disabled={
                     isSubmitting || (!gallery && selectedFiles.length === 0)
                   }
-                  className="bg-primary hover:bg-primary/90 px-6 h-11 rounded-xl font-semibold"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 h-11 rounded-xl font-semibold"
                 >
                   {isSubmitting && (
                     <Loader2 className="mr-2 size-4 animate-spin" />

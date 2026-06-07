@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import type { Administration } from "@/lib/stores/administration-store";
+import { getUploadUrl } from "@/lib/axios";
 
 interface AdministratorCardProps {
   administrator: Administration;
@@ -19,40 +20,33 @@ export function AdministratorCard({
   onDelete,
 }: AdministratorCardProps) {
   return (
-    <Card className="overflow-hidden bg-[#121212] border-none">
-      <CardContent className="p-4 flex flex-col gap-4">
-        <div className="overflow-hidden rounded-xl bg-[#1e1e1e]">
-          <AspectRatio ratio={1 / 1.1}>
-            <Image
-              src={
-                administrator.image
-                  ? administrator.image.startsWith("http")
-                    ? administrator.image
-                    : `/api/uploads/${administrator.image}`
-                  : "/placeholder.png"
-              }
-              alt={administrator.name}
-              fill
-              className="object-cover"
-            />
-          </AspectRatio>
+    <Card className="overflow-hidden bg-card border border-border rounded-2xl group hover:shadow-lg transition-all duration-300">
+      <CardContent className="p-5 flex flex-col gap-4">
+        <div className="overflow-hidden rounded-xl bg-muted aspect-[1/1.1] relative">
+          <Image
+            src={getUploadUrl(administrator.image) || "/placeholder.png"}
+            alt={administrator.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
         </div>
 
-        <div className="space-y-1">
-          <h3 className="font-semibold text-white text-base">
+        <div className="space-y-1.5 flex-1">
+          <h3 className="font-bold text-foreground text-lg leading-tight truncate">
             {administrator.name}
           </h3>
-          <p className="text-sm text-gray-400 line-clamp-2">
-            {administrator.description || "No description"}
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {administrator.description || "No description provided."}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border mt-auto">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => onEdit(administrator)}
-            className="bg-transparent border-gray-800 text-white hover:bg-gray-800 hover:text-white"
+            className="rounded-xl font-semibold"
           >
             <Edit className="size-4 mr-2" />
             Edit
@@ -61,7 +55,7 @@ export function AdministratorCard({
             variant="destructive"
             size="sm"
             onClick={() => onDelete(administrator.id)}
-            className="bg-[#f05252] hover:bg-[#d94444]"
+            className="rounded-xl font-semibold shadow-sm"
           >
             <Trash2 className="size-4 mr-2" />
             Delete

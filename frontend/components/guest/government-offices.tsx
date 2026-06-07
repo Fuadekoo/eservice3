@@ -80,7 +80,7 @@ export function GovernmentOffices() {
     <section id="offices" className="space-y-10 py-12">
       <div className="flex items-center gap-3">
         <Building2 className="size-8 text-primary" />
-        <h2 className="text-3xl font-black tracking-tight text-white">
+        <h2 className="text-3xl font-black tracking-tight text-foreground">
           {t("Government Offices")}{" "}
           <span className="text-primary/70 text-xl font-bold">({offices.length})</span>
         </h2>

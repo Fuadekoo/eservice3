@@ -9,3 +9,6 @@ backend/node_modules
 
 # build
 backend/dist/*
+
+#filedata
+backend/filedata/*

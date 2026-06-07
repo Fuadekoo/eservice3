@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useGalleryStore, type Gallery } from "@/lib/stores/gallery-store";
 import { uploadFileOnly } from "@/lib/file-upload";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { getUploadUrl } from "@/lib/axios";
 
 interface ImageManagementDialogProps {
   open: boolean;
@@ -72,17 +73,17 @@ export function ImageManagementDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col bg-[#121212] text-white border-gray-800">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col bg-card text-foreground border-border">
         <DialogHeader>
           <DialogTitle>{gallery.name} - Images</DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-muted-foreground">
             Manage images in this collection.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto min-h-[300px] py-4">
           {!gallery.images || gallery.images.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl">
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-border rounded-2xl">
               <ImageIcon className="size-12 mb-2 opacity-20" />
               <p>No images in this gallery</p>
             </div>
@@ -91,23 +92,24 @@ export function ImageManagementDialog({
               {gallery.images.map((img) => (
                 <div
                   key={img.id}
-                  className="group relative rounded-xl overflow-hidden bg-[#1e1e1e]"
+                  className="group relative rounded-xl overflow-hidden bg-muted"
                 >
                   <AspectRatio ratio={1 / 1}>
                     <Image
-                      src={`/api/uploads/${img.filename}`}
+                      src={getUploadUrl(img.filename)}
                       alt="Gallery image"
                       fill
-                      className="object-cover"
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
                     />
                   </AspectRatio>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                     <Button
                       variant="destructive"
-                      size="icon-sm"
+                      size="icon"
                       disabled={isDeleting === img.id}
                       onClick={() => handleDelete(img.id)}
-                      className="size-8 rounded-full"
+                      className="size-9 rounded-full shadow-lg"
                     >
                       {isDeleting === img.id ? (
                         <Loader2 className="size-4 animate-spin" />
@@ -122,14 +124,14 @@ export function ImageManagementDialog({
           )}
         </div>
 
-        <div className="pt-6 flex justify-between items-center border-t border-gray-800">
-          <p className="text-sm text-gray-500">
+        <div className="pt-6 flex justify-between items-center border-t border-border">
+          <p className="text-sm font-medium text-muted-foreground">
             {gallery.images?.length || 0} images total
           </p>
           <div className="relative">
             <Button
               disabled={isUploading}
-              className="bg-primary hover:bg-primary/90 rounded-xl"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6"
             >
               {isUploading ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />

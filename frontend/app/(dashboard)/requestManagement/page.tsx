@@ -345,20 +345,25 @@ export default function RequestManagementPage() {
           )}
         </div>
 
-        {pagination && pagination.total > pageSize && (
-          <PaginationFooter
-            currentPage={currentPage}
-            pageSize={pageSize}
-            totalPages={pagination.totalPages}
-            totalItems={pagination.total}
-            startIndex={(currentPage - 1) * pageSize}
-            endIndex={Math.min(currentPage * pageSize, pagination.total)}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
-            canGoNext={currentPage < pagination.totalPages}
-            canGoPrevious={currentPage > 1}
-            itemLabel="requests"
-          />
+        {pagination && pagination.totalPages > 1 && (
+          <div className="pt-2">
+            <PaginationFooter
+              currentPage={currentPage}
+              pageSize={pageSize}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.total}
+              startIndex={(currentPage - 1) * pageSize + 1}
+              endIndex={Math.min(currentPage * pageSize, pagination.total)}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(s) => {
+                setPageSize(s);
+                setCurrentPage(1);
+              }}
+              canGoNext={currentPage < pagination.totalPages}
+              canGoPrevious={currentPage > 1}
+              itemLabel="requests"
+            />
+          </div>
         )}
       </div>
 

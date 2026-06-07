@@ -65,9 +65,15 @@ export const NAVIGATION: NavSection[] = [
         roles: ["ADMIN"],
       },
       {
-        titleKey: "User Management",
+        titleKey: "Staff Management",
         icon: Users2,
         href: "/staff",
+        roles: ["ADMIN"],
+      },
+      {
+        titleKey: "User Management",
+        icon: ShieldCheck,
+        href: "/users",
         roles: ["ADMIN"],
       },
       {

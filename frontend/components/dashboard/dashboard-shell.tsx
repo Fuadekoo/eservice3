@@ -224,7 +224,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       console.log(
         "[DashboardShell] User not authenticated, redirecting to signin",
       );
-      router.replace("/signin");
+      const search = window.location.search;
+      const fullPath = window.location.pathname + search;
+      router.replace(`/signin?callbackUrl=${encodeURIComponent(fullPath)}`);
     }
   }, [router]);
 

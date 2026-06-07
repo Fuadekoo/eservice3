@@ -144,7 +144,7 @@ export default function ApplyServicePage() {
               (s) => s.id === serviceIdParam,
             );
             if (service) {
-              setDetailService(service);
+              setApplyService(service);
             }
           }
         } catch (error) {

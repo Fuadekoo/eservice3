@@ -37,7 +37,7 @@ export default function EditRolePage() {
   const router = useRouter();
   const params = useParams();
   const roleId = params.roleId as string;
-  const { isAdmin } = usePermissions();
+  const { isAdmin, hasPermission } = usePermissions();
 
   const {
     roles,
@@ -52,21 +52,28 @@ export default function EditRolePage() {
   >([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const canAccess = isAdmin || hasPermission("role:read");
+
   const role = React.useMemo(
     () => roles.find((r) => r.id === roleId) || null,
     [roles, roleId],
   );
 
   React.useEffect(() => {
+    if (!canAccess) {
+      router.replace("/dashboard");
+      return;
+    }
     if (roleId) {
-      // Fetch roles - SUPERADMIN sees all, others only see their school's roles
       void Promise.all([fetchRoles(), fetchPermissions()]);
     }
-  }, [roleId, fetchRoles, fetchPermissions]);
+  }, [roleId, canAccess, fetchRoles, fetchPermissions, router]);
 
   React.useEffect(() => {
     if (role) {
-      setSelectedPermissionCodes(role.permissions.map((p) => p.code));
+      setSelectedPermissionCodes(
+        role.permissions.map((p) => p.code).filter((c): c is string => typeof c === "string" && c.length > 0),
+      );
     } else if (roles.length > 0 && !isLoading) {
       toast.error("Role not found");
       router.push("/security/roles");
@@ -157,7 +164,9 @@ export default function EditRolePage() {
   const handleSelectAll = React.useCallback(
     (checked: boolean) => {
       if (checked) {
-        setSelectedPermissionCodes(permissions.map((p) => p.code));
+        setSelectedPermissionCodes(
+          permissions.map((p) => p.code).filter((c): c is string => typeof c === "string" && c.length > 0),
+        );
       } else {
         setSelectedPermissionCodes([]);
       }
@@ -193,7 +202,7 @@ export default function EditRolePage() {
       await updateRole(role.id, {
         name,
         description: description || undefined,
-        permissions: selectedPermissionCodes,
+        permissions: selectedPermissionCodes.filter((c): c is string => typeof c === "string" && c.length > 0),
       });
       toast.success("Role updated successfully");
       router.push("/security/roles");

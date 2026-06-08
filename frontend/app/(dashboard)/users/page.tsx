@@ -36,6 +36,7 @@ export default function UsersPage() {
     isLoading,
     fetchUsers,
     deleteUser,
+    updateUser,
     pagination,
   } = useUserStore();
   const { roles, fetchRoles } = useSecurityStore();
@@ -47,6 +48,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [selectedRoleId, setSelectedRoleId] = React.useState("all");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | "active" | "inactive">("all");
 
   React.useEffect(() => {
     void fetchRoles();
@@ -58,8 +60,9 @@ export default function UsersPage() {
       pageSize,
       search: searchQuery || undefined,
       roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+      isActive: statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
     });
-  }, [currentPage, fetchUsers, pageSize, searchQuery, selectedRoleId]);
+  }, [currentPage, fetchUsers, pageSize, searchQuery, selectedRoleId, statusFilter]);
 
   React.useEffect(() => {
     if (selectedRoleId === "all") return;
@@ -96,12 +99,22 @@ export default function UsersPage() {
     }
   };
 
+  const handleToggleActive = async (user: User) => {
+    try {
+      await updateUser(user.id, { isActive: !user.isActive });
+      toast.success(user.isActive ? "User deactivated" : "User activated");
+    } catch {
+      toast.error("Failed to update user status");
+    }
+  };
+
   const handleRefresh = () => {
     void fetchUsers({
       page: currentPage,
       pageSize,
       search: searchQuery || undefined,
       roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+      isActive: statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
     });
     toast.success("User list refreshed");
   };
@@ -146,7 +159,7 @@ export default function UsersPage() {
               className="pl-11 border-border focus:ring-primary rounded-xl h-11"
             />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             <Select
               value={selectedRoleId}
               onValueChange={(value) => {
@@ -154,7 +167,7 @@ export default function UsersPage() {
                 setCurrentPage(1);
               }}
             >
-              <SelectTrigger className="w-[180px] h-11 rounded-xl">
+              <SelectTrigger className="w-40 h-11 rounded-xl">
                 <SelectValue placeholder="All Roles" />
               </SelectTrigger>
               <SelectContent>
@@ -166,6 +179,23 @@ export default function UsersPage() {
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="flex items-center rounded-xl border border-border overflow-hidden h-11 bg-muted/30">
+              {(["all", "active", "inactive"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => { setStatusFilter(s); setCurrentPage(1); }}
+                  className={`px-4 h-full text-xs font-semibold capitalize transition-colors ${
+                    statusFilter === s
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {s === "all" ? "All" : s === "active" ? "Active" : "Inactive"}
+                </button>
+              ))}
+            </div>
+
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Show:</span>
               <Select
@@ -175,7 +205,7 @@ export default function UsersPage() {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-[80px] h-11 rounded-xl">
+                <SelectTrigger className="w-20 h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -193,6 +223,7 @@ export default function UsersPage() {
           users={users}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
+          onToggleActive={handleToggleActive}
         />
 
         {pagination && pagination.total > 0 && (

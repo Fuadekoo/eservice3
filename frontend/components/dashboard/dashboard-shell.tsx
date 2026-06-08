@@ -340,7 +340,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     item.roles?.map((r) => r.toUpperCase()) ?? [];
                   const hasRoleRestriction = itemRolesUpper.length > 0;
 
-                  // ── Other roles (staff, customer, etc.) ──
                   const itemPermissions = item.permissions ?? [];
                   const hasPermissionRestriction = itemPermissions.length > 0;
 
@@ -348,8 +347,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     !hasRoleRestriction ||
                     itemRolesUpper.includes(roleNameUpper);
 
+                  // If the item is already gated by a role the user has,
+                  // the role match is sufficient — skip the permission check.
                   const hasPermissionMatch =
                     !hasPermissionRestriction ||
+                    (hasRoleRestriction && hasRoleMatch) ||
                     hasAnyPermission(itemPermissions);
 
                   return hasRoleMatch && hasPermissionMatch;
@@ -358,11 +360,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   // Filter sub-items based on permissions
                   if (item.items && item.items.length > 0) {
                     const filteredSubItems = item.items.filter((subitem) => {
-                      if (subitem.roles?.includes("ADMIN")) return true;
-
                       const subPerms = subitem.permissions ?? [];
                       if (subPerms.length === 0) return true;
-
                       return hasAnyPermission(subPerms);
                     });
 

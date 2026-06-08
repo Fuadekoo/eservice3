@@ -50,7 +50,7 @@ export default function StaffPage() {
     roleNameUpper === "ADMINISTRATOR" ||
     roleNameUpper === "SUPERADMIN";
 
-  const { staff, isLoading, fetchStaff, deleteStaff, pagination } =
+  const { staff, isLoading, fetchStaff, deleteStaff, updateStaff, pagination } =
     useStaffStore();
   const { offices, fetchOffices } = useOfficeStore();
   const { roles, fetchRoles } = useSecurityStore();
@@ -66,6 +66,7 @@ export default function StaffPage() {
   const [selectedRoleId, setSelectedRoleId] = React.useState<string>("all");
   const [assignServicesMember, setAssignServicesMember] =
     React.useState<StaffMember | null>(null);
+  const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
 
   React.useEffect(() => {
     if (isSessionPending) return;
@@ -123,6 +124,7 @@ export default function StaffPage() {
       search: searchQuery || undefined,
       roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
       officeId: effectiveOfficeId,
+      status: selectedStatus !== "all" ? selectedStatus : undefined,
     });
   }, [
     currentPage,
@@ -133,6 +135,7 @@ export default function StaffPage() {
     searchQuery,
     selectedOfficeId,
     selectedRoleId,
+    selectedStatus,
     sessionOfficeId,
   ]);
 
@@ -162,6 +165,16 @@ export default function StaffPage() {
     }
   };
 
+  const handleToggleStatus = async (member: StaffMember) => {
+    const newStatus = member.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    try {
+      await updateStaff(member.id, { status: newStatus });
+      toast.success(newStatus === "ACTIVE" ? "Staff member activated" : "Staff member deactivated");
+    } catch {
+      toast.error("Failed to update staff status");
+    }
+  };
+
   const handleRefresh = () => {
     const effectiveOfficeId =
       selectedOfficeId !== "all"
@@ -176,6 +189,7 @@ export default function StaffPage() {
       search: searchQuery || undefined,
       roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
       officeId: effectiveOfficeId,
+      status: selectedStatus !== "all" ? selectedStatus : undefined,
     });
     toast.success("Staff list refreshed");
   };
@@ -258,7 +272,7 @@ export default function StaffPage() {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-[140px] border-none bg-transparent h-8 focus:ring-0">
+                <SelectTrigger className="w-35 border-none bg-transparent h-8 focus:ring-0">
                   <SelectValue placeholder="All Roles" />
                 </SelectTrigger>
                 <SelectContent>
@@ -272,6 +286,22 @@ export default function StaffPage() {
               </Select>
             </div>
 
+            <div className="flex items-center rounded-xl border border-border overflow-hidden h-9 bg-muted/50">
+              {(["all", "ACTIVE", "INACTIVE", "PENDING", "BLOCKED"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => { setSelectedStatus(s); setCurrentPage(1); }}
+                  className={`px-3 h-full text-[11px] font-semibold capitalize transition-colors whitespace-nowrap ${
+                    selectedStatus === s
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {s === "all" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+
             <div className="flex items-center gap-2 ml-auto lg:ml-0">
               <span className="text-xs font-medium text-muted-foreground">
                 Show:
@@ -283,7 +313,7 @@ export default function StaffPage() {
                   setCurrentPage(1);
                 }}
               >
-                <SelectTrigger className="w-[70px] bg-muted/50 border-border h-9 rounded-xl">
+                <SelectTrigger className="w-18 bg-muted/50 border-border h-9 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -302,6 +332,7 @@ export default function StaffPage() {
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
           onAssignServices={(member) => setAssignServicesMember(member)}
+          onToggleStatus={handleToggleStatus}
         />
 
         {pagination && pagination.totalItems > 0 && (

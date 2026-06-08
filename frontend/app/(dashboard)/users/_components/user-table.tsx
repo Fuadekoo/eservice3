@@ -7,6 +7,8 @@ import {
   Edit,
   Trash2,
   Eye,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import {
   Table,
@@ -25,9 +27,10 @@ interface UserTableProps {
   users: User[];
   onEdit: (user: User) => void;
   onDelete: (id: string) => void;
+  onToggleActive?: (user: User) => void;
 }
 
-export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
+export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTableProps) {
   const getInitials = (username: string) => {
     return username.substring(0, 1).toUpperCase();
   };
@@ -148,15 +151,25 @@ export function UserTable({ users, onEdit, onDelete }: UserTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center py-5">
-                    <Badge
-                      className={`rounded-full px-3 py-1 text-[10px] font-bold border-none ${
-                        user.isActive
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                          : "bg-destructive/10 text-destructive"
-                      }`}
+                    <button
+                      onClick={() => onToggleActive?.(user)}
+                      title={user.isActive ? "Click to deactivate" : "Click to activate"}
+                      className="group/toggle inline-flex items-center gap-1.5 cursor-pointer"
                     >
-                      {user.isActive ? "Active" : "Inactive"}
-                    </Badge>
+                      {user.isActive
+                        ? <ToggleRight className="size-4 text-emerald-500 group-hover/toggle:opacity-70 transition-opacity" />
+                        : <ToggleLeft className="size-4 text-muted-foreground group-hover/toggle:opacity-70 transition-opacity" />
+                      }
+                      <Badge
+                        className={`rounded-full px-3 py-1 text-[10px] font-bold border-none group-hover/toggle:opacity-70 transition-opacity ${
+                          user.isActive
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "bg-destructive/10 text-destructive"
+                        }`}
+                      >
+                        {user.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </button>
                   </TableCell>
                   <TableCell className="text-right pr-6 py-5">
                     <div className="flex items-center justify-end gap-1">

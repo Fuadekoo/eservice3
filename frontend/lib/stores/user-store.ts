@@ -59,6 +59,7 @@ type UserStore = {
     search?: string;
     roleId?: string;
     officeId?: string;
+    isActive?: boolean;
   }) => Promise<void>;
   createUser: (payload: CreateUserPayload) => Promise<User>;
   updateUser: (id: string, payload: UpdateUserPayload) => Promise<User>;
@@ -75,13 +76,14 @@ export const useUserStore = create<UserStore>((set) => ({
   fetchUsers: async (params = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const { page = 1, pageSize = 10, search, roleId, officeId } = params;
+      const { page = 1, pageSize = 10, search, roleId, officeId, isActive } = params;
       const queryParams = new URLSearchParams();
       queryParams.append("page", page.toString());
       queryParams.append("pageSize", pageSize.toString());
       if (search) queryParams.append("search", search);
       if (roleId) queryParams.append("roleId", roleId);
       if (officeId) queryParams.append("officeId", officeId);
+      if (isActive !== undefined) queryParams.append("isActive", isActive.toString());
 
       const response = (await axiosInstance.get<{
         success: boolean;

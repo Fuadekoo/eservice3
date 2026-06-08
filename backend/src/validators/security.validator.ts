@@ -23,7 +23,12 @@ export const createRoleSchema = z.object({
   name: z.string().trim().min(1, "Role name is required."),
   description: z.string().trim().nullable().optional(),
   officeId: z.string().trim().nullable().optional(),
-  permissions: z.array(z.string()).optional(),
+  permissions: z
+    .array(z.string().nullable().optional())
+    .optional()
+    .transform((arr) =>
+      arr?.filter((s): s is string => typeof s === "string" && s.length > 0),
+    ),
 });
 
 export const updateRoleSchema = createRoleSchema.partial().extend({

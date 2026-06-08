@@ -83,6 +83,12 @@ export const NAVIGATION: NavSection[] = [
         roles: ["ADMIN"],
       },
       {
+        titleKey: "Report Management",
+        icon: ClipboardCheck,
+        href: "/reportManagement",
+        roles: ["ADMIN"],
+      },
+      {
         titleKey: "Request Management",
         icon: ClipboardList,
         href: "/requestManagement",

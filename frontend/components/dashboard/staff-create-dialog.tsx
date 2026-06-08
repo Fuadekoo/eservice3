@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Shield, Phone, Key, Mail, Info } from "lucide-react";
 
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,10 @@ import {
 } from "@/components/ui/select";
 import { useStaffStore, type StaffMember } from "@/lib/stores/staff-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
+import { useTranslation } from "@/lib/i18n";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 const staffSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
@@ -40,10 +45,16 @@ const staffSchema = z.object({
   lastName: z.string().min(2, "Last name is required"),
   phone: z.string().min(10, "Phone number is required"),
   username: z.string().min(2, "Username is required"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .optional()
+    .or(z.literal("")),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
   roleId: z.string().min(1, "Role is required"),
-  status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"]).default("ACTIVE"),
+  status: z
+    .enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"])
+    .default("ACTIVE"),
 });
 
 type StaffFormValues = z.infer<typeof staffSchema>;
@@ -61,6 +72,7 @@ export function StaffCreateDialog({
   member,
   officeId,
 }: StaffCreateDialogProps) {
+  const { t } = useTranslation();
   const { createStaff, updateStaff } = useStaffStore();
   const { roles, fetchRoles } = useSecurityStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -125,19 +137,19 @@ export function StaffCreateDialog({
 
       if (member) {
         await updateStaff(member.id, payload as any);
-        toast.success("Staff member updated successfully");
+        toast.success(t("Staff member updated successfully"));
       } else {
         if (!values.password) {
-          toast.error("Password is required for new staff members");
+          toast.error(t("Password is required for new staff members"));
           setIsSubmitting(false);
           return;
         }
         await createStaff(payload as any);
-        toast.success("Staff member created successfully");
+        toast.success(t("Staff member created successfully"));
       }
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error?.message || "Failed to save staff member");
+      toast.error(error?.message || t("Failed to save staff member"));
     } finally {
       setIsSubmitting(false);
     }
@@ -145,191 +157,326 @@ export function StaffCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-[#121212] text-white border-gray-800">
-        <DialogHeader>
-          <DialogTitle>{member ? "Edit Staff Member" : "Add Staff Member"}</DialogTitle>
-          <DialogDescription className="text-gray-400">
-            {member ? "Update staff details and status." : "Create a new staff account for your office."}
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-0 border-none shadow-2xl rounded-2xl">
+        <DialogHeader className="p-6 pb-4 bg-primary/5 border-b border-primary/10">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl">
+              <User className="size-5" />
+            </div>
+            <DialogTitle className="text-xl font-black">
+              {member ? t("Edit Staff Member") : t("Add New Staff")}
+            </DialogTitle>
+          </div>
+          <DialogDescription className="font-medium text-muted-foreground ml-11">
+            {member
+              ? t("Update the details and permissions for this staff member.")
+              : t("Create a new staff account and assign them to this office.")}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="John" className="bg-[#1e1e1e] border-gray-800" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="fatherName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Father Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Doe" className="bg-[#1e1e1e] border-gray-800" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Smith" className="bg-[#1e1e1e] border-gray-800" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
+            <div className="p-6 space-y-6">
+              {/* Personal Information */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-muted-foreground/70">
+                  <Info className="size-4" />
+                  {t("Personal Information")}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                          {t("First Name")}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Abebe"
+                            className="h-11 rounded-xl bg-muted/30 border-border/50 focus-visible:ring-primary/20"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="fatherName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                          {t("Father Name")}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Bekele"
+                            className="h-11 rounded-xl bg-muted/30 border-border/50 focus-visible:ring-primary/20"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                          {t("Last Name")}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Kebede"
+                            className="h-11 rounded-xl bg-muted/30 border-border/50 focus-visible:ring-primary/20"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
+              <Separator className="bg-border/50" />
+
+              {/* Account Credentials */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-muted-foreground/70">
+                  <Key className="size-4" />
+                  {t("Account Credentials")}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                          {t("Username")}
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                            <Input
+                              {...field}
+                              placeholder="abebe.bekele"
+                              className="h-11 pl-9 rounded-xl bg-muted/30 border-border/50 focus-visible:ring-primary/20"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormDescription className="text-[10px]">
+                          {t("This will be used for system login.")}
+                        </FormDescription>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                          {member ? t("New Password") : t("Password")}
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Key className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                            <Input
+                              {...field}
+                              type="password"
+                              placeholder="••••••••"
+                              className="h-11 pl-9 rounded-xl bg-muted/30 border-border/50 focus-visible:ring-primary/20"
+                            />
+                          </div>
+                        </FormControl>
+                        {member && (
+                          <FormDescription className="text-[10px]">
+                            {t("Leave blank to keep current password.")}
+                          </FormDescription>
+                        )}
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator className="bg-border/50" />
+
+              {/* Role & Status */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-muted-foreground/70">
+                  <Shield className="size-4" />
+                  {t("Permissions & Status")}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                          {t("Gender")}
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/50 focus:ring-primary/20">
+                              <SelectValue placeholder={t("Select gender")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="rounded-xl border-border/50 shadow-xl">
+                            <SelectItem value="MALE" className="rounded-lg">
+                              {t("Male")}
+                            </SelectItem>
+                            <SelectItem value="FEMALE" className="rounded-lg">
+                              {t("Female")}
+                            </SelectItem>
+                            <SelectItem value="OTHER" className="rounded-lg">
+                              {t("Other")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="roleId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                          {t("Assign Role")}
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/50 focus:ring-primary/20">
+                              <SelectValue placeholder={t("Select role")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="rounded-xl border-border/50 shadow-xl">
+                            {roles.map((role) => (
+                              <SelectItem
+                                key={role.id}
+                                value={role.id}
+                                className="rounded-lg"
+                              >
+                                {role.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                          {t("Account Status")}
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/50 focus:ring-primary/20">
+                              <SelectValue placeholder={t("Select status")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="rounded-xl border-border/50 shadow-xl">
+                            <SelectItem value="ACTIVE" className="rounded-lg">
+                              {t("Active")}
+                            </SelectItem>
+                            <SelectItem value="INACTIVE" className="rounded-lg">
+                              {t("Inactive")}
+                            </SelectItem>
+                            <SelectItem value="PENDING" className="rounded-lg">
+                              {t("Pending")}
+                            </SelectItem>
+                            <SelectItem value="BLOCKED" className="rounded-lg">
+                              {t("Blocked")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-[10px]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Phone */}
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                      {t("Phone Number")}
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="+251..." className="bg-[#1e1e1e] border-gray-800" />
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <Input
+                          {...field}
+                          placeholder="+251 911 223 344"
+                          className="h-11 pl-9 rounded-xl bg-muted/30 border-border/50 focus-visible:ring-primary/20"
+                        />
+                      </div>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="johndoe" className="bg-[#1e1e1e] border-gray-800" />
-                    </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[10px]" />
                   </FormItem>
                 )}
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{member ? "New Password (optional)" : "Password"}</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="password" placeholder="******" className="bg-[#1e1e1e] border-gray-800" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gender</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-[#1e1e1e] border-gray-800">
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-[#1e1e1e] border-gray-800 text-white">
-                        <SelectItem value="MALE">Male</SelectItem>
-                        <SelectItem value="FEMALE">Female</SelectItem>
-                        <SelectItem value="OTHER">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="roleId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-[#1e1e1e] border-gray-800">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-[#1e1e1e] border-gray-800 text-white">
-                        {roles.map((role) => (
-                          <SelectItem key={role.id} value={role.id}>
-                            {role.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-[#1e1e1e] border-gray-800">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-[#1e1e1e] border-gray-800 text-white">
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="INACTIVE">Inactive</SelectItem>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="BLOCKED">Blocked</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="p-6 bg-muted/20 border-t border-border/50 flex flex-col sm:flex-row gap-3 sm:justify-end">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="bg-transparent border-gray-800 text-white hover:bg-gray-800"
+                className="h-11 px-8 rounded-xl font-bold border-border/50 hover:bg-muted/50 uppercase text-[10px] tracking-widest transition-all"
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-primary hover:bg-primary/90"
+                className="h-11 px-10 rounded-xl font-black uppercase text-xs tracking-wider shadow-lg shadow-primary/20"
               >
-                {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {member ? "Update Member" : "Create Member"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    {t("Saving...")}
+                  </>
+                ) : member ? (
+                  t("Update Staff")
+                ) : (
+                  t("Create Staff")
+                )}
               </Button>
             </div>
           </form>

@@ -1,18 +1,16 @@
 "use client";
 
-import * as React from "react";
 import {
-  MoreVertical,
   Phone,
   CheckCircle2,
   XCircle,
-  Shield,
   Edit,
   Trash2,
   Eye,
   GraduationCap,
-  Plus,
   RotateCw,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import {
   Table,
@@ -24,12 +22,6 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import type { StaffMember } from "@/lib/stores/staff-store";
 
@@ -38,9 +30,10 @@ interface StaffTableProps {
   onEdit: (member: StaffMember) => void;
   onDelete: (id: string) => void;
   onAssignServices: (member: StaffMember) => void;
+  onToggleStatus?: (member: StaffMember) => void;
 }
 
-export function StaffTable({ staff, onEdit, onDelete, onAssignServices }: StaffTableProps) {
+export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggleStatus }: StaffTableProps) {
   const getInitials = (username?: string, fallbackName?: string) => {
     const source = (username || fallbackName || "?").trim();
     return source.substring(0, 1).toUpperCase();
@@ -168,7 +161,19 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices }: StaffT
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center py-5">
-                    {getStatusBadge(member.status)}
+                    <button
+                      onClick={() => onToggleStatus?.(member)}
+                      title={member.status === "ACTIVE" ? "Click to deactivate" : "Click to activate"}
+                      className="group/toggle inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {member.status === "ACTIVE"
+                        ? <ToggleRight className="size-4 text-emerald-500 group-hover/toggle:opacity-70 transition-opacity" />
+                        : <ToggleLeft className="size-4 text-muted-foreground group-hover/toggle:opacity-70 transition-opacity" />
+                      }
+                      <span className="group-hover/toggle:opacity-70 transition-opacity">
+                        {getStatusBadge(member.status)}
+                      </span>
+                    </button>
                   </TableCell>
                   <TableCell className="text-right pr-6 py-5">
                     <div className="flex items-center justify-end gap-1">
@@ -197,14 +202,6 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices }: StaffT
                         title="Assign Services"
                       >
                         <GraduationCap className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Add"
-                      >
-                        <Plus className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"

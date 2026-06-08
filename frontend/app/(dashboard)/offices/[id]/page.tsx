@@ -38,6 +38,7 @@ import { OfficeStaffTab } from "@/components/dashboard/office-staff-tab";
 import { OfficeServicesTab } from "@/components/dashboard/office-services-tab";
 import { OfficeAccessTab } from "@/components/dashboard/office-access-tab";
 import { ServiceCreateDialog } from "@/components/dashboard/service-create-dialog";
+import { StaffCreateDialog } from "@/components/dashboard/staff-create-dialog";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,7 @@ export default function OfficeDetailsPage() {
   const { currentOffice, isLoading, getOffice, error } = useOfficeStore();
   const [activeTab, setActiveTab] = React.useState<TabValue>("overview");
   const [isServiceCreateOpen, setIsServiceCreateOpen] = React.useState(false);
+  const [isStaffCreateOpen, setIsStaffCreateOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (id) {
@@ -458,6 +460,7 @@ export default function OfficeDetailsPage() {
                       variant="secondary"
                       size="sm"
                       className="w-full justify-start font-semibold"
+                      onClick={() => setIsStaffCreateOpen(true)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       {t("New Staff Member")}
@@ -496,6 +499,12 @@ export default function OfficeDetailsPage() {
         open={isServiceCreateOpen}
         onOpenChange={setIsServiceCreateOpen}
         defaultOfficeId={currentOffice.id}
+      />
+
+      <StaffCreateDialog
+        open={isStaffCreateOpen}
+        onOpenChange={setIsStaffCreateOpen}
+        officeId={id as string}
       />
     </div>
   );

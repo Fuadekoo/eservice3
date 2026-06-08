@@ -44,17 +44,24 @@ import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { StaffCreateDialog } from "@/components/dashboard/staff-create-dialog";
+import { type StaffMember } from "@/lib/stores/staff-store";
+import { useTranslation } from "@/lib/i18n";
 
 interface OfficeStaffTabProps {
   officeId: string;
 }
 
 export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
+  const { t } = useTranslation();
   const { staff, pagination, isLoading, fetchStaff, deleteStaff } =
     useStaffStore();
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [selectedMember, setSelectedMember] =
+    React.useState<StaffMember | null>(null);
 
   React.useEffect(() => {
     fetchStaff({
@@ -66,14 +73,25 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
   }, [officeId, currentPage, pageSize, searchQuery, fetchStaff]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this staff member?")) return;
+    if (!confirm(t("Are you sure you want to delete this staff member?")))
+      return;
     try {
       await deleteStaff(id);
-      toast.success("Staff deleted successfully");
+      toast.success(t("Staff deleted successfully"));
       fetchStaff({ officeId, page: currentPage, pageSize });
     } catch (error) {
-      toast.error("Failed to delete staff");
+      toast.error(t("Failed to delete staff"));
     }
+  };
+
+  const handleEdit = (member: StaffMember) => {
+    setSelectedMember(member);
+    setIsCreateOpen(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedMember(null);
+    setIsCreateOpen(true);
   };
 
   const getInitials = (name: string) => {
@@ -94,23 +112,25 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg font-bold sm:text-xl">
-                Office Staff
+                {t("Office Staff")}
               </CardTitle>
               {pagination && (
                 <Badge
                   variant="secondary"
                   className="bg-secondary text-secondary-foreground border-transparent font-medium"
                 >
-                  {pagination.totalItems} Members
+                  {pagination.totalItems} {t("Members")}
                 </Badge>
               )}
             </div>
-            <CardDescription>Current members and their roles</CardDescription>
+            <CardDescription>
+              {t("Current members and their roles")}
+            </CardDescription>
           </div>
         </div>
-        <Button className="gap-2 w-full sm:w-auto">
+        <Button className="gap-2 w-full sm:w-auto" onClick={handleAdd}>
           <UserPlus className="size-4" />
-          Add User
+          {t("Add Staff")}
         </Button>
       </CardHeader>
 
@@ -119,7 +139,7 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search staff..."
+              placeholder={t("Search staff...")}
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -139,19 +159,19 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
             <TableHeader className="bg-muted/50">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[300px] font-semibold text-foreground">
-                  Staff Name
+                  {t("Staff Name")}
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">
-                  Role
+                  {t("Role")}
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">
-                  Contact
+                  {t("Contact")}
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">
-                  Status
+                  {t("Status")}
                 </TableHead>
                 <TableHead className="text-right font-semibold text-foreground">
-                  Actions
+                  {t("Actions")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -182,7 +202,7 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
                     colSpan={5}
                     className="h-24 text-center text-muted-foreground"
                   >
-                    No staff members found.
+                    {t("No staff members found.")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -216,7 +236,7 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
                         variant="outline"
                         className="rounded-full px-3 py-0.5 font-medium border-border text-muted-foreground uppercase text-[10px] tracking-wider"
                       >
-                        {member.role?.name || "N/A"}
+                        {member.role?.name || t("N/A")}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -239,7 +259,7 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
                             : "bg-destructive/15 text-destructive"
                         }`}
                       >
-                        {member.status}
+                        {t(member.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -254,19 +274,22 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel>{t("Actions")}</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="gap-2">
-                            <Eye className="size-4" /> View Detail
+                            <Eye className="size-4" /> {t("View Detail")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2">
-                            <Pencil className="size-4" /> Edit
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={() => handleEdit(member)}
+                          >
+                            <Pencil className="size-4" /> {t("Edit")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
                             onClick={() => handleDelete(member.id)}
                           >
-                            <Trash2 className="size-4" /> Delete
+                            <Trash2 className="size-4" /> {t("Delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -296,6 +319,13 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
           </div>
         )}
       </CardContent>
+
+      <StaffCreateDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        member={selectedMember}
+        officeId={officeId}
+      />
     </Card>
   );
 }

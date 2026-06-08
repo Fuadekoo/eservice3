@@ -19,12 +19,12 @@ export declare const createRoleSchema: z.ZodObject<{
     name: z.ZodString;
     description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     officeId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    permissions: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    permissions: z.ZodPipe<z.ZodOptional<z.ZodArray<z.ZodOptional<z.ZodNullable<z.ZodString>>>>, z.ZodTransform<string[] | undefined, (string | null | undefined)[] | undefined>>;
 }, z.core.$strip>;
 export declare const updateRoleSchema: z.ZodObject<{
     description: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
     officeId: z.ZodOptional<z.ZodOptional<z.ZodNullable<z.ZodString>>>;
-    permissions: z.ZodOptional<z.ZodOptional<z.ZodArray<z.ZodString>>>;
+    permissions: z.ZodOptional<z.ZodPipe<z.ZodOptional<z.ZodArray<z.ZodOptional<z.ZodNullable<z.ZodString>>>>, z.ZodTransform<string[] | undefined, (string | null | undefined)[] | undefined>>>;
     name: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 /**

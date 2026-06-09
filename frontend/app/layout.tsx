@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "e-Service | Government Services Management System",
   description:
     "e-Service Government Services Management System for your needs with multi-tenant support and multi-language support",
-  manifest: "/manifest",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

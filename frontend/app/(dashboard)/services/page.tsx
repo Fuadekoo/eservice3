@@ -393,6 +393,7 @@ export default function ServicesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </PageLayout>
   );
 }
 

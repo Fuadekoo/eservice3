@@ -16,66 +16,37 @@ import {
   FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useOfficeStore, type Office } from "@/lib/stores/office-store";
+import {
+  useHomepageStore,
+  type HomepageOfficeDetail,
+  type HomepageServiceItem,
+} from "@/lib/stores/homepage-store";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
-import { axiosInstance, getUploadUrl } from "@/lib/axios";
-import { useSession } from "@/hooks/use-session";
+import { getUploadUrl } from "@/lib/axios";
+import { isAuthenticated } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-type ServiceItem = {
-  id: string;
-  name: string;
-  description: string;
-  timeToTake: string;
-  roomNumber?: string | null;
-  requirements?: { id: string; name: string; description?: string | null }[];
-  serviceFors?: { id: string; name: string; description?: string | null }[];
-};
-
-type OfficeDetail = Office & {
-  service?: ServiceItem[];
-};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function GovernmentOffices() {
-  const { offices, fetchOffices, isLoading } = useOfficeStore();
+  const { isLoading } = useOfficeStore();
+  const offices = useOfficeStore((state) => state.offices);
+  const searchQuery = useHomepageStore((state) => state.searchQuery);
+  const getFilteredOffices = useHomepageStore((state) => state.getFilteredOffices);
+  const {
+    selectedOffice,
+    isOfficeDialogOpen,
+    isFetchingOfficeDetail,
+    openOfficeDialog,
+    closeOfficeDialog,
+  } = useHomepageStore();
   const { getTranslationForKey: t } = useLanguagesStore();
-  const [selectedOffice, setSelectedOffice] =
-    React.useState<OfficeDetail | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [isFetching, setIsFetching] = React.useState(false);
 
-  React.useEffect(() => {
-    void fetchOffices();
-  }, [fetchOffices]);
-
-  // Only show active offices to guests
   const activeOffices = React.useMemo(
-    () => offices.filter((office) => office.status !== false),
-    [offices],
+    () => getFilteredOffices(),
+    [getFilteredOffices, offices, searchQuery],
   );
-
-  const handleOfficeClick = async (office: Office) => {
-    setIsFetching(true);
-    try {
-      // Interceptor unwraps one level → response = { data: office, ... }
-      const response = (await axiosInstance.get(
-        `/offices/${office.id}`,
-      )) as unknown as {
-        data: OfficeDetail;
-      };
-      setSelectedOffice(response.data);
-      setIsDialogOpen(true);
-    } catch {
-      // Fallback: open with the basic office data we already have
-      setSelectedOffice(office as OfficeDetail);
-      setIsDialogOpen(true);
-    } finally {
-      setIsFetching(false);
-    }
-  };
 
   if (isLoading && activeOffices.length === 0) {
     return (
@@ -103,8 +74,8 @@ export function GovernmentOffices() {
           <OfficeCard
             key={office.id}
             office={office}
-            onClick={() => handleOfficeClick(office)}
-            isLoading={isFetching}
+            onClick={() => void openOfficeDialog(office)}
+            isLoading={isFetchingOfficeDetail}
             t={t}
           />
         ))}
@@ -112,7 +83,9 @@ export function GovernmentOffices() {
           <div className="col-span-full py-20 text-center rounded-3xl border-2 border-dashed border-white/10">
             <Building2 className="size-12 text-white/20 mx-auto mb-3" />
             <p className="text-white/40 font-medium">
-              {t("No offices found.")}
+              {searchQuery.trim()
+                ? t("No offices match your search.")
+                : t("No offices found.")}
             </p>
           </div>
         )}
@@ -121,8 +94,10 @@ export function GovernmentOffices() {
       {selectedOffice && (
         <OfficeDialog
           office={selectedOffice}
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          open={isOfficeDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) closeOfficeDialog();
+          }}
           t={t}
         />
       )}
@@ -213,24 +188,27 @@ function OfficeDialog({
   onOpenChange,
   t,
 }: {
-  office: OfficeDetail;
+  office: HomepageOfficeDetail;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   t: (k: string) => string;
 }) {
-  const [selectedService, setSelectedService] =
-    React.useState<ServiceItem | null>(null);
-  const { data: sessionData } = useSession();
-  const isLoggedIn = !!sessionData?.session;
+  const selectedService = useHomepageStore((state) => state.selectedService);
+  const setSelectedService = useHomepageStore((state) => state.setSelectedService);
+  const isLoggedIn = isAuthenticated();
 
-  // Reset selected service when dialog closes
   React.useEffect(() => {
     if (!open) setSelectedService(null);
-  }, [open]);
+  }, [open, setSelectedService]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[600px] p-0 gap-0 border-none bg-background text-foreground overflow-hidden rounded-[1.5rem] shadow-2xl">
+        <DialogDescription className="sr-only">
+          {selectedService
+            ? t("Service details and requirements")
+            : t("Browse services offered by this office")}
+        </DialogDescription>
         {!selectedService ? (
           // ── Service List View ──
           <>
@@ -313,7 +291,7 @@ function ServiceRow({
   onDetail,
   t,
 }: {
-  service: ServiceItem;
+  service: HomepageServiceItem;
   isLoggedIn: boolean;
   onDetail: () => void;
   t: (k: string) => string;
@@ -360,7 +338,7 @@ function ServiceDetailView({
   onClose,
   t,
 }: {
-  service: ServiceItem;
+  service: HomepageServiceItem;
   officeName: string;
   isLoggedIn: boolean;
   onBack: () => void;
@@ -422,7 +400,7 @@ function ServiceDetailView({
               <div className="flex items-center gap-3 text-slate-600">
                 <Building2 className="size-5 text-slate-400 shrink-0" />
                 <span className="text-sm font-medium">
-                  {t("Office")}: {t("Waajjira Mummee")}
+                  {t("Office")}: {officeName}
                 </span>
               </div>
             </div>

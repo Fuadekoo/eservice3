@@ -25,32 +25,24 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import { useOfficeStore } from "@/lib/stores/office-store";
 import { useAdministrationStore } from "@/lib/stores/administration-store";
 import { useGalleryStore, type Gallery } from "@/lib/stores/gallery-store";
+import { useHomepageStore } from "@/lib/stores/homepage-store";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { Logo } from "@/components/logo";
 import { GovernmentOffices } from "@/components/guest/government-offices";
 import { getUploadUrl } from "@/lib/axios";
 
 export default function Page() {
-  const { offices, fetchOffices, isLoading: loadingOffices } = useOfficeStore();
-  const {
-    sections: adminSections,
-    fetchAdministration,
-    isLoading: loadingAdmin,
-  } = useAdministrationStore();
-  const {
-    galleries,
-    fetchGalleries,
-    isLoading: loadingGallery,
-  } = useGalleryStore();
+  const { sections: adminSections, isLoading: loadingAdmin } =
+    useAdministrationStore();
+  const { galleries, isLoading: loadingGallery } = useGalleryStore();
+  const { initializeHomepage } = useHomepageStore();
   const { getTranslationForKey } = useLanguagesStore();
 
   React.useEffect(() => {
-    void fetchAdministration();
-    void fetchGalleries();
-  }, [fetchAdministration, fetchGalleries]);
+    void initializeHomepage();
+  }, [initializeHomepage]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -246,7 +238,7 @@ function HeroSection({
 }: {
   getTranslationForKey: (key: string) => string;
 }) {
-  const [search, setSearch] = React.useState("");
+  const { searchQuery, setSearchQuery } = useHomepageStore();
 
   return (
     <section className="relative min-h-[95vh] flex flex-col items-center justify-center text-center overflow-hidden bg-[#020617] text-white pt-20 pb-12 px-4">
@@ -292,8 +284,8 @@ function HeroSection({
                 "Search for offices or services..."
               }
               className="h-14 pl-6 pr-12 rounded-xl bg-white/5 border-white/10 focus:bg-white/10 focus:border-blue-500/50 text-white placeholder:text-gray-500 text-lg transition-all"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
             <Search className="absolute right-5 top-1/2 -translate-y-1/2 size-5 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
           </div>

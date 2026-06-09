@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { axiosInstance } from "@/lib/axios";
-import type { AuthSession } from "@/lib/auth-client";
+import { axiosInstance, ApiError } from "@/lib/axios";
+import { getToken, type AuthSession } from "@/lib/auth-client";
 
 export function useSession() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -10,21 +10,28 @@ export function useSession() {
 
   useEffect(() => {
     const fetchSession = async () => {
+      if (!getToken()) {
+        setSession(null);
+        setIsPending(false);
+        return;
+      }
+
       try {
         const response = await axiosInstance.get("/auth/me");
-        // Axios interceptor already unwraps response.data, so we access it directly
         if (response?.data) {
           setSession(response.data);
         }
       } catch (error) {
-        console.error("Failed to fetch session:", error);
+        if (!(error instanceof ApiError && error.status === 401)) {
+          console.error("Failed to fetch session:", error);
+        }
         setSession(null);
       } finally {
         setIsPending(false);
       }
     };
 
-    fetchSession();
+    void fetchSession();
   }, []);
 
   return {
@@ -32,4 +39,3 @@ export function useSession() {
     isPending,
   };
 }
-

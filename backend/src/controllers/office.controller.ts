@@ -85,6 +85,64 @@ export async function listOffices(
   }
 }
 
+export async function getPublicOffice(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    const id = req.params["id"] as string;
+
+    const office = await prisma.office.findFirst({
+      where: { id, status: true },
+      select: {
+        ...officeListSelect,
+        _count: {
+          select: {
+            service: true,
+            staffs: true,
+            requests: true,
+            appointments: true,
+          },
+        },
+        service: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            timeToTake: true,
+            roomNumber: true,
+            requirements: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+            serviceFors: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+          orderBy: { name: "asc" },
+        },
+      },
+    });
+
+    if (!office) {
+      return res
+        .status(404)
+        .json({ error: "NotFound", message: "Office not found." });
+    }
+
+    return res.json({ data: office });
+  } catch (error) {
+    return handlePrismaError(error, res, "getPublicOffice");
+  }
+}
+
 export async function getOffice(
   req: AuthRequest,
   res: Response,

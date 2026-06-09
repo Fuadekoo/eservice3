@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   listOffices,
+  getPublicOffice,
   getOffice,
   createOffice,
   updateOffice,
@@ -15,6 +16,7 @@ const router = Router();
  * Public routes
  */
 router.get("/", asyncHandler(listOffices));
+router.get("/:id/public", asyncHandler(getPublicOffice));
 
 /**
  * Protected routes

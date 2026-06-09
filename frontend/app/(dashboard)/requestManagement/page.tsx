@@ -10,10 +10,13 @@ import {
   Loader2,
   RefreshCw,
   Eye,
+  Building2,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useRequestStore, type ServiceRequest } from "@/lib/stores/request-store";
+import { useOfficeStore } from "@/lib/stores/office-store";
 import { useSession } from "@/hooks/use-session";
 import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
 import { Button } from "@/components/ui/button";
@@ -22,6 +25,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,16 +81,24 @@ export default function RequestManagementPage() {
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const session = sessionData?.session;
   const managerStaffId = session?.user?.staffId ?? null;
+  const sessionOfficeId = session?.officeId ?? session?.office?.id ?? null;
+  const sessionOfficeName = session?.office?.name ?? null;
 
-  const userRole = session?.role?.name?.toLowerCase() || null;
-  const isManager = userRole === "manager";
-  const isStaff = userRole === "staff";
+  const roleNameUpper = session?.role?.name?.toUpperCase() || "";
+  const isAdmin =
+    roleNameUpper === "ADMIN" ||
+    roleNameUpper === "ADMINISTRATOR" ||
+    roleNameUpper === "SUPERADMIN";
+  const isManager = roleNameUpper === "MANAGER";
+  const isStaff = roleNameUpper === "STAFF";
   const activeRole = isStaff ? "staff" : isManager ? "manager" : null;
 
   const { requests, isLoading, pagination, fetchRequests } = useRequestStore();
+  const { offices, fetchOffices } = useOfficeStore();
 
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
+  const [officeFilter, setOfficeFilter] = React.useState("all");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
 
@@ -92,19 +110,62 @@ export default function RequestManagementPage() {
   const [rejectReason, setRejectReason] = React.useState("");
   const [isRejecting, setIsRejecting] = React.useState(false);
 
+  const effectiveOfficeId = React.useMemo(() => {
+    if (isAdmin) {
+      return officeFilter !== "all" ? officeFilter : undefined;
+    }
+    return undefined;
+  }, [isAdmin, officeFilter]);
+
+  const officeOptions = React.useMemo(() => {
+    if (isAdmin) return offices;
+    if (sessionOfficeId && sessionOfficeName) {
+      return [{ id: sessionOfficeId, name: sessionOfficeName }];
+    }
+    return offices.filter((office) => office.id === sessionOfficeId);
+  }, [isAdmin, offices, sessionOfficeId, sessionOfficeName]);
+
+  React.useEffect(() => {
+    if (isSessionPending) return;
+    if (isAdmin) {
+      void fetchOffices();
+    }
+  }, [isSessionPending, isAdmin, fetchOffices]);
+
+  React.useEffect(() => {
+    if (isSessionPending || isAdmin || !sessionOfficeId) return;
+    setOfficeFilter(sessionOfficeId);
+  }, [isSessionPending, isAdmin, sessionOfficeId]);
+
   const refresh = React.useCallback(() => {
     fetchRequests({
       page: currentPage,
       pageSize,
       search: search || undefined,
       status: statusFilter || undefined,
+      officeId: effectiveOfficeId,
     });
-  }, [fetchRequests, currentPage, pageSize, search, statusFilter]);
+  }, [
+    fetchRequests,
+    currentPage,
+    pageSize,
+    search,
+    statusFilter,
+    effectiveOfficeId,
+  ]);
 
   React.useEffect(() => {
     if (isSessionPending) return;
     refresh();
-  }, [isSessionPending, currentPage, pageSize, search, statusFilter]);
+  }, [
+    isSessionPending,
+    currentPage,
+    pageSize,
+    search,
+    statusFilter,
+    effectiveOfficeId,
+    refresh,
+  ]);
 
   const handleApprove = async (id: string) => {
     setApprovingId(id);
@@ -215,18 +276,53 @@ export default function RequestManagementPage() {
           ))}
         </div>
 
-        {/* Search */}
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by customer or service..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="pl-9 rounded-xl h-10"
-          />
+        {/* Search & office filter */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by customer or service..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-9 rounded-xl h-10"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
+            <Filter className="size-4 text-muted-foreground shrink-0" />
+            <Building2 className="size-4 text-muted-foreground shrink-0 sm:hidden" />
+            <Select
+              value={officeFilter}
+              onValueChange={(value) => {
+                setOfficeFilter(value);
+                setCurrentPage(1);
+              }}
+              disabled={!isAdmin}
+            >
+              <SelectTrigger className="w-[200px] border-none bg-transparent h-9 focus:ring-0">
+                <SelectValue
+                  placeholder={isAdmin ? "All Offices" : "Your Office"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {isAdmin && <SelectItem value="all">All Offices</SelectItem>}
+                {officeOptions.map((office) => (
+                  <SelectItem key={office.id} value={office.id}>
+                    {office.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {!isAdmin && sessionOfficeName && (
+            <p className="text-xs text-muted-foreground">
+              Showing requests for <strong>{sessionOfficeName}</strong>
+            </p>
+          )}
         </div>
 
         {/* Requests Table */}

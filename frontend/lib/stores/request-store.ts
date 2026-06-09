@@ -35,6 +35,7 @@ type RequestStore = {
     pageSize?: number;
     search?: string;
     status?: string;
+    officeId?: string;
   }) => Promise<void>;
   approveRequestStaff: (id: string, staffId: string, notes?: string) => Promise<void>;
   approveRequestManager: (id: string, approverId: string, notes?: string) => Promise<void>;
@@ -56,6 +57,7 @@ export const useRequestStore = create<RequestStore>((set) => ({
       if (params.pageSize) q.set("pageSize", String(params.pageSize));
       if (params.search) q.set("search", params.search);
       if (params.status) q.set("status", params.status);
+      if (params.officeId) q.set("officeId", params.officeId);
 
       const res = (await axiosInstance.get(
         `/requests?${q.toString()}`

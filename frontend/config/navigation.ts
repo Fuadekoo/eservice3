@@ -103,7 +103,7 @@ export const NAVIGATION: NavSection[] = [
       {
         titleKey: "Gallery",
         icon: Images,
-        href: "/gallery",
+        href: "/gallery-management",
         roles: ["ADMIN"],
       },
       {

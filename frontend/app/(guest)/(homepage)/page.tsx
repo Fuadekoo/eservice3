@@ -17,20 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
 import { useAdministrationStore } from "@/lib/stores/administration-store";
 import { useGalleryStore, type Gallery } from "@/lib/stores/gallery-store";
 import { useHomepageStore } from "@/lib/stores/homepage-store";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
-import { Logo } from "@/components/logo";
 import { GovernmentOffices } from "@/components/guest/government-offices";
+import { GuestGalleryCard } from "@/components/guest/guest-gallery-card";
+import { GalleryLightbox } from "@/components/guest/gallery-lightbox";
 import { getUploadUrl } from "@/lib/axios";
 
 export default function Page() {
@@ -39,6 +32,11 @@ export default function Page() {
   const { galleries, isLoading: loadingGallery } = useGalleryStore();
   const { initializeHomepage } = useHomepageStore();
   const { getTranslationForKey } = useLanguagesStore();
+  const [selectedGallery, setSelectedGallery] = React.useState<Gallery | null>(
+    null,
+  );
+  const [isGalleryLightboxOpen, setIsGalleryLightboxOpen] =
+    React.useState(false);
 
   React.useEffect(() => {
     void initializeHomepage();
@@ -149,10 +147,13 @@ export default function Page() {
           ) : galleries.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {galleries.map((gallery) => (
-                <GalleryCard
+                <GuestGalleryCard
                   key={gallery.id}
                   gallery={gallery}
-                  getTranslationForKey={getTranslationForKey}
+                  onClick={() => {
+                    setSelectedGallery(gallery);
+                    setIsGalleryLightboxOpen(true);
+                  }}
                 />
               ))}
             </div>
@@ -166,69 +167,15 @@ export default function Page() {
           )}
         </section>
       </main>
-    </div>
-  );
-}
 
-function GalleryCard({
-  gallery,
-  getTranslationForKey,
-}: {
-  gallery: Gallery;
-  getTranslationForKey: (key: string) => string;
-}) {
-  const images = gallery.images || [];
-
-  return (
-    <div className="group flex flex-col bg-card rounded-xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all duration-300">
-      <div className="relative aspect-video w-full overflow-hidden bg-muted">
-        {images.length > 0 ? (
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            plugins={[
-              Autoplay({
-                delay: 4000 + Math.random() * 2000,
-              }),
-            ]}
-            className="size-full"
-          >
-            <CarouselContent className="-ml-0">
-              {images.map((image) => (
-                <CarouselItem key={image.id} className="pl-0 basis-full">
-                  <img
-                    src={getUploadUrl(image.filename)}
-                    alt={gallery.name}
-                    className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            {images.length > 1 && (
-              <div className="absolute top-2 right-2 z-10">
-                <div className="bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] font-bold text-white border border-white/10">
-                  +{images.length - 1}
-                </div>
-              </div>
-            )}
-          </Carousel>
-        ) : (
-          <div className="size-full flex flex-col items-center justify-center text-muted-foreground/30">
-            <ImageIcon className="size-10 mb-1" />
-            <p className="text-[10px] font-bold uppercase tracking-widest">
-              No Images
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="p-4">
-        <h3 className="text-sm font-bold text-foreground truncate leading-none">
-          {gallery.name}
-        </h3>
-      </div>
+      <GalleryLightbox
+        gallery={selectedGallery}
+        open={isGalleryLightboxOpen}
+        onOpenChange={setIsGalleryLightboxOpen}
+        imageCounterLabel={(current, total) =>
+          `${getTranslationForKey("Image")} ${current} ${getTranslationForKey("of")} ${total}`
+        }
+      />
     </div>
   );
 }

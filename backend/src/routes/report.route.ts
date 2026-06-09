@@ -8,11 +8,13 @@ import {
   updateReportStatus,
   deleteReport,
   getAdminUsers,
+  getManagerUsers,
 } from "../controllers/report.controller.js";
 
 const router = Router();
 
 router.get("/admins", requireAuth, asyncHandler(getAdminUsers));
+router.get("/managers", requireAuth, asyncHandler(getManagerUsers));
 router.get("/", requireAuth, asyncHandler(listReports));
 router.post("/", requireAuth, asyncHandler(createReport));
 router.get("/:id", requireAuth, asyncHandler(getReport));

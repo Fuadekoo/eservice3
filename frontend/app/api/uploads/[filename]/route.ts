@@ -1,5 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 
+function guessContentType(filename: string) {
+  const ext = filename.split(".").pop()?.toLowerCase();
+  if (ext === "pdf") return "application/pdf";
+  if (ext === "png") return "image/png";
+  if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
+  if (ext === "webp") return "image/webp";
+  return "application/octet-stream";
+}
+
+function buildFileHeaders(filename: string, contentType: string) {
+  const headers: Record<string, string> = {
+    "Content-Type": contentType,
+    "Cache-Control": "public, max-age=31536000, immutable",
+  };
+
+  if (contentType === "application/pdf") {
+    headers["Content-Disposition"] = `inline; filename="${filename}"`;
+  }
+
+  return headers;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ filename: string }> },
@@ -39,24 +61,20 @@ export async function GET(
 
       const data = await filedataResponse.arrayBuffer();
       const contentType =
-        filedataResponse.headers.get("content-type") || "image/jpeg";
+        filedataResponse.headers.get("content-type") ||
+        guessContentType(filename);
 
       return new NextResponse(data, {
-        headers: {
-          "Content-Type": contentType,
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
+        headers: buildFileHeaders(filename, contentType),
       });
     }
 
     const data = await response.arrayBuffer();
-    const contentType = response.headers.get("content-type") || "image/jpeg";
+    const contentType =
+      response.headers.get("content-type") || guessContentType(filename);
 
     return new NextResponse(data, {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
+      headers: buildFileHeaders(filename, contentType),
     });
   } catch (error) {
     console.error("Error streaming image:", error);

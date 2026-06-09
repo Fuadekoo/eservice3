@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { axiosInstance } from "@/lib/axios";
-
-export type ReportStatus = "pending" | "sent" | "received" | "read" | "archived";
+import type { ReportStatusKey } from "@/lib/report-utils";
 
 export type ReportUser = {
   id: string;
   username: string;
   phoneNumber: string;
+  role?: string | null;
 };
 
 export type ReportOffice = {
@@ -26,7 +26,7 @@ export type Report = {
   description: string;
   reportSentTo: string;
   reportSentBy: string;
-  receiverStatus: ReportStatus;
+  receiverStatus: ReportStatusKey;
   sender?: ReportUser | null;
   receiver?: ReportUser | null;
   office?: ReportOffice | null;
@@ -36,10 +36,16 @@ export type Report = {
   updatedAt: string;
 };
 
+export type ReportFilePayload = {
+  name: string;
+  filepath: string;
+};
+
 export type CreateReportPayload = {
   name: string;
   description: string;
   reportSentTo: string;
+  files: ReportFilePayload[];
 };
 
 type Pagination = {
@@ -57,6 +63,7 @@ type FetchReportsParams = {
   status?: string;
   month?: number;
   year?: number;
+  scope?: "inbox" | "sent" | "all";
 };
 
 type ReportStore = {
@@ -65,13 +72,18 @@ type ReportStore = {
   isSubmitting: boolean;
   error: string | null;
   adminUsers: ReportUser[];
+  managerUsers: ReportUser[];
   pagination: Pagination | null;
 
   fetchReports: (params?: FetchReportsParams) => Promise<void>;
+  fetchReportById: (id: string) => Promise<Report>;
   createReport: (payload: CreateReportPayload) => Promise<Report>;
-  updateReportStatus: (id: string, status: ReportStatus) => Promise<Report>;
+  updateReportStatus: (id: string, status: ReportStatusKey) => Promise<Report>;
+  approveReport: (id: string) => Promise<Report>;
+  rejectReport: (id: string) => Promise<Report>;
   deleteReport: (id: string) => Promise<void>;
   fetchAdminUsers: () => Promise<void>;
+  fetchManagerUsers: () => Promise<void>;
 };
 
 export const useReportStore = create<ReportStore>((set) => ({
@@ -80,6 +92,7 @@ export const useReportStore = create<ReportStore>((set) => ({
   isSubmitting: false,
   error: null,
   adminUsers: [],
+  managerUsers: [],
   pagination: null,
 
   fetchReports: async (params = {}) => {
@@ -93,9 +106,10 @@ export const useReportStore = create<ReportStore>((set) => ({
       if (params.status) q.set("status", params.status);
       if (params.month) q.set("month", String(params.month));
       if (params.year) q.set("year", String(params.year));
+      if (params.scope) q.set("scope", params.scope);
 
       const res = (await axiosInstance.get(
-        `/reports?${q.toString()}`
+        `/reports?${q.toString()}`,
       )) as unknown as { data: Report[]; pagination: Pagination };
 
       set({
@@ -112,12 +126,19 @@ export const useReportStore = create<ReportStore>((set) => ({
     }
   },
 
+  fetchReportById: async (id) => {
+    const res = (await axiosInstance.get(`/reports/${id}`)) as unknown as {
+      data: Report;
+    };
+    return res.data;
+  },
+
   createReport: async (payload) => {
     set({ isSubmitting: true });
     try {
       const res = (await axiosInstance.post(
         "/reports",
-        payload
+        payload,
       )) as unknown as { data: Report };
       const newReport = res.data;
       set((state) => ({
@@ -132,40 +153,52 @@ export const useReportStore = create<ReportStore>((set) => ({
   },
 
   updateReportStatus: async (id, status) => {
-    try {
-      const res = (await axiosInstance.patch(
-        `/reports/${id}/status`,
-        { status }
-      )) as unknown as { data: Report };
-      const updated = res.data;
-      set((state) => ({
-        reports: state.reports.map((r) => (r.id === id ? updated : r)),
-      }));
-      return updated;
-    } catch (err: any) {
-      throw err;
-    }
+    const res = (await axiosInstance.patch(`/reports/${id}/status`, {
+      status,
+    })) as unknown as { data: Report };
+    const updated = res.data;
+    set((state) => ({
+      reports: state.reports.map((r) => (r.id === id ? updated : r)),
+    }));
+    return updated;
+  },
+
+  approveReport: async (id) => {
+    return useReportStore.getState().updateReportStatus(id, "approved");
+  },
+
+  rejectReport: async (id) => {
+    return useReportStore.getState().updateReportStatus(id, "rejected");
   },
 
   deleteReport: async (id) => {
-    try {
-      await axiosInstance.delete(`/reports/${id}`);
-      set((state) => ({
-        reports: state.reports.filter((r) => r.id !== id),
-      }));
-    } catch (err: any) {
-      throw err;
-    }
+    await axiosInstance.delete(`/reports/${id}`);
+    set((state) => ({
+      reports: state.reports.filter((r) => r.id !== id),
+    }));
   },
 
   fetchAdminUsers: async () => {
     try {
-      const res = (await axiosInstance.get(
-        "/reports/admins"
-      )) as unknown as { data: ReportUser[] };
+      const res = (await axiosInstance.get("/reports/admins")) as unknown as {
+        data: ReportUser[];
+      };
       set({ adminUsers: res.data ?? [] });
     } catch {
-      // silently fail — non-critical
+      set({ adminUsers: [] });
+    }
+  },
+
+  fetchManagerUsers: async () => {
+    try {
+      const res = (await axiosInstance.get("/reports/managers")) as unknown as {
+        data: ReportUser[];
+      };
+      set({ managerUsers: res.data ?? [] });
+    } catch {
+      set({ managerUsers: [] });
     }
   },
 }));
+
+export type { ReportStatusKey as ReportStatus };

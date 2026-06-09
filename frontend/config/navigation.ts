@@ -6,7 +6,6 @@ import {
   Shield,
   ShieldCheck,
   Settings,
-  LineChart,
   Globe,
   Building2,
   Calendar,
@@ -74,12 +73,6 @@ export const NAVIGATION: NavSection[] = [
         titleKey: "User Management",
         icon: ShieldCheck,
         href: "/users",
-        roles: ["ADMIN"],
-      },
-      {
-        titleKey: "Report",
-        icon: LineChart,
-        href: "/report",
         roles: ["ADMIN"],
       },
       {
@@ -188,6 +181,12 @@ export const NAVIGATION: NavSection[] = [
         titleKey: "Request Management",
         icon: ClipboardList,
         href: "/requestManagement",
+        roles: ["STAFF"],
+      },
+      {
+        titleKey: "Report",
+        icon: ClipboardCheck,
+        href: "/report",
         roles: ["STAFF"],
       },
       {

@@ -23,7 +23,6 @@ type AboutStore = {
   isLoading: boolean;
   error: string | null;
 
-  // Actions
   fetchAbout: () => Promise<void>;
   createAbout: (payload: CreateAboutPayload) => Promise<AboutSection>;
   updateAbout: (id: string, payload: UpdateAboutPayload) => Promise<AboutSection>;
@@ -38,7 +37,9 @@ export const useAboutStore = create<AboutStore>((set) => ({
   fetchAbout: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axiosInstance.get<{ data: AboutSection[] }>("/about") as unknown as { data: AboutSection[] };
+      const response = (await axiosInstance.get<{ data: AboutSection[] }>(
+        "/about",
+      )) as unknown as { data: AboutSection[] };
       set({ sections: response.data || [], isLoading: false });
     } catch (error: any) {
       set({
@@ -51,7 +52,10 @@ export const useAboutStore = create<AboutStore>((set) => ({
 
   createAbout: async (payload) => {
     try {
-      const response = await axiosInstance.post<{ data: AboutSection }>("/about", payload) as unknown as { data: AboutSection };
+      const response = (await axiosInstance.post<{ data: AboutSection }>(
+        "/about",
+        payload,
+      )) as unknown as { data: AboutSection };
       const newSection = response.data;
       set((state) => ({ sections: [...state.sections, newSection] }));
       return newSection;
@@ -63,7 +67,10 @@ export const useAboutStore = create<AboutStore>((set) => ({
 
   updateAbout: async (id, payload) => {
     try {
-      const response = await axiosInstance.put<{ data: AboutSection }>(`/about/${id}`, payload) as unknown as { data: AboutSection };
+      const response = (await axiosInstance.put<{ data: AboutSection }>(
+        `/about/${id}`,
+        payload,
+      )) as unknown as { data: AboutSection };
       const updatedSection = response.data;
       set((state) => ({
         sections: state.sections.map((s) => (s.id === id ? updatedSection : s)),

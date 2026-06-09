@@ -4,7 +4,7 @@ import * as React from "react";
 import { Plus, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useAboutStore } from "../_stores/about-store";
+import { useAboutStore } from "@/lib/stores/about-store";
 import { AboutSectionCard } from "./about-section-card";
 import { AboutSectionDialog } from "./about-section-dialog";
 import {

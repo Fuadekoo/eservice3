@@ -26,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useAboutStore, type AboutSection } from "../_stores/about-store";
+import { useAboutStore, type AboutSection } from "@/lib/stores/about-store";
 import { uploadFileOnly } from "@/lib/file-upload";
 import { getUploadUrl } from "@/lib/axios";
 

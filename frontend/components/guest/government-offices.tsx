@@ -203,7 +203,10 @@ function OfficeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[600px] p-0 gap-0 border-none bg-background text-foreground overflow-hidden rounded-[1.5rem] shadow-2xl">
+      <DialogContent
+        showCloseButton={false}
+        className="w-[calc(100vw-2rem)] max-w-4xl sm:max-w-4xl p-0 gap-0 border-none bg-background text-foreground overflow-hidden rounded-[1.5rem] shadow-2xl"
+      >
         <DialogDescription className="sr-only">
           {selectedService
             ? t("Service details and requirements")
@@ -213,9 +216,9 @@ function OfficeDialog({
           // ── Service List View ──
           <>
             {/* Blue header */}
-            <div className="relative bg-[#0047FF] px-8 py-10 flex items-center gap-5">
+            <div className="relative bg-[#0047FF] px-6 py-8 sm:px-10 sm:py-10 flex items-start sm:items-center gap-5 pr-14">
               {/* Logo */}
-              <div className="size-20 rounded-2xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-xl border border-white/10">
+              <div className="size-16 sm:size-20 rounded-2xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-xl border border-white/10">
                 {office.logo ? (
                   <img
                     src={getUploadUrl(office.logo)}
@@ -229,10 +232,10 @@ function OfficeDialog({
 
               {/* Name */}
               <div className="flex-1 min-w-0">
-                <DialogTitle className="text-xl font-bold text-white leading-tight">
+                <DialogTitle className="text-xl sm:text-2xl font-bold text-white leading-snug break-words">
                   {office.name}
                 </DialogTitle>
-                <p className="text-white/70 text-sm font-medium mt-1 italic opacity-80">
+                <p className="text-white/70 text-sm sm:text-base font-medium mt-2 italic opacity-80 leading-relaxed break-words">
                   {office.slogan || "Excellence in Public Service"}
                 </p>
               </div>
@@ -247,7 +250,7 @@ function OfficeDialog({
             </div>
 
             {/* Services Grid/List */}
-            <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4 bg-[#F8FAFC]">
+            <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#F8FAFC]">
               {office.service && office.service.length > 0 ? (
                 office.service.map((service) => (
                   <ServiceRow
@@ -303,27 +306,30 @@ function ServiceRow({
   return (
     <div
       onClick={onDetail}
-      className="flex items-center gap-6 px-6 py-6 bg-white border border-slate-200/60 rounded-2xl hover:shadow-md transition-all cursor-pointer group"
+      className="flex flex-col gap-4 p-5 sm:p-6 bg-white border border-slate-200/60 rounded-2xl hover:shadow-md transition-all cursor-pointer group"
     >
-      <div className="flex-1 min-w-0">
-        <p className="text-lg font-bold text-slate-900 leading-tight group-hover:text-[#0047FF] transition-colors">
+      <div className="space-y-2">
+        <p className="text-lg sm:text-xl font-bold text-slate-900 leading-snug break-words group-hover:text-[#0047FF] transition-colors">
           {service.name}
         </p>
-        <p className="text-sm text-slate-400 mt-1 line-clamp-1 font-medium">
+        <p className="text-sm sm:text-base text-slate-500 leading-relaxed break-words whitespace-pre-wrap">
           {service.description}
         </p>
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-slate-100">
         <Button
           asChild
           size="sm"
-          className="rounded-xl px-6 h-10 font-bold bg-[#0047FF] hover:bg-[#0036C1] text-white shadow-lg shadow-blue-500/20 text-sm"
+          className="rounded-xl px-6 h-11 font-bold bg-[#0047FF] hover:bg-[#0036C1] text-white shadow-lg shadow-blue-500/20 text-sm w-full sm:w-auto"
           onClick={(e) => e.stopPropagation()}
         >
           <Link href={applyUrl}>{t("Apply Now")}</Link>
         </Button>
-        <ChevronRight className="size-5 text-slate-300 group-hover:text-[#0047FF] group-hover:translate-x-1 transition-all" />
+        <span className="inline-flex items-center justify-center sm:justify-end gap-1 text-sm font-semibold text-slate-400 group-hover:text-[#0047FF] transition-colors">
+          {t("View details")}
+          <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
+        </span>
       </div>
     </div>
   );
@@ -360,8 +366,8 @@ function ServiceDetailView({
           >
             <ArrowLeft className="size-4" />
           </button>
-          <div className="flex-1">
-            <DialogTitle className="text-lg font-bold text-white leading-tight">
+          <div className="flex-1 min-w-0">
+            <DialogTitle className="text-lg sm:text-xl font-bold text-white leading-snug break-words">
               {service.name}
             </DialogTitle>
           </div>
@@ -376,11 +382,11 @@ function ServiceDetailView({
       </div>
 
       {/* Content */}
-      <div className="max-h-[70vh] overflow-y-auto p-6 space-y-4">
+      <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-6 space-y-4">
         {/* Main info card */}
-        <div className="rounded-2xl bg-white border border-slate-200/60 p-6 shadow-sm space-y-6">
+        <div className="rounded-2xl bg-white border border-slate-200/60 p-5 sm:p-6 shadow-sm space-y-6">
           <div className="space-y-4">
-            <p className="text-sm text-slate-500 font-medium leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed break-words whitespace-pre-wrap">
               {service.description}
             </p>
 

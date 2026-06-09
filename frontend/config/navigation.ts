@@ -109,7 +109,7 @@ export const NAVIGATION: NavSection[] = [
       {
         titleKey: "About",
         icon: Info,
-        href: "/about",
+        href: "/about-management",
         roles: ["ADMIN"],
       },
     ],

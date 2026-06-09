@@ -5,7 +5,7 @@ import { Edit, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import type { AboutSection } from "../_stores/about-store";
+import type { AboutSection } from "@/lib/stores/about-store";
 import { getUploadUrl } from "@/lib/axios";
 
 interface AboutSectionCardProps {

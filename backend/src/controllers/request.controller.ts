@@ -10,11 +10,8 @@ import {
   rejectRequestSchema,
   buildValidationError,
 } from "../validators/request.validator.js";
-import {
-  generateRequestNumber,
-  sendSMS,
-  sendEmail,
-} from "../utils/notification.js";
+import { generateRequestNumber } from "../utils/notification.js";
+import { sendSMS } from "../services/sms.service.js";
 
 /**
  * Request response include configuration
@@ -149,6 +146,21 @@ async function getStaffRecord(userId: string): Promise<{ id: string } | null> {
   return prisma.staff.findFirst({
     where: { userId },
     select: { id: true },
+  });
+}
+
+/**
+ * Get all managers for a given office
+ */
+async function getOfficeManagers(officeId: string) {
+  return prisma.staff.findMany({
+    where: {
+      officeId,
+      user: { role: { name: "manager" } },
+    },
+    include: {
+      user: { select: { username: true, phoneNumber: true } },
+    },
   });
 }
 
@@ -449,53 +461,72 @@ export async function createRequest(req: AuthRequest, res: Response) {
 
     console.log(`✅ Created request: ${newRequest.id} (${requestNumber})`);
 
-    // Send notifications to assigned staff
-    try {
-      const assignedStaff = await prisma.serviceStaffAssignment.findMany({
-        where: { serviceId },
-        include: {
-          staff: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  phoneNumber: true,
-                  username: true,
-                },
+    // Send notifications (fire-and-forget — never block the response)
+    (async () => {
+      try {
+        const assignedStaff = await prisma.serviceStaffAssignment.findMany({
+          where: { serviceId },
+          include: {
+            staff: {
+              include: {
+                user: { select: { id: true, phoneNumber: true, username: true } },
               },
             },
           },
-        },
-      });
+        });
 
-      for (const assignment of assignedStaff) {
-        const staffPhone = assignment.staff.user.phoneNumber;
-        if (!staffPhone) continue;
+        const customerName = newRequest.user.username;
+        const customerPhone = newRequest.user.phoneNumber ?? "N/A";
+        const requestDate = new Date(date).toLocaleDateString("en-GB");
 
-        const staffMessage = `📋 New Service Request
+        // --- Notify each assigned staff ---
+        for (const assignment of assignedStaff) {
+          const staffPhone = assignment.staff.user.phoneNumber;
+          if (!staffPhone) continue;
 
-Service: ${service.name}
-Customer: ${newRequest.user.username}
-Phone: ${newRequest.user.phoneNumber}
-Address: ${currentAddress}
-Date: ${new Date(date).toLocaleDateString()}
-Request #: ${requestNumber}
+          const staffMsg =
+            `New service request received.\n\n` +
+            `Service: ${service.name}\n` +
+            `Customer: ${customerName}\n` +
+            `Phone: ${customerPhone}\n` +
+            `Address: ${currentAddress}\n` +
+            `Date: ${requestDate}\n` +
+            `Request No: ${requestNumber}\n\n` +
+            `Office: ${service.office.name} - Room ${service.office.roomNumber}\n\n` +
+            `Please login to review and process this request.`;
 
-Office: ${service.office.name}
-Room: ${service.office.roomNumber}
-
-Please check the dashboard to review and process this request.`;
-
-        try {
-          await sendSMS(staffPhone, staffMessage);
-          console.log(`✅ SMS sent to staff: ${staffPhone}`);
-        } catch (error: any) {
-          console.error(`⚠️ Failed to send SMS to ${staffPhone}:`, error);
+          sendSMS(staffPhone, staffMsg).catch((e) =>
+            console.error(`SMS to staff ${staffPhone} failed:`, e),
+          );
         }
+
+        // --- Notify manager(s) of the office ---
+        const managers = await getOfficeManagers(service.officeId);
+        const staffNames =
+          assignedStaff.map((a) => a.staff.user.username).join(", ") || "None";
+
+        for (const manager of managers) {
+          const managerPhone = manager.user.phoneNumber;
+          if (!managerPhone) continue;
+
+          const managerMsg =
+            `New service request received.\n\n` +
+            `Service: ${service.name}\n` +
+            `Customer: ${customerName}\n` +
+            `Phone: ${customerPhone}\n` +
+            `Date: ${requestDate}\n` +
+            `Request No: ${requestNumber}\n\n` +
+            `Assigned staff: ${staffNames}\n\n` +
+            `Please review on the dashboard.`;
+
+          sendSMS(managerPhone, managerMsg).catch((e) =>
+            console.error(`SMS to manager ${managerPhone} failed:`, e),
+          );
+        }
+      } catch (notificationError) {
+        console.error("Failed to send request notifications:", notificationError);
       }
-    } catch (notificationError: any) {
-      console.error("⚠️ Failed to send notifications:", notificationError);
-    }
+    })();
 
     return res.status(201).json({
       success: true,
@@ -628,7 +659,10 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
     // Get existing request
     const existingRequest = await prisma.request.findUnique({
       where: { id: requestId },
-      include: { user: { select: { phoneNumber: true } } },
+      include: {
+        user: { select: { username: true, phoneNumber: true } },
+        service: { select: { name: true } },
+      },
     });
 
     if (!existingRequest) {
@@ -661,19 +695,17 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
       include: requestInclude,
     });
 
-    // Send SMS to customer
+    // Notify customer — staff-level approval (non-blocking)
     if (existingRequest.user?.phoneNumber) {
-      try {
-        const customerMessage = `✅ Your service request has been approved by ${staff.user.username}.
-        
-It will be reviewed by the manager.
-${notes ? `Note: ${notes}` : ""}`;
+      const customerMsg =
+        `Dear ${existingRequest.user.username},\n\n` +
+        `Your request for "${existingRequest.service.name}" has been reviewed and approved by staff.\n\n` +
+        `It is now pending manager approval. You will be notified once fully approved.` +
+        (notes ? `\n\nNote: ${notes}` : "");
 
-        await sendSMS(existingRequest.user.phoneNumber, customerMessage);
-        console.log(`✅ Customer SMS sent`);
-      } catch (error: any) {
-        console.error("⚠️ Failed to send customer SMS:", error);
-      }
+      sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
+        console.error("Customer SMS (staff approval) failed:", e),
+      );
     }
 
     return res.status(200).json({
@@ -719,7 +751,14 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
     // Get existing request
     const existingRequest = await prisma.request.findUnique({
       where: { id: requestId },
-      include: { user: { select: { phoneNumber: true } } },
+      include: {
+        user: { select: { username: true, phoneNumber: true } },
+        service: {
+          include: {
+            office: { select: { name: true, roomNumber: true, address: true } },
+          },
+        },
+      },
     });
 
     if (!existingRequest) {
@@ -752,19 +791,18 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
       include: requestInclude,
     });
 
-    // Send SMS to customer
+    // Notify customer — final approval (non-blocking)
     if (existingRequest.user?.phoneNumber) {
-      try {
-        const customerMessage = `✅ Your service request has been fully approved by ${approver.user.username}.
+      const office = existingRequest.service.office;
+      const customerMsg =
+        `Dear ${existingRequest.user.username},\n\n` +
+        `Your request for "${existingRequest.service.name}" has been approved.\n\n` +
+        `Please visit ${office.name} (Room ${office.roomNumber}, ${office.address}) for further assistance.` +
+        (notes ? `\n\nNote: ${notes}` : "");
 
-You will receive further updates soon.
-${notes ? `Note: ${notes}` : ""}`;
-
-        await sendSMS(existingRequest.user.phoneNumber, customerMessage);
-        console.log(`✅ Customer approval SMS sent`);
-      } catch (error: any) {
-        console.error("⚠️ Failed to send approval SMS:", error);
-      }
+      sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
+        console.error("Customer SMS (manager approval) failed:", e),
+      );
     }
 
     return res.status(200).json({
@@ -810,7 +848,10 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
     // Get existing request
     const existingRequest = await prisma.request.findUnique({
       where: { id: requestId },
-      include: { user: { select: { phoneNumber: true } } },
+      include: {
+        user: { select: { username: true, phoneNumber: true } },
+        service: { select: { name: true } },
+      },
     });
 
     if (!existingRequest) {
@@ -830,20 +871,17 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
       include: requestInclude,
     });
 
-    // Send SMS to customer
+    // Notify customer — rejection (non-blocking)
     if (existingRequest.user?.phoneNumber) {
-      try {
-        const customerMessage = `❌ Your service request has been rejected.
+      const customerMsg =
+        `Dear ${existingRequest.user.username},\n\n` +
+        `Your request for "${existingRequest.service.name}" has been rejected.\n\n` +
+        `Reason: ${rejectionReason}\n\n` +
+        `For more information, please contact us.`;
 
-Reason: ${rejectionReason}
-
-Please contact us for more information.`;
-
-        await sendSMS(existingRequest.user.phoneNumber, customerMessage);
-        console.log(`✅ Rejection SMS sent to customer`);
-      } catch (error: any) {
-        console.error("⚠️ Failed to send rejection SMS:", error);
-      }
+      sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
+        console.error("Customer SMS (rejection) failed:", e),
+      );
     }
 
     return res.status(200).json({

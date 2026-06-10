@@ -1,4 +1,5 @@
 import { prisma } from "../lib/db.js";
+import { sendSMS as smsSend } from "../services/sms.service.js";
 
 /**
  * Generate a unique request number
@@ -38,16 +39,7 @@ export async function sendSMS(
   phoneNumber: string,
   message: string,
 ): Promise<void> {
-  // TODO: Implement SMS sending with your provider
-  console.log(`📱 SMS to ${phoneNumber}:`, message);
-
-  // Example with Twilio:
-  // const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  // await client.messages.create({
-  //   body: message,
-  //   from: process.env.TWILIO_PHONE_NUMBER,
-  //   to: phoneNumber,
-  // });
+  await smsSend(phoneNumber, message);
 }
 
 /**

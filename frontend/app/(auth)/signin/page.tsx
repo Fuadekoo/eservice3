@@ -390,20 +390,16 @@ export default function SignInPage() {
                         render={({ field, fieldState }) => (
                           <FormItem>
                             <div className="flex items-center justify-end mb-1.5">
-                              <a
-                                href="#"
+                              <Link
+                                href={
+                                  callbackUrl
+                                    ? `/forget-password?callbackUrl=${encodeURIComponent(callbackUrl)}`
+                                    : "/forget-password"
+                                }
                                 className="text-xs text-primary hover:underline underline-offset-2 transition-colors"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  toast.info(
-                                    getTranslationForKey(
-                                      "Password reset feature coming soon",
-                                    ),
-                                  );
-                                }}
                               >
                                 {getTranslationForKey("Forgot password?")}
-                              </a>
+                              </Link>
                             </div>
                             <FormControl>
                               <PasswordInput

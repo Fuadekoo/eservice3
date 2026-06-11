@@ -44,6 +44,7 @@ import { axiosInstance } from "@/lib/axios";
 import { setToken } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import z from "zod";
+import { strongPasswordSchema } from "@/lib/password-strength";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Field, FieldError } from "@/components/ui/field";
@@ -69,7 +70,7 @@ const profileSchema = z
       .string()
       .trim()
       .min(3, "Username must be at least 3 characters."),
-    password: z.string().min(6, "Password must be at least 6 characters."),
+    password: strongPasswordSchema,
     confirmPassword: z.string().min(1, "Please confirm your password."),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -727,63 +728,63 @@ export default function SignupPage() {
                       )}
                     />
 
-                    {/* Password row */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormField
-                        name="password"
-                        control={profileForm.control}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-bold flex items-center gap-2 mb-1.5">
-                              <Lock className="size-3.5 text-primary" />
-                              {t("Password")}
-                            </FormLabel>
-                            <FormControl>
-                              <PasswordInput
-                                {...field}
-                                placeholder="••••••••"
-                                className={cn(
-                                  "h-11 rounded-xl bg-muted/30 border-muted-foreground/20 transition-all",
-                                  fieldState.error && "border-destructive",
-                                )}
-                              />
-                            </FormControl>
-                            <FormMessage className="text-[11px]">
-                              {fieldState.error?.message
-                                ? t(fieldState.error.message)
-                                : ""}
-                            </FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        name="confirmPassword"
-                        control={profileForm.control}
-                        render={({ field, fieldState }) => (
-                          <FormItem>
-                            <FormLabel className="text-sm font-bold flex items-center gap-2 mb-1.5">
-                              <Lock className="size-3.5 text-primary" />
-                              {t("Confirm")}
-                            </FormLabel>
-                            <FormControl>
-                              <PasswordInput
-                                {...field}
-                                placeholder="••••••••"
-                                className={cn(
-                                  "h-11 rounded-xl bg-muted/30 border-muted-foreground/20 transition-all",
-                                  fieldState.error && "border-destructive",
-                                )}
-                              />
-                            </FormControl>
-                            <FormMessage className="text-[11px]">
-                              {fieldState.error?.message
-                                ? t(fieldState.error.message)
-                                : ""}
-                            </FormMessage>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    {/* Password */}
+                    <FormField
+                      name="password"
+                      control={profileForm.control}
+                      render={({ field, fieldState }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-bold flex items-center gap-2 mb-1.5">
+                            <Lock className="size-3.5 text-primary" />
+                            {t("Password")}
+                          </FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              {...field}
+                              showStrength
+                              placeholder="••••••••"
+                              className={cn(
+                                "h-11 rounded-xl bg-muted/30 border-muted-foreground/20 transition-all",
+                                fieldState.error && "border-destructive",
+                              )}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[11px]">
+                            {fieldState.error?.message
+                              ? t(fieldState.error.message)
+                              : ""}
+                          </FormMessage>
+                        </FormItem>
+                      )}
+                    />
+                    {/* Confirm Password */}
+                    <FormField
+                      name="confirmPassword"
+                      control={profileForm.control}
+                      render={({ field, fieldState }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-bold flex items-center gap-2 mb-1.5">
+                            <Lock className="size-3.5 text-primary" />
+                            {t("Confirm Password")}
+                          </FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              {...field}
+                              placeholder="••••••••"
+                              className={cn(
+                                "h-11 rounded-xl bg-muted/30 border-muted-foreground/20 transition-all",
+                                fieldState.error && "border-destructive",
+                              )}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-[11px]">
+                            {fieldState.error?.message
+                              ? t(fieldState.error.message)
+                              : ""}
+                          </FormMessage>
+                        </FormItem>
+                      )}
+                    />
 
                     <Button
                       type="submit"

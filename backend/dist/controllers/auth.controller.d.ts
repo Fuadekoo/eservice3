@@ -14,4 +14,7 @@ export declare function getTwoFactorStatus(req: AuthRequest, res: Response): Pro
 export declare function beginTwoFactorSetup(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function verifyTwoFactorSetup(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function disableTwoFactor(req: AuthRequest, res: Response): Promise<Response | void>;
+export declare function requestPasswordReset(req: Request, res: Response): Promise<Response | void>;
+export declare function verifyPasswordResetOtp(req: Request, res: Response): Promise<Response | void>;
+export declare function resetPassword(req: Request, res: Response): Promise<Response | void>;
 //# sourceMappingURL=auth.controller.d.ts.map

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { beginTwoFactorSetup, changePassword, disableTwoFactor, getTwoFactorStatus, login, getCurrentUser, updateProfile, getUserSessions, logout, registerCustomer, revokeOtherSessions, revokeSession, verifyLoginTwoFactor, verifyTwoFactorSetup, } from "../controllers/auth.controller.js";
+import { beginTwoFactorSetup, changePassword, disableTwoFactor, getTwoFactorStatus, login, getCurrentUser, updateProfile, getUserSessions, logout, registerCustomer, requestPasswordReset, resetPassword, revokeOtherSessions, revokeSession, verifyLoginTwoFactor, verifyPasswordResetOtp, verifyTwoFactorSetup, } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middleware/auth.js";
 const router = Router();
 const loginRateLimiter = rateLimit({
@@ -114,6 +114,10 @@ router.post("/login", loginRateLimiter, asyncHandler(login));
 router.post("/login/verify-2fa", loginRateLimiter, asyncHandler(verifyLoginTwoFactor));
 // Public customer registration endpoint
 router.post("/register/customer", asyncHandler(registerCustomer));
+// Forgot password (OTP-based, all public)
+router.post("/forgot-password/request", loginRateLimiter, asyncHandler(requestPasswordReset));
+router.post("/forgot-password/verify", loginRateLimiter, asyncHandler(verifyPasswordResetOtp));
+router.post("/forgot-password/reset", asyncHandler(resetPassword));
 /**
  * @swagger
  * /auth/me:

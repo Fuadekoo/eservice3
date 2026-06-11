@@ -1,6 +1,8 @@
 import { Prisma } from "../lib/prisma-client.js";
 import { compare, hash } from "bcryptjs";
+import { randomBytes } from "crypto";
 import { z } from "zod";
+import { sendSMS } from "../services/sms.service.js";
 import { disableTwoFactor as disableTwoFactorHandler, generateTwoFactorSetup as beginTwoFactorSetupHandler, getTwoFactorStatus as getTwoFactorStatusHandler, validateTwoFactorLogin as verifyLoginTwoFactorHandler, verifyAndEnableTwoFactor as verifyTwoFactorSetupHandler, } from "./two-factor.controller.js";
 import { createAuthSession, deleteAuthSession, listUserAuthSessions, revokeOtherUserSessions, serializeAuthSession, } from "../lib/auth-session.js";
 import { prisma } from "../lib/db.js";
@@ -492,5 +494,168 @@ export async function verifyTwoFactorSetup(req, res) {
 }
 export async function disableTwoFactor(req, res) {
     return disableTwoFactorHandler(req, res);
+}
+const otpStore = new Map();
+const resetTokenStore = new Map();
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const RESET_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_OTP_ATTEMPTS = 5;
+const forgotPasswordStrongPassword = z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .max(128, "Password must be less than 128 characters.")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter.")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter.")
+    .regex(/[0-9]/, "Password must contain at least one number.")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character.");
+function generateOtp() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+}
+function generateResetToken() {
+    return randomBytes(32).toString("hex");
+}
+export async function requestPasswordReset(req, res) {
+    try {
+        const { phone } = req.body;
+        if (!phone?.trim()) {
+            return res.status(400).json({
+                error: "ValidationError",
+                message: "Phone number is required.",
+            });
+        }
+        const user = await prisma.user.findFirst({
+            where: { phoneNumber: phone.trim() },
+            select: { id: true, phoneNumber: true, isActive: true },
+        });
+        // Always return success to prevent phone enumeration attacks,
+        // but only send OTP if the account actually exists and is active.
+        if (user && user.isActive) {
+            const otp = generateOtp();
+            otpStore.set(user.phoneNumber, {
+                otp,
+                expiresAt: Date.now() + OTP_TTL_MS,
+                attempts: 0,
+            });
+            const smsResult = await sendSMS(user.phoneNumber, `Your password reset code is: ${otp}. Valid for 10 minutes. Do not share this code.`);
+            if (process.env.NODE_ENV === "development") {
+                console.log(`[forgot-password] OTP for ${user.phoneNumber}: ${otp} (SMS: ${smsResult.success ? "sent" : "failed"})`);
+            }
+        }
+        return res.json({
+            message: "If an account with that number exists, an OTP has been sent.",
+            ...(process.env.NODE_ENV === "development" && user?.isActive
+                ? { _devOtp: otpStore.get(user.phoneNumber)?.otp }
+                : {}),
+        });
+    }
+    catch (error) {
+        return handleControllerError(res, error, "Failed to send password reset OTP");
+    }
+}
+export async function verifyPasswordResetOtp(req, res) {
+    try {
+        const { phone, otp } = req.body;
+        if (!phone?.trim() || !otp?.trim()) {
+            return res.status(400).json({
+                error: "ValidationError",
+                message: "Phone number and OTP are required.",
+            });
+        }
+        const entry = otpStore.get(phone.trim());
+        if (!entry) {
+            return res.status(400).json({
+                error: "InvalidOtp",
+                message: "No OTP found for this number. Please request a new code.",
+            });
+        }
+        if (Date.now() > entry.expiresAt) {
+            otpStore.delete(phone.trim());
+            return res.status(400).json({
+                error: "OtpExpired",
+                message: "OTP has expired. Please request a new code.",
+            });
+        }
+        entry.attempts += 1;
+        if (entry.attempts > MAX_OTP_ATTEMPTS) {
+            otpStore.delete(phone.trim());
+            return res.status(429).json({
+                error: "TooManyAttempts",
+                message: "Too many incorrect attempts. Please request a new code.",
+            });
+        }
+        if (entry.otp !== otp.trim()) {
+            return res.status(400).json({
+                error: "InvalidOtp",
+                message: "Incorrect code. Please try again.",
+            });
+        }
+        otpStore.delete(phone.trim());
+        const resetToken = generateResetToken();
+        resetTokenStore.set(resetToken, {
+            phone: phone.trim(),
+            expiresAt: Date.now() + RESET_TOKEN_TTL_MS,
+        });
+        return res.json({
+            data: { resetToken },
+            message: "OTP verified. You may now reset your password.",
+        });
+    }
+    catch (error) {
+        return handleControllerError(res, error, "Failed to verify OTP");
+    }
+}
+export async function resetPassword(req, res) {
+    try {
+        const { resetToken, newPassword } = req.body;
+        if (!resetToken?.trim()) {
+            return res.status(400).json({
+                error: "ValidationError",
+                message: "Reset token is required.",
+            });
+        }
+        const parsed = forgotPasswordStrongPassword.safeParse(newPassword);
+        if (!parsed.success) {
+            return res.status(400).json({
+                error: "ValidationError",
+                message: parsed.error.errors[0]?.message ?? "Invalid password.",
+            });
+        }
+        const entry = resetTokenStore.get(resetToken.trim());
+        if (!entry) {
+            return res.status(400).json({
+                error: "InvalidToken",
+                message: "Invalid or already used reset token.",
+            });
+        }
+        if (Date.now() > entry.expiresAt) {
+            resetTokenStore.delete(resetToken.trim());
+            return res.status(400).json({
+                error: "TokenExpired",
+                message: "Reset token has expired. Please start the process again.",
+            });
+        }
+        const user = await prisma.user.findFirst({
+            where: { phoneNumber: entry.phone },
+            select: { id: true },
+        });
+        if (!user) {
+            return res.status(404).json({
+                error: "NotFound",
+                message: "Account not found.",
+            });
+        }
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { password: await hash(parsed.data, 12) },
+        });
+        resetTokenStore.delete(resetToken.trim());
+        return res.json({
+            data: { success: true },
+            message: "Password reset successfully. You can now sign in.",
+        });
+    }
+    catch (error) {
+        return handleControllerError(res, error, "Failed to reset password");
+    }
 }
 //# sourceMappingURL=auth.controller.js.map

@@ -12,9 +12,12 @@ import {
   getUserSessions,
   logout,
   registerCustomer,
+  requestPasswordReset,
+  resetPassword,
   revokeOtherSessions,
   revokeSession,
   verifyLoginTwoFactor,
+  verifyPasswordResetOtp,
   verifyTwoFactorSetup,
 } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -148,6 +151,11 @@ router.post(
 
 // Public customer registration endpoint
 router.post("/register/customer", asyncHandler(registerCustomer));
+
+// Forgot password (OTP-based, all public)
+router.post("/forgot-password/request", loginRateLimiter, asyncHandler(requestPasswordReset));
+router.post("/forgot-password/verify", loginRateLimiter, asyncHandler(verifyPasswordResetOtp));
+router.post("/forgot-password/reset", asyncHandler(resetPassword));
 
 /**
  * @swagger

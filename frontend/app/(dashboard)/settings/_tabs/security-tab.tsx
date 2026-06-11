@@ -40,6 +40,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { logout, useSession, type DeviceSessionInfo } from "@/lib/auth-client";
 import { axiosInstance } from "@/lib/axios";
+import { checkPasswordCriteria } from "@/lib/password-strength";
 
 type TwoFactorStatus = {
   accountName: string;
@@ -236,8 +237,15 @@ export function SecurityTab() {
       return;
     }
 
-    if (passwordData.newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+    const criteria = checkPasswordCriteria(passwordData.newPassword);
+    const unmet = Object.entries(criteria)
+      .filter(([, v]) => !v)
+      .map(([k]) => k);
+    if (unmet.length > 0) {
+      toast.error("Password is too weak", {
+        description:
+          "Use 8+ characters with uppercase, lowercase, a number, and a special character.",
+      });
       return;
     }
 
@@ -415,6 +423,7 @@ export function SecurityTab() {
             <Label htmlFor="newPassword">New Password</Label>
             <PasswordInput
               id="newPassword"
+              showStrength
               value={passwordData.newPassword}
               onChange={(event) =>
                 handlePasswordChange("newPassword", event.target.value)
@@ -423,9 +432,6 @@ export function SecurityTab() {
               placeholder="Enter new password"
               autoComplete="new-password"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Password must be at least 8 characters long
-            </p>
           </div>
 
           <div>

@@ -813,7 +813,7 @@ export async function resetPassword(
     if (!parsed.success) {
       return res.status(400).json({
         error: "ValidationError",
-        message: parsed.error.errors[0]?.message ?? "Invalid password.",
+        message: parsed.error.issues[0]?.message ?? "Invalid password.",
       });
     }
 

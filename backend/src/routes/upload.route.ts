@@ -3,6 +3,7 @@ import { uploadFile, serveByFilepath } from "../controllers/upload.controller.js
 import { upload } from "../middleware/upload.js";
 import { requireAuth } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadLimiter } from "../middleware/rate-limit.js";
 
 const router = Router();
 
@@ -10,6 +11,7 @@ const router = Router();
 // The frontend sends the file in a field named "file"
 router.post(
   "/upload",
+  uploadLimiter,
   requireAuth,
   upload.single("file"),
   asyncHandler(uploadFile),

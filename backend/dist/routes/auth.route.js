@@ -1,18 +1,8 @@
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
 import { beginTwoFactorSetup, changePassword, disableTwoFactor, getTwoFactorStatus, login, getCurrentUser, updateProfile, getUserSessions, logout, registerCustomer, requestPasswordReset, resetPassword, revokeOtherSessions, revokeSession, verifyLoginTwoFactor, verifyPasswordResetOtp, verifyTwoFactorSetup, } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middleware/auth.js";
+import { changePasswordLimiter, forgotPasswordLimiter, loginLimiter, otpVerifyLimiter, passwordResetLimiter, registrationLimiter, } from "../middleware/rate-limit.js";
 const router = Router();
-const loginRateLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000,
-    max: 10,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-        error: "RateLimitExceeded",
-        message: "Too many authentication attempts. Please try again in a few minutes.",
-    },
-});
 // Async wrapper for route handlers
 const asyncHandler = (fn) => {
     return (req, res, next) => {
@@ -110,14 +100,14 @@ const asyncMiddleware = (fn) => {
  *               $ref: '#/components/schemas/Error'
  */
 // Login endpoint (public, no auth required)
-router.post("/login", loginRateLimiter, asyncHandler(login));
-router.post("/login/verify-2fa", loginRateLimiter, asyncHandler(verifyLoginTwoFactor));
+router.post("/login", loginLimiter, asyncHandler(login));
+router.post("/login/verify-2fa", loginLimiter, asyncHandler(verifyLoginTwoFactor));
 // Public customer registration endpoint
-router.post("/register/customer", asyncHandler(registerCustomer));
+router.post("/register/customer", registrationLimiter, asyncHandler(registerCustomer));
 // Forgot password (OTP-based, all public)
-router.post("/forgot-password/request", loginRateLimiter, asyncHandler(requestPasswordReset));
-router.post("/forgot-password/verify", loginRateLimiter, asyncHandler(verifyPasswordResetOtp));
-router.post("/forgot-password/reset", asyncHandler(resetPassword));
+router.post("/forgot-password/request", forgotPasswordLimiter, asyncHandler(requestPasswordReset));
+router.post("/forgot-password/verify", otpVerifyLimiter, asyncHandler(verifyPasswordResetOtp));
+router.post("/forgot-password/reset", passwordResetLimiter, asyncHandler(resetPassword));
 /**
  * @swagger
  * /auth/me:
@@ -187,7 +177,7 @@ router.get("/sessions", asyncMiddleware(requireAuth), asyncHandler(getUserSessio
 router.delete("/sessions/:sessionId", asyncMiddleware(requireAuth), asyncHandler(revokeSession));
 router.post("/sessions/revoke-others", asyncMiddleware(requireAuth), asyncHandler(revokeOtherSessions));
 router.post("/logout", asyncMiddleware(requireAuth), asyncHandler(logout));
-router.post("/change-password", asyncMiddleware(requireAuth), asyncHandler(changePassword));
+router.post("/change-password", changePasswordLimiter, asyncMiddleware(requireAuth), asyncHandler(changePassword));
 router.get("/2fa/status", asyncMiddleware(requireAuth), asyncHandler(getTwoFactorStatus));
 router.post("/2fa/setup", asyncMiddleware(requireAuth), asyncHandler(beginTwoFactorSetup));
 router.post("/2fa/verify", asyncMiddleware(requireAuth), asyncHandler(verifyTwoFactorSetup));

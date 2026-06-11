@@ -8,6 +8,7 @@ import { fileURLToPath } from "url";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import { auditLogger } from "./middleware/audit.js";
+import { globalLimiter } from "./middleware/rate-limit.js";
 import routes from "./routes/index.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,6 +100,8 @@ app.get("/test-swagger", (_req, res) => {
 app.get("/back-api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+// Global rate limiter — must be before routes, after body parsers
+app.use("/back-api", globalLimiter);
 // Debug middleware to log all incoming API requests (before routes)
 app.use("/back-api", (req, res, next) => {
     console.log(`[App] Incoming request: ${req.method} ${req.originalUrl}`);

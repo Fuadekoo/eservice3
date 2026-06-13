@@ -22,7 +22,6 @@ import { StaffTable } from "./_components/staff-table";
 import { AssignServicesDialog } from "./_components/assign-services-dialog";
 import { StaffCreateDialog } from "@/components/dashboard/staff-create-dialog";
 import { PaginationFooter } from "@/components/dashboard/pagination-footer";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -124,7 +123,7 @@ export default function StaffPage() {
       search: searchQuery || undefined,
       roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
       officeId: effectiveOfficeId,
-      status: selectedStatus !== "all" ? selectedStatus : undefined,
+      status: selectedStatus !== "all" ? selectedStatus.toLowerCase() : undefined,
     });
   }, [
     currentPage,
@@ -189,7 +188,7 @@ export default function StaffPage() {
       search: searchQuery || undefined,
       roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
       officeId: effectiveOfficeId,
-      status: selectedStatus !== "all" ? selectedStatus : undefined,
+      status: selectedStatus !== "all" ? selectedStatus.toLowerCase() : undefined,
     });
     toast.success("Staff list refreshed");
   };
@@ -287,7 +286,7 @@ export default function StaffPage() {
             </div>
 
             <div className="flex items-center rounded-xl border border-border overflow-hidden h-9 bg-muted/50">
-              {(["all", "ACTIVE", "INACTIVE", "PENDING", "BLOCKED"] as const).map((s) => (
+              {(["all", "ACTIVE", "INACTIVE"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => { setSelectedStatus(s); setCurrentPage(1); }}

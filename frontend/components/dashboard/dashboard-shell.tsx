@@ -34,13 +34,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User, Settings } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -56,9 +49,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarProvider,
-  SidebarSeparator,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
@@ -205,13 +196,11 @@ function UserAvatarDropdown() {
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { t, getTranslationForKey, selectedLanguage } = useTranslation();
+  const { getTranslationForKey, selectedLanguage } = useTranslation();
   const { loadTranslations } = useLanguagesStore();
   const {
     role,
-    permissions,
     isLoading: isLoadingPermissions,
-    hasPermission,
     hasAnyPermission,
   } = usePermissions();
   const [openMenus, setOpenMenus] = React.useState<Record<string, boolean>>({});
@@ -288,7 +277,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider className="h-dvh overflow-hidden">
       <Sidebar collapsible="icon" variant="inset">
-        <SidebarHeader>
+        <SidebarHeader className="border-b border-sidebar-border pb-3">
           <div className="flex items-center gap-3 overflow-hidden group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
             <div className="shrink-0 size-8 flex items-center justify-center">
               <Image

@@ -6,8 +6,6 @@ import {
   Search,
   Eye,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   Building2,
   X,
   Calendar,
@@ -16,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
+import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import { toast } from "sonner";
 import { useReportStore, type Report } from "@/lib/stores/report-store";
 import { useOfficeStore } from "@/lib/stores/office-store";
@@ -280,16 +279,6 @@ export default function ReportManagementPage() {
           </SelectContent>
         </Select>
 
-        <Select value={String(pageSize)} onValueChange={(value) => setPageSize(Number(value))}>
-          <SelectTrigger className="w-[110px] rounded-xl">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="10">10 / page</SelectItem>
-            <SelectItem value="25">25 / page</SelectItem>
-            <SelectItem value="50">50 / page</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
@@ -422,35 +411,19 @@ export default function ReportManagementPage() {
       </div>
 
       {totalCount > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 text-sm text-muted-foreground">
-          <span>
-            {t("Showing")} {from} {t("to")} {to} {t("of")} {totalCount}{" "}
-            {t("reports")}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8 rounded-xl"
-              disabled={page <= 1 || isLoading}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="px-3 py-1 text-sm font-medium">
-              {page} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8 rounded-xl"
-              disabled={page >= totalPages || isLoading}
-              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
+        <PaginationFooter
+          currentPage={page}
+          pageSize={pageSize}
+          totalPages={totalPages}
+          totalItems={totalCount}
+          startIndex={(page - 1) * pageSize}
+          endIndex={Math.min(page * pageSize, totalCount)}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          canGoNext={page < totalPages}
+          canGoPrevious={page > 1}
+          itemLabel={t("reports")}
+        />
       )}
 
       <ReportViewDialog

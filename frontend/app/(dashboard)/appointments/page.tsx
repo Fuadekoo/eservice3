@@ -26,7 +26,10 @@ import { toast } from "sonner";
 import axios from "axios";
 
 import { axiosInstance } from "@/lib/axios";
+import { useSession } from "@/hooks/use-session";
+import { usePagination } from "@/hooks/use-pagination";
 import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
+import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -186,6 +189,13 @@ export default function AppointmentsPage() {
     [appointments, tab, search]
   );
 
+  const aptPagination = usePagination(displayed, { initialPageSize: 10 });
+
+  React.useEffect(() => {
+    aptPagination.setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, search]);
+
   const openEdit = (apt: Appointment) => {
     setEditApt(apt);
     setEditForm({
@@ -289,9 +299,26 @@ export default function AppointmentsPage() {
       ) : displayed.length === 0 ? (
         <EmptyState tab={tab} search={search} />
       ) : view === "card" ? (
-        <CardGrid apts={displayed} onView={setDetailApt} onEdit={openEdit} />
+        <CardGrid apts={aptPagination.paginatedData} onView={setDetailApt} onEdit={openEdit} />
       ) : (
-        <TableView apts={displayed} onView={setDetailApt} onEdit={openEdit} />
+        <TableView apts={aptPagination.paginatedData} onView={setDetailApt} onEdit={openEdit} />
+      )}
+
+      {/* Pagination */}
+      {displayed.length > 0 && !isLoading && (
+        <PaginationFooter
+          currentPage={aptPagination.currentPage}
+          pageSize={aptPagination.pageSize}
+          totalPages={aptPagination.totalPages}
+          totalItems={aptPagination.totalItems}
+          startIndex={aptPagination.startIndex}
+          endIndex={aptPagination.endIndex}
+          onPageChange={aptPagination.setPage}
+          onPageSizeChange={aptPagination.setPageSize}
+          canGoNext={aptPagination.canGoNext}
+          canGoPrevious={aptPagination.canGoPrevious}
+          itemLabel="appointments"
+        />
       )}
 
       {/* Detail Dialog */}

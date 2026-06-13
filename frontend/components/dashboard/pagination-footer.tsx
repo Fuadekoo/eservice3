@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,24 +49,23 @@ export function PaginationFooter({
   const resolvedItemLabel = itemLabel ?? t("items");
 
   return (
-    <div className="flex flex-col gap-4 border-t pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">
-          {t("Showing")} {startIndex + 1} {t("to")}{" "}
-          {Math.min(endIndex, totalItems)} {t("of")} {totalItems}{" "}
-          {resolvedItemLabel}
-        </span>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+    <div className="flex items-center justify-between gap-4 border-t pt-4">
+      <span className="text-sm text-muted-foreground whitespace-nowrap">
+        {t("Showing")} {startIndex + 1} {t("to")}{" "}
+        {Math.min(endIndex, totalItems)} {t("of")} {totalItems}{" "}
+        {resolvedItemLabel}
+      </span>
+
+      <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">
             {t("Rows per page")}:
           </span>
           <Select
             value={pageSize.toString()}
             onValueChange={(value) => onPageSizeChange(Number(value))}
           >
-            <SelectTrigger className="w-20 sm:w-20">
+            <SelectTrigger className="w-16 h-8">
               <SelectValue placeholder={pageSize.toString()} />
             </SelectTrigger>
             <SelectContent>
@@ -78,18 +76,19 @@ export function PaginationFooter({
             </SelectContent>
           </Select>
         </div>
+
         <Pagination>
-          <PaginationContent className="flex-wrap justify-start">
+          <PaginationContent>
             <PaginationItem>
               <Button
                 variant="ghost"
                 size="default"
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={!canGoPrevious}
-                className="h-9 gap-1 px-2.5 sm:h-10 sm:pl-2.5"
+                className="h-9 gap-1 px-2.5"
               >
                 <ChevronLeftIcon className="size-4" />
-                <span className="hidden sm:block">{t("Previous")}</span>
+                {t("Previous")}
               </Button>
             </PaginationItem>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
@@ -104,7 +103,7 @@ export function PaginationFooter({
                       variant={currentPage === page ? "outline" : "ghost"}
                       size="icon"
                       onClick={() => onPageChange(page)}
-                      className="h-8 w-8 sm:h-9 sm:w-9"
+                      className="h-9 w-9"
                     >
                       {page}
                     </Button>
@@ -125,9 +124,9 @@ export function PaginationFooter({
                 size="default"
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={!canGoNext}
-                className="h-9 gap-1 px-2.5 sm:h-10 sm:pr-2.5"
+                className="h-9 gap-1 px-2.5"
               >
-                <span className="hidden sm:block">{t("Next")}</span>
+                {t("Next")}
                 <ChevronRightIcon className="size-4" />
               </Button>
             </PaginationItem>

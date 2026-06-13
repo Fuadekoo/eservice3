@@ -18,7 +18,6 @@ import {
   Edit,
   Trash2,
   Loader2,
-  Power,
   MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,16 +37,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { OfficeCreateDialog } from "@/components/dashboard/office-create-dialog";
+import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +52,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PageLayout } from "@/components/dashboard/page-layout";
+import { usePagination } from "@/hooks/use-pagination";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +62,6 @@ export default function OfficesPage() {
     useOfficeStore();
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [pageSize, setPageSize] = React.useState("20");
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
   const [editingOffice, setEditingOffice] = React.useState<Office | null>(null);
   const [deletingOffice, setDeletingOffice] = React.useState<Office | null>(
@@ -87,6 +78,13 @@ export default function OfficesPage() {
       office.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       office.roomNumber.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  const officePagination = usePagination(filteredOffices, { initialPageSize: 20 });
+
+  React.useEffect(() => {
+    officePagination.setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   const handleDelete = async () => {
     if (!deletingOffice) return;
@@ -141,22 +139,6 @@ export default function OfficesPage() {
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2 mr-4">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-              {t("Per page")}
-            </span>
-            <Select value={pageSize} onValueChange={setPageSize}>
-              <SelectTrigger className="w-[80px] h-9 rounded-lg border-none bg-background shadow-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="flex items-center gap-1 bg-background p-1 rounded-lg border border-border shadow-sm">
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
@@ -191,7 +173,7 @@ export default function OfficesPage() {
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredOffices.map((office) => (
+          {officePagination.paginatedData.map((office) => (
             <OfficeCard
               key={office.id}
               office={office}
@@ -219,7 +201,7 @@ export default function OfficesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOffices.map((office) => (
+              {officePagination.paginatedData.map((office) => (
                 <TableRow key={office.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -351,6 +333,23 @@ export default function OfficesPage() {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {/* Pagination */}
+      {filteredOffices.length > 0 && !isLoading && (
+        <PaginationFooter
+          currentPage={officePagination.currentPage}
+          pageSize={officePagination.pageSize}
+          totalPages={officePagination.totalPages}
+          totalItems={officePagination.totalItems}
+          startIndex={officePagination.startIndex}
+          endIndex={officePagination.endIndex}
+          onPageChange={officePagination.setPage}
+          onPageSizeChange={officePagination.setPageSize}
+          canGoNext={officePagination.canGoNext}
+          canGoPrevious={officePagination.canGoPrevious}
+          itemLabel={t("offices")}
+        />
       )}
 
       {/* Dialogs */}

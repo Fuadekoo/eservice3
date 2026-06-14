@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { beginTwoFactorSetup, changePassword, disableTwoFactor, getTwoFactorStatus, login, getCurrentUser, updateProfile, getUserSessions, logout, registerCustomer, requestPasswordReset, resetPassword, revokeOtherSessions, revokeSession, verifyLoginTwoFactor, verifyPasswordResetOtp, verifyTwoFactorSetup, } from "../controllers/auth.controller.js";
+import { beginTwoFactorSetup, changePassword, disableTwoFactor, getTwoFactorStatus, login, getCurrentUser, requestRegistrationOtp, updateProfile, getUserSessions, logout, registerCustomer, requestPasswordReset, resetPassword, revokeOtherSessions, revokeSession, verifyRegistrationOtp, verifyLoginTwoFactor, verifyPasswordResetOtp, verifyTwoFactorSetup, } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middleware/auth.js";
 import { changePasswordLimiter, forgotPasswordLimiter, loginLimiter, otpVerifyLimiter, passwordResetLimiter, registrationLimiter, } from "../middleware/rate-limit.js";
 const router = Router();
@@ -103,6 +103,8 @@ const asyncMiddleware = (fn) => {
 router.post("/login", loginLimiter, asyncHandler(login));
 router.post("/login/verify-2fa", loginLimiter, asyncHandler(verifyLoginTwoFactor));
 // Public customer registration endpoint
+router.post("/register/customer/request-otp", registrationLimiter, asyncHandler(requestRegistrationOtp));
+router.post("/register/customer/verify-otp", otpVerifyLimiter, asyncHandler(verifyRegistrationOtp));
 router.post("/register/customer", registrationLimiter, asyncHandler(registerCustomer));
 // Forgot password (OTP-based, all public)
 router.post("/forgot-password/request", forgotPasswordLimiter, asyncHandler(requestPasswordReset));

@@ -423,8 +423,161 @@ const registerCustomerSchema = z.object({
   username: z.string().trim().min(1, "Username is required."),
   phone: z.string().trim().min(1, "Phone number is required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
+  otp: z.string().trim().length(6, "OTP must be 6 digits."),
   officeId: z.string().min(1).optional(),
 });
+
+const registerOtpSchema = z.object({
+  phone: z.string().trim().min(1, "Phone number is required."),
+});
+
+const verifyRegisterOtpSchema = z.object({
+  phone: z.string().trim().min(1, "Phone number is required."),
+  otp: z.string().trim().length(6, "OTP must be 6 digits."),
+});
+
+type OtpEntry = {
+  otp: string;
+  expiresAt: number;
+  attempts: number;
+  verified?: boolean;
+};
+type ResetTokenEntry = { phone: string; expiresAt: number };
+
+const registrationOtpStore = new Map<string, OtpEntry>();
+const otpStore = new Map<string, OtpEntry>();
+const resetTokenStore = new Map<string, ResetTokenEntry>();
+
+const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const RESET_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_OTP_ATTEMPTS = 5;
+
+function generateOtp(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function generateResetToken(): string {
+  return randomBytes(32).toString("hex");
+}
+
+function getValidOtpEntry(
+  store: Map<string, OtpEntry>,
+  phone: string,
+): OtpEntry | null {
+  const entry = store.get(phone);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    store.delete(phone);
+    return null;
+  }
+  return entry;
+}
+
+export async function requestRegistrationOtp(
+  req: Request,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    const validationResult = registerOtpSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json(buildValidationError(validationResult.error));
+    }
+
+    const phone = validationResult.data.phone.trim();
+    const existingUser = await prisma.user.findFirst({
+      where: { phoneNumber: phone },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        error: "ConflictError",
+        message: "Phone number is already in use.",
+      });
+    }
+
+    const otp = generateOtp();
+    registrationOtpStore.set(phone, {
+      otp,
+      expiresAt: Date.now() + OTP_TTL_MS,
+      attempts: 0,
+      verified: false,
+    });
+
+    const smsResult = await sendSMS(
+      phone,
+      `Your E-Service registration code is: ${otp}. Valid for 10 minutes. Do not share this code.`,
+    );
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `[register] OTP for ${phone}: ${otp} (SMS: ${smsResult.success ? "sent" : "failed"})`,
+      );
+    }
+
+    return res.json({
+      message: "Verification code sent. Please check your phone.",
+      ...(process.env.NODE_ENV === "development" ? { _devOtp: otp } : {}),
+    });
+  } catch (error) {
+    return handleControllerError(
+      res,
+      error,
+      "Failed to send registration OTP",
+    );
+  }
+}
+
+export async function verifyRegistrationOtp(
+  req: Request,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    const validationResult = verifyRegisterOtpSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json(buildValidationError(validationResult.error));
+    }
+
+    const phone = validationResult.data.phone.trim();
+    const otp = validationResult.data.otp.trim();
+    const entry = getValidOtpEntry(registrationOtpStore, phone);
+
+    if (!entry) {
+      return res.status(400).json({
+        error: "OtpExpired",
+        message: "Verification code has expired. Please request a new code.",
+      });
+    }
+
+    entry.attempts += 1;
+    if (entry.attempts > MAX_OTP_ATTEMPTS) {
+      registrationOtpStore.delete(phone);
+      return res.status(429).json({
+        error: "TooManyAttempts",
+        message: "Too many incorrect attempts. Please request a new code.",
+      });
+    }
+
+    if (entry.otp !== otp) {
+      return res.status(400).json({
+        error: "InvalidOtp",
+        message: "Incorrect verification code. Please try again.",
+      });
+    }
+
+    entry.verified = true;
+
+    return res.json({
+      message: "Phone number verified successfully.",
+    });
+  } catch (error) {
+    return handleControllerError(
+      res,
+      error,
+      "Failed to verify registration OTP",
+    );
+  }
+}
 
 export async function registerCustomer(
   req: Request,
@@ -443,13 +596,15 @@ export async function registerCustomer(
       username,
       phone,
       password,
+      otp,
       officeId,
     } = validationResult.data;
+    const normalizedPhone = phone.trim();
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ username: username.trim() }, { phoneNumber: phone.trim() }],
+        OR: [{ username: username.trim() }, { phoneNumber: normalizedPhone }],
       },
     });
 
@@ -458,6 +613,41 @@ export async function registerCustomer(
         error: "ConflictError",
         message: "Username or phone number is already in use.",
       });
+    }
+
+    const otpEntry = getValidOtpEntry(registrationOtpStore, normalizedPhone);
+    if (!otpEntry) {
+      return res.status(400).json({
+        error: "OtpExpired",
+        message: "Verification code has expired. Please request a new code.",
+      });
+    }
+
+    if (otpEntry.otp !== otp.trim()) {
+      otpEntry.attempts += 1;
+      if (otpEntry.attempts > MAX_OTP_ATTEMPTS) {
+        registrationOtpStore.delete(normalizedPhone);
+        return res.status(429).json({
+          error: "TooManyAttempts",
+          message: "Too many incorrect attempts. Please request a new code.",
+        });
+      }
+
+      return res.status(400).json({
+        error: "InvalidOtp",
+        message: "Incorrect verification code. Please try again.",
+      });
+    }
+
+    if (!otpEntry.verified) {
+      otpEntry.attempts += 1;
+      if (otpEntry.attempts > MAX_OTP_ATTEMPTS) {
+        registrationOtpStore.delete(normalizedPhone);
+        return res.status(429).json({
+          error: "TooManyAttempts",
+          message: "Too many incorrect attempts. Please request a new code.",
+        });
+      }
     }
 
     // Get Customer role
@@ -481,11 +671,11 @@ export async function registerCustomer(
           fatherName: fatherName.trim(),
           lastName: lastName.trim(),
           username: username.trim(),
-          phoneNumber: phone.trim(),
+          phoneNumber: normalizedPhone,
           password: await hash(password, 12),
           roleId: customerRole.id,
           isActive: true,
-          phoneVerified: false,
+          phoneVerified: true,
         },
       });
 
@@ -500,6 +690,7 @@ export async function registerCustomer(
 
       return user;
     });
+    registrationOtpStore.delete(normalizedPhone);
 
     const userForAuth = await findUserForAuthById(newUser.id);
     if (!userForAuth) {
@@ -508,6 +699,19 @@ export async function registerCustomer(
 
     const session = await createAuthSession(userForAuth.id, req);
     const token = buildTokenForUser(userForAuth, session.id);
+
+    const welcomeMsg =
+      `Welcome ${userForAuth.username}!\n\n` +
+      `Your E-Service account has been created successfully.\n\n` +
+      `You can now sign in, apply for services, track your requests, and receive updates by SMS.\n\n` +
+      `Thank you for joining us.`;
+
+    sendSMS(userForAuth.phoneNumber, welcomeMsg).catch((error) =>
+      console.error(
+        `Welcome SMS to customer ${userForAuth.phoneNumber} failed:`,
+        error,
+      ),
+    );
 
     return res.status(201).json({
       data: buildAuthResponse(userForAuth, token, session),
@@ -651,16 +855,6 @@ export async function disableTwoFactor(
 
 // ─── Forgot Password (OTP-based) ─────────────────────────────────────────────
 
-type OtpEntry = { otp: string; expiresAt: number; attempts: number };
-type ResetTokenEntry = { phone: string; expiresAt: number };
-
-const otpStore = new Map<string, OtpEntry>();
-const resetTokenStore = new Map<string, ResetTokenEntry>();
-
-const OTP_TTL_MS = 10 * 60 * 1000;       // 10 minutes
-const RESET_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_OTP_ATTEMPTS = 5;
-
 const forgotPasswordStrongPassword = z
   .string()
   .min(8, "Password must be at least 8 characters.")
@@ -669,14 +863,6 @@ const forgotPasswordStrongPassword = z
   .regex(/[a-z]/, "Password must contain at least one lowercase letter.")
   .regex(/[0-9]/, "Password must contain at least one number.")
   .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character.");
-
-function generateOtp(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
-function generateResetToken(): string {
-  return randomBytes(32).toString("hex");
-}
 
 export async function requestPasswordReset(
   req: Request,

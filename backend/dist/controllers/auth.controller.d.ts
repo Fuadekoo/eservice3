@@ -5,6 +5,8 @@ export declare function getCurrentUser(req: AuthRequest, res: Response): Promise
 export declare function updateProfile(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function changePassword(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function verifyLoginTwoFactor(req: Request, res: Response): Promise<Response | void>;
+export declare function requestRegistrationOtp(req: Request, res: Response): Promise<Response | void>;
+export declare function verifyRegistrationOtp(req: Request, res: Response): Promise<Response | void>;
 export declare function registerCustomer(req: Request, res: Response): Promise<Response | void>;
 export declare function getUserSessions(req: AuthRequest, res: Response): Promise<Response | void>;
 export declare function logout(req: AuthRequest, res: Response): Promise<Response | void>;

@@ -67,6 +67,17 @@ const resetSchema = z
 type PhoneValues = z.infer<typeof phoneSchema>;
 type ResetValues = z.infer<typeof resetSchema>;
 
+type OtpResponse = {
+  message?: string;
+  _devOtp?: string;
+};
+
+type VerifyOtpResponse = {
+  data?: {
+    resetToken?: string;
+  };
+};
+
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
 const STEPS = [
@@ -168,9 +179,9 @@ export default function ForgotPasswordPage() {
   const sendOtp = async (values: PhoneValues) => {
     setIsSendingOtp(true);
     try {
-      const res = await axiosInstance.post("/auth/forgot-password/request", {
+      const res = (await axiosInstance.post("/auth/forgot-password/request", {
         phone: values.phone,
-      }) as any;
+      })) as OtpResponse;
 
       setPhone(values.phone);
       setOtp("");
@@ -183,12 +194,15 @@ export default function ForgotPasswordPage() {
       });
 
       // Show dev OTP if backend returns it
-      if (res?._devOtp) {
+      if (res._devOtp) {
         toast.info(`Dev mode — OTP: ${res._devOtp}`, { duration: 30000 });
       }
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Failed to send code", {
-        description: error?.message || "Please check your number and try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your number and try again.",
       });
     } finally {
       setIsSendingOtp(false);
@@ -198,9 +212,9 @@ export default function ForgotPasswordPage() {
   const resendOtp = async () => {
     setIsResending(true);
     try {
-      const res = await axiosInstance.post("/auth/forgot-password/request", {
+      const res = (await axiosInstance.post("/auth/forgot-password/request", {
         phone,
-      }) as any;
+      })) as OtpResponse;
 
       setOtp("");
       setOtpError("");
@@ -208,11 +222,13 @@ export default function ForgotPasswordPage() {
 
       toast.success("Code resent");
 
-      if (res?._devOtp) {
+      if (res._devOtp) {
         toast.info(`Dev mode — OTP: ${res._devOtp}`, { duration: 30000 });
       }
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to resend code.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to resend code.",
+      );
     } finally {
       setIsResending(false);
     }
@@ -226,18 +242,22 @@ export default function ForgotPasswordPage() {
       setIsVerifyingOtp(true);
       setOtpError("");
       try {
-        const res = await axiosInstance.post("/auth/forgot-password/verify", {
+        const res = (await axiosInstance.post("/auth/forgot-password/verify", {
           phone,
           otp: code,
-        }) as any;
+        })) as VerifyOtpResponse;
 
         setResetToken(res?.data?.resetToken ?? "");
         setStep(3);
         toast.success("Phone verified!", {
           description: "Now set your new password.",
         });
-      } catch (error: any) {
-        setOtpError(error?.message || "Invalid code. Please try again.");
+      } catch (error) {
+        setOtpError(
+          error instanceof Error
+            ? error.message
+            : "Invalid code. Please try again.",
+        );
         setOtp("");
       } finally {
         setIsVerifyingOtp(false);
@@ -246,9 +266,14 @@ export default function ForgotPasswordPage() {
     [phone, isVerifyingOtp],
   );
 
-  React.useEffect(() => {
-    if (otp.length === 6) verifyOtp(otp);
-  }, [otp, verifyOtp]);
+  const handleOtpChange = React.useCallback(
+    (value: string) => {
+      setOtp(value);
+      setOtpError("");
+      if (value.length === 6) void verifyOtp(value);
+    },
+    [verifyOtp],
+  );
 
   // ── Step 3: Reset password ───────────────────────────────────────────────
 
@@ -264,9 +289,10 @@ export default function ForgotPasswordPage() {
       toast.success("Password reset successfully!", {
         description: "You can now sign in with your new password.",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Reset failed", {
-        description: error?.message || "Please start over.",
+        description:
+          error instanceof Error ? error.message : "Please start over.",
       });
     } finally {
       setIsResetting(false);
@@ -414,10 +440,7 @@ export default function ForgotPasswordPage() {
                   <InputOTP
                     maxLength={6}
                     value={otp}
-                    onChange={(v) => {
-                      setOtp(v);
-                      setOtpError("");
-                    }}
+                    onChange={handleOtpChange}
                     disabled={isVerifyingOtp}
                     autoFocus
                   >

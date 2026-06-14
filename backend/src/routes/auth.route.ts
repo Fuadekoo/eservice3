@@ -7,6 +7,7 @@ import {
   getTwoFactorStatus,
   login,
   getCurrentUser,
+  requestRegistrationOtp,
   updateProfile,
   getUserSessions,
   logout,
@@ -15,6 +16,7 @@ import {
   resetPassword,
   revokeOtherSessions,
   revokeSession,
+  verifyRegistrationOtp,
   verifyLoginTwoFactor,
   verifyPasswordResetOtp,
   verifyTwoFactorSetup,
@@ -142,6 +144,8 @@ router.post("/login", loginLimiter, asyncHandler(login));
 router.post("/login/verify-2fa", loginLimiter, asyncHandler(verifyLoginTwoFactor));
 
 // Public customer registration endpoint
+router.post("/register/customer/request-otp", registrationLimiter, asyncHandler(requestRegistrationOtp));
+router.post("/register/customer/verify-otp", otpVerifyLimiter, asyncHandler(verifyRegistrationOtp));
 router.post("/register/customer", registrationLimiter, asyncHandler(registerCustomer));
 
 // Forgot password (OTP-based, all public)

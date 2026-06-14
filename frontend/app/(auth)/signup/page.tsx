@@ -95,9 +95,10 @@ type RegisterCustomerResponse = {
   message?: string;
 };
 
-function makeOtp() {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
+type OtpResponse = {
+  message?: string;
+  _devOtp?: string;
+};
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
@@ -165,7 +166,6 @@ export default function SignupPage() {
   const { t } = useTranslation();
   const [step, setStep] = React.useState(1);
   const [phone, setPhone] = React.useState("");
-  const [generatedOtp, setGeneratedOtp] = React.useState("");
   const [otpInput, setOtpInput] = React.useState("");
   const [otpError, setOtpError] = React.useState("");
   const [isSendingOtp, setIsSendingOtp] = React.useState(false);
@@ -201,45 +201,92 @@ export default function SignupPage() {
 
   const sendOtp = async (values: PhoneValues) => {
     setIsSendingOtp(true);
-    setPhone(values.phone);
-    const code = makeOtp();
-    setGeneratedOtp(code);
-    await new Promise((r) => setTimeout(r, 700));
-    setIsSendingOtp(false);
-    setStep(3);
-    setResendCooldown(60);
-    toast.success(t("OTP sent"), {
-      description: `${t("Your verification code")}: ${code}`,
-    });
+    try {
+      const response = (await axiosInstance.post(
+        "/auth/register/customer/request-otp",
+        { phone: values.phone },
+      )) as OtpResponse;
+
+      setPhone(values.phone);
+      setOtpInput("");
+      setOtpError("");
+      setStep(3);
+      setResendCooldown(60);
+      toast.success(t("OTP sent"), {
+        description: response.message ?? t("Check your phone for the code."),
+      });
+
+      if (response._devOtp) {
+        toast.info(`Dev mode - OTP: ${response._devOtp}`, {
+          duration: 30000,
+        });
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("Failed to send OTP. Please try again."),
+      );
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
   const resendOtp = async () => {
-    const code = makeOtp();
-    setGeneratedOtp(code);
-    setOtpInput("");
-    setOtpError("");
-    setResendCooldown(60);
-    toast.success(t("OTP resent"), {
-      description: `${t("Your verification code")}: ${code}`,
-    });
+    setIsSendingOtp(true);
+    try {
+      const response = (await axiosInstance.post(
+        "/auth/register/customer/request-otp",
+        { phone },
+      )) as OtpResponse;
+
+      setOtpInput("");
+      setOtpError("");
+      setResendCooldown(60);
+      toast.success(t("OTP resent"), {
+        description: response.message ?? t("Check your phone for the code."),
+      });
+
+      if (response._devOtp) {
+        toast.info(`Dev mode - OTP: ${response._devOtp}`, {
+          duration: 30000,
+        });
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t("Failed to resend OTP. Please try again."),
+      );
+    } finally {
+      setIsSendingOtp(false);
+    }
   };
 
   const verifyOtp = React.useCallback(
-    (code: string) => {
-      if (code.length !== 6) return;
+    async (code: string) => {
+      if (code.length !== 6 || isVerifyingOtp) return;
       setIsVerifyingOtp(true);
-      setTimeout(() => {
+      setOtpError("");
+      try {
+        await axiosInstance.post("/auth/register/customer/verify-otp", {
+          phone,
+          otp: code,
+        });
+        setStep(4);
+        toast.success(t("Phone verified!"));
+      } catch (error) {
+        setOtpError(
+          error instanceof Error
+            ? error.message
+            : t("Invalid code. Please try again."),
+        );
+        setOtpInput("");
+      } finally {
         setIsVerifyingOtp(false);
-        if (code === generatedOtp) {
-          setStep(4);
-          toast.success(t("Phone verified!"));
-        } else {
-          setOtpError(t("Invalid code. Please try again."));
-          setOtpInput("");
-        }
-      }, 600);
+      }
     },
-    [generatedOtp, t],
+    [isVerifyingOtp, phone, t],
   );
 
   const handleOtpChange = React.useCallback(
@@ -263,6 +310,7 @@ export default function SignupPage() {
         username: values.username,
         phone,
         password: values.password,
+        otp: otpInput,
       })) as RegisterCustomerResponse;
 
       const { data, message } = response;

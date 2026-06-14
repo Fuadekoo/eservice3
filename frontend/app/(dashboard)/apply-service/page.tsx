@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Building2,
   ChevronRight,
@@ -25,14 +25,16 @@ import { toast } from "sonner";
 
 import { axiosInstance, getUploadUrl } from "@/lib/axios";
 import { useOfficeStore } from "@/lib/stores/office-store";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageLayout } from "@/components/dashboard/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -46,7 +48,7 @@ type ServiceFor = { id: string; name: string; description?: string | null };
 type ServiceDetail = {
   id: string;
   name: string;
-  description: string;
+  description?: string | null;
   timeToTake: string;
   roomNumber?: string | null;
   requirements?: Requirement[];
@@ -86,7 +88,6 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ApplyServicePage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const serviceIdParam = searchParams.get("serviceId");
 
@@ -275,78 +276,88 @@ export default function ApplyServicePage() {
   const filteredServices = (selectedOffice?.service ?? []).filter(
     (s) =>
       s.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-      s.description.toLowerCase().includes(serviceSearch.toLowerCase()),
+      (s.description ?? "").toLowerCase().includes(serviceSearch.toLowerCase()),
   );
+  const selectedServiceCount =
+    selectedOffice?._count?.service ?? selectedOffice?.service?.length ?? 0;
+  const selectedStaffCount = selectedOffice?._count?.staffs ?? 0;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-6xl">
-      {/* ── Header ── */}
-      {!selectedOffice ? (
-        <PageHeader
-          title="Apply for Service"
-          description="Choose a government office to see available services"
-          icon={Building2}
-        />
-      ) : (
-        <div className="flex items-center gap-3">
+    <PageLayout
+      title={selectedOffice ? selectedOffice.name : "Apply for Service"}
+      description={
+        selectedOffice
+          ? "Choose a service and submit your application"
+          : "Choose an office, review available services, and submit a request"
+      }
+      icon={selectedOffice ? Building2 : FileText}
+      actions={
+        selectedOffice ? (
           <Button
-            variant="ghost"
-            size="icon"
+            variant="outline"
             onClick={() => setSelectedOffice(null)}
-            className="rounded-xl h-10 w-10 shrink-0"
+            className="h-10 rounded-xl font-semibold"
           >
-            <ArrowLeft className="size-5" />
+            <ArrowLeft className="mr-2 size-4" />
+            Back to offices
           </Button>
-          <div className="min-w-0">
-            <h1 className="text-xl font-black tracking-tight truncate">
-              {selectedOffice.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {selectedOffice._count?.service ??
-                selectedOffice.service?.length ??
-                0}{" "}
-              services available
-            </p>
-          </div>
-        </div>
-      )}
+        ) : undefined
+      }
+    >
+      <div className="space-y-6">
 
       {/* ── OFFICE GRID ── */}
       {!selectedOffice && (
         <>
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              placeholder="Search offices..."
-              value={officeSearch}
-              onChange={(e) => setOfficeSearch(e.target.value)}
-              className="pl-9 h-11 rounded-xl"
-            />
+          <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold">Find the right office</p>
+              <p className="text-xs text-muted-foreground">
+                {filteredOffices.length} of {offices.length} offices available
+              </p>
+            </div>
+            <div className="relative w-full sm:max-w-sm">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search offices..."
+                value={officeSearch}
+                onChange={(e) => setOfficeSearch(e.target.value)}
+                className="h-10 rounded-xl pl-9"
+              />
+            </div>
           </div>
 
           {loadingOffices ? (
-            <div className="flex items-center justify-center py-24">
-              <Loader2 className="size-7 animate-spin text-primary" />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="h-52 animate-pulse rounded-xl border border-border/60 bg-muted/40"
+                />
+              ))}
             </div>
           ) : filteredOffices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <Building2 className="size-12 text-muted-foreground/30 mb-3" />
-              <p className="font-semibold">No offices found</p>
+            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-24 text-center">
+              <Building2 className="mb-3 size-12 text-muted-foreground/30" />
+              <p className="font-bold">No offices found</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try a different office name.
+              </p>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filteredOffices.map((office) => (
                 <button
                   key={office.id}
                   type="button"
                   onClick={() => handleSelectOffice(office.id)}
                   disabled={isFetchingOffice}
-                  className="group text-left rounded-2xl border border-border/60 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 overflow-hidden"
+                  className="group flex min-h-52 flex-col overflow-hidden rounded-xl border border-border/60 bg-card text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md disabled:pointer-events-none disabled:opacity-60"
                 >
-                  <div className="h-1.5 w-full bg-primary/20 group-hover:bg-primary/40 transition-colors" />
-                  <div className="p-5">
-                    <div className="flex items-start gap-4">
-                      <div className="size-14 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0 border border-border group-hover:border-primary/30 transition-colors">
+                  <div className="h-1 w-full bg-primary/30 transition-colors group-hover:bg-primary" />
+                  <div className="flex flex-1 flex-col p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/40 transition-colors group-hover:border-primary/30">
                         {office.logo ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -359,36 +370,58 @@ export default function ApplyServicePage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                        <h3 className="line-clamp-2 text-base font-bold leading-snug transition-colors group-hover:text-primary">
                           {office.name}
                         </h3>
-                        <Badge
-                          variant="secondary"
-                          className="mt-1.5 text-xs font-semibold"
-                        >
-                          {office._count?.service ?? 0} services
-                        </Badge>
-                      </div>
-                      <ChevronRight className="size-4 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0 mt-0.5" />
-                    </div>
-                    {office.service && office.service.length > 0 && (
-                      <div className="mt-4 space-y-1.5 border-t border-border/50 pt-4">
-                        {office.service.slice(0, 3).map((s) => (
-                          <div
-                            key={s.id}
-                            className="flex items-center gap-2 text-xs text-muted-foreground"
-                          >
-                            <span className="size-1.5 rounded-full bg-primary/40 shrink-0" />
-                            <span className="line-clamp-1">{s.name}</span>
-                          </div>
-                        ))}
-                        {(office._count?.service ?? 0) > 3 && (
-                          <p className="text-xs text-primary/60 font-semibold pl-3.5">
-                            +{(office._count?.service ?? 0) - 3} more
+                        {office.address && (
+                          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin className="size-3 shrink-0" />
+                            <span className="line-clamp-1">{office.address}</span>
                           </p>
                         )}
                       </div>
-                    )}
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="font-semibold">
+                        {office._count?.service ?? office.service?.length ?? 0} services
+                      </Badge>
+                      {office._count?.staffs !== undefined && (
+                        <Badge variant="outline" className="font-semibold">
+                          {office._count.staffs} staff
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="mt-4 flex-1 border-t border-border/50 pt-4">
+                      {office.service && office.service.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {office.service.slice(0, 3).map((s) => (
+                            <div
+                              key={s.id}
+                              className="flex items-center gap-2 text-xs text-muted-foreground"
+                            >
+                              <span className="size-1.5 rounded-full bg-primary/40 shrink-0" />
+                              <span className="line-clamp-1">{s.name}</span>
+                            </div>
+                          ))}
+                          {(office._count?.service ?? 0) > 3 && (
+                            <p className="text-xs text-primary/60 font-semibold pl-3.5">
+                              +{(office._count?.service ?? 0) - 3} more
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Open this office to view available services.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between text-xs font-bold text-primary">
+                      <span>Select office</span>
+                      <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                    </div>
                   </div>
                 </button>
               ))}
@@ -405,86 +438,111 @@ export default function ApplyServicePage() {
               <Loader2 className="size-7 animate-spin text-primary" />
             </div>
           ) : (
-            <>
-              {/* Office banner */}
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                <div className="size-12 rounded-xl bg-background border border-border flex items-center justify-center overflow-hidden shrink-0">
-                  {selectedOffice.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={getUploadUrl(selectedOffice.logo)}
-                      alt={selectedOffice.name}
-                      className="size-full object-contain p-1"
-                    />
-                  ) : (
-                    <Building2 className="size-6 text-primary/60" />
-                  )}
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+              <div className="space-y-4">
+                <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-background">
+                        {selectedOffice.logo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={getUploadUrl(selectedOffice.logo)}
+                            alt={selectedOffice.name}
+                            className="size-full object-contain p-1.5"
+                          />
+                        ) : (
+                          <Building2 className="size-7 text-primary/60" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-black">{selectedOffice.name}</p>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          <Badge variant="secondary" className="font-semibold">
+                            {selectedServiceCount} services
+                          </Badge>
+                          <Badge variant="outline" className="font-semibold">
+                            {selectedStaffCount} staff
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative w-full sm:max-w-xs">
+                      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search services..."
+                        value={serviceSearch}
+                        onChange={(e) => setServiceSearch(e.target.value)}
+                        className="h-10 rounded-xl pl-9"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-black text-sm">{selectedOffice.name}</p>
-                  <div className="flex flex-wrap gap-3 mt-0.5">
+
+                {filteredServices.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-20 text-center">
+                    <FileText className="mb-3 size-10 text-muted-foreground/30" />
+                    <p className="font-bold">No services found</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {serviceSearch
+                        ? "Try a different search term."
+                        : "This office has no services yet."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredServices.map((service) => (
+                      <ServiceRow
+                        key={service.id}
+                        service={service}
+                        onDetail={() => setDetailService(service)}
+                        onApply={() => {
+                          setApplyService(service);
+                          setForm({ address: "", date: "", notes: "" });
+                          setUploadedFiles([]);
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4 xl:sticky xl:top-6 xl:self-start">
+                <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                  <SectionLabel title="Office Details" icon={Building2} />
+                  <div className="mt-4 space-y-3">
                     {selectedOffice.address && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin className="size-3" />
-                        {selectedOffice.address}
-                      </span>
+                      <InfoTile
+                        icon={MapPin}
+                        label="Address"
+                        value={selectedOffice.address}
+                      />
                     )}
                     {selectedOffice.phoneNumber && (
-                      <span className="text-xs text-muted-foreground">
-                        {selectedOffice.phoneNumber}
-                      </span>
+                      <InfoTile
+                        icon={Info}
+                        label="Phone"
+                        value={selectedOffice.phoneNumber}
+                      />
+                    )}
+                    {selectedOffice.roomNumber && (
+                      <InfoTile
+                        icon={MapPin}
+                        label="Room"
+                        value={`Room ${selectedOffice.roomNumber}`}
+                      />
                     )}
                   </div>
                 </div>
+
+                {weeklySchedule && (
+                  <AvailabilityBanner
+                    schedule={weeklySchedule}
+                    slotDuration={slotDuration}
+                  />
+                )}
               </div>
-
-              {/* Office availability preview */}
-              {weeklySchedule && (
-                <AvailabilityBanner
-                  schedule={weeklySchedule}
-                  slotDuration={slotDuration}
-                />
-              )}
-
-              {/* Search */}
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search services..."
-                  value={serviceSearch}
-                  onChange={(e) => setServiceSearch(e.target.value)}
-                  className="pl-9 h-11 rounded-xl"
-                />
-              </div>
-
-              {/* Services */}
-              {filteredServices.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl border-2 border-dashed border-border">
-                  <FileText className="size-10 text-muted-foreground/30 mb-3" />
-                  <p className="font-semibold">No services found</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {serviceSearch
-                      ? "Try a different search term."
-                      : "This office has no services yet."}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredServices.map((service) => (
-                    <ServiceRow
-                      key={service.id}
-                      service={service}
-                      onDetail={() => setDetailService(service)}
-                      onApply={() => {
-                        setApplyService(service);
-                        setForm({ address: "", date: "", notes: "" });
-                        setUploadedFiles([]);
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
+            </div>
           )}
         </>
       )}
@@ -503,9 +561,9 @@ export default function ApplyServicePage() {
                     <DialogTitle className="text-white text-xl font-black leading-snug">
                       {detailService.name}
                     </DialogTitle>
-                    <p className="text-primary-foreground/70 text-sm mt-0.5">
+                    <DialogDescription className="text-primary-foreground/70 text-sm mt-0.5">
                       {selectedOffice?.name}
-                    </p>
+                    </DialogDescription>
                   </DialogHeader>
                   <DialogClose className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40">
                     <X className="size-4" />
@@ -636,35 +694,37 @@ export default function ApplyServicePage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-6xl w-[95vw] rounded-3xl p-0 overflow-hidden gap-0">
+        <DialogContent className="w-[95vw] gap-0 overflow-hidden rounded-xl p-0 sm:max-w-6xl">
           {applyService && (
-            <div className="flex flex-col h-full max-h-[92vh]">
-              {/* ── Gradient header ── */}
-              <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/80 px-8 py-2 shrink-0">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex max-h-[92vh] flex-col">
+              <div className="shrink-0 border-b border-border/60 bg-primary px-6 py-5 text-primary-foreground sm:px-8">
+                <div className="flex flex-col gap-4 pr-10 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <DialogHeader>
-                      <DialogTitle className="text-white font-black text-2xl leading-tight">
+                      <DialogTitle className="text-xl font-black leading-tight text-primary-foreground sm:text-2xl">
                         Apply for Service
                       </DialogTitle>
-                      {/* <p className="text-primary-foreground/80 text-sm mt-1 max-w-2xl">
-                        Complete the form below and attach your documents to
-                        submit this request.
-                      </p> */}
+                      <DialogDescription className="sr-only">
+                        Submit an application for {applyService.name} at{" "}
+                        {selectedOffice?.name ?? "the selected office"}.
+                      </DialogDescription>
                     </DialogHeader>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm text-white/90">
-                        <FileText className="size-3" /> {applyService.name}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="inline-flex max-w-full items-center gap-2 rounded-lg bg-white/15 px-3 py-2 text-sm font-semibold text-white/90">
+                        <FileText className="size-3.5 shrink-0" />
+                        <span className="truncate">{applyService.name}</span>
                       </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm text-white/90">
-                        <Building2 className="size-3" />{" "}
-                        {selectedOffice?.name ?? "Office"}
+                      <span className="inline-flex max-w-full items-center gap-2 rounded-lg bg-white/15 px-3 py-2 text-sm font-semibold text-white/90">
+                        <Building2 className="size-3.5 shrink-0" />
+                        <span className="truncate">
+                          {selectedOffice?.name ?? "Office"}
+                        </span>
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 justify-end">
-                    <Badge className="bg-white/15 text-white border-white/20 font-semibold py-2 px-3">
+                  <div className="flex items-center justify-end gap-3">
+                    <Badge className="border-white/20 bg-white/15 px-3 py-2 font-semibold text-white">
                       {uploadedFiles.length} file
                       {uploadedFiles.length !== 1 ? "s" : ""}
                     </Badge>
@@ -673,9 +733,9 @@ export default function ApplyServicePage() {
               </div>
 
               {/* ── Two-column body ── */}
-              <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
                 {/* LEFT — Service info, availability, requirements */}
-                <div className="md:w-2/5 border-b md:border-b-0 md:border-r border-border/50 bg-slate-50 overflow-y-auto">
+                <div className="border-b border-border/50 bg-muted/25 md:w-2/5 md:border-b-0 md:border-r">
                   <div className="p-6 space-y-5">
                     {/* Service info tiles */}
                     <div>
@@ -829,7 +889,7 @@ export default function ApplyServicePage() {
                 </div>
 
                 {/* RIGHT — Form fields */}
-                <div className="md:w-3/5 overflow-y-auto bg-white">
+                <div className="overflow-y-auto bg-background md:w-3/5">
                   <div className="p-6 space-y-5">
                     {/* Application details */}
                     <div>
@@ -894,14 +954,14 @@ export default function ApplyServicePage() {
                               (Optional)
                             </span>
                           </label>
-                          <textarea
+                          <Textarea
                             placeholder="Add any additional notes or information..."
                             value={form.notes}
                             onChange={(e) =>
                               setForm((p) => ({ ...p, notes: e.target.value }))
                             }
                             rows={3}
-                            className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                            className="min-h-24 resize-none rounded-xl bg-background"
                           />
                         </div>
                       </div>
@@ -918,7 +978,7 @@ export default function ApplyServicePage() {
 
                       <label
                         className={cn(
-                          "flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-border cursor-pointer transition-all",
+                          "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/20 py-8 transition-all",
                           "hover:border-primary/50 hover:bg-primary/5",
                           isUploading && "pointer-events-none opacity-60",
                         )}
@@ -953,7 +1013,7 @@ export default function ApplyServicePage() {
                           {uploadedFiles.map((file, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20"
+                              className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3"
                             >
                               <div className="size-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
                                 <Paperclip className="size-4 text-emerald-600" />
@@ -982,17 +1042,17 @@ export default function ApplyServicePage() {
                     <Separator />
 
                     {/* Submit actions */}
-                    <div className="flex gap-3 pb-1">
+                    <div className="flex flex-col-reverse gap-3 pb-1 sm:flex-row">
                       <Button
                         variant="outline"
-                        className="flex-1 rounded-xl h-12 font-bold"
+                        className="h-11 flex-1 rounded-xl font-bold"
                         onClick={() => setApplyService(null)}
                         disabled={isSubmitting || isUploading}
                       >
                         Cancel
                       </Button>
                       <Button
-                        className="flex-[2] rounded-xl h-12 font-black text-base"
+                        className="h-11 flex-[2] rounded-xl text-sm font-black"
                         onClick={handleApply}
                         disabled={isSubmitting || isUploading}
                       >
@@ -1011,7 +1071,8 @@ export default function ApplyServicePage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PageLayout>
   );
 }
 
@@ -1026,47 +1087,50 @@ function ServiceRow({
   onApply: () => void;
 }) {
   return (
-    <div className="flex items-center gap-4 p-5 rounded-3xl border border-border/70 bg-white shadow-sm hover:border-primary/30 hover:shadow-lg transition-all duration-200 group">
-      <div className="size-11 rounded-3xl bg-primary/10 flex items-center justify-center shrink-0">
-        <FileText className="size-5 text-primary" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-sm group-hover:text-primary transition-colors">
-          {service.name}
-        </p>
-        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-          {service.description}
-        </p>
-        <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <Clock className="size-3" />
-            {service.timeToTake}
-          </span>
-          {service.requirements && service.requirements.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-muted-foreground/80">
-              · {service.requirements.length} requirements
-            </span>
-          )}
+    <div className="group rounded-xl border border-border/70 bg-card p-4 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <FileText className="size-5 text-primary" />
         </div>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-9 rounded-xl font-semibold px-4 text-xs"
-          onClick={onApply}
-        >
-          <Send className="size-3 mr-1.5" /> Apply
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-9 w-9 rounded-xl p-0"
-          onClick={onDetail}
-          title="View details"
-        >
-          <ChevronRight className="size-4" />
-        </Button>
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-bold leading-snug transition-colors group-hover:text-primary">
+            {service.name}
+          </p>
+          {service.description && (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+              {service.description}
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Clock className="size-3" />
+              {service.timeToTake}
+            </span>
+            {service.requirements && service.requirements.length > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-700">
+                <CheckCircle2 className="size-3" />
+                {service.requirements.length} requirements
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 sm:flex-col md:flex-row">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 rounded-xl px-3 text-xs font-semibold"
+            onClick={onDetail}
+          >
+            Details
+          </Button>
+          <Button
+            size="sm"
+            className="h-9 rounded-xl font-semibold px-4 text-xs"
+            onClick={onApply}
+          >
+            <Send className="size-3 mr-1.5" /> Apply
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -32,18 +32,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useStaffStore, type StaffMember } from "@/lib/stores/staff-store";
+import {
+  useStaffStore,
+  type CreateStaffMemberPayload,
+  type StaffMember,
+  type UpdateStaffMemberPayload,
+} from "@/lib/stores/staff-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
 import { useTranslation } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import {
+  ethiopianMobilePhoneSchema,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
 
 const staffSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
   fatherName: z.string().min(2, "Father name is required"),
   lastName: z.string().min(2, "Last name is required"),
-  phone: z.string().min(10, "Phone number is required"),
+  phone: ethiopianMobilePhoneSchema,
   username: z.string().min(2, "Username is required"),
   password: z
     .string()
@@ -52,12 +61,14 @@ const staffSchema = z.object({
     .or(z.literal("")),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
   roleId: z.string().min(1, "Role is required"),
-  status: z
-    .enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"])
-    .default("ACTIVE"),
+  status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"]),
 });
 
 type StaffFormValues = z.infer<typeof staffSchema>;
+
+function getErrorMessage(error: unknown): string | undefined {
+  return error instanceof Error ? error.message : undefined;
+}
 
 interface StaffCreateDialogProps {
   open: boolean;
@@ -129,14 +140,23 @@ export function StaffCreateDialog({
   const onSubmit = async (values: StaffFormValues) => {
     setIsSubmitting(true);
     try {
-      const payload = {
-        ...values,
+      const normalizedPhone =
+        normalizeEthiopianMobilePhone(values.phone) ?? values.phone;
+      const payload: UpdateStaffMemberPayload = {
+        firstName: values.firstName,
+        fatherName: values.fatherName,
+        lastName: values.lastName,
+        phone: normalizedPhone,
+        username: values.username,
+        gender: values.gender,
+        roleId: values.roleId,
+        status: values.status,
         officeId,
         password: values.password || undefined,
       };
 
       if (member) {
-        await updateStaff(member.id, payload as any);
+        await updateStaff(member.id, payload);
         toast.success(t("Staff member updated successfully"));
       } else {
         if (!values.password) {
@@ -144,12 +164,24 @@ export function StaffCreateDialog({
           setIsSubmitting(false);
           return;
         }
-        await createStaff(payload as any);
+        const createPayload: CreateStaffMemberPayload = {
+          firstName: values.firstName,
+          fatherName: values.fatherName,
+          lastName: values.lastName,
+          phone: normalizedPhone,
+          username: values.username,
+          password: values.password,
+          gender: values.gender,
+          roleId: values.roleId,
+          status: values.status,
+          officeId,
+        };
+        await createStaff(createPayload);
         toast.success(t("Staff member created successfully"));
       }
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error?.message || t("Failed to save staff member"));
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || t("Failed to save staff member"));
     } finally {
       setIsSubmitting(false);
     }
@@ -442,7 +474,7 @@ export function StaffCreateDialog({
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                         <Input
                           {...field}
-                          placeholder="+251 911 223 344"
+                          placeholder="0912345678 or 251912345678"
                           className="h-11 pl-9 rounded-xl bg-muted/30 border-border/50 focus-visible:ring-primary/20"
                         />
                       </div>

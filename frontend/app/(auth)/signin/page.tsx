@@ -54,6 +54,14 @@ import {
   InputOTPSeparator,
 } from "@/components/ui/input-otp";
 import { PasswordInput } from "@/components/ui/password-input";
+import {
+  ethiopianMobilePhoneSchema,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
+
+function getErrorMessage(error: unknown): string | undefined {
+  return error instanceof Error ? error.message : undefined;
+}
 
 function EServiceLogo() {
   return (
@@ -71,15 +79,7 @@ function EServiceLogo() {
 }
 
 const loginSchema = z.object({
-  phone: z
-    .string()
-    .min(1, "Phone number is required")
-    .regex(
-      /^[0-9+\-\s()]+$/,
-      "Phone number must contain only numbers and valid characters",
-    )
-    .min(10, "Phone number must be at least 10 characters")
-    .max(20, "Phone number must not exceed 20 characters"),
+  phone: ethiopianMobilePhoneSchema,
   password: z
     .string()
     .min(1, "Password is required")
@@ -91,25 +91,25 @@ type LoginSchema = z.infer<typeof loginSchema>;
 const DEMO_CREDENTIALS = [
   {
     role: "Admin",
-    phone: "0900000000",
+    phone: "251900000000",
     password: "password123",
     description: "System Administrator",
   },
   {
     role: "Manager",
-    phone: "0911111111",
+    phone: "251911111111",
     password: "password123",
     description: "Office Manager",
   },
   {
     role: "Staff",
-    phone: "0922222222",
+    phone: "251922222222",
     password: "password123",
     description: "Office Staff",
   },
   {
     role: "Customer",
-    phone: "0933333333",
+    phone: "251933333333",
     password: "password123",
     description: "Test Customer",
   },
@@ -168,7 +168,9 @@ export default function SignInPage() {
 
   const onSubmit = form.handleSubmit(async (credentials) => {
     try {
-      const result = await authLogin(credentials.phone, credentials.password);
+      const normalizedPhone =
+        normalizeEthiopianMobilePhone(credentials.phone) ?? credentials.phone;
+      const result = await authLogin(normalizedPhone, credentials.password);
 
       // Check if 2FA is required
       if ("requiresTwoFactor" in result) {
@@ -192,10 +194,11 @@ export default function SignInPage() {
       toast.success(getTranslationForKey("Success"), {
         description: getTranslationForKey("Signing in successful"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error);
       toast.error(getTranslationForKey("Error"), {
-        description: error.message
-          ? getTranslationForKey(error.message)
+        description: errorMessage
+          ? getTranslationForKey(errorMessage)
           : getTranslationForKey("Signing in failed"),
       });
     }
@@ -216,10 +219,11 @@ export default function SignInPage() {
         toast.success(getTranslationForKey("Success"), {
           description: getTranslationForKey("Signing in successful"),
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage = getErrorMessage(error);
         toast.error(getTranslationForKey("Error"), {
-          description: error.message
-            ? getTranslationForKey(error.message)
+          description: errorMessage
+            ? getTranslationForKey(errorMessage)
             : getTranslationForKey("Verification failed"),
         });
         setOtpValue("");
@@ -230,12 +234,13 @@ export default function SignInPage() {
     [twoFactorState, router, callbackUrl, getTranslationForKey],
   );
 
-  // Auto-submit when 6 digits are entered
-  React.useEffect(() => {
-    if (otpValue.length === 6 && twoFactorState) {
-      handleVerify2FA(otpValue);
-    }
-  }, [otpValue, twoFactorState, handleVerify2FA]);
+  const handleOtpValueChange = React.useCallback(
+    (value: string) => {
+      setOtpValue(value);
+      if (value.length === 6) void handleVerify2FA(value);
+    },
+    [handleVerify2FA],
+  );
 
   return (
     <div className="bg-linear-to-br from-primary/20 via-background to-primary/20  flex min-h-dvh flex-col items-center-justify-center gap-2 overflow-auto p-4 md:p-6 lg:p-10">
@@ -277,7 +282,7 @@ export default function SignInPage() {
                       <InputOTP
                         maxLength={6}
                         value={otpValue}
-                        onChange={setOtpValue}
+                        onChange={handleOtpValueChange}
                         disabled={isVerifying2FA}
                         autoFocus
                       >
@@ -388,7 +393,7 @@ export default function SignInPage() {
                                 <InputGroupInput
                                   id="phone"
                                   type="tel"
-                                  placeholder="+251911234567"
+                                  placeholder="0912345678 or 251912345678"
                                   disabled={form.formState.isSubmitting}
                                   {...field}
                                 />

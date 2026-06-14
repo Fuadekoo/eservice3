@@ -38,6 +38,10 @@ import { useSession } from "@/hooks/use-session";
 import { axiosInstance, getUploadUrl } from "@/lib/axios";
 import { useTranslation } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import {
+  PHONE_FORMAT_MESSAGE,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
 
 type OfficeData = {
   id: string;
@@ -113,6 +117,12 @@ function validateForm(form: FormState, t: (key: string) => string): FormErrors {
     errors.subdomain = t(
       "Subdomain must use lowercase letters, numbers, and hyphens only",
     );
+  }
+  if (
+    form.phoneNumber.trim() &&
+    !normalizeEthiopianMobilePhone(form.phoneNumber)
+  ) {
+    errors.phoneNumber = t(PHONE_FORMAT_MESSAGE);
   }
   return errors;
 }
@@ -234,7 +244,10 @@ export default function ConfigurationPage() {
     const nextForm = {
       ...form,
       name: form.name.trim(),
-      phoneNumber: form.phoneNumber.trim(),
+      phoneNumber: form.phoneNumber.trim()
+        ? (normalizeEthiopianMobilePhone(form.phoneNumber) ??
+          form.phoneNumber.trim())
+        : "",
       roomNumber: form.roomNumber.trim(),
       address: form.address.trim(),
       subdomain: normalizeSubdomain(form.subdomain),
@@ -535,14 +548,19 @@ export default function ConfigurationPage() {
                   />
                 </FormField>
 
-                <FormField icon={Phone} label={t("Phone Number")}>
+                <FormField
+                  icon={Phone}
+                  label={t("Phone Number")}
+                  error={errors.phoneNumber}
+                >
                   <Input
                     value={form.phoneNumber}
                     onChange={(event) =>
                       handleChange("phoneNumber", event.target.value)
                     }
-                    placeholder="+251..."
+                    placeholder="0912345678 or 251912345678"
                     className="h-11 rounded-xl"
+                    aria-invalid={Boolean(errors.phoneNumber)}
                   />
                 </FormField>
               </div>

@@ -1,9 +1,17 @@
 import { z, type ZodError } from "zod";
+import {
+  ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+  normalizeEthiopianMobilePhone,
+} from "../utils/phone.js";
 
 const phoneField = z
   .string()
   .trim()
   .min(1, "Phone number is required.")
+  .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+    message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+  })
+  .transform((value) => normalizeEthiopianMobilePhone(value) ?? value)
   .optional();
 
 export const createUserSchema = z
@@ -33,12 +41,8 @@ export const createUserSchema = z
 export const updateUserSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
-    phone: z.string().trim().min(1, "Phone number is required.").optional(),
-    phoneNumber: z
-      .string()
-      .trim()
-      .min(1, "Phone number is required.")
-      .optional(),
+    phone: phoneField,
+    phoneNumber: phoneField,
     password: z
       .string()
       .min(6, "Password must be at least 6 characters.")

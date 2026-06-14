@@ -8,14 +8,16 @@ async function main() {
   // 1. Create the Primary Office
   const office = await prisma.office.upsert({
     where: { id: "east-shoa-office-id" },
-    update: {},
+    update: {
+      phoneNumber: "251911223344",
+    },
     create: {
       id: "east-shoa-office-id",
       name: "East Shoa E-Service Office",
       roomNumber: "A-204",
       address: "Adama, East Shoa, Ethiopia",
       subdomain: "eastshoa",
-      phoneNumber: "+251911223344",
+      phoneNumber: "251911223344",
       slogan: "Excellence in Public Service",
     },
   });
@@ -65,28 +67,28 @@ async function main() {
     {
       username: "admin_user",
       name: "System Administrator",
-      phoneNumber: "0900000000",
+      phoneNumber: "251900000000",
       role: "ADMIN",
       isStaff: false,
     },
     {
       username: "office_manager",
       name: "Office Manager",
-      phoneNumber: "0911111111",
+      phoneNumber: "251911111111",
       role: "MANAGER",
       isStaff: true,
     },
     {
       username: "office_staff",
       name: "Office Staff",
-      phoneNumber: "0922222222",
+      phoneNumber: "251922222222",
       role: "STAFF",
       isStaff: true,
     },
     {
       username: "test_customer",
       name: "Test Customer",
-      phoneNumber: "0933333333",
+      phoneNumber: "251933333333",
       role: "CUSTOMER",
       isStaff: false,
     },
@@ -97,6 +99,7 @@ async function main() {
       where: { username: u.username },
       update: {
         name: u.name,
+        phoneNumber: u.phoneNumber,
         roleId: roleMap[u.role],
         password: passwordHash,
       },

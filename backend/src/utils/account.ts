@@ -1,5 +1,6 @@
 import { Prisma } from "../lib/prisma-client.js";
 import { hash } from "bcryptjs";
+import { normalizeEthiopianMobilePhone } from "./phone.js";
 
 /**
  * Legacy status values accepted by the helper and mapped to `isActive`.
@@ -71,7 +72,9 @@ export async function hashPassword(password: string): Promise<string> {
 function getNormalizedPhoneNumber(
   payload: Pick<UserInput, "phone" | "phoneNumber">,
 ): string | null {
-  return coerceNullableString(payload.phoneNumber ?? payload.phone);
+  const phoneNumber = coerceNullableString(payload.phoneNumber ?? payload.phone);
+  if (!phoneNumber) return null;
+  return normalizeEthiopianMobilePhone(phoneNumber);
 }
 
 /**
@@ -211,9 +214,7 @@ export async function syncUser(
  * Validate phone number format (basic validation)
  */
 export function validatePhone(phone: string): boolean {
-  // Basic phone validation - adjust regex based on your requirements
-  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ""));
+  return normalizeEthiopianMobilePhone(phone) !== null;
 }
 
 /**

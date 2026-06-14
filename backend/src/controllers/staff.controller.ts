@@ -14,6 +14,10 @@ import {
   updateStaffSchema,
   buildValidationError,
 } from "../validators/staff.validator.js";
+import {
+  getEthiopianMobilePhoneCandidates,
+  normalizeEthiopianMobilePhone,
+} from "../utils/phone.js";
 
 // ─── Query / param helpers ────────────────────────────────────────────────────
 
@@ -47,7 +51,9 @@ function getNormalizedPhone(input: {
   phone?: string | undefined;
   phoneNumber?: string | undefined;
 }): string | undefined {
-  return normalizeString(input.phoneNumber ?? input.phone);
+  const rawPhone = normalizeString(input.phoneNumber ?? input.phone);
+  if (!rawPhone) return undefined;
+  return normalizeEthiopianMobilePhone(rawPhone) ?? rawPhone;
 }
 
 /**
@@ -448,6 +454,9 @@ export async function createStaff(
     }
 
     const phoneNumber = getNormalizedPhone(parsed.data);
+    const phoneCandidates = phoneNumber
+      ? getEthiopianMobilePhoneCandidates(phoneNumber)
+      : [];
     if (!phoneNumber) {
       return res.status(400).json({
         error: "ValidationError",
@@ -459,7 +468,10 @@ export async function createStaff(
       // Fail fast on duplicate username or phone before hashing
       const collision = await tx.user.findFirst({
         where: {
-          OR: [{ username: parsed.data.username }, { phoneNumber }],
+          OR: [
+            { username: parsed.data.username },
+            { phoneNumber: { in: phoneCandidates } },
+          ],
         },
         select: { username: true, phoneNumber: true },
       });
@@ -599,6 +611,9 @@ export async function updateStaff(
     // Pre-check for collisions before entering the transaction
     const phoneNumber = getNormalizedPhone(parsed.data);
     if (phoneNumber || parsed.data.username) {
+      const phoneCandidates = phoneNumber
+        ? getEthiopianMobilePhoneCandidates(phoneNumber)
+        : [];
       const collision = await prisma.user.findFirst({
         where: {
           id: { not: existing.user.id },
@@ -606,7 +621,7 @@ export async function updateStaff(
             ...(parsed.data.username
               ? [{ username: parsed.data.username }]
               : []),
-            ...(phoneNumber ? [{ phoneNumber }] : []),
+            ...(phoneNumber ? [{ phoneNumber: { in: phoneCandidates } }] : []),
           ],
         },
         select: { username: true, phoneNumber: true },

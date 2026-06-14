@@ -1,4 +1,18 @@
 import { z, type ZodError } from "zod";
+import {
+  ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+  normalizeEthiopianMobilePhone,
+} from "../utils/phone.js";
+
+const phoneField = z
+  .string()
+  .trim()
+  .min(1, "Phone number is required.")
+  .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+    message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+  })
+  .transform((value) => normalizeEthiopianMobilePhone(value) ?? value)
+  .optional();
 
 /**
  * Create staff — phone and role are cross-validated via superRefine.
@@ -16,12 +30,8 @@ export const createStaffSchema = z
       .enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"])
       .optional()
       .default("ACTIVE"),
-    phone: z.string().trim().min(1, "Phone number is required.").optional(),
-    phoneNumber: z
-      .string()
-      .trim()
-      .min(1, "Phone number is required.")
-      .optional(),
+    phone: phoneField,
+    phoneNumber: phoneField,
     password: z.string().min(6, "Password must be at least 6 characters."),
     roleId: z.string().trim().min(1).optional(),
     roleName: z.string().trim().min(1).optional(),
@@ -58,12 +68,8 @@ export const updateStaffSchema = z
     name: z.string().trim().optional(),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
     status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"]).optional(),
-    phone: z.string().trim().min(1, "Phone number is required.").optional(),
-    phoneNumber: z
-      .string()
-      .trim()
-      .min(1, "Phone number is required.")
-      .optional(),
+    phone: phoneField,
+    phoneNumber: phoneField,
     password: z
       .string()
       .min(6, "Password must be at least 6 characters.")

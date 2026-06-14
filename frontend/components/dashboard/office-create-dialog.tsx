@@ -27,6 +27,23 @@ import { Switch } from "@/components/ui/switch";
 import { useOfficeStore, type Office } from "@/lib/stores/office-store";
 import { useTranslation } from "@/lib/i18n";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  PHONE_FORMAT_MESSAGE,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
+
+function getErrorMessage(error: unknown): string | undefined {
+  return error instanceof Error ? error.message : undefined;
+}
+
+const optionalPhoneSchema = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || normalizeEthiopianMobilePhone(value), {
+    message: PHONE_FORMAT_MESSAGE,
+  })
+  .optional();
 
 const officeSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -40,11 +57,11 @@ const officeSchema = z.object({
     ),
   roomNumber: z.string().min(1, "Room number is required"),
   address: z.string().min(2, "Address is required"),
-  phoneNumber: z.string().optional(),
+  phoneNumber: optionalPhoneSchema,
   slogan: z.string().optional(),
   logo: z.string().optional(),
   description: z.string().optional(),
-  status: z.boolean().default(true),
+  status: z.boolean(),
 });
 
 type OfficeFormValues = z.infer<typeof officeSchema>;
@@ -115,7 +132,10 @@ export function OfficeCreateDialog({
         subdomain: values.subdomain.trim().toLowerCase(),
         roomNumber: values.roomNumber.trim(),
         address: values.address.trim(),
-        phoneNumber: values.phoneNumber?.trim() || undefined,
+        phoneNumber: values.phoneNumber?.trim()
+          ? (normalizeEthiopianMobilePhone(values.phoneNumber) ??
+            values.phoneNumber.trim())
+          : undefined,
         slogan: values.slogan?.trim() || undefined,
         logo: values.logo?.trim() || undefined,
         status: values.status,
@@ -129,8 +149,8 @@ export function OfficeCreateDialog({
         toast.success(t("Office created successfully"));
       }
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error?.message || t("An error occurred"));
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || t("An error occurred"));
     } finally {
       setIsSubmitting(false);
     }
@@ -201,9 +221,12 @@ export function OfficeCreateDialog({
                   <FormItem>
                     <FormLabel>{t("Phone Number")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="+251..." {...field} />
+                      <Input
+                        placeholder="0912345678 or 251912345678"
+                        {...field}
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />

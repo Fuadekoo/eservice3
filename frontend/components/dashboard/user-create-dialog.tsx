@@ -34,13 +34,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useUserStore, type User } from "@/lib/stores/user-store";
+import {
+  useUserStore,
+  type CreateUserPayload,
+  type UpdateUserPayload,
+  type User,
+} from "@/lib/stores/user-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
 import { useOfficeStore } from "@/lib/stores/office-store";
+import {
+  ethiopianMobilePhoneSchema,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
 
 const userSchema = z.object({
   username: z.string().min(2, "Username is required"),
-  phoneNumber: z.string().min(10, "Phone number is required"),
+  phoneNumber: ethiopianMobilePhoneSchema,
   password: optionalStrongPasswordSchema,
   roleId: z.string().min(1, "Role is required"),
   officeId: z.string().optional().or(z.literal("")),
@@ -48,6 +57,10 @@ const userSchema = z.object({
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
+
+function getErrorMessage(error: unknown): string | undefined {
+  return error instanceof Error ? error.message : undefined;
+}
 
 interface UserCreateDialogProps {
   open: boolean;
@@ -109,10 +122,15 @@ export function UserCreateDialog({
   const onSubmit = async (values: UserFormValues) => {
     setIsSubmitting(true);
     try {
-      const payload = {
-        ...values,
+      const normalizedPhone =
+        normalizeEthiopianMobilePhone(values.phoneNumber) ?? values.phoneNumber;
+      const payload: UpdateUserPayload = {
+        username: values.username,
+        phoneNumber: normalizedPhone,
+        roleId: values.roleId,
         officeId: values.officeId || undefined,
         password: values.password || undefined,
+        isActive: values.isActive,
       };
 
       if (user) {
@@ -124,12 +142,20 @@ export function UserCreateDialog({
           setIsSubmitting(false);
           return;
         }
-        await createUser(payload as any);
+        const createPayload: CreateUserPayload = {
+          username: values.username,
+          phoneNumber: normalizedPhone,
+          password: values.password,
+          roleId: values.roleId,
+          officeId: values.officeId || undefined,
+          isActive: values.isActive,
+        };
+        await createUser(createPayload);
         toast.success("User created successfully");
       }
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to save user");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error) || "Failed to save user");
     } finally {
       setIsSubmitting(false);
     }
@@ -168,9 +194,9 @@ export function UserCreateDialog({
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="+251..." />
+                    <Input {...field} placeholder="0912345678 or 251912345678" />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />

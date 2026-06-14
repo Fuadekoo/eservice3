@@ -29,6 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  PHONE_FORMAT_MESSAGE,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -99,6 +103,7 @@ function Field({
 
 export function ProfileTab() {
   const [profile, setProfile] = React.useState<ProfileForm>(defaultProfile);
+  const [phoneError, setPhoneError] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   React.useEffect(() => {
@@ -106,14 +111,16 @@ export function ProfileTab() {
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
-      setProfile(toProfile(parsed));
+      queueMicrotask(() => setProfile(toProfile(parsed)));
     } catch {
       /* keep defaults */
     }
   }, []);
 
-  const set = (field: keyof ProfileForm, value: string) =>
+  const set = (field: keyof ProfileForm, value: string) => {
     setProfile((p) => ({ ...p, [field]: value }));
+    if (field === "phoneNumber") setPhoneError("");
+  };
 
   const initials =
     [profile.firstName, profile.fatherName]
@@ -130,14 +137,26 @@ export function ProfileTab() {
   };
 
   const handleSave = async () => {
+    const normalizedPhone = profile.phoneNumber.trim()
+      ? normalizeEthiopianMobilePhone(profile.phoneNumber)
+      : "";
+
+    if (profile.phoneNumber.trim() && !normalizedPhone) {
+      setPhoneError(PHONE_FORMAT_MESSAGE);
+      toast.error(PHONE_FORMAT_MESSAGE);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await new Promise((r) => setTimeout(r, 800));
       const stored = {
         ...profile,
+        phoneNumber: normalizedPhone || "",
         name: `${profile.firstName} ${profile.fatherName} ${profile.grandfatherName}`.trim(),
       };
       localStorage.setItem("user", JSON.stringify(stored));
+      setProfile(toProfile(stored));
       toast.success("Profile updated successfully");
     } catch {
       toast.error("Failed to update profile");
@@ -236,9 +255,15 @@ export function ProfileTab() {
               type="tel"
               value={profile.phoneNumber}
               onChange={(e) => set("phoneNumber", e.target.value)}
-              placeholder="Enter phone number"
+              placeholder="0912345678 or 251912345678"
               disabled={isSubmitting}
+              aria-invalid={Boolean(phoneError)}
             />
+            {phoneError ? (
+              <p className="text-xs font-medium text-destructive">
+                {phoneError}
+              </p>
+            ) : null}
           </Field>
 
           <Field label="Gender">

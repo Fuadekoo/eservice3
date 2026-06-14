@@ -49,16 +49,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Field, FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
+import {
+  ethiopianMobilePhoneSchema,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const phoneSchema = z.object({
-  phone: z
-    .string()
-    .trim()
-    .min(10, "Phone number must be at least 10 digits.")
-    .max(20, "Phone number is too long.")
-    .regex(/^[0-9+\-\s()]+$/, "Please enter a valid phone number."),
+  phone: ethiopianMobilePhoneSchema,
 });
 
 const profileSchema = z
@@ -202,12 +201,14 @@ export default function SignupPage() {
   const sendOtp = async (values: PhoneValues) => {
     setIsSendingOtp(true);
     try {
+      const normalizedPhone =
+        normalizeEthiopianMobilePhone(values.phone) ?? values.phone;
       const response = (await axiosInstance.post(
         "/auth/register/customer/request-otp",
-        { phone: values.phone },
+        { phone: normalizedPhone },
       )) as OtpResponse;
 
-      setPhone(values.phone);
+      setPhone(normalizedPhone);
       setOtpInput("");
       setOtpError("");
       setStep(3);
@@ -498,7 +499,7 @@ export default function SignupPage() {
                             <Input
                               {...field}
                               type="tel"
-                              placeholder="+251 91 234 5678"
+                              placeholder="0912345678 or 251912345678"
                               autoFocus
                               className={cn(
                                 "h-12 rounded-xl bg-muted/30 border-muted-foreground/20 text-base transition-all",
@@ -559,7 +560,7 @@ export default function SignupPage() {
                   <p className="text-muted-foreground text-sm">
                     {t("Enter the 6-digit code sent to")}{" "}
                     <span className="font-semibold text-foreground">
-                      {phone}
+                  {phone}
                     </span>
                   </p>
                 </div>

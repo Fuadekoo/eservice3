@@ -8,6 +8,7 @@ import {
   updateUserSchema,
   buildValidationError,
 } from "../validators/user.validator.js";
+import { getEthiopianMobilePhoneCandidates } from "../utils/phone.js";
 
 function parseQueryString(value: unknown): string | undefined {
   const str = typeof value === "string" ? value.trim() : undefined;
@@ -180,7 +181,8 @@ export async function createUser(req: AuthRequest, res: Response) {
       roleName: roleNameInput,
       isActive,
     } = validation.data;
-    const normalizedPhone = (phoneNumber || phone || "").trim();
+    const normalizedPhone = phoneNumber || phone || "";
+    const phoneCandidates = getEthiopianMobilePhoneCandidates(normalizedPhone);
 
     // Unique checks
     const existingByUsername = await prisma.user.findUnique({
@@ -193,7 +195,7 @@ export async function createUser(req: AuthRequest, res: Response) {
 
     if (normalizedPhone) {
       const existingByPhone = await prisma.user.findFirst({
-        where: { phoneNumber: normalizedPhone },
+        where: { phoneNumber: { in: phoneCandidates } },
       });
       if (existingByPhone)
         return res
@@ -284,12 +286,11 @@ export async function updateUser(req: AuthRequest, res: Response) {
       updateData.username = username;
     }
 
-    const normalizedPhone = (phoneNumber || phone || undefined) as
-      | string
-      | undefined;
+    const normalizedPhone = phoneNumber || phone || undefined;
     if (normalizedPhone) {
+      const phoneCandidates = getEthiopianMobilePhoneCandidates(normalizedPhone);
       const exists = await prisma.user.findFirst({
-        where: { phoneNumber: normalizedPhone },
+        where: { phoneNumber: { in: phoneCandidates } },
       });
       if (exists && exists.id !== id)
         return res

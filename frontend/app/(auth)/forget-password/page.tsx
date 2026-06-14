@@ -42,16 +42,15 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { axiosInstance } from "@/lib/axios";
 import { cn } from "@/lib/utils";
 import { strongPasswordSchema } from "@/lib/password-strength";
+import {
+  ethiopianMobilePhoneSchema,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const phoneSchema = z.object({
-  phone: z
-    .string()
-    .trim()
-    .min(10, "Phone number must be at least 10 digits.")
-    .max(20, "Phone number is too long.")
-    .regex(/^[0-9+\-\s()]+$/, "Please enter a valid phone number."),
+  phone: ethiopianMobilePhoneSchema,
 });
 
 const resetSchema = z
@@ -179,11 +178,13 @@ export default function ForgotPasswordPage() {
   const sendOtp = async (values: PhoneValues) => {
     setIsSendingOtp(true);
     try {
+      const normalizedPhone =
+        normalizeEthiopianMobilePhone(values.phone) ?? values.phone;
       const res = (await axiosInstance.post("/auth/forgot-password/request", {
-        phone: values.phone,
+        phone: normalizedPhone,
       })) as OtpResponse;
 
-      setPhone(values.phone);
+      setPhone(normalizedPhone);
       setOtp("");
       setOtpError("");
       setResendCooldown(60);
@@ -371,7 +372,7 @@ export default function ForgotPasswordPage() {
                             <Input
                               {...field}
                               type="tel"
-                              placeholder="+251 91 234 5678"
+                              placeholder="0912345678 or 251912345678"
                               autoFocus
                               className={cn(
                                 "h-12 rounded-xl bg-muted/30 border-muted-foreground/20 text-base transition-all",

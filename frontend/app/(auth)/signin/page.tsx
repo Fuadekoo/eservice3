@@ -171,7 +171,7 @@ export default function SignInPage() {
       const result = await authLogin(credentials.phone, credentials.password);
 
       // Check if 2FA is required
-      if ("requiresTwoFactor" in result && result.requiresTwoFactor) {
+      if ("requiresTwoFactor" in result) {
         setTwoFactorState({
           required: true,
           userId: result.userId,
@@ -187,7 +187,7 @@ export default function SignInPage() {
 
       // Normal login success
       router.replace(
-        callbackUrl || getRoleOverviewPath(result.role?.name) || "/dashboard",
+        callbackUrl || getRoleOverviewPath(result.role.name) || "/dashboard",
       );
       toast.success(getTranslationForKey("Success"), {
         description: getTranslationForKey("Signing in successful"),
@@ -227,7 +227,7 @@ export default function SignInPage() {
         setIsVerifying2FA(false);
       }
     },
-    [twoFactorState, router, getTranslationForKey],
+    [twoFactorState, router, callbackUrl, getTranslationForKey],
   );
 
   // Auto-submit when 6 digits are entered

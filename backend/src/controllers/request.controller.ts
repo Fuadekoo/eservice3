@@ -479,6 +479,22 @@ export async function createRequest(req: AuthRequest, res: Response) {
         const customerPhone = newRequest.user.phoneNumber ?? "N/A";
         const requestDate = new Date(date).toLocaleDateString("en-GB");
 
+        // --- Confirm receipt to the customer ---
+        if (newRequest.user.phoneNumber) {
+          const customerMsg =
+            `Dear ${customerName},\n\n` +
+            `Thank you for applying for "${service.name}" at ${service.office.name}.\n\n` +
+            `Your request has been received and is now under review. Please wait while our team processes it.\n\n` +
+            `Request No: ${requestNumber}`;
+
+          sendSMS(newRequest.user.phoneNumber, customerMsg).catch((e) =>
+            console.error(
+              `SMS to customer ${newRequest.user.phoneNumber} failed:`,
+              e,
+            ),
+          );
+        }
+
         // --- Notify each assigned staff ---
         for (const assignment of assignedStaff) {
           const staffPhone = assignment.staff.user.phoneNumber;

@@ -31,10 +31,12 @@ import { toast } from "sonner";
 
 import { axiosInstance } from "@/lib/axios";
 import { useSession } from "@/hooks/use-session";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PageLayout } from "@/components/dashboard/page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -82,6 +84,18 @@ const TOOLTIP_STYLE = {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function AdminOverviewPage() {
+  return (
+    <ProtectedRoute
+      allowedRoles={OVERVIEW_ROLES.admin}
+      redirectTo="/dashboard"
+      showError={false}
+    >
+      <AdminOverviewContent />
+    </ProtectedRoute>
+  );
+}
+
+function AdminOverviewContent() {
   const { isPending: isSessionPending } = useSession();
   const [overview, setOverview] = React.useState<Overview | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);

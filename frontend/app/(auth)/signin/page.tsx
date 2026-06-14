@@ -44,6 +44,7 @@ import {
   verifyTwoFactor,
   isAuthenticated,
 } from "@/lib/auth-client";
+import { getRoleOverviewPath } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
 import {
@@ -126,12 +127,24 @@ export default function SignInPage() {
   const [isVerifying2FA, setIsVerifying2FA] = React.useState(false);
   const { loadTranslations, getTranslationForKey } = useLanguagesStore();
 
+  const getDefaultRedirect = React.useCallback(() => {
+    if (typeof window === "undefined") return "/dashboard";
+
+    try {
+      const storedRole = localStorage.getItem("role");
+      const role = storedRole ? JSON.parse(storedRole) : null;
+      return getRoleOverviewPath(role?.name) ?? "/dashboard";
+    } catch {
+      return "/dashboard";
+    }
+  }, []);
+
   // Redirect already-authenticated users away from the sign-in page
   React.useEffect(() => {
     if (isAuthenticated()) {
-      router.replace(callbackUrl || "/dashboard");
+      router.replace(callbackUrl || getDefaultRedirect());
     }
-  }, [router, callbackUrl]);
+  }, [router, callbackUrl, getDefaultRedirect]);
 
   React.useEffect(() => {
     loadTranslations();
@@ -173,7 +186,9 @@ export default function SignInPage() {
       }
 
       // Normal login success
-      router.replace(callbackUrl || "/dashboard");
+      router.replace(
+        callbackUrl || getRoleOverviewPath(result.role?.name) || "/dashboard",
+      );
       toast.success(getTranslationForKey("Success"), {
         description: getTranslationForKey("Signing in successful"),
       });
@@ -192,8 +207,12 @@ export default function SignInPage() {
 
       setIsVerifying2FA(true);
       try {
-        await verifyTwoFactor(twoFactorState.userId, code);
-        router.replace(callbackUrl || "/dashboard");
+        const session = await verifyTwoFactor(twoFactorState.userId, code);
+        router.replace(
+          callbackUrl ||
+            getRoleOverviewPath(session.role?.name) ||
+            "/dashboard",
+        );
         toast.success(getTranslationForKey("Success"), {
           description: getTranslationForKey("Signing in successful"),
         });

@@ -36,10 +36,12 @@ import { toast } from "sonner";
 
 import { axiosInstance, getUploadUrl } from "@/lib/axios";
 import { useSession } from "@/hooks/use-session";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PageLayout } from "@/components/dashboard/page-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -140,6 +142,18 @@ const APT_STATUS_CONFIG: Record<string, { label: string; badge: string }> = {
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 export default function ManagerOverviewPage() {
+  return (
+    <ProtectedRoute
+      allowedRoles={OVERVIEW_ROLES.manager}
+      redirectTo="/dashboard"
+      showError={false}
+    >
+      <ManagerOverviewContent />
+    </ProtectedRoute>
+  );
+}
+
+function ManagerOverviewContent() {
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const session = sessionData?.session;
   const officeId = session?.officeId || session?.user?.officeId;

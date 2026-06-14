@@ -17,12 +17,14 @@ import {
 import Link from "next/link";
 
 import { useSession } from "@/hooks/use-session";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { axiosInstance } from "@/lib/axios";
 import { useRequestStore, type ServiceRequest } from "@/lib/stores/request-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────────────────
@@ -138,6 +140,18 @@ function StatCard({
 
 // ── Page ─────────────────────────────────────────────────────────
 export default function CustomerOverviewPage() {
+  return (
+    <ProtectedRoute
+      allowedRoles={OVERVIEW_ROLES.customer}
+      redirectTo="/dashboard"
+      showError={false}
+    >
+      <CustomerOverviewContent />
+    </ProtectedRoute>
+  );
+}
+
+function CustomerOverviewContent() {
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const session = sessionData?.session;
   const user = session?.user;

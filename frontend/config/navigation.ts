@@ -48,7 +48,7 @@ export const NAVIGATION: NavSection[] = [
       {
         titleKey: "Overview",
         icon: LayoutDashboard,
-        href: "/dashboard",
+        href: "/admin-overview",
         roles: ["ADMIN"],
       },
       {
@@ -114,7 +114,7 @@ export const NAVIGATION: NavSection[] = [
       {
         titleKey: "Overview",
         icon: Grid2X2,
-        href: "/dashboard",
+        href: "/manager-overview",
         roles: ["MANAGER"],
       },
       {
@@ -208,7 +208,7 @@ export const NAVIGATION: NavSection[] = [
     labelKey: "Customer Portal",
     items: [
       {
-        titleKey: "Home",
+        titleKey: "Overview",
         icon: LayoutDashboard,
         href: "/customer-overview",
         roles: ["CUSTOMER"],

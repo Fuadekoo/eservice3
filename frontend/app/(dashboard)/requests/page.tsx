@@ -146,8 +146,8 @@ export default function MyRequestsPage() {
       toast.success("Request cancelled successfully");
       setDeleteId(null);
       refresh();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to cancel request");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to cancel request");
     } finally {
       setIsDeleting(false);
     }
@@ -162,6 +162,14 @@ export default function MyRequestsPage() {
            tab.value === "approved" ? stats.approved :
            tab.value === "rejected" ? stats.rejected : undefined
   }));
+
+  const totalItems = pagination?.total ?? requests.length;
+  const totalPages = Math.max(
+    1,
+    pagination?.totalPages ?? Math.ceil(totalItems / pageSize)
+  );
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(currentPage * pageSize, totalItems);
 
   return (
     <PageLayout
@@ -263,17 +271,17 @@ export default function MyRequestsPage() {
       )}
 
       {/* Pagination */}
-      {pagination && pagination.total > pageSize && (
+      {totalItems > 0 && !isLoading && (
         <PaginationFooter
           currentPage={currentPage}
           pageSize={pageSize}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.total}
-          startIndex={(currentPage - 1) * pageSize}
-          endIndex={Math.min(currentPage * pageSize, pagination.total)}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startIndex={startIndex}
+          endIndex={endIndex}
           onPageChange={setCurrentPage}
           onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
-          canGoNext={currentPage < pagination.totalPages}
+          canGoNext={currentPage < totalPages}
           canGoPrevious={currentPage > 1}
           itemLabel="requests"
         />
@@ -627,7 +635,7 @@ function RequestDetailDialog({
                 Appointments ({request.appointments.length})
               </p>
               <div className="space-y-2">
-                {request.appointments.map((apt: any) => (
+                {request.appointments.map((apt) => (
                   <div key={apt.id} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <Calendar className="size-4 text-violet-500" />
@@ -658,7 +666,7 @@ function RequestDetailDialog({
                 Attachments ({request.fileData.length})
               </p>
               <div className="space-y-2">
-                {request.fileData.map((f: any) => (
+                {request.fileData.map((f) => (
                   <div key={f.id} className="flex items-center gap-2 text-sm">
                     <Paperclip className="size-4 text-muted-foreground shrink-0" />
                     <span className="font-medium line-clamp-1">{f.name}</span>
@@ -690,7 +698,7 @@ function RequestDetailDialog({
               </div>
               {request.customerSatisfaction.comment && (
                 <p className="text-sm text-muted-foreground italic">
-                  "{request.customerSatisfaction.comment}"
+                  &quot;{request.customerSatisfaction.comment}&quot;
                 </p>
               )}
             </div>

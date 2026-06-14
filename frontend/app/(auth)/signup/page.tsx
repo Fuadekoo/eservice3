@@ -45,7 +45,7 @@ import { setToken } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import z from "zod";
 import { strongPasswordSchema } from "@/lib/password-strength";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Field, FieldError } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
@@ -80,6 +80,24 @@ const profileSchema = z
 
 type PhoneValues = z.infer<typeof phoneSchema>;
 type ProfileValues = z.infer<typeof profileSchema>;
+
+type RegisterCustomerResponse = {
+  data?: {
+    token?: string;
+    user?: unknown;
+    role?: unknown;
+    permissions?: unknown[];
+    office?: {
+      id?: string;
+      [key: string]: unknown;
+    } | null;
+  };
+  message?: string;
+};
+
+function makeOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
@@ -170,6 +188,9 @@ export default function SignupPage() {
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
+      firstName: "",
+      fatherName: "",
+      lastName: "",
       username: "",
       password: "",
       confirmPassword: "",
@@ -177,8 +198,6 @@ export default function SignupPage() {
   });
 
   // ── OTP helpers ──────────────────────────────────────────────────────────
-
-  const makeOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 
   const sendOtp = async (values: PhoneValues) => {
     setIsSendingOtp(true);
@@ -223,25 +242,30 @@ export default function SignupPage() {
     [generatedOtp, t],
   );
 
-  React.useEffect(() => {
-    if (otpInput.length === 6) verifyOtp(otpInput);
-  }, [otpInput, verifyOtp]);
+  const handleOtpChange = React.useCallback(
+    (value: string) => {
+      setOtpInput(value);
+      setOtpError("");
+      if (value.length === 6) verifyOtp(value);
+    },
+    [verifyOtp],
+  );
 
   // ── Profile submit ────────────────────────────────────────────────────────
 
   const onSubmitProfile = async (values: ProfileValues) => {
     setIsSubmitting(true);
     try {
-      const response = await axiosInstance.post("/auth/register/customer", {
+      const response = (await axiosInstance.post("/auth/register/customer", {
         firstName: values.firstName,
         fatherName: values.fatherName,
         lastName: values.lastName,
         username: values.username,
         phone,
         password: values.password,
-      });
+      })) as RegisterCustomerResponse;
 
-      const { data, message } = response as { data: any; message?: string };
+      const { data, message } = response;
 
       if (data?.token) {
         setToken(data.token);
@@ -249,19 +273,23 @@ export default function SignupPage() {
         localStorage.setItem("role", JSON.stringify(data.role));
         localStorage.setItem(
           "permissions",
-          JSON.stringify(data.permissions || []),
+          JSON.stringify(data.permissions ?? []),
         );
         if (data.office) {
           localStorage.setItem("office", JSON.stringify(data.office));
-          localStorage.setItem("officeId", data.office.id);
+          if (data.office.id) {
+            localStorage.setItem("officeId", data.office.id);
+          }
         }
       }
 
       toast.success(message || t("Registration successful!"));
       router.push(callbackUrl || "/customer-overview");
-    } catch (error: any) {
+    } catch (error) {
       toast.error(
-        error?.message || t("Registration failed. Please try again."),
+        error instanceof Error
+          ? error.message
+          : t("Registration failed. Please try again."),
       );
     } finally {
       setIsSubmitting(false);
@@ -492,10 +520,7 @@ export default function SignupPage() {
                   <InputOTP
                     maxLength={6}
                     value={otpInput}
-                    onChange={(v) => {
-                      setOtpInput(v);
-                      setOtpError("");
-                    }}
+                    onChange={handleOtpChange}
                     disabled={isVerifyingOtp}
                     autoFocus
                   >

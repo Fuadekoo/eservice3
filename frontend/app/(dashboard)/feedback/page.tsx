@@ -56,9 +56,16 @@ type FeedbackRecord = {
   serviceName: string | null;
 };
 
+type ApiListResponse<T> = { data?: T[] } | T[];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const RATING_LABELS = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 const RATING_COLORS = ["", "text-red-500", "text-orange-500", "text-yellow-500", "text-lime-500", "text-emerald-500"];
+
+function getListData<T>(response: ApiListResponse<T> | null | undefined): T[] {
+  if (Array.isArray(response)) return response;
+  return Array.isArray(response?.data) ? response.data : [];
+}
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -137,15 +144,15 @@ export default function FeedbackPage() {
     setIsLoading(true);
     try {
       const [reqBody, fbBody] = await Promise.all([
-        axiosInstance.get("/requests?pageSize=100") as unknown as Promise<{ data: ServiceRequest[] }>,
-        axiosInstance.get("/feedbacks") as unknown as Promise<{ data: FeedbackRecord[] }>,
+        axiosInstance.get("/requests?pageSize=100") as unknown as Promise<ApiListResponse<ServiceRequest>>,
+        axiosInstance.get("/feedback") as unknown as Promise<ApiListResponse<FeedbackRecord>>,
       ]);
       // Only show fully approved requests (eligible for feedback)
-      const approved = (reqBody.data ?? []).filter(
+      const approved = getListData(reqBody).filter(
         (r) => r.statusbystaff === "approved" && r.statusbyadmin === "approved"
       );
       setRequests(approved);
-      setFeedbacks(fbBody.data ?? []);
+      setFeedbacks(getListData(fbBody));
     } catch {
       toast.error("Failed to load feedback data.");
     } finally {
@@ -155,7 +162,11 @@ export default function FeedbackPage() {
 
   React.useEffect(() => {
     if (isSessionPending) return;
-    void load();
+    const timeoutId = window.setTimeout(() => {
+      void load();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [isSessionPending, load]);
 
   // Split: requests without feedback vs those with feedback
@@ -181,12 +192,13 @@ export default function FeedbackPage() {
     if (rating === 0) { toast.error("Please select a rating."); return; }
     setIsSubmitting(true);
     try {
-      await axiosInstance.put(`/feedbacks/${dialogReq.id}`, { rating, comment: comment || undefined });
+      await axiosInstance.put(`/feedback/${dialogReq.id}`, { rating, comment: comment || undefined });
       toast.success(existingFeedback ? "Feedback updated!" : "Thank you for your feedback!");
       setDialogReq(null);
       void load();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Failed to submit feedback.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to submit feedback.";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -504,7 +516,7 @@ function ReviewCard({
         <Separator className="mb-3" />
         {feedback.comment ? (
           <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3 leading-relaxed">
-            "{feedback.comment}"
+            &quot;{feedback.comment}&quot;
           </p>
         ) : (
           <p className="text-xs text-muted-foreground/50 italic">No written comment.</p>

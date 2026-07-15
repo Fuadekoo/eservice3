@@ -16,7 +16,9 @@ export interface TranslationKey {
 const API_URL = "/api/translations"
 
 async function fetchAllTranslations() {
-  const res = await fetch(API_URL, { cache: "no-store" })
+  // "no-cache" still revalidates every time, but a 304 skips re-transferring
+  // the payload. "no-store" would bypass the cache and always refetch it.
+  const res = await fetch(API_URL, { cache: "no-cache" })
   if (!res.ok) throw new Error("Failed to load translations")
   const json = await res.json()
   return {
@@ -84,13 +86,37 @@ async function deleteTranslationKeyApi(key: string) {
 
 async function loadFlatTranslations(langCode: string) {
   try {
-    const res = await fetch(`${API_URL}?lang=${langCode}`, { cache: "no-store" })
+    const res = await fetch(`${API_URL}?lang=${langCode}`, { cache: "no-cache" })
     if (!res.ok) return {}
     const json = await res.json()
     return (json.data as Record<string, string>) || {}
   } catch {
     return {}
   }
+}
+
+// ──────────────────────────────────────────
+// Lookup index
+// ──────────────────────────────────────────
+// getTranslationForKey is called once per label per render. A linear find over
+// the full key list turns every render into hundreds of scans, so keep a map.
+// Keyed on the array's identity, so any code path that replaces `translations`
+// rebuilds it automatically and the index can never drift from the state.
+/** Shared by concurrent loadTranslations callers so they issue one request. */
+let inFlightLoad: Promise<void> | null = null
+
+let indexCache: {
+  source: TranslationKey[]
+  index: Map<string, Record<string, string>>
+} | null = null
+
+function getIndex(translations: TranslationKey[]) {
+  if (!indexCache || indexCache.source !== translations) {
+    const index = new Map<string, Record<string, string>>()
+    for (const entry of translations) index.set(entry.key, entry.translations)
+    indexCache = { source: translations, index }
+  }
+  return indexCache.index
 }
 
 // ──────────────────────────────────────────
@@ -122,6 +148,8 @@ export interface LanguagesStore {
   hasUnsavedChanges: boolean
   isLoading: boolean
   translationData: Record<string, string>
+  /** True once real translations are present (from the server or the API). */
+  isHydrated: boolean
 
   // Actions
   setSelectedLanguage: (languageCode: string) => void
@@ -135,7 +163,7 @@ export interface LanguagesStore {
   updateNewKeyForm: (field: string, value: string | Record<string, string>) => void
   resetNewKeyForm: () => void
   saveTranslations: () => Promise<void>
-  loadTranslations: () => Promise<void>
+  loadTranslations: (force?: boolean) => Promise<void>
   filterTranslations: () => void
   getTranslationForKey: (key: string, languageCode?: string) => string
   addLanguage: (language: Language) => Promise<void>
@@ -163,6 +191,7 @@ export const useLanguagesStore = create<LanguagesStore>()(
       hasUnsavedChanges: false,
       isLoading: false,
       translationData: {},
+      isHydrated: false,
 
       // ── Language selection ──
       setSelectedLanguage: async (languageCode) => {
@@ -286,21 +315,36 @@ export const useLanguagesStore = create<LanguagesStore>()(
       },
 
       // ── Load all from API ──
-      loadTranslations: async () => {
-        try {
-          set({ isLoading: true })
-          const data = await fetchAllTranslations()
-          set({
-            availableLanguages: data.availableLanguages,
-            translations: data.translations,
-            filteredTranslations: data.translations,
-          })
-        } catch (e) {
-          console.error("Failed to load translations:", e)
-          // fallback: keep defaults
-        } finally {
-          set({ isLoading: false })
-        }
+      // Several trees (guest layout, dashboard shell, signin) each ask for
+      // translations on mount, and StrictMode double-invokes every effect in
+      // dev. Without the guards below that is four fetches of the same 65KB.
+      // `force` is for the translations admin screens, which must re-read the
+      // file after an edit rather than reuse what is already in memory.
+      loadTranslations: async (force = false) => {
+        if (!force && get().isHydrated) return
+        if (!force && inFlightLoad) return inFlightLoad
+
+        const run = (async () => {
+          try {
+            set({ isLoading: true })
+            const data = await fetchAllTranslations()
+            set({
+              availableLanguages: data.availableLanguages,
+              translations: data.translations,
+              filteredTranslations: data.translations,
+              isHydrated: true,
+            })
+          } catch (e) {
+            console.error("Failed to load translations:", e)
+            // fallback: keep defaults
+          } finally {
+            set({ isLoading: false })
+            inFlightLoad = null
+          }
+        })()
+
+        inFlightLoad = run
+        return run
       },
 
       // ── Filter ──
@@ -324,8 +368,8 @@ export const useLanguagesStore = create<LanguagesStore>()(
       getTranslationForKey: (key, languageCode) => {
         const { translations, selectedLanguage } = get()
         const lang = languageCode || selectedLanguage
-        const found = translations.find((t) => t.key === key)
-        return found?.translations[lang] || key
+        const found = getIndex(translations).get(key)
+        return found?.[lang] || key
       },
 
       // ── Language management ──

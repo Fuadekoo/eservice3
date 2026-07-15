@@ -39,6 +39,9 @@ type HomepageStore = {
   reset: () => void;
 };
 
+/** Shared by concurrent initializeHomepage callers so they issue one round. */
+let inFlightInit: Promise<void> | null = null;
+
 const initialState = {
   searchQuery: "",
   selectedOffice: null as HomepageOfficeDetail | null,
@@ -54,17 +57,30 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
 
   initializeHomepage: async () => {
-    const { fetchOffices } = useOfficeStore.getState();
-    const { fetchAdministration } = useAdministrationStore.getState();
-    const { fetchGalleries } = useGalleryStore.getState();
+    // The homepage effect re-runs on every mount, and StrictMode double-invokes
+    // it in dev, so without these guards one page view fires each request twice.
+    if (get().isInitialized) return;
+    if (inFlightInit) return inFlightInit;
 
-    await Promise.all([
-      fetchOffices(),
-      fetchAdministration(),
-      fetchGalleries({ pageSize: 4 }),
-    ]);
+    const run = (async () => {
+      const { fetchOffices } = useOfficeStore.getState();
+      const { fetchAdministration } = useAdministrationStore.getState();
+      const { fetchGalleries } = useGalleryStore.getState();
 
-    set({ isInitialized: true });
+      // Each fetch records its own failure in its store, so a section that
+      // fails should not take down the sections that succeeded.
+      await Promise.allSettled([
+        fetchOffices(),
+        fetchAdministration(),
+        fetchGalleries({ pageSize: 4 }),
+      ]);
+
+      set({ isInitialized: true });
+      inFlightInit = null;
+    })();
+
+    inFlightInit = run;
+    return run;
   },
 
   getFilteredOffices: () => {
@@ -116,5 +132,9 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
 
   setSelectedService: (service) => set({ selectedService: service }),
 
-  reset: () => set(initialState),
+  reset: () => {
+    // Clear the guard too, or a reset store could never re-initialize.
+    inFlightInit = null;
+    set(initialState);
+  },
 }));

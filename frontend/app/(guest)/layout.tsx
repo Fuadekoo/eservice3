@@ -40,8 +40,14 @@ export default function GuestLayout({
 
 function Header() {
   const router = useRouter();
-  const authenticated = isAuthenticated();
+  const [authenticated, setAuthenticated] = React.useState(false);
   const { getTranslationForKey } = useLanguagesStore();
+
+  // The token lives in localStorage, which is unreadable during SSR. Resolve it
+  // after mount so the first client render still matches the server's HTML.
+  useEffect(() => {
+    setAuthenticated(isAuthenticated());
+  }, []);
 
   const handleLogout = () => {
     logout();

@@ -33,21 +33,48 @@ function writeData(data: TranslationsData): void {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
 }
 
+/**
+ * Cheap fingerprint of the translations file. The payload is ~65KB and changes
+ * only when an admin edits it, so an ETag lets repeat loads settle for a 304
+ * instead of re-downloading the whole thing.
+ */
+function currentETag(): string | null {
+  try {
+    const { mtimeMs, size } = fs.statSync(DATA_FILE);
+    return `W/"${size.toString(36)}-${Math.floor(mtimeMs).toString(36)}"`;
+  } catch {
+    return null;
+  }
+}
+
 // GET /api/translations          → full { availableLanguages, translations }
 // GET /api/translations?lang=en  → flat { data: { key: value } }
 export async function GET(req: NextRequest) {
   const lang = req.nextUrl.searchParams.get("lang");
+  const etag = currentETag();
+  // `lang` changes the body shape, so it has to be part of the identity.
+  const scopedTag = etag && (lang ? `${etag.slice(0, -1)}-${lang}"` : etag);
+
+  if (scopedTag && req.headers.get("if-none-match") === scopedTag) {
+    return new NextResponse(null, {
+      status: 304,
+      headers: { ETag: scopedTag, "Cache-Control": "no-cache" },
+    });
+  }
+
   const data = readData();
+  const headers: Record<string, string> = { "Cache-Control": "no-cache" };
+  if (scopedTag) headers.ETag = scopedTag;
 
   if (lang) {
     const flat: Record<string, string> = {};
     for (const entry of data.translations) {
       flat[entry.key] = entry.translations[lang] ?? entry.translations["en"] ?? entry.key;
     }
-    return NextResponse.json({ data: flat });
+    return NextResponse.json({ data: flat }, { headers });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, { headers });
 }
 
 // POST /api/translations with { language }            → add language

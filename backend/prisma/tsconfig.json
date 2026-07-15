@@ -1,0 +1,18 @@
+{
+  // The root tsconfig only includes `src`, so the scripts in this folder were
+  // left outside the project: editors fell back to default options for them,
+  // reporting node builtins as unresolved and never surfacing real type errors.
+  // This config puts them in a project of their own.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // These scripts are executed straight from source (tsx / node type
+    // stripping) rather than compiled into dist, so this project only checks.
+    "noEmit": true,
+    // ...which in turn is what lets them import with explicit .ts extensions.
+    "allowImportingTsExtensions": true,
+    // Covers both this folder and the `../src` modules it imports.
+    "rootDir": "..",
+    "types": ["node"]
+  },
+  "include": ["."]
+}

@@ -88,6 +88,20 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ApplyServicePage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex min-h-[400px] items-center justify-center">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <ApplyServiceContent />
+    </React.Suspense>
+  );
+}
+
+function ApplyServiceContent() {
   const searchParams = useSearchParams();
   const serviceIdParam = searchParams.get("serviceId");
 

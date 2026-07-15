@@ -177,7 +177,7 @@ export default function ReportPage() {
   >("details");
   const [actioningId, setActioningId] = React.useState<string | null>(null);
 
-  const recipients =
+  const recipients: ReportUser[] =
     role === "staff"
       ? managerUsers
       : role === "manager"

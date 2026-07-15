@@ -86,7 +86,7 @@ type ReportStore = {
   fetchManagerUsers: () => Promise<void>;
 };
 
-export const useReportStore = create<ReportStore>((set) => ({
+export const useReportStore = create<ReportStore>((set, get) => ({
   reports: [],
   isLoading: false,
   isSubmitting: false,
@@ -164,11 +164,11 @@ export const useReportStore = create<ReportStore>((set) => ({
   },
 
   approveReport: async (id) => {
-    return useReportStore.getState().updateReportStatus(id, "approved");
+    return get().updateReportStatus(id, "approved");
   },
 
   rejectReport: async (id) => {
-    return useReportStore.getState().updateReportStatus(id, "rejected");
+    return get().updateReportStatus(id, "rejected");
   },
 
   deleteReport: async (id) => {

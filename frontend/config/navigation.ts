@@ -319,6 +319,30 @@ NAVIGATION_LOOKUP["/customer-overview"] = {
   href: "/customer-overview",
 };
 
+/**
+ * Maps a page path to the permission codes declared for it in NAVIGATION.
+ * Paths without declared permissions are absent, which ProtectedPage treats
+ * as "no permission required".
+ */
+export const PAGE_PERMISSIONS: Record<string, string[]> = NAVIGATION.reduce(
+  (acc, section) => {
+    section.items.forEach((item) => {
+      if (item.href && item.permissions?.length) {
+        acc[item.href] = item.permissions;
+      }
+
+      item.items?.forEach((subitem) => {
+        if (subitem.permissions?.length) {
+          acc[subitem.href] = subitem.permissions;
+        }
+      });
+    });
+
+    return acc;
+  },
+  {} as Record<string, string[]>,
+);
+
 export const BREADCRUMB_ROOT = {
   titleKey: "Overview",
   href: "/dashboard",

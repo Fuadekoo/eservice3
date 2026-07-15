@@ -14,7 +14,11 @@ export type HomepageServiceItem = {
   serviceFors?: { id: string; name: string; description?: string | null }[];
 };
 
-export type HomepageOfficeDetail = Office & {
+/**
+ * `Office` declares a narrower `service` shape; omit it so the richer
+ * homepage detail shape replaces it instead of intersecting with it.
+ */
+export type HomepageOfficeDetail = Omit<Office, "service"> & {
   service?: HomepageServiceItem[];
 };
 

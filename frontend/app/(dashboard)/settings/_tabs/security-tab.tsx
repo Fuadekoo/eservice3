@@ -874,7 +874,7 @@ export function SecurityTab() {
                               {session.deviceName?.trim() || "Unknown device"}
                             </p>
                             {session.isCurrent ? (
-                              <Badge variant="success">Current device</Badge>
+                              <Badge variant="secondary">Current device</Badge>
                             ) : null}
                             {session.deviceType ? (
                               <Badge variant="outline" className="capitalize">

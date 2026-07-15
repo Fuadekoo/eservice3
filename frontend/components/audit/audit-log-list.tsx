@@ -277,6 +277,8 @@ export default function AuditLogList() {
           endIndex={Math.min(currentPage * pageSize, pagination.total)}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
+          canGoNext={currentPage < pagination.totalPages}
+          canGoPrevious={currentPage > 1}
           itemLabel="logs"
         />
       )}

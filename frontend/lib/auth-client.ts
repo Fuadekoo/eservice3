@@ -22,6 +22,25 @@ export interface AuthUser {
   isAdmin?: boolean;
 }
 
+/**
+ * A device/session record as returned by the API.
+ * Mirrors `serializeAuthSession` in backend/src/lib/auth-session.ts.
+ */
+export interface DeviceSessionInfo {
+  id: string;
+  deviceName: string | null;
+  deviceType: string | null;
+  browser: string | null;
+  operatingSystem: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  lastSeenAt: string;
+  createdAt: string;
+  updatedAt: string;
+  /** Only present when the API knows which session is making the request. */
+  isCurrent?: boolean;
+}
+
 export interface AuthSession {
   user: AuthUser;
   role: {
@@ -37,6 +56,7 @@ export interface AuthSession {
     subdomain?: string;
     subscriptionExpiry?: string;
   };
+  currentSession?: DeviceSessionInfo | null;
   token: string;
 }
 
@@ -71,6 +91,7 @@ export function removeToken(): void {
     localStorage.removeItem("permissions");
     localStorage.removeItem("office");
     localStorage.removeItem("officeId");
+    localStorage.removeItem("currentSession");
   }
 }
 
@@ -174,6 +195,12 @@ export async function login(
     if (session.office) {
       localStorage.setItem("office", JSON.stringify(session.office));
     }
+    if (session.currentSession) {
+      localStorage.setItem(
+        "currentSession",
+        JSON.stringify(session.currentSession),
+      );
+    }
   }
 
   return session;
@@ -255,6 +282,12 @@ export async function verifyTwoFactor(
     if (session.office) {
       localStorage.setItem("office", JSON.stringify(session.office));
     }
+    if (session.currentSession) {
+      localStorage.setItem(
+        "currentSession",
+        JSON.stringify(session.currentSession),
+      );
+    }
   }
 
   return session;
@@ -288,11 +321,15 @@ export function getSession(): { data: { session: AuthSession | null } } | null {
     const permissionsStr = localStorage.getItem("permissions");
     const officeStr = localStorage.getItem("office");
     const officeId = localStorage.getItem("officeId");
+    const currentSessionStr = localStorage.getItem("currentSession");
 
     const user = userStr ? JSON.parse(userStr) : null;
     const role = roleStr ? JSON.parse(roleStr) : null;
     const permissions = permissionsStr ? JSON.parse(permissionsStr) : [];
     const office = officeStr ? JSON.parse(officeStr) : null;
+    const currentSession = currentSessionStr
+      ? JSON.parse(currentSessionStr)
+      : null;
 
     if (!user || !role) return { data: { session: null } };
 
@@ -304,6 +341,7 @@ export function getSession(): { data: { session: AuthSession | null } } | null {
           permissions,
           officeId: officeId || undefined,
           office: office || undefined,
+          currentSession: currentSession || undefined,
           token,
         },
       },

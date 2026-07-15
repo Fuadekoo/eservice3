@@ -87,8 +87,8 @@ export function RoleCatalogPage({
   description?: string;
 }) {
   const router = useRouter();
-  const { roles, isLoading, fetchRoles, deleteRole, viewMode, setViewMode } =
-    useSecurityStore();
+  const { roles, isLoading, fetchRoles, deleteRole } = useSecurityStore();
+  const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [search, setSearch] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);

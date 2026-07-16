@@ -127,7 +127,7 @@ export default function OfficesPage() {
       }
     >
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-card/50 p-4 rounded-2xl border border-border/50 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/50 p-3 sm:p-4 rounded-2xl border border-border/50 mb-6">
         <div className="relative w-full md:w-[400px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
@@ -138,7 +138,7 @@ export default function OfficesPage() {
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center justify-end gap-3 w-full md:w-auto">
           <div className="flex items-center gap-1 bg-background p-1 rounded-lg border border-border shadow-sm">
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
@@ -484,7 +484,7 @@ function OfficeCard({
           />
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-4">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex items-center p-1 bg-muted/40 rounded-xl border border-border/50 w-fit shadow-inner">
             <button
               onClick={() => office.status && onStatusToggle()}

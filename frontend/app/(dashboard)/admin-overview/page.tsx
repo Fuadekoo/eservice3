@@ -285,7 +285,7 @@ function AdminOverviewContent() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[720px] text-sm">
                   <thead>
                     <tr className="border-b border-border/50 bg-muted/30">
                       {["Office", "Status", "Services", "Staff", "Requests", "Appointments"].map(h => (

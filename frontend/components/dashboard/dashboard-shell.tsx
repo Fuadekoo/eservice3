@@ -508,7 +508,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <SidebarFooter></SidebarFooter>
       </Sidebar>
 
-      <SidebarInset className="grid grid-rows-[auto_1fr] overflow-hidden ">
+      <SidebarInset className="grid grid-rows-[auto_1fr] overflow-hidden min-w-0">
         <header className="p-2 border-b bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/60 flex gap-2 items-center ">
           <SidebarTrigger />
           <Separator orientation="vertical" className="max-h-6 max-md:hidden" />
@@ -552,7 +552,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <UserAvatarDropdown />
         </header>
 
-        <main className="grid overflow-x-hidden overflow-y-auto">
+        <main className="grid grid-cols-1 min-w-0 overflow-x-hidden overflow-y-auto">
           {children}
         </main>
       </SidebarInset>

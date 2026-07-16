@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { axiosInstance } from "@/lib/axios";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -175,22 +176,25 @@ export function AssignServicesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px] p-0 gap-0 overflow-hidden rounded-2xl border-border bg-card">
+      <DialogContent
+        showCloseButton={false}
+        className="flex max-h-[85vh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden rounded-2xl border-border bg-card p-0 sm:max-w-[600px]"
+      >
         {/* Header */}
-        <div className="relative overflow-hidden">
+        <div className="relative flex-none overflow-hidden">
           {/* Gradient accent bar */}
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
 
-          <DialogHeader className="p-6 pb-4">
+          <DialogHeader className="p-6 pb-4 pr-14">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center size-11 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/20">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/20 to-indigo-500/20">
                 <GraduationCap className="size-5 text-violet-500" />
               </div>
-              <div className="flex flex-col gap-1">
+              <div className="flex min-w-0 flex-col gap-1">
                 <DialogTitle className="text-lg font-bold text-foreground">
                   Assign Services
                 </DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground">
+                <DialogDescription className="truncate text-sm text-muted-foreground">
                   {staffName ? (
                     <>
                       Managing services for{" "}
@@ -205,27 +209,39 @@ export function AssignServicesDialog({
               </div>
             </div>
           </DialogHeader>
+
+          {/* Close button */}
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="absolute right-3 top-3 rounded-lg text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </DialogClose>
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16">
             <div className="relative">
-              <div className="size-12 rounded-full border-2 border-violet-500/20 animate-pulse" />
-              <Loader2 className="size-6 text-violet-500 animate-spin absolute top-3 left-3" />
+              <div className="size-12 animate-pulse rounded-full border-2 border-violet-500/20" />
+              <Loader2 className="absolute left-3 top-3 size-6 animate-spin text-violet-500" />
             </div>
-            <p className="text-sm text-muted-foreground font-medium">
+            <p className="text-sm font-medium text-muted-foreground">
               Loading services…
             </p>
           </div>
         ) : data && data.services.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="flex items-center justify-center size-14 rounded-full bg-muted/50">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16">
+            <div className="flex size-14 items-center justify-center rounded-full bg-muted/50">
               <Briefcase className="size-6 text-muted-foreground" />
             </div>
             <p className="text-sm font-semibold text-foreground">
               No Services Available
             </p>
-            <p className="text-xs text-muted-foreground text-center max-w-[280px]">
+            <p className="max-w-[280px] text-center text-xs text-muted-foreground">
               There are no services in{" "}
               <span className="font-medium">{data.officeName}</span>. Create
               services first before assigning them.
@@ -234,23 +250,21 @@ export function AssignServicesDialog({
         ) : (
           <>
             {/* Stats + Search Bar */}
-            <div className="px-6 pb-3 space-y-3">
+            <div className="flex-none space-y-3 px-6 pb-3">
               {/* Stats Row */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-violet-500/10 text-violet-600 dark:text-violet-400 border-none gap-1"
-                  >
-                    <Sparkles className="size-3" />
-                    {assignedCount} / {totalCount} assigned
-                  </Badge>
-                </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 rounded-full border-none bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400"
+                >
+                  <Sparkles className="size-3" />
+                  {assignedCount} / {totalCount} assigned
+                </Badge>
                 <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground rounded-lg"
+                    className="h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
                     onClick={handleSelectAll}
                   >
                     Select All
@@ -259,7 +273,7 @@ export function AssignServicesDialog({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground rounded-lg"
+                    className="h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
                     onClick={handleDeselectAll}
                   >
                     Deselect All
@@ -269,17 +283,17 @@ export function AssignServicesDialog({
 
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search services…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 rounded-xl bg-muted/50 border-border text-sm focus:ring-violet-500/30"
+                  className="h-9 rounded-xl border-border bg-muted/50 pl-9 pr-9 text-sm focus:ring-violet-500/30"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -288,10 +302,10 @@ export function AssignServicesDialog({
             </div>
 
             {/* Services List */}
-            <ScrollArea className="h-[320px] px-6">
+            <ScrollArea className="min-h-0 flex-1 px-6">
               <div className="space-y-1.5 pb-4">
                 {filteredServices.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-10 gap-2">
+                  <div className="flex flex-col items-center justify-center gap-2 py-10">
                     <Search className="size-5 text-muted-foreground/50" />
                     <p className="text-sm text-muted-foreground">
                       No services match &quot;{searchQuery}&quot;
@@ -305,27 +319,23 @@ export function AssignServicesDialog({
                         key={service.id}
                         type="button"
                         onClick={() => toggleService(service.id)}
-                        className={`
-                          w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all duration-200
-                          hover:bg-muted/60 group cursor-pointer
-                          ${
-                            isChecked
-                              ? "bg-violet-500/5 border border-violet-500/20 hover:bg-violet-500/10"
-                              : "bg-transparent border border-transparent hover:border-border"
-                          }
-                        `}
+                        className={`group flex w-full cursor-pointer items-start gap-3 rounded-xl p-3 text-left transition-all duration-200 hover:bg-muted/60 ${
+                          isChecked
+                            ? "border border-violet-500/20 bg-violet-500/5 hover:bg-violet-500/10"
+                            : "border border-transparent bg-transparent hover:border-border"
+                        }`}
                       >
                         <div className="pt-0.5">
                           <Checkbox
                             checked={isChecked}
                             onCheckedChange={() => toggleService(service.id)}
-                            className="data-[state=checked]:bg-violet-500 data-[state=checked]:border-violet-500"
+                            className="data-[state=checked]:border-violet-500 data-[state=checked]:bg-violet-500"
                           />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span
-                              className={`text-sm font-semibold truncate transition-colors ${
+                              className={`truncate text-sm font-semibold transition-colors ${
                                 isChecked
                                   ? "text-violet-700 dark:text-violet-300"
                                   : "text-foreground"
@@ -334,15 +344,15 @@ export function AssignServicesDialog({
                               {service.name}
                             </span>
                             {isChecked && (
-                              <CheckCircle2 className="size-3.5 text-violet-500 shrink-0" />
+                              <CheckCircle2 className="size-3.5 shrink-0 text-violet-500" />
                             )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
+                          <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
                             {service.description}
                           </p>
-                          <div className="flex items-center gap-1 mt-1.5 text-[10px] text-muted-foreground/70">
-                            <Clock className="size-3" />
-                            <span>{service.timeToTake}</span>
+                          <div className="mt-1.5 flex items-center gap-1 text-[10px] text-muted-foreground/70">
+                            <Clock className="size-3 shrink-0" />
+                            <span className="truncate">{service.timeToTake}</span>
                           </div>
                         </div>
                       </button>
@@ -356,24 +366,24 @@ export function AssignServicesDialog({
 
         {/* Footer */}
         {!isLoading && data && data.services.length > 0 && (
-          <DialogFooter className="p-4 border-t border-border bg-muted/30">
-            <div className="flex items-center justify-between w-full gap-3">
+          <DialogFooter className="mx-0 mb-0 flex-none border-t border-border bg-muted/30 p-4">
+            <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-muted-foreground">
                 {hasChanges ? (
-                  <span className="text-amber-500 font-medium">
+                  <span className="font-medium text-amber-500">
                     • Unsaved changes
                   </span>
                 ) : (
-                  <span className="text-emerald-500 font-medium">
+                  <span className="font-medium text-emerald-500">
                     ✓ All changes saved
                   </span>
                 )}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={() => onOpenChange(false)}
-                  className="rounded-xl h-9 px-4 text-sm font-medium"
+                  className="h-9 rounded-xl px-4 text-sm font-medium"
                   disabled={isSaving}
                 >
                   Cancel
@@ -381,16 +391,16 @@ export function AssignServicesDialog({
                 <Button
                   onClick={handleSave}
                   disabled={!hasChanges || isSaving}
-                  className="rounded-xl h-9 px-6 text-sm font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                  className="h-9 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 text-sm font-semibold text-white shadow-sm transition-all hover:from-violet-700 hover:to-indigo-700 active:scale-95 disabled:opacity-50"
                 >
                   {isSaving ? (
                     <>
-                      <Loader2 className="size-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 size-4 animate-spin" />
                       Saving…
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="size-4 mr-2" />
+                      <CheckCircle2 className="mr-2 size-4" />
                       Save Assignments
                     </>
                   )}

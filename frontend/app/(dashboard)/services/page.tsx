@@ -239,17 +239,25 @@ export default function ServicesPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
-          <table className="w-full text-left">
+        <div className="rounded-2xl border border-border/50 bg-card overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
-                <th className="p-4 font-bold text-sm">{t("Service Name")}</th>
+                <th className="p-4 font-bold text-sm whitespace-nowrap">
+                  {t("Service Name")}
+                </th>
                 {isAdmin && (
-                  <th className="p-4 font-bold text-sm">{t("Office")}</th>
+                  <th className="p-4 font-bold text-sm whitespace-nowrap">
+                    {t("Office")}
+                  </th>
                 )}
-                <th className="p-4 font-bold text-sm">{t("Time")}</th>
-                <th className="p-4 font-bold text-sm">{t("Stats")}</th>
-                <th className="p-4 font-bold text-sm text-right">
+                <th className="p-4 font-bold text-sm whitespace-nowrap">
+                  {t("Time")}
+                </th>
+                <th className="p-4 font-bold text-sm whitespace-nowrap">
+                  {t("Stats")}
+                </th>
+                <th className="p-4 font-bold text-sm text-right whitespace-nowrap">
                   {t("Actions")}
                 </th>
               </tr>
@@ -274,14 +282,14 @@ export default function ServicesPage() {
                     </div>
                   </td>
                   {isAdmin && (
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-sm">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                         {service.office?.name}
                       </div>
                     </td>
                   )}
-                  <td className="p-4">
+                  <td className="p-4 whitespace-nowrap">
                     <Badge
                       variant="secondary"
                       className="bg-muted/50 font-medium"
@@ -290,7 +298,7 @@ export default function ServicesPage() {
                       {service.timeToTake}
                     </Badge>
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 whitespace-nowrap">
                     <div className="flex gap-2">
                       <Badge
                         variant="outline"
@@ -306,7 +314,7 @@ export default function ServicesPage() {
                       </Badge>
                     </div>
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="p-4 text-right whitespace-nowrap">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button

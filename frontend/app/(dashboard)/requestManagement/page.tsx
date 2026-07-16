@@ -343,7 +343,7 @@ export default function RequestManagementPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[760px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border/50 bg-muted/30">
                     <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Customer</th>

@@ -515,7 +515,7 @@ function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: 
   return (
     <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-border/50 bg-muted/30">
               {["Service", "Office", "Date", "Time", "Room", "Status", "Actions"].map(h => (

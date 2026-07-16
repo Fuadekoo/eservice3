@@ -2,6 +2,7 @@ import { hash } from "bcryptjs";
 import { randomUUID } from "crypto";
 import { prisma } from "../lib/db.js";
 import { createUserSchema, updateUserSchema, buildValidationError, } from "../validators/user.validator.js";
+import { getEthiopianMobilePhoneCandidates } from "../utils/phone.js";
 function parseQueryString(value) {
     const str = typeof value === "string" ? value.trim() : undefined;
     return str || undefined;
@@ -153,7 +154,8 @@ export async function createUser(req, res) {
                 errors: buildValidationError(validation.error),
             });
         const { username, phone, phoneNumber, password, roleId, roleName: roleNameInput, isActive, } = validation.data;
-        const normalizedPhone = (phoneNumber || phone || "").trim();
+        const normalizedPhone = phoneNumber || phone || "";
+        const phoneCandidates = getEthiopianMobilePhoneCandidates(normalizedPhone);
         // Unique checks
         const existingByUsername = await prisma.user.findUnique({
             where: { username },
@@ -164,7 +166,7 @@ export async function createUser(req, res) {
                 .json({ success: false, error: "Username already exists" });
         if (normalizedPhone) {
             const existingByPhone = await prisma.user.findFirst({
-                where: { phoneNumber: normalizedPhone },
+                where: { phoneNumber: { in: phoneCandidates } },
             });
             if (existingByPhone)
                 return res
@@ -238,10 +240,11 @@ export async function updateUser(req, res) {
                     .json({ success: false, error: "Username already exists" });
             updateData.username = username;
         }
-        const normalizedPhone = (phoneNumber || phone || undefined);
+        const normalizedPhone = phoneNumber || phone || undefined;
         if (normalizedPhone) {
+            const phoneCandidates = getEthiopianMobilePhoneCandidates(normalizedPhone);
             const exists = await prisma.user.findFirst({
-                where: { phoneNumber: normalizedPhone },
+                where: { phoneNumber: { in: phoneCandidates } },
             });
             if (exists && exists.id !== id)
                 return res

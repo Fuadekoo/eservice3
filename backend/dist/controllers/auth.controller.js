@@ -8,14 +8,30 @@ import { createAuthSession, deleteAuthSession, listUserAuthSessions, revokeOther
 import { prisma } from "../lib/db.js";
 import { generateToken } from "../lib/jwt.js";
 import { buildValidationError } from "../validators/security.validator.js";
+import { ETHIOPIAN_MOBILE_PHONE_MESSAGE, getEthiopianMobilePhoneCandidates, normalizeEthiopianMobilePhone, } from "../utils/phone.js";
 const loginSchema = z.object({
-    phone: z.string().trim().min(1, "Phone number is required."),
+    phone: z
+        .string()
+        .trim()
+        .min(1, "Phone number is required.")
+        .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+        message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+    })
+        .transform((value) => normalizeEthiopianMobilePhone(value) ?? value),
     password: z.string().min(1, "Password is required."),
 });
 const updateProfileSchema = z
     .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
-    phone: z.string().trim().min(1, "Phone number is required.").optional(),
+    phone: z
+        .string()
+        .trim()
+        .min(1, "Phone number is required.")
+        .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+        message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+    })
+        .transform((value) => normalizeEthiopianMobilePhone(value) ?? value)
+        .optional(),
 })
     .refine((value) => value.username !== undefined || value.phone !== undefined, {
     message: "Provide at least one field to update.",
@@ -57,9 +73,10 @@ const userAuthInclude = {
     },
 };
 async function findUserForAuthByPhone(phone) {
+    const candidates = getEthiopianMobilePhoneCandidates(phone);
     return prisma.user.findFirst({
         where: {
-            phoneNumber: phone.trim(),
+            phoneNumber: candidates.length > 1 ? { in: candidates } : (candidates[0] ?? phone),
         },
         include: userAuthInclude,
     });
@@ -126,6 +143,25 @@ function buildAuthResponse(user, token, session) {
         ...(token ? { token } : {}),
     };
 }
+async function normalizeStoredAuthUserPhone(user, normalizedPhone) {
+    if (user.phoneNumber === normalizedPhone)
+        return user;
+    try {
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { phoneNumber: normalizedPhone },
+        });
+        return (await findUserForAuthById(user.id)) ?? user;
+    }
+    catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002") {
+            return user;
+        }
+        console.warn(`[auth.controller] Failed to normalize stored phone for user ${user.id}:`, error);
+        return user;
+    }
+}
 function isDatabaseConnectionError(error) {
     if (!error || typeof error !== "object") {
         return false;
@@ -164,7 +200,7 @@ export async function login(req, res) {
             return res.status(400).json(buildValidationError(validationResult.error));
         }
         const { phone, password } = validationResult.data;
-        const user = await findUserForAuthByPhone(phone);
+        let user = await findUserForAuthByPhone(phone);
         if (!user) {
             return res.status(401).json({
                 error: "AuthenticationError",
@@ -184,6 +220,7 @@ export async function login(req, res) {
                 message: "Invalid phone number or password",
             });
         }
+        user = await normalizeStoredAuthUserPhone(user, phone);
         if (user.twoFactorEnabled) {
             return res.status(202).json({
                 data: {
@@ -239,6 +276,21 @@ export async function updateProfile(req, res) {
             return res.status(400).json(buildValidationError(validationResult.error));
         }
         const { phone, username } = validationResult.data;
+        if (phone !== undefined) {
+            const existingByPhone = await prisma.user.findFirst({
+                where: {
+                    id: { not: req.userId },
+                    phoneNumber: { in: getEthiopianMobilePhoneCandidates(phone) },
+                },
+                select: { id: true },
+            });
+            if (existingByPhone) {
+                return res.status(409).json({
+                    error: "ConflictError",
+                    message: "Phone number is already in use.",
+                });
+            }
+        }
         await prisma.user.update({
             where: { id: req.userId },
             data: {
@@ -328,16 +380,37 @@ const registerCustomerSchema = z.object({
     fatherName: z.string().trim().min(1, "Father's name is required."),
     lastName: z.string().trim().min(1, "Last name is required."),
     username: z.string().trim().min(1, "Username is required."),
-    phone: z.string().trim().min(1, "Phone number is required."),
+    phone: z
+        .string()
+        .trim()
+        .min(1, "Phone number is required.")
+        .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+        message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+    })
+        .transform((value) => normalizeEthiopianMobilePhone(value) ?? value),
     password: z.string().min(6, "Password must be at least 6 characters."),
     otp: z.string().trim().length(6, "OTP must be 6 digits."),
     officeId: z.string().min(1).optional(),
 });
 const registerOtpSchema = z.object({
-    phone: z.string().trim().min(1, "Phone number is required."),
+    phone: z
+        .string()
+        .trim()
+        .min(1, "Phone number is required.")
+        .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+        message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+    })
+        .transform((value) => normalizeEthiopianMobilePhone(value) ?? value),
 });
 const verifyRegisterOtpSchema = z.object({
-    phone: z.string().trim().min(1, "Phone number is required."),
+    phone: z
+        .string()
+        .trim()
+        .min(1, "Phone number is required.")
+        .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+        message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+    })
+        .transform((value) => normalizeEthiopianMobilePhone(value) ?? value),
     otp: z.string().trim().length(6, "OTP must be 6 digits."),
 });
 const registrationOtpStore = new Map();
@@ -368,9 +441,10 @@ export async function requestRegistrationOtp(req, res) {
         if (!validationResult.success) {
             return res.status(400).json(buildValidationError(validationResult.error));
         }
-        const phone = validationResult.data.phone.trim();
+        const phone = validationResult.data.phone;
+        const phoneCandidates = getEthiopianMobilePhoneCandidates(phone);
         const existingUser = await prisma.user.findFirst({
-            where: { phoneNumber: phone },
+            where: { phoneNumber: { in: phoneCandidates } },
             select: { id: true },
         });
         if (existingUser) {
@@ -405,7 +479,7 @@ export async function verifyRegistrationOtp(req, res) {
         if (!validationResult.success) {
             return res.status(400).json(buildValidationError(validationResult.error));
         }
-        const phone = validationResult.data.phone.trim();
+        const phone = validationResult.data.phone;
         const otp = validationResult.data.otp.trim();
         const entry = getValidOtpEntry(registrationOtpStore, phone);
         if (!entry) {
@@ -444,11 +518,15 @@ export async function registerCustomer(req, res) {
             return res.status(400).json(buildValidationError(validationResult.error));
         }
         const { firstName, fatherName, lastName, username, phone, password, otp, officeId, } = validationResult.data;
-        const normalizedPhone = phone.trim();
+        const normalizedPhone = phone;
+        const phoneCandidates = getEthiopianMobilePhoneCandidates(normalizedPhone);
         // Check if user already exists
         const existingUser = await prisma.user.findFirst({
             where: {
-                OR: [{ username: username.trim() }, { phoneNumber: normalizedPhone }],
+                OR: [
+                    { username: username.trim() },
+                    { phoneNumber: { in: phoneCandidates } },
+                ],
             },
         });
         if (existingUser) {
@@ -650,34 +728,40 @@ const forgotPasswordStrongPassword = z
 export async function requestPasswordReset(req, res) {
     try {
         const { phone } = req.body;
-        if (!phone?.trim()) {
+        const normalizedPhone = phone
+            ? normalizeEthiopianMobilePhone(phone)
+            : null;
+        if (!phone?.trim() || !normalizedPhone) {
             return res.status(400).json({
                 error: "ValidationError",
-                message: "Phone number is required.",
+                message: phone?.trim()
+                    ? ETHIOPIAN_MOBILE_PHONE_MESSAGE
+                    : "Phone number is required.",
             });
         }
+        const phoneCandidates = getEthiopianMobilePhoneCandidates(normalizedPhone);
         const user = await prisma.user.findFirst({
-            where: { phoneNumber: phone.trim() },
+            where: { phoneNumber: { in: phoneCandidates } },
             select: { id: true, phoneNumber: true, isActive: true },
         });
         // Always return success to prevent phone enumeration attacks,
         // but only send OTP if the account actually exists and is active.
         if (user && user.isActive) {
             const otp = generateOtp();
-            otpStore.set(user.phoneNumber, {
+            otpStore.set(normalizedPhone, {
                 otp,
                 expiresAt: Date.now() + OTP_TTL_MS,
                 attempts: 0,
             });
-            const smsResult = await sendSMS(user.phoneNumber, `Your password reset code is: ${otp}. Valid for 10 minutes. Do not share this code.`);
+            const smsResult = await sendSMS(normalizedPhone, `Your password reset code is: ${otp}. Valid for 10 minutes. Do not share this code.`);
             if (process.env.NODE_ENV === "development") {
-                console.log(`[forgot-password] OTP for ${user.phoneNumber}: ${otp} (SMS: ${smsResult.success ? "sent" : "failed"})`);
+                console.log(`[forgot-password] OTP for ${normalizedPhone}: ${otp} (SMS: ${smsResult.success ? "sent" : "failed"})`);
             }
         }
         return res.json({
             message: "If an account with that number exists, an OTP has been sent.",
             ...(process.env.NODE_ENV === "development" && user?.isActive
-                ? { _devOtp: otpStore.get(user.phoneNumber)?.otp }
+                ? { _devOtp: otpStore.get(normalizedPhone)?.otp }
                 : {}),
         });
     }
@@ -688,13 +772,18 @@ export async function requestPasswordReset(req, res) {
 export async function verifyPasswordResetOtp(req, res) {
     try {
         const { phone, otp } = req.body;
-        if (!phone?.trim() || !otp?.trim()) {
+        const normalizedPhone = phone
+            ? normalizeEthiopianMobilePhone(phone)
+            : null;
+        if (!phone?.trim() || !normalizedPhone || !otp?.trim()) {
             return res.status(400).json({
                 error: "ValidationError",
-                message: "Phone number and OTP are required.",
+                message: phone?.trim() && !normalizedPhone
+                    ? ETHIOPIAN_MOBILE_PHONE_MESSAGE
+                    : "Phone number and OTP are required.",
             });
         }
-        const entry = otpStore.get(phone.trim());
+        const entry = otpStore.get(normalizedPhone);
         if (!entry) {
             return res.status(400).json({
                 error: "InvalidOtp",
@@ -702,7 +791,7 @@ export async function verifyPasswordResetOtp(req, res) {
             });
         }
         if (Date.now() > entry.expiresAt) {
-            otpStore.delete(phone.trim());
+            otpStore.delete(normalizedPhone);
             return res.status(400).json({
                 error: "OtpExpired",
                 message: "OTP has expired. Please request a new code.",
@@ -710,7 +799,7 @@ export async function verifyPasswordResetOtp(req, res) {
         }
         entry.attempts += 1;
         if (entry.attempts > MAX_OTP_ATTEMPTS) {
-            otpStore.delete(phone.trim());
+            otpStore.delete(normalizedPhone);
             return res.status(429).json({
                 error: "TooManyAttempts",
                 message: "Too many incorrect attempts. Please request a new code.",
@@ -722,10 +811,10 @@ export async function verifyPasswordResetOtp(req, res) {
                 message: "Incorrect code. Please try again.",
             });
         }
-        otpStore.delete(phone.trim());
+        otpStore.delete(normalizedPhone);
         const resetToken = generateResetToken();
         resetTokenStore.set(resetToken, {
-            phone: phone.trim(),
+            phone: normalizedPhone,
             expiresAt: Date.now() + RESET_TOKEN_TTL_MS,
         });
         return res.json({
@@ -768,7 +857,7 @@ export async function resetPassword(req, res) {
             });
         }
         const user = await prisma.user.findFirst({
-            where: { phoneNumber: entry.phone },
+            where: { phoneNumber: { in: getEthiopianMobilePhoneCandidates(entry.phone) } },
             select: { id: true },
         });
         if (!user) {

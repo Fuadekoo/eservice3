@@ -5,6 +5,8 @@ export type Role = {
   id: string;
   name: string;
   description?: string | null;
+  officeId?: string | null;
+  officeName?: string | null;
   permissions: Permission[];
   memberCount?: number;
   createdAt: string;

@@ -4,7 +4,7 @@ export declare const createOfficeSchema: z.ZodObject<{
     roomNumber: z.ZodString;
     address: z.ZodString;
     subdomain: z.ZodString;
-    phoneNumber: z.ZodNullable<z.ZodOptional<z.ZodString>>;
+    phoneNumber: z.ZodNullable<z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<string | null, string>>>>;
     logo: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     slogan: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     settings: z.ZodOptional<z.ZodAny>;
@@ -15,7 +15,7 @@ export declare const updateOfficeSchema: z.ZodObject<{
     roomNumber: z.ZodOptional<z.ZodString>;
     address: z.ZodOptional<z.ZodString>;
     subdomain: z.ZodOptional<z.ZodString>;
-    phoneNumber: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
+    phoneNumber: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<string | null, string>>>>>;
     logo: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
     slogan: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodString>>>;
     settings: z.ZodOptional<z.ZodOptional<z.ZodAny>>;

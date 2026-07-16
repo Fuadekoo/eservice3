@@ -11,11 +11,19 @@ import type { AuthRequest } from "../middleware/auth.js";
  * @returns Office ID (string) or null for super admin
  */
 export function getOfficeId(req: AuthRequest, res: Response): string | null {
+  // Super admin operates globally (no office scope). The admin account may still
+  // carry a staff record tied to the head office, so this check must come first —
+  // otherwise office-scoped queries silently hide global rows (e.g. the base
+  // admin/manager/staff/customer roles, which have officeId = null).
+  if (req.isAdmin) {
+    return null;
+  }
+
   // Check if user has staff relationship (office staff)
   if (req.user?.staff?.officeId) {
     return req.user.staff.officeId;
   }
 
-  // Super admin or user with no office assignment
+  // User with no office assignment
   return null;
 }

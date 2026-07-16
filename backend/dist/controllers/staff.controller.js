@@ -3,6 +3,7 @@ import { hash } from "bcryptjs";
 import { canAccessOffice, getScopedOfficeId, requestHasOfficeWideAccess, } from "../helper/myOffice.js";
 import { prisma } from "../lib/db.js";
 import { createStaffSchema, updateStaffSchema, buildValidationError, } from "../validators/staff.validator.js";
+import { getEthiopianMobilePhoneCandidates, normalizeEthiopianMobilePhone, } from "../utils/phone.js";
 // ─── Query / param helpers ────────────────────────────────────────────────────
 function parseQueryString(value) {
     const str = typeof value === "string" ? value.trim() : undefined;
@@ -27,7 +28,10 @@ function getRequestedOfficeId(req) {
     return normalizeString(fromBody ?? fromQuery);
 }
 function getNormalizedPhone(input) {
-    return normalizeString(input.phoneNumber ?? input.phone);
+    const rawPhone = normalizeString(input.phoneNumber ?? input.phone);
+    if (!rawPhone)
+        return undefined;
+    return normalizeEthiopianMobilePhone(rawPhone) ?? rawPhone;
 }
 /**
  * Parses ?status= query param into a boolean filter value.
@@ -358,6 +362,9 @@ export async function createStaff(req, res) {
                 .json({ error: "NotFound", message: "Office not found." });
         }
         const phoneNumber = getNormalizedPhone(parsed.data);
+        const phoneCandidates = phoneNumber
+            ? getEthiopianMobilePhoneCandidates(phoneNumber)
+            : [];
         if (!phoneNumber) {
             return res.status(400).json({
                 error: "ValidationError",
@@ -368,7 +375,10 @@ export async function createStaff(req, res) {
             // Fail fast on duplicate username or phone before hashing
             const collision = await tx.user.findFirst({
                 where: {
-                    OR: [{ username: parsed.data.username }, { phoneNumber }],
+                    OR: [
+                        { username: parsed.data.username },
+                        { phoneNumber: { in: phoneCandidates } },
+                    ],
                 },
                 select: { username: true, phoneNumber: true },
             });
@@ -476,6 +486,9 @@ export async function updateStaff(req, res) {
         // Pre-check for collisions before entering the transaction
         const phoneNumber = getNormalizedPhone(parsed.data);
         if (phoneNumber || parsed.data.username) {
+            const phoneCandidates = phoneNumber
+                ? getEthiopianMobilePhoneCandidates(phoneNumber)
+                : [];
             const collision = await prisma.user.findFirst({
                 where: {
                     id: { not: existing.user.id },
@@ -483,7 +496,7 @@ export async function updateStaff(req, res) {
                         ...(parsed.data.username
                             ? [{ username: parsed.data.username }]
                             : []),
-                        ...(phoneNumber ? [{ phoneNumber }] : []),
+                        ...(phoneNumber ? [{ phoneNumber: { in: phoneCandidates } }] : []),
                     ],
                 },
                 select: { username: true, phoneNumber: true },

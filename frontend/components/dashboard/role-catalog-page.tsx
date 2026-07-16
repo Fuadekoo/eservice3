@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Building2,
   Edit2,
+  Globe,
   KeyRound,
   LayoutGrid,
   List,
@@ -18,8 +20,16 @@ import { toast } from "sonner";
 
 import { PermissionGuard } from "@/components/auth/permission-guard";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { PaginationFooter } from "@/components/dashboard/pagination-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -77,6 +87,24 @@ function SummaryCard({
   );
 }
 
+/** Shows the office a role is scoped to, or a "Global" marker for system roles. */
+function OfficeBadge({ role }: { role: Role }) {
+  if (role.officeId) {
+    return (
+      <Badge variant="secondary" className="gap-1 font-medium">
+        <Building2 className="h-3 w-3" />
+        {role.officeName || "Unknown office"}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="gap-1 text-muted-foreground">
+      <Globe className="h-3 w-3" />
+      Global
+    </Badge>
+  );
+}
+
 export function RoleCatalogPage({
   basePath,
   title = "Roles",
@@ -90,18 +118,51 @@ export function RoleCatalogPage({
   const { roles, isLoading, fetchRoles, deleteRole } = useSecurityStore();
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [search, setSearch] = useState("");
+  const [officeFilter, setOfficeFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     void fetchRoles();
   }, [fetchRoles]);
 
+  // Return to the first page whenever the result set changes underneath us.
+  useEffect(() => {
+    setPage(1);
+  }, [search, officeFilter, pageSize]);
+
+  // Distinct offices present in the loaded roles, for the office filter.
+  const officeOptions = useMemo(() => {
+    const byId = new Map<string, string>();
+    let hasGlobal = false;
+    for (const role of roles) {
+      if (role.officeId) byId.set(role.officeId, role.officeName || "Unknown office");
+      else hasGlobal = true;
+    }
+    const list = [...byId.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return { list, hasGlobal };
+  }, [roles]);
+
   const filteredRoles = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return roles;
 
     return roles.filter((role) => {
+      // Office scope filter.
+      if (officeFilter === "__global__" && role.officeId) return false;
+      if (
+        officeFilter !== "all" &&
+        officeFilter !== "__global__" &&
+        role.officeId !== officeFilter
+      ) {
+        return false;
+      }
+
+      if (!query) return true;
+
       const permissionMatch = (role.permissions || []).some(
         (permission) =>
           permission.name.toLowerCase().includes(query) ||
@@ -111,10 +172,11 @@ export function RoleCatalogPage({
       return (
         role.name.toLowerCase().includes(query) ||
         (role.description || "").toLowerCase().includes(query) ||
+        (role.officeName || "").toLowerCase().includes(query) ||
         permissionMatch
       );
     });
-  }, [roles, search]);
+  }, [roles, search, officeFilter]);
 
   const summary = useMemo(() => {
     const totalMembers = filteredRoles.reduce(
@@ -136,6 +198,14 @@ export function RoleCatalogPage({
       assignedRoles,
     };
   }, [filteredRoles]);
+
+  // Client-side pagination over the filtered set (the store holds every role).
+  const totalItems = filteredRoles.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const pagedRoles = filteredRoles.slice(startIndex, endIndex);
 
   const handleEdit = (role: Role) => {
     router.push(`${basePath}/${role.id}/edit`);
@@ -230,16 +300,35 @@ export function RoleCatalogPage({
       <Card className="border-border/60">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search role, description, or permission..."
-                className="pl-9"
-              />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center w-full lg:max-w-2xl">
+              <div className="relative w-full sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search role, office, or permission..."
+                  className="pl-9"
+                />
+              </div>
+              <Select value={officeFilter} onValueChange={setOfficeFilter}>
+                <SelectTrigger className="w-full sm:w-56">
+                  <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="All offices" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All offices</SelectItem>
+                  {officeOptions.hasGlobal ? (
+                    <SelectItem value="__global__">Global (system roles)</SelectItem>
+                  ) : null}
+                  {officeOptions.list.map((office) => (
+                    <SelectItem key={office.id} value={office.id}>
+                      {office.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground whitespace-nowrap">
               {filteredRoles.length} role
               {filteredRoles.length === 1 ? "" : "s"} visible
             </p>
@@ -269,7 +358,7 @@ export function RoleCatalogPage({
             </div>
           ) : viewMode === "card" ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {filteredRoles.map((role) => (
+              {pagedRoles.map((role) => (
                 <Card
                   key={role.id}
                   className="border-border/60 transition-shadow hover:shadow-md"
@@ -288,6 +377,7 @@ export function RoleCatalogPage({
                           </CardDescription>
                         </div>
                       </div>
+                      <OfficeBadge role={role} />
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -355,6 +445,7 @@ export function RoleCatalogPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Role</TableHead>
+                    <TableHead>Office</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Permissions</TableHead>
                     <TableHead>Members</TableHead>
@@ -362,13 +453,16 @@ export function RoleCatalogPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRoles.map((role) => (
+                  {pagedRoles.map((role) => (
                     <TableRow key={role.id}>
                       <TableCell>
                         <div className="flex items-center gap-2 font-medium">
                           <Shield className="h-4 w-4 text-primary" />
                           {role.name}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <OfficeBadge role={role} />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {role.description || "No description provided."}
@@ -425,6 +519,24 @@ export function RoleCatalogPage({
               </Table>
             </div>
           )}
+
+          {!isLoading && totalItems > 0 ? (
+            <div className="mt-6">
+              <PaginationFooter
+                currentPage={currentPage}
+                pageSize={pageSize}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+                canGoNext={currentPage < totalPages}
+                canGoPrevious={currentPage > 1}
+                itemLabel="roles"
+              />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

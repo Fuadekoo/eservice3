@@ -25,8 +25,13 @@ export function isValidEthiopianMobilePhone(input: string): boolean {
   return normalizeEthiopianMobilePhone(input) !== null;
 }
 
+/**
+ * Validates a phone as 09XXXXXXXX or 2519XXXXXXXX and normalizes it to the
+ * canonical 2519XXXXXXXX form on submit, so forms always send/store 2519.
+ */
 export const ethiopianMobilePhoneSchema = z
   .string()
   .trim()
   .min(1, "Phone number is required.")
-  .refine(isValidEthiopianMobilePhone, PHONE_FORMAT_MESSAGE);
+  .refine(isValidEthiopianMobilePhone, PHONE_FORMAT_MESSAGE)
+  .transform((value) => normalizeEthiopianMobilePhone(value) ?? value);

@@ -44,6 +44,13 @@ const loginSchema = z.object({
 const updateProfileSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
+    firstName: z.string().trim().max(100).optional(),
+    fatherName: z.string().trim().max(100).optional(),
+    lastName: z.string().trim().max(100).optional(),
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+    // Stored image is an uploaded filename (see /files/upload); empty string
+    // clears the current photo.
+    image: z.string().trim().max(255).optional(),
     phone: z
       .string()
       .trim()
@@ -54,13 +61,10 @@ const updateProfileSchema = z
       .transform((value) => normalizeEthiopianMobilePhone(value) ?? value)
       .optional(),
   })
-  .refine(
-    (value) => value.username !== undefined || value.phone !== undefined,
-    {
-      message: "Provide at least one field to update.",
-      path: [],
-    },
-  );
+  .refine((value) => Object.values(value).some((v) => v !== undefined), {
+    message: "Provide at least one field to update.",
+    path: [],
+  });
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required."),
@@ -161,6 +165,12 @@ function buildAuthResponse(
     user: {
       id: user.id,
       username: user.username,
+      name: user.name ?? null,
+      firstName: user.firstName ?? null,
+      fatherName: user.fatherName ?? null,
+      lastName: user.lastName ?? null,
+      gender: user.gender ?? null,
+      image: user.image ?? null,
       phone: user.phoneNumber,
       phoneNumber: user.phoneNumber,
       isActive: user.isActive,
@@ -368,7 +378,8 @@ export async function updateProfile(
       return res.status(400).json(buildValidationError(validationResult.error));
     }
 
-    const { phone, username } = validationResult.data;
+    const { phone, username, firstName, fatherName, lastName, gender, image } =
+      validationResult.data;
 
     if (phone !== undefined) {
       const existingByPhone = await prisma.user.findFirst({
@@ -387,11 +398,38 @@ export async function updateProfile(
       }
     }
 
+    // Keep the denormalized `name` in sync when any name part changes.
+    const nameChanged =
+      firstName !== undefined ||
+      fatherName !== undefined ||
+      lastName !== undefined;
+    let composedName: string | undefined;
+    if (nameChanged) {
+      const current = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { firstName: true, fatherName: true, lastName: true },
+      });
+      composedName = [
+        firstName ?? current?.firstName ?? "",
+        fatherName ?? current?.fatherName ?? "",
+        lastName ?? current?.lastName ?? "",
+      ]
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(" ");
+    }
+
     await prisma.user.update({
       where: { id: req.userId },
       data: {
         ...(username !== undefined ? { username } : {}),
         ...(phone !== undefined ? { phoneNumber: phone } : {}),
+        ...(firstName !== undefined ? { firstName } : {}),
+        ...(fatherName !== undefined ? { fatherName } : {}),
+        ...(lastName !== undefined ? { lastName } : {}),
+        ...(gender !== undefined ? { gender } : {}),
+        ...(image !== undefined ? { image: image || null } : {}),
+        ...(composedName !== undefined ? { name: composedName } : {}),
       },
     });
 

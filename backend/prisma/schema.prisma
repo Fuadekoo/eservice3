@@ -34,6 +34,7 @@ model User {
   firstName        String?
   fatherName       String?
   lastName         String?
+  image            String?
   gender           Gender?     @default(OTHER)
   status           UserStatus? @default(ACTIVE)
   username         String      @unique

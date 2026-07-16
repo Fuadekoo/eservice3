@@ -30,7 +30,7 @@
       "translations": {
         "en": "Bytes",
         "am": "ባይት",
-        "om": "Bytes"
+        "om": "Baytii"
       }
     },
     {
@@ -102,7 +102,7 @@
       "translations": {
         "en": "Platform",
         "am": "ፕላትፎርም",
-        "om": "Platform"
+        "om": "Waltajjii"
       }
     },
     {
@@ -126,7 +126,7 @@
       "translations": {
         "en": "Service Desk",
         "am": "የአገልግሎት መስጫ",
-        "om": "Service Desk"
+        "om": "Deeskii Tajaajilaa"
       }
     },
     {
@@ -134,7 +134,7 @@
       "translations": {
         "en": "Customer Portal",
         "am": "የደንበኞች ፖርታል",
-        "om": "Customer Portal"
+        "om": "Poortaalii Maamilaa"
       }
     },
     {
@@ -142,7 +142,7 @@
       "translations": {
         "en": "Content Management",
         "am": "የይዘት አስተዳደር",
-        "om": "Content Management"
+        "om": "Bulchiinsa Qabiyyee"
       }
     },
     {
@@ -158,7 +158,7 @@
       "translations": {
         "en": "Overview",
         "am": "አጠቃላይ እይታ",
-        "om": "Overview"
+        "om": "Ilaalcha Waliigalaa"
       }
     },
     {
@@ -166,7 +166,7 @@
       "translations": {
         "en": "System Stats",
         "am": "የስርዓት ስታቲስቲክስ",
-        "om": "System Stats"
+        "om": "Istaatistiksii Sirnaa"
       }
     },
     {
@@ -190,7 +190,7 @@
       "translations": {
         "en": "Security & Roles",
         "am": "ደህንነት እና ሚናዎች",
-        "om": "Security & Roles"
+        "om": "Nageenyaa fi Gahee"
       }
     },
     {
@@ -198,7 +198,7 @@
       "translations": {
         "en": "Roles",
         "am": "ሚናዎች",
-        "om": "Roles"
+        "om": "Gahee"
       }
     },
     {
@@ -206,7 +206,7 @@
       "translations": {
         "en": "Permissions",
         "am": "ፈቃዶች",
-        "om": "Permissions"
+        "om": "Hayyamawwan"
       }
     },
     {
@@ -214,7 +214,7 @@
       "translations": {
         "en": "Audit Logs",
         "am": "የኦዲት ምዝግብ ማስታወሻዎች",
-        "om": "Audit Logs"
+        "om": "Galmeewwan Ooditii"
       }
     },
     {
@@ -230,7 +230,7 @@
       "translations": {
         "en": "System Settings",
         "am": "የስርዓት ቅንብሮች",
-        "om": "System Settings"
+        "om": "Qindaa'ina Sirnaa"
       }
     },
     {
@@ -262,7 +262,7 @@
       "translations": {
         "en": "Availability",
         "am": "ተገኝነት",
-        "om": "Availability"
+        "om": "Argamummaa"
       }
     },
     {
@@ -270,7 +270,7 @@
       "translations": {
         "en": "Requests",
         "am": "ጥያቄዎች",
-        "om": "Requests"
+        "om": "Gaaffiiwwan"
       }
     },
     {
@@ -286,7 +286,7 @@
       "translations": {
         "en": "My Queue",
         "am": "የእኔ ወረፋ",
-        "om": "My Queue"
+        "om": "Tarree Koo"
       }
     },
     {
@@ -294,7 +294,7 @@
       "translations": {
         "en": "Appointments",
         "am": "ቀጠሮዎች",
-        "om": "Appointments"
+        "om": "Beellamawwan"
       }
     },
     {
@@ -302,7 +302,7 @@
       "translations": {
         "en": "Reports",
         "am": "ሪፖርቶች",
-        "om": "Reports"
+        "om": "Gabaasota"
       }
     },
     {
@@ -342,7 +342,7 @@
       "translations": {
         "en": "Feedback",
         "am": "አስተያየት",
-        "om": "Feedback"
+        "om": "Yaada Deebii"
       }
     },
     {
@@ -350,7 +350,7 @@
       "translations": {
         "en": "Gallery",
         "am": "ጋለሪ",
-        "om": "Gallery"
+        "om": "Galarii"
       }
     },
     {
@@ -1021,7 +1021,7 @@
       "key": "Overview",
       "translations": {
         "en": "Overview",
-        "am": "እይታእአዝዝ",
+        "am": "አጠቃላይ እይታ",
         "om": "Cuunfaa"
       }
     },
@@ -2237,664 +2237,664 @@
       "key": "Two-Factor Authentication",
       "translations": {
         "en": "Two-Factor Authentication",
-        "am": "Two-Factor Authentication",
-        "om": "Two-Factor Authentication"
+        "am": "ባለ ሁለት ደረጃ ማረጋገጫ",
+        "om": "Mirkaneessa Sadarkaa Lamaa"
       }
     },
     {
       "key": "Enable 2FA",
       "translations": {
         "en": "Enable 2FA",
-        "am": "Enable 2FA",
-        "om": "Enable 2FA"
+        "am": "2FA አንቃ",
+        "om": "2FA Dandeessisi"
       }
     },
     {
       "key": "Disable 2FA",
       "translations": {
         "en": "Disable 2FA",
-        "am": "Disable 2FA",
-        "om": "Disable 2FA"
+        "am": "2FA አሰናክል",
+        "om": "2FA Dhaamsi"
       }
     },
     {
       "key": "Set Up Authenticator",
       "translations": {
         "en": "Set Up Authenticator",
-        "am": "Set Up Authenticator",
-        "om": "Set Up Authenticator"
+        "am": "አረጋጋጭ አዋቅር",
+        "om": "Mirkaneessaa Qindeessi"
       }
     },
     {
       "key": "Scan the QR code with your authenticator app",
       "translations": {
         "en": "Scan the QR code with your authenticator app",
-        "am": "Scan the QR code with your authenticator app",
-        "om": "Scan the QR code with your authenticator app"
+        "am": "የQR ኮዱን በአረጋጋጭ መተግበሪያዎ ይቃኙ",
+        "om": "Koodii QR appii mirkaneessaa keessaniin skaan godhaa"
       }
     },
     {
       "key": "Scan QR code or enter key manually",
       "translations": {
         "en": "Scan QR code or enter key manually",
-        "am": "Scan QR code or enter key manually",
-        "om": "Scan QR code or enter key manually"
+        "am": "የQR ኮድ ይቃኙ ወይም ቁልፉን በእጅ ያስገቡ",
+        "om": "Koodii QR skaan godhaa ykn furtuu harkaan galchaa"
       }
     },
     {
       "key": "Open your authenticator app and scan this QR code",
       "translations": {
         "en": "Open your authenticator app and scan this QR code",
-        "am": "Open your authenticator app and scan this QR code",
-        "om": "Open your authenticator app and scan this QR code"
+        "am": "የአረጋጋጭ መተግበሪያዎን ይክፈቱ እና ይህን የQR ኮድ ይቃኙ",
+        "om": "Appii mirkaneessaa keessan banaatii koodii QR kana skaan godhaa"
       }
     },
     {
       "key": "Or enter this key manually:",
       "translations": {
         "en": "Or enter this key manually:",
-        "am": "Or enter this key manually:",
-        "om": "Or enter this key manually:"
+        "am": "ወይም ይህን ቁልፍ በእጅ ያስገቡ:",
+        "om": "Ykn furtuu kana harkaan galchaa:"
       }
     },
     {
       "key": "Recommended apps:",
       "translations": {
         "en": "Recommended apps:",
-        "am": "Recommended apps:",
-        "om": "Recommended apps:"
+        "am": "የሚመከሩ መተግበሪያዎች:",
+        "om": "Appiiwwan gorfaman:"
       }
     },
     {
       "key": "Enter the verification code from your app",
       "translations": {
         "en": "Enter the verification code from your app",
-        "am": "Enter the verification code from your app",
-        "om": "Enter the verification code from your app"
+        "am": "ከመተግበሪያዎ የማረጋገጫ ኮድ ያስገቡ",
+        "om": "Koodii mirkaneessaa appii keessan irraa galchaa"
       }
     },
     {
       "key": "Verify & Enable",
       "translations": {
         "en": "Verify & Enable",
-        "am": "Verify & Enable",
-        "om": "Verify & Enable"
+        "am": "አረጋግጥ እና አንቃ",
+        "om": "Mirkaneessii Dandeessisi"
       }
     },
     {
       "key": "Setting up...",
       "translations": {
         "en": "Setting up...",
-        "am": "Setting up...",
-        "om": "Setting up..."
+        "am": "በማዋቀር ላይ...",
+        "om": "Qindeessaa jira..."
       }
     },
     {
       "key": "Verifying...",
       "translations": {
         "en": "Verifying...",
-        "am": "Verifying...",
-        "om": "Verifying..."
+        "am": "በማረጋገጥ ላይ...",
+        "om": "Mirkaneessaa jira..."
       }
     },
     {
       "key": "Enabled",
       "translations": {
         "en": "Enabled",
-        "am": "Enabled",
-        "om": "Enabled"
+        "am": "ነቅቷል",
+        "om": "Dandeessifame"
       }
     },
     {
       "key": "Disabled",
       "translations": {
         "en": "Disabled",
-        "am": "Disabled",
-        "om": "Disabled"
+        "am": "ተሰናክሏል",
+        "om": "Dhaamame"
       }
     },
     {
       "key": "Your account is protected with an authenticator app",
       "translations": {
         "en": "Your account is protected with an authenticator app",
-        "am": "Your account is protected with an authenticator app",
-        "om": "Your account is protected with an authenticator app"
+        "am": "መለያዎ በአረጋጋጭ መተግበሪያ የተጠበቀ ነው",
+        "om": "Akkaawuntiin keessan appii mirkaneessaatiin eegameera"
       }
     },
     {
       "key": "Add an extra layer of security to your account",
       "translations": {
         "en": "Add an extra layer of security to your account",
-        "am": "Add an extra layer of security to your account",
-        "om": "Add an extra layer of security to your account"
+        "am": "ለመለያዎ ተጨማሪ የደህንነት ሽፋን ያክሉ",
+        "om": "Akkaawuntii keessaniif dabalata nageenyaa ida'aa"
       }
     },
     {
       "key": "Your account is secured",
       "translations": {
         "en": "Your account is secured",
-        "am": "Your account is secured",
-        "om": "Your account is secured"
+        "am": "መለያዎ ተጠብቋል",
+        "om": "Akkaawuntiin keessan eegameera"
       }
     },
     {
       "key": "Your account could be more secure",
       "translations": {
         "en": "Your account could be more secure",
-        "am": "Your account could be more secure",
-        "om": "Your account could be more secure"
+        "am": "መለያዎ የበለጠ ደህንነቱ የተጠበቀ ሊሆን ይችላል",
+        "om": "Akkaawuntiin keessan caalaatti eegamuu danda'a"
       }
     },
     {
       "key": "A verification code from your authenticator app is required every time you sign in.",
       "translations": {
         "en": "A verification code from your authenticator app is required every time you sign in.",
-        "am": "A verification code from your authenticator app is required every time you sign in.",
-        "om": "A verification code from your authenticator app is required every time you sign in."
+        "am": "በሚገቡበት ጊዜ ሁሉ ከአረጋጋጭ መተግበሪያዎ የማረጋገጫ ኮድ ያስፈልጋል።",
+        "om": "Yeroo hunda yommuu seentan koodiin mirkaneessaa appii mirkaneessaa keessan irraa ni barbaachisa."
       }
     },
     {
       "key": "Enable two-factor authentication to require a verification code from your authenticator app when signing in.",
       "translations": {
         "en": "Enable two-factor authentication to require a verification code from your authenticator app when signing in.",
-        "am": "Enable two-factor authentication to require a verification code from your authenticator app when signing in.",
-        "om": "Enable two-factor authentication to require a verification code from your authenticator app when signing in."
+        "am": "በሚገቡበት ጊዜ ከአረጋጋጭ መተግበሪያዎ የማረጋገጫ ኮድ እንዲጠየቅ ባለ ሁለት ደረጃ ማረጋገጫን ያንቁ።",
+        "om": "Yeroo seentan koodii mirkaneessaa appii keessan irraa gaafachuuf mirkaneessa sadarkaa lamaa dandeessisaa."
       }
     },
     {
       "key": "Disable Two-Factor Authentication",
       "translations": {
         "en": "Disable Two-Factor Authentication",
-        "am": "Disable Two-Factor Authentication",
-        "om": "Disable Two-Factor Authentication"
+        "am": "ባለ ሁለት ደረጃ ማረጋገጫን አሰናክል",
+        "om": "Mirkaneessa Sadarkaa Lamaa Dhaamsi"
       }
     },
     {
       "key": "Enter the current code from your authenticator app to confirm disabling two-factor authentication. Your account will be less secure after this action.",
       "translations": {
         "en": "Enter the current code from your authenticator app to confirm disabling two-factor authentication. Your account will be less secure after this action.",
-        "am": "Enter the current code from your authenticator app to confirm disabling two-factor authentication. Your account will be less secure after this action.",
-        "om": "Enter the current code from your authenticator app to confirm disabling two-factor authentication. Your account will be less secure after this action."
+        "am": "ባለ ሁለት ደረጃ ማረጋገጫን ማሰናከል ለማረጋገጥ የአሁኑን ኮድ ከአረጋጋጭ መተግበሪያዎ ያስገቡ። ከዚህ ተግባር በኋላ መለያዎ ደህንነቱ ያነሰ ይሆናል።",
+        "om": "Mirkaneessa sadarkaa lamaa dhaamsuu mirkaneessuuf koodii ammaa appii mirkaneessaa keessan irraa galchaa. Gocha kana booda akkaawuntiin keessan nageenya xiqqaa qabaata."
       }
     },
     {
       "key": "Confirm Disable",
       "translations": {
         "en": "Confirm Disable",
-        "am": "Confirm Disable",
-        "om": "Confirm Disable"
+        "am": "ማሰናከልን አረጋግጥ",
+        "om": "Dhaamsuu Mirkaneessi"
       }
     },
     {
       "key": "Disabling...",
       "translations": {
         "en": "Disabling...",
-        "am": "Disabling...",
-        "om": "Disabling..."
+        "am": "በማሰናከል ላይ...",
+        "om": "Dhaamsaa jira..."
       }
     },
     {
       "key": "Secret key copied to clipboard",
       "translations": {
         "en": "Secret key copied to clipboard",
-        "am": "Secret key copied to clipboard",
-        "om": "Secret key copied to clipboard"
+        "am": "ሚስጥራዊ ቁልፍ ወደ ቅንጥብ ሰሌዳ ተቀድቷል",
+        "om": "Furtuun iccitii gara kilipboordiitti waraabame"
       }
     },
     {
       "key": "Failed to start 2FA setup",
       "translations": {
         "en": "Failed to start 2FA setup",
-        "am": "Failed to start 2FA setup",
-        "om": "Failed to start 2FA setup"
+        "am": "የ2FA ማዋቀር ማስጀመር አልተሳካም",
+        "om": "Qindaa'ina 2FA jalqabuun hin milkoofne"
       }
     },
     {
       "key": "Two-factor authentication enabled!",
       "translations": {
         "en": "Two-factor authentication enabled!",
-        "am": "Two-factor authentication enabled!",
-        "om": "Two-factor authentication enabled!"
+        "am": "ባለ ሁለት ደረጃ ማረጋገጫ ነቅቷል!",
+        "om": "Mirkaneessi sadarkaa lamaa dandeessifame!"
       }
     },
     {
       "key": "Your account is now more secure.",
       "translations": {
         "en": "Your account is now more secure.",
-        "am": "Your account is now more secure.",
-        "om": "Your account is now more secure."
+        "am": "መለያዎ አሁን የበለጠ ደህንነቱ የተጠበቀ ነው።",
+        "om": "Akkaawuntiin keessan amma caalaatti eegameera."
       }
     },
     {
       "key": "Verification failed",
       "translations": {
         "en": "Verification failed",
-        "am": "Verification failed",
-        "om": "Verification failed"
+        "am": "ማረጋገጥ አልተሳካም",
+        "om": "Mirkaneessuun hin milkoofne"
       }
     },
     {
       "key": "Invalid code. Make sure you're using the latest code.",
       "translations": {
         "en": "Invalid code. Make sure you're using the latest code.",
-        "am": "Invalid code. Make sure you're using the latest code.",
-        "om": "Invalid code. Make sure you're using the latest code."
+        "am": "ልክ ያልሆነ ኮድ። የቅርብ ጊዜውን ኮድ እየተጠቀሙ መሆኑን ያረጋግጡ።",
+        "om": "Koodiin sirrii miti. Koodii haaraa fayyadamaa jirtan mirkaneeffadhaa."
       }
     },
     {
       "key": "Two-factor authentication disabled",
       "translations": {
         "en": "Two-factor authentication disabled",
-        "am": "Two-factor authentication disabled",
-        "om": "Two-factor authentication disabled"
+        "am": "ባለ ሁለት ደረጃ ማረጋገጫ ተሰናክሏል",
+        "om": "Mirkaneessi sadarkaa lamaa dhaamame"
       }
     },
     {
       "key": "You can re-enable it anytime from settings.",
       "translations": {
         "en": "You can re-enable it anytime from settings.",
-        "am": "You can re-enable it anytime from settings.",
-        "om": "You can re-enable it anytime from settings."
+        "am": "በማንኛውም ጊዜ ከቅንብሮች እንደገና ማንቃት ይችላሉ።",
+        "om": "Yeroo kamiyyuu qindaa'ina irraa deebisanii dandeessisuu dandeessu."
       }
     },
     {
       "key": "Failed to disable 2FA",
       "translations": {
         "en": "Failed to disable 2FA",
-        "am": "Failed to disable 2FA",
-        "om": "Failed to disable 2FA"
+        "am": "2FA ማሰናከል አልተሳካም",
+        "om": "2FA dhaamsuun hin milkoofne"
       }
     },
     {
       "key": "Invalid code. Please try again.",
       "translations": {
         "en": "Invalid code. Please try again.",
-        "am": "Invalid code. Please try again.",
-        "om": "Invalid code. Please try again."
+        "am": "ልክ ያልሆነ ኮድ። እባክዎ እንደገና ይሞክሩ።",
+        "om": "Koodiin sirrii miti. Maaloo irra deebi'aa yaalaa."
       }
     },
     {
       "key": "Enter your full name",
       "translations": {
         "en": "Enter your full name",
-        "am": "Enter your full name",
-        "om": "Enter your full name"
+        "am": "ሙሉ ስምዎን ያስገቡ",
+        "om": "Maqaa guutuu keessan galchaa"
       }
     },
     {
       "key": "Username",
       "translations": {
         "en": "Username",
-        "am": "Username",
-        "om": "Username"
+        "am": "የተጠቃሚ ስም",
+        "om": "Maqaa Fayyadamaa"
       }
     },
     {
       "key": "Enter username",
       "translations": {
         "en": "Enter username",
-        "am": "Enter username",
-        "om": "Enter username"
+        "am": "የተጠቃሚ ስም ያስገቡ",
+        "om": "Maqaa fayyadamaa galchaa"
       }
     },
     {
       "key": "Gender",
       "translations": {
         "en": "Gender",
-        "am": "Gender",
-        "om": "Gender"
+        "am": "ጾታ",
+        "om": "Saala"
       }
     },
     {
       "key": "Select gender",
       "translations": {
         "en": "Select gender",
-        "am": "Select gender",
-        "om": "Select gender"
+        "am": "ጾታ ይምረጡ",
+        "om": "Saala filadhaa"
       }
     },
     {
       "key": "Date of Birth",
       "translations": {
         "en": "Date of Birth",
-        "am": "Date of Birth",
-        "om": "Date of Birth"
+        "am": "የልደት ቀን",
+        "om": "Guyyaa Dhalootaa"
       }
     },
     {
       "key": "Only PDF files are allowed",
       "translations": {
         "en": "Only PDF files are allowed",
-        "am": "Only PDF files are allowed",
-        "om": "Only PDF files are allowed"
+        "am": "የPDF ፋይሎች ብቻ ይፈቀዳሉ",
+        "om": "Faayiloonni PDF qofa hayyamamu"
       }
     },
     {
       "key": "PDF (MAX. 50MB per file)",
       "translations": {
         "en": "PDF (MAX. 50MB per file)",
-        "am": "PDF (MAX. 50MB per file)",
-        "om": "PDF (MAX. 50MB per file)"
+        "am": "PDF (ከፍተኛ 50MB በአንድ ፋይል)",
+        "om": "PDF (Ol'aanaa 50MB faayilii tokkoof)"
       }
     },
     {
       "key": "Loading security settings...",
       "translations": {
         "en": "Loading security settings...",
-        "am": "Loading security settings...",
-        "om": "Loading security settings..."
+        "am": "የደህንነት ቅንብሮችን በመጫን ላይ...",
+        "om": "Qindaa'ina nageenyaa fe'aa jira..."
       }
     },
     {
       "key": "Are you sure you want to delete this file?",
       "translations": {
         "en": "Are you sure you want to delete this file?",
-        "am": "Are you sure you want to delete this file?",
-        "om": "Are you sure you want to delete this file?"
+        "am": "ይህን ፋይል መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት?",
+        "om": "Faayilii kana haquu barbaadduu dhugumaan?"
       }
     },
     {
       "key": "This action cannot be undone. This will permanently delete the file.",
       "translations": {
         "en": "This action cannot be undone. This will permanently delete the file.",
-        "am": "This action cannot be undone. This will permanently delete the file.",
-        "om": "This action cannot be undone. This will permanently delete the file."
+        "am": "ይህ ተግባር ሊቀለበስ አይችልም። ይህ ፋይሉን በቋሚነት ይሰርዘዋል።",
+        "om": "Gochi kun deebi'uu hin danda'u. Kun faayilii guutummaatti haqa."
       }
     },
     {
       "key": "Verify & Sign In",
       "translations": {
         "en": "Verify & Sign In",
-        "am": "Verify & Sign In",
-        "om": "Verify & Sign In"
+        "am": "አረጋግጥ እና ግባ",
+        "om": "Mirkaneessii Seeni"
       }
     },
     {
       "key": "Back to login",
       "translations": {
         "en": "Back to login",
-        "am": "Back to login",
-        "om": "Back to login"
+        "am": "ወደ መግቢያ ተመለስ",
+        "om": "Gara Seensaatti Deebi'i"
       }
     },
     {
       "key": "Enter the 6-digit code from your authenticator app",
       "translations": {
         "en": "Enter the 6-digit code from your authenticator app",
-        "am": "Enter the 6-digit code from your authenticator app",
-        "om": "Enter the 6-digit code from your authenticator app"
+        "am": "ከአረጋጋጭ መተግበሪያዎ ባለ 6 አሃዝ ኮድ ያስገቡ",
+        "om": "Koodii dijitii 6 appii mirkaneessaa keessan irraa galchaa"
       }
     },
     {
       "key": "Please enter the code from your authenticator app",
       "translations": {
         "en": "Please enter the code from your authenticator app",
-        "am": "Please enter the code from your authenticator app",
-        "om": "Please enter the code from your authenticator app"
+        "am": "እባክዎ ከአረጋጋጭ መተግበሪያዎ ኮዱን ያስገቡ",
+        "om": "Maaloo koodii appii mirkaneessaa keessan irraa galchaa"
       }
     },
     {
       "key": "Retry",
       "translations": {
         "en": "Retry",
-        "am": "Retry",
-        "om": "Retry"
+        "am": "እንደገና ሞክር",
+        "om": "Irra Deebi'ii Yaali"
       }
     },
     {
       "key": "Search files...",
       "translations": {
         "en": "Search files...",
-        "am": "Search files...",
-        "om": "Search files..."
+        "am": "ፋይሎችን ፈልግ...",
+        "om": "Faayiloota barbaadi..."
       }
     },
     {
       "key": "No files found",
       "translations": {
         "en": "No files found",
-        "am": "No files found",
-        "om": "No files found"
+        "am": "ምንም ፋይል አልተገኘም",
+        "om": "Faayiliin hin argamne"
       }
     },
     {
       "key": "Try adjusting your search terms",
       "translations": {
         "en": "Try adjusting your search terms",
-        "am": "Try adjusting your search terms",
-        "om": "Try adjusting your search terms"
+        "am": "የፍለጋ ቃላትዎን ማስተካከል ይሞክሩ",
+        "om": "Jechoota barbaachaa keessan sirreessuu yaalaa"
       }
     },
     {
       "key": "Get started by creating your first file",
       "translations": {
         "en": "Get started by creating your first file",
-        "am": "Get started by creating your first file",
-        "om": "Get started by creating your first file"
+        "am": "የመጀመሪያ ፋይልዎን በመፍጠር ይጀምሩ",
+        "om": "Faayilii keessan jalqabaa uumuun jalqabaa"
       }
     },
     {
       "key": "View Details",
       "translations": {
         "en": "View Details",
-        "am": "View Details",
-        "om": "View Details"
+        "am": "ዝርዝሮችን ተመልከት",
+        "om": "Bal'ina Ilaali"
       }
     },
     {
       "key": "Edit",
       "translations": {
         "en": "Edit",
-        "am": "Edit",
-        "om": "Edit"
+        "am": "አርትዕ",
+        "om": "Gulaali"
       }
     },
     {
       "key": "File created successfully",
       "translations": {
         "en": "File created successfully",
-        "am": "File created successfully",
-        "om": "File created successfully"
+        "am": "ፋይል በተሳካ ሁኔታ ተፈጥሯል",
+        "om": "Faayiliin milkaa'inaan uumame"
       }
     },
     {
       "key": "Failed to load file details",
       "translations": {
         "en": "Failed to load file details",
-        "am": "Failed to load file details",
-        "om": "Failed to load file details"
+        "am": "የፋይል ዝርዝሮችን መጫን አልተሳካም",
+        "om": "Bal'ina faayilii fe'uun hin milkoofne"
       }
     },
     {
       "key": "Maximum 10 versions allowed per file. Please delete an older version first.",
       "translations": {
         "en": "Maximum 10 versions allowed per file. Please delete an older version first.",
-        "am": "Maximum 10 versions allowed per file. Please delete an older version first.",
-        "om": "Maximum 10 versions allowed per file. Please delete an older version first."
+        "am": "በአንድ ፋይል ከፍተኛ 10 ስሪቶች ይፈቀዳሉ። እባክዎ መጀመሪያ የቆየ ስሪት ይሰርዙ።",
+        "om": "Faayilii tokkoof varshinii 10 ol'aanaa hayyamama. Maaloo dura varshinii moofaa haqaa."
       }
     },
     {
       "key": "History",
       "translations": {
         "en": "History",
-        "am": "History",
-        "om": "History"
+        "am": "ታሪክ",
+        "om": "Seenaa"
       }
     },
     {
       "key": "Add Version",
       "translations": {
         "en": "Add Version",
-        "am": "Add Version",
-        "om": "Add Version"
+        "am": "ስሪት አክል",
+        "om": "Varshinii Ida'i"
       }
     },
     {
       "key": "View",
       "translations": {
         "en": "View",
-        "am": "View",
-        "om": "View"
+        "am": "ተመልከት",
+        "om": "Ilaali"
       }
     },
     {
       "key": "Download",
       "translations": {
         "en": "Download",
-        "am": "Download",
-        "om": "Download"
+        "am": "አውርድ",
+        "om": "Buufadhu"
       }
     },
     {
       "key": "Delete Version",
       "translations": {
         "en": "Delete Version",
-        "am": "Delete Version",
-        "om": "Delete Version"
+        "am": "ስሪት ሰርዝ",
+        "om": "Varshinii Haqi"
       }
     },
     {
       "key": "Are you sure you want to delete this version?",
       "translations": {
         "en": "Are you sure you want to delete this version?",
-        "am": "Are you sure you want to delete this version?",
-        "om": "Are you sure you want to delete this version?"
+        "am": "ይህን ስሪት መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት?",
+        "om": "Varshinii kana haquu barbaadduu dhugumaan?"
       }
     },
     {
       "key": "This version will be permanently removed.",
       "translations": {
         "en": "This version will be permanently removed.",
-        "am": "This version will be permanently removed.",
-        "om": "This version will be permanently removed."
+        "am": "ይህ ስሪት በቋሚነት ይወገዳል።",
+        "om": "Varshiniin kun guutummaatti ni haqama."
       }
     },
     {
       "key": "Add Tags",
       "translations": {
         "en": "Add Tags",
-        "am": "Add Tags",
-        "om": "Add Tags"
+        "am": "መለያዎች አክል",
+        "om": "Taagiiwwan Ida'i"
       }
     },
     {
       "key": "Search tags...",
       "translations": {
         "en": "Search tags...",
-        "am": "Search tags...",
-        "om": "Search tags..."
+        "am": "መለያዎችን ፈልግ...",
+        "om": "Taagiiwwan barbaadi..."
       }
     },
     {
       "key": "Edit File",
       "translations": {
         "en": "Edit File",
-        "am": "Edit File",
-        "om": "Edit File"
+        "am": "ፋይል አርትዕ",
+        "om": "Faayilii Gulaali"
       }
     },
     {
       "key": "Update File",
       "translations": {
         "en": "Update File",
-        "am": "Update File",
-        "om": "Update File"
+        "am": "ፋይል አዘምን",
+        "om": "Faayilii Haaromsi"
       }
     },
     {
       "key": "File updated successfully",
       "translations": {
         "en": "File updated successfully",
-        "am": "File updated successfully",
-        "om": "File updated successfully"
+        "am": "ፋይል በተሳካ ሁኔታ ተዘምኗል",
+        "om": "Faayiliin milkaa'inaan haaromfame"
       }
     },
     {
       "key": "Failed to update file",
       "translations": {
         "en": "Failed to update file",
-        "am": "Failed to update file",
-        "om": "Failed to update file"
+        "am": "ፋይል ማዘመን አልተሳካም",
+        "om": "Faayilii haaromsuun hin milkoofne"
       }
     },
     {
       "key": "This action cannot be undone.",
       "translations": {
         "en": "This action cannot be undone.",
-        "am": "This action cannot be undone.",
-        "om": "This action cannot be undone."
+        "am": "ይህ ተግባር ሊቀለበስ አይችልም።",
+        "om": "Gochi kun deebi'uu hin danda'u."
       }
     },
     {
       "key": "Permanently delete the file",
       "translations": {
         "en": "Permanently delete the file",
-        "am": "Permanently delete the file",
-        "om": "Permanently delete the file"
+        "am": "ፋይሉን በቋሚነት ሰርዝ",
+        "om": "Faayilii guutummaatti haqi"
       }
     },
     {
       "key": "File deleted successfully",
       "translations": {
         "en": "File deleted successfully",
-        "am": "File deleted successfully",
-        "om": "File deleted successfully"
+        "am": "ፋይል በተሳካ ሁኔታ ተሰርዟል",
+        "om": "Faayiliin milkaa'inaan haqame"
       }
     },
     {
       "key": "Failed to delete file",
       "translations": {
         "en": "Failed to delete file",
-        "am": "Failed to delete file",
-        "om": "Failed to delete file"
+        "am": "ፋይል መሰረዝ አልተሳካም",
+        "om": "Faayilii haquun hin milkoofne"
       }
     },
     {
       "key": "Click to upload",
       "translations": {
         "en": "Click to upload",
-        "am": "Click to upload",
-        "om": "Click to upload"
+        "am": "ለመጫን ጠቅ ያድርጉ",
+        "om": "Olkaa'uuf cuqaasaa"
       }
     },
     {
       "key": "or drag and drop",
       "translations": {
         "en": "or drag and drop",
-        "am": "or drag and drop",
-        "om": "or drag and drop"
+        "am": "ወይም ይጎትቱ እና ይጣሉ",
+        "om": "ykn harkisaatii gadhiisaa"
       }
     },
     {
       "key": "File Details",
       "translations": {
         "en": "File Details",
-        "am": "File Details",
-        "om": "File Details"
+        "am": "የፋይል ዝርዝሮች",
+        "om": "Bal'ina Faayilii"
       }
     },
     {
       "key": "View detailed information about this file",
       "translations": {
         "en": "View detailed information about this file",
-        "am": "View detailed information about this file",
-        "om": "View detailed information about this file"
+        "am": "ስለዚህ ፋይል ዝርዝር መረጃ ተመልከት",
+        "om": "Odeeffannoo bal'aa faayilii kanaa ilaali"
       }
     },
     {
       "key": "File Number",
       "translations": {
         "en": "File Number",
-        "am": "File Number",
-        "om": "File Number"
+        "am": "የፋይል ቁጥር",
+        "om": "Lakkoofsa Faayilii"
       }
     },
     {
       "key": "Full Name",
       "translations": {
         "en": "Full Name",
-        "am": "Full Name",
-        "om": "Full Name"
+        "am": "ሙሉ ስም",
+        "om": "Maqaa Guutuu"
       }
     },
     {
@@ -2909,448 +2909,528 @@
       "key": "Phone",
       "translations": {
         "en": "Phone",
-        "am": "Phone",
-        "om": "Phone"
+        "am": "ስልክ",
+        "om": "Bilbila"
       }
     },
     {
       "key": "Address",
       "translations": {
         "en": "Address",
-        "am": "Address",
-        "om": "Address"
+        "am": "አድራሻ",
+        "om": "Teessoo"
       }
     },
     {
       "key": "Woreda",
       "translations": {
         "en": "Woreda",
-        "am": "Woreda",
-        "om": "Woreda"
+        "am": "ወረዳ",
+        "om": "Aanaa"
       }
     },
     {
       "key": "Zone",
       "translations": {
         "en": "Zone",
-        "am": "Zone",
-        "om": "Zone"
+        "am": "ዞን",
+        "om": "Zoonii"
       }
     },
     {
       "key": "City",
       "translations": {
         "en": "City",
-        "am": "City",
-        "om": "City"
+        "am": "ከተማ",
+        "om": "Magaalaa"
       }
     },
     {
       "key": "State",
       "translations": {
         "en": "State",
-        "am": "State",
-        "om": "State"
+        "am": "ክልል",
+        "om": "Naannoo"
       }
     },
     {
       "key": "Country",
       "translations": {
         "en": "Country",
-        "am": "Country",
-        "om": "Country"
+        "am": "አገር",
+        "om": "Biyya"
       }
     },
     {
       "key": "Created By",
       "translations": {
         "en": "Created By",
-        "am": "Created By",
-        "om": "Created By"
+        "am": "የፈጠረው",
+        "om": "Kan Uume"
       }
     },
     {
       "key": "No tags attached",
       "translations": {
         "en": "No tags attached",
-        "am": "No tags attached",
-        "om": "No tags attached"
+        "am": "ምንም መለያ አልተያያዘም",
+        "om": "Taagiin hin maxxanfamne"
       }
     },
     {
       "key": "Add New Version",
       "translations": {
         "en": "Add New Version",
-        "am": "Add New Version",
-        "om": "Add New Version"
+        "am": "አዲስ ስሪት አክል",
+        "om": "Varshinii Haaraa Ida'i"
       }
     },
     {
       "key": "Maximum 10 versions reached",
       "translations": {
         "en": "Maximum 10 versions reached",
-        "am": "Maximum 10 versions reached",
-        "om": "Maximum 10 versions reached"
+        "am": "ከፍተኛ 10 ስሪቶች ደርሷል",
+        "om": "Varshinii 10 ol'aanaa ga'ame"
       }
     },
     {
       "key": "Upload a new file version",
       "translations": {
         "en": "Upload a new file version",
-        "am": "Upload a new file version",
-        "om": "Upload a new file version"
+        "am": "አዲስ የፋይል ስሪት ጫን",
+        "om": "Varshinii faayilii haaraa olkaa'i"
       }
     },
     {
       "key": "Upload Version",
       "translations": {
         "en": "Upload Version",
-        "am": "Upload Version",
-        "om": "Upload Version"
+        "am": "ስሪት ጫን",
+        "om": "Varshinii Olkaa'i"
       }
     },
     {
       "key": "Are you sure you want to delete version {version}?",
       "translations": {
         "en": "Are you sure you want to delete version {version}?",
-        "am": "Are you sure you want to delete version {version}?",
-        "om": "Are you sure you want to delete version {version}?"
+        "am": "ስሪት {version} መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት?",
+        "om": "Varshinii {version} haquu barbaadduu dhugumaan?"
       }
     },
     {
       "key": "Version {version} deleted successfully",
       "translations": {
         "en": "Version {version} deleted successfully",
-        "am": "Version {version} deleted successfully",
-        "om": "Version {version} deleted successfully"
+        "am": "ስሪት {version} በተሳካ ሁኔታ ተሰርዟል",
+        "om": "Varshiniin {version} milkaa'inaan haqame"
       }
     },
     {
       "key": "Version",
       "translations": {
         "en": "Version",
-        "am": "Version",
-        "om": "Version"
+        "am": "ስሪት",
+        "om": "Varshinii"
       }
     },
     {
       "key": "Size",
       "translations": {
         "en": "Size",
-        "am": "Size",
-        "om": "Size"
+        "am": "መጠን",
+        "om": "Guddina"
       }
     },
     {
       "key": "No file versions found",
       "translations": {
         "en": "No file versions found",
-        "am": "No file versions found",
-        "om": "No file versions found"
+        "am": "ምንም የፋይል ስሪት አልተገኘም",
+        "om": "Varshiniin faayilii hin argamne"
       }
     },
     {
       "key": "File not found",
       "translations": {
         "en": "File not found",
-        "am": "File not found",
-        "om": "File not found"
+        "am": "ፋይል አልተገኘም",
+        "om": "Faayiliin hin argamne"
       }
     },
     {
       "key": "Are you sure?",
       "translations": {
         "en": "Are you sure?",
-        "am": "Are you sure?",
-        "om": "Are you sure?"
+        "am": "እርግጠኛ ነዎት?",
+        "om": "Dhugumaan mirkaneeffattee?"
       }
     },
     {
       "key": "This action cannot be undone. This will permanently delete the file and move it to trash.",
       "translations": {
         "en": "This action cannot be undone. This will permanently delete the file and move it to trash.",
-        "am": "This action cannot be undone. This will permanently delete the file and move it to trash.",
-        "om": "This action cannot be undone. This will permanently delete the file and move it to trash."
+        "am": "ይህ ተግባር ሊቀለበስ አይችልም። ይህ ፋይሉን በቋሚነት ሰርዞ ወደ ቆሻሻ ያንቀሳቅሰዋል።",
+        "om": "Gochi kun deebi'uu hin danda'u. Kun faayilii guutummaatti haqee gara kosiitti dabarsa."
       }
     },
     {
       "key": "Deleting...",
       "translations": {
         "en": "Deleting...",
-        "am": "Deleting...",
-        "om": "Deleting..."
+        "am": "በመሰረዝ ላይ...",
+        "om": "Haqaa jira..."
       }
     },
     {
       "key": "Browse and manage deleted files. Restore items or delete them permanently.",
       "translations": {
         "en": "Browse and manage deleted files. Restore items or delete them permanently.",
-        "am": "Browse and manage deleted files. Restore items or delete them permanently.",
-        "om": "Browse and manage deleted files. Restore items or delete them permanently."
+        "am": "የተሰረዙ ፋይሎችን ያስሱ እና ያስተዳድሩ። እቃዎችን ይመልሱ ወይም በቋሚነት ይሰርዙ።",
+        "om": "Faayiloota haqaman sakatta'aatii bulchaa. Wantoota deebisaa ykn guutummaatti haqaa."
       }
     },
     {
       "key": "Search for deleted files.",
       "translations": {
         "en": "Search for deleted files.",
-        "am": "Search for deleted files.",
-        "om": "Search for deleted files."
+        "am": "የተሰረዙ ፋይሎችን ፈልግ።",
+        "om": "Faayiloota haqaman barbaadi."
       }
     },
     {
       "key": "Search by name, file number…",
       "translations": {
         "en": "Search by name, file number…",
-        "am": "Search by name, file number…",
-        "om": "Search by name, file number…"
+        "am": "በስም፣ በፋይል ቁጥር ፈልግ…",
+        "om": "Maqaa, lakkoofsa faayiliitiin barbaadi…"
       }
     },
     {
       "key": "item",
       "translations": {
         "en": "item",
-        "am": "item",
-        "om": "item"
+        "am": "እቃ",
+        "om": "wanta"
       }
     },
     {
       "key": "items",
       "translations": {
         "en": "items",
-        "am": "items",
-        "om": "items"
+        "am": "እቃዎች",
+        "om": "wantoota"
       }
     },
     {
       "key": "shown",
       "translations": {
         "en": "shown",
-        "am": "shown",
-        "om": "shown"
+        "am": "የሚታይ",
+        "om": "agarsiifame"
       }
     },
     {
       "key": "Reset filters",
       "translations": {
         "en": "Reset filters",
-        "am": "Reset filters",
-        "om": "Reset filters"
+        "am": "ማጣሪያዎችን ዳግም አስጀምር",
+        "om": "Calaltuuwwan haaromsi"
       }
     },
     {
       "key": "View deleted files. Restore items or delete them permanently.",
       "translations": {
         "en": "View deleted files. Restore items or delete them permanently.",
-        "am": "View deleted files. Restore items or delete them permanently.",
-        "om": "View deleted files. Restore items or delete them permanently."
+        "am": "የተሰረዙ ፋይሎችን ተመልከት። እቃዎችን ይመልሱ ወይም በቋሚነት ይሰርዙ።",
+        "om": "Faayiloota haqaman ilaali. Wantoota deebisaa ykn guutummaatti haqaa."
       }
     },
     {
       "key": "No trash items found with the current filters.",
       "translations": {
         "en": "No trash items found with the current filters.",
-        "am": "No trash items found with the current filters.",
-        "om": "No trash items found with the current filters."
+        "am": "በአሁኑ ማጣሪያዎች ምንም የቆሻሻ እቃ አልተገኘም።",
+        "om": "Calaltuu ammaatiin wantoonni kosii hin argamne."
       }
     },
     {
       "key": "Item",
       "translations": {
         "en": "Item",
-        "am": "Item",
-        "om": "Item"
+        "am": "እቃ",
+        "om": "Wanta"
       }
     },
     {
       "key": "Deleted By",
       "translations": {
         "en": "Deleted By",
-        "am": "Deleted By",
-        "om": "Deleted By"
+        "am": "የሰረዘው",
+        "om": "Kan Haqe"
       }
     },
     {
       "key": "Deleted At",
       "translations": {
         "en": "Deleted At",
-        "am": "Deleted At",
-        "om": "Deleted At"
+        "am": "የተሰረዘበት ጊዜ",
+        "om": "Yeroo Haqame"
       }
     },
     {
       "key": "Item no longer exists",
       "translations": {
         "en": "Item no longer exists",
-        "am": "Item no longer exists",
-        "om": "Item no longer exists"
+        "am": "እቃው ከእንግዲህ የለም",
+        "om": "Wantichi si'achi hin jiru"
       }
     },
     {
       "key": "Restore",
       "translations": {
         "en": "Restore",
-        "am": "Restore",
-        "om": "Restore"
+        "am": "መልስ",
+        "om": "Deebisi"
       }
     },
     {
       "key": "Delete permanently",
       "translations": {
         "en": "Delete permanently",
-        "am": "Delete permanently",
-        "om": "Delete permanently"
+        "am": "በቋሚነት ሰርዝ",
+        "om": "Guutummaatti Haqi"
       }
     },
     {
       "key": "Are you sure you want to permanently delete this item? This action cannot be undone and the item will be lost forever.",
       "translations": {
         "en": "Are you sure you want to permanently delete this item? This action cannot be undone and the item will be lost forever.",
-        "am": "Are you sure you want to permanently delete this item? This action cannot be undone and the item will be lost forever.",
-        "om": "Are you sure you want to permanently delete this item? This action cannot be undone and the item will be lost forever."
+        "am": "ይህን እቃ በቋሚነት መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት? ይህ ተግባር ሊቀለበስ አይችልም እና እቃው ለዘላለም ይጠፋል።",
+        "om": "Wanta kana guutummaatti haquu barbaadduu dhugumaan? Gochi kun deebi'uu hin danda'u, wantichis bara baraan bada."
       }
     },
     {
       "key": "Delete Permanently",
       "translations": {
         "en": "Delete Permanently",
-        "am": "Delete Permanently",
-        "om": "Delete Permanently"
+        "am": "በቋሚነት ሰርዝ",
+        "om": "Guutummaatti Haqi"
       }
     },
     {
       "key": "Item restored successfully",
       "translations": {
         "en": "Item restored successfully",
-        "am": "Item restored successfully",
-        "om": "Item restored successfully"
+        "am": "እቃ በተሳካ ሁኔታ ተመልሷል",
+        "om": "Wantichi milkaa'inaan deebi'e"
       }
     },
     {
       "key": "Item permanently deleted",
       "translations": {
         "en": "Item permanently deleted",
-        "am": "Item permanently deleted",
-        "om": "Item permanently deleted"
+        "am": "እቃ በቋሚነት ተሰርዟል",
+        "om": "Wantichi guutummaatti haqame"
       }
     },
     {
       "key": "Unable to load trash items.",
       "translations": {
         "en": "Unable to load trash items.",
-        "am": "Unable to load trash items.",
-        "om": "Unable to load trash items."
+        "am": "የቆሻሻ እቃዎችን መጫን አልተቻለም።",
+        "om": "Wantoota kosii fe'uun hin danda'amne."
       }
     },
     {
       "key": "Details",
       "translations": {
         "en": "Details",
-        "am": "Details",
-        "om": "Details"
+        "am": "ዝርዝሮች",
+        "om": "Bal'ina"
       }
     },
     {
       "key": "Update file information",
       "translations": {
         "en": "Update file information",
-        "am": "Update file information",
-        "om": "Update file information"
+        "am": "የፋይል መረጃ አዘምን",
+        "om": "Odeeffannoo faayilii haaromsi"
       }
     },
     {
       "key": "Select or create tags...",
       "translations": {
         "en": "Select or create tags...",
-        "am": "Select or create tags...",
-        "om": "Select or create tags..."
+        "am": "መለያዎችን ይምረጡ ወይም ይፍጠሩ...",
+        "om": "Taagiiwwan filadhaa ykn uumaa..."
       }
     },
     {
       "key": "Search or create tag...",
       "translations": {
         "en": "Search or create tag...",
-        "am": "Search or create tag...",
-        "om": "Search or create tag..."
+        "am": "መለያ ይፈልጉ ወይም ይፍጠሩ...",
+        "om": "Taagii barbaadaa ykn uumaa..."
       }
     },
     {
       "key": "Create tag \"{tagName}\"",
       "translations": {
         "en": "Create tag \"{tagName}\"",
-        "am": "Create tag \"{tagName}\"",
-        "om": "Create tag \"{tagName}\""
+        "am": "መለያ \"{tagName}\" ፍጠር",
+        "om": "Taagii \"{tagName}\" uumi"
       }
     },
     {
       "key": "First Name",
       "translations": {
         "en": "First Name",
-        "am": "First Name",
-        "om": "First Name"
+        "am": "የመጀመሪያ ስም",
+        "om": "Maqaa Jalqabaa"
       }
     },
     {
       "key": "Father Name",
       "translations": {
         "en": "Father Name",
-        "am": "Father Name",
-        "om": "Father Name"
+        "am": "የአባት ስም",
+        "om": "Maqaa Abbaa"
       }
     },
     {
       "key": "Last Name",
       "translations": {
         "en": "Last Name",
-        "am": "Last Name",
-        "om": "Last Name"
+        "am": "የአያት ስም",
+        "om": "Maqaa Akaakayyuu"
       }
     },
     {
       "key": "Updating...",
       "translations": {
         "en": "Updating...",
-        "am": "Updating...",
-        "om": "Updating..."
+        "am": "በማዘመን ላይ...",
+        "om": "Haaromsaa jira..."
       }
     },
     {
       "key": "Failed to load file",
       "translations": {
         "en": "Failed to load file",
-        "am": "Failed to load file",
-        "om": "Failed to load file"
+        "am": "ፋይል መጫን አልተሳካም",
+        "om": "Faayilii fe'uun hin milkoofne"
       }
     },
     {
       "key": "Tag \"{tagName}\" created!",
       "translations": {
         "en": "Tag \"{tagName}\" created!",
-        "am": "Tag \"{tagName}\" created!",
-        "om": "Tag \"{tagName}\" created!"
+        "am": "መለያ \"{tagName}\" ተፈጥሯል!",
+        "om": "Taagiin \"{tagName}\" uumame!"
       }
     },
     {
       "key": "Failed to create tag",
       "translations": {
         "en": "Failed to create tag",
-        "am": "Failed to create tag",
-        "om": "Failed to create tag"
+        "am": "መለያ መፍጠር አልተሳካም",
+        "om": "Taagii uumuun hin milkoofne"
       }
     },
     {
       "key": "Authentication required",
       "translations": {
         "en": "Authentication required",
-        "am": "Authentication required",
-        "om": "Authentication required"
+        "am": "ማረጋገጫ ያስፈልጋል",
+        "om": "Mirkaneessi barbaachisaa dha"
       }
     },
     {
       "key": "Action failed",
       "translations": {
         "en": "Action failed",
-        "am": "Action failed",
-        "om": "Action failed"
+        "am": "ተግባር አልተሳካም",
+        "om": "Gochi hin milkoofne"
+      }
+    },
+    {
+      "key": "e-service",
+      "translations": {
+        "en": "e-service",
+        "am": "e-service",
+        "om": "e-service"
+      }
+    },
+    {
+      "key": "Government Portal",
+      "translations": {
+        "en": "Government Portal",
+        "am": "የመንግስት ፖርታል",
+        "om": "Poortaalii Mootummaa"
+      }
+    },
+    {
+      "key": "Operations",
+      "translations": {
+        "en": "Operations",
+        "am": "ስራዎች",
+        "om": "Hojiiwwan"
+      }
+    },
+    {
+      "key": "My Work",
+      "translations": {
+        "en": "My Work",
+        "am": "የእኔ ስራ",
+        "om": "Hojii Koo"
+      }
+    },
+    {
+      "key": "Office",
+      "translations": {
+        "en": "Office",
+        "am": "ቢሮ",
+        "om": "Waajjira"
+      }
+    },
+    {
+      "key": "Staff Management",
+      "translations": {
+        "en": "Staff Management",
+        "am": "የሰራተኞች አስተዳደር",
+        "om": "Bulchiinsa Hojjettootaa"
+      }
+    },
+    {
+      "key": "Report Management",
+      "translations": {
+        "en": "Report Management",
+        "am": "የሪፖርት አስተዳደር",
+        "om": "Bulchiinsa Gabaasaa"
+      }
+    },
+    {
+      "key": "Request Management",
+      "translations": {
+        "en": "Request Management",
+        "am": "የጥያቄ አስተዳደር",
+        "om": "Bulchiinsa Gaaffii"
+      }
+    },
+    {
+      "key": "About",
+      "translations": {
+        "en": "About",
+        "am": "ስለ እኛ",
+        "om": "Waaʼee Keenya"
+      }
+    },
+    {
+      "key": "Report",
+      "translations": {
+        "en": "Report",
+        "am": "ሪፖርት",
+        "om": "Gabaasa"
       }
     }
   ]

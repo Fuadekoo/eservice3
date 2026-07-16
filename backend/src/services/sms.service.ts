@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import { normalizeEthiopianMobilePhone } from "../utils/phone.js";
+
 const SMS_API = process.env.SMS_API ?? "";
 const SMS_TOKEN = process.env.SMS_TOKEN ?? "";
 const SENDER_NAME = process.env.SENDER_NAME ?? "";
@@ -9,6 +11,24 @@ export interface SMSResult {
   success: boolean;
   message: string;
   data?: unknown;
+}
+
+/**
+ * The gateway expects the international MSISDN form `2519XXXXXXXX` (no `+`, no
+ * leading `0`). Call sites are inconsistent — some pass the stored/normalized
+ * number, others pass raw user input like `0912…` or `+2519…` — so normalize
+ * here to guarantee every message goes out in the one format the gateway
+ * accepts. If the number isn't a recognizable Ethiopian mobile, fall back to a
+ * digit-only version rather than silently dropping the send.
+ */
+function toGatewayMsisdn(phoneNumber: string): string {
+  const normalized = normalizeEthiopianMobilePhone(phoneNumber);
+  if (normalized) return normalized;
+  const digits = phoneNumber.replace(/\D/g, "");
+  console.warn(
+    `SMS: "${phoneNumber}" is not a valid Ethiopian mobile number; sending to "${digits}" as-is`,
+  );
+  return digits;
 }
 
 export async function sendSMS(
@@ -21,7 +41,7 @@ export async function sendSMS(
   }
 
   const payload: Record<string, string> = {
-    msisdn: phoneNumber,
+    msisdn: toGatewayMsisdn(phoneNumber),
     text,
   };
 

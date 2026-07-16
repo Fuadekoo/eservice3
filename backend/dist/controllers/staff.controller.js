@@ -245,6 +245,7 @@ export async function listStaff(req, res) {
         }
         const search = parseQueryString(req.query["search"]);
         const roleIdFilter = parseQueryString(req.query["roleId"]);
+        const roleNameFilter = parseQueryString(req.query["roleName"]);
         const page = Math.max(1, parseQueryInt(req.query["page"], 1));
         const pageSize = Math.min(100, Math.max(1, parseQueryInt(req.query["pageSize"], 50)));
         const skip = (page - 1) * pageSize;
@@ -274,6 +275,20 @@ export async function listStaff(req, res) {
         }
         if (roleIdFilter) {
             filters.push({ user: { is: { roleId: roleIdFilter } } });
+        }
+        // Roles are per-office and share names, so match by name to include staff
+        // across every office that has a role with this name. MySQL's default
+        // collation makes the equality case-insensitive.
+        if (roleNameFilter) {
+            filters.push({
+                user: {
+                    is: {
+                        role: {
+                            is: { name: { equals: roleNameFilter } },
+                        },
+                    },
+                },
+            });
         }
         const where = filters.length > 0 ? { AND: filters } : {};
         const [staffMembers, total] = await Promise.all([

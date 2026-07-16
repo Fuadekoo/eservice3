@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useStaffStore, type StaffMember } from "@/lib/stores/staff-store";
 import { useOfficeStore } from "@/lib/stores/office-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
+import { dedupeRolesByName } from "@/lib/roles";
 import { useSession } from "@/hooks/use-session";
 import { PageLayout } from "@/components/dashboard/page-layout";
 import { Button } from "@/components/ui/button";
@@ -68,10 +69,14 @@ export default function StaffPage() {
     React.useState<StaffMember | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [selectedOfficeId, setSelectedOfficeId] = React.useState<string>("all");
-  const [selectedRoleId, setSelectedRoleId] = React.useState<string>("all");
+  const [selectedRole, setSelectedRole] = React.useState<string>("all");
   const [assignServicesMember, setAssignServicesMember] =
     React.useState<StaffMember | null>(null);
   const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
+
+  // Collapse per-office duplicate role names into one entry per name; filter
+  // by name so it matches staff across every office that has that role.
+  const distinctRoles = React.useMemo(() => dedupeRolesByName(roles), [roles]);
 
   React.useEffect(() => {
     if (isSessionPending) return;
@@ -98,15 +103,15 @@ export default function StaffPage() {
   ]);
 
   React.useEffect(() => {
-    if (selectedRoleId === "all") return;
-    const selectedRoleStillExists = roles.some(
-      (role) => role.id === selectedRoleId,
+    if (selectedRole === "all") return;
+    const selectedRoleStillExists = distinctRoles.some(
+      (role) => role.key === selectedRole,
     );
     if (!selectedRoleStillExists) {
-      setSelectedRoleId("all");
+      setSelectedRole("all");
       setCurrentPage(1);
     }
-  }, [roles, selectedRoleId]);
+  }, [distinctRoles, selectedRole]);
 
   React.useEffect(() => {
     if (isSessionPending || isAdmin || !sessionOfficeId) return;
@@ -127,7 +132,7 @@ export default function StaffPage() {
       page: currentPage,
       pageSize,
       search: searchQuery || undefined,
-      roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+      roleName: selectedRole !== "all" ? selectedRole : undefined,
       officeId: effectiveOfficeId,
       status: selectedStatus !== "all" ? selectedStatus.toLowerCase() : undefined,
     });
@@ -139,7 +144,7 @@ export default function StaffPage() {
     pageSize,
     searchQuery,
     selectedOfficeId,
-    selectedRoleId,
+    selectedRole,
     selectedStatus,
     sessionOfficeId,
   ]);
@@ -192,7 +197,7 @@ export default function StaffPage() {
       page: currentPage,
       pageSize,
       search: searchQuery || undefined,
-      roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+      roleName: selectedRole !== "all" ? selectedRole : undefined,
       officeId: effectiveOfficeId,
       status: selectedStatus !== "all" ? selectedStatus.toLowerCase() : undefined,
     });
@@ -251,7 +256,7 @@ export default function StaffPage() {
                   value={selectedOfficeId}
                   onValueChange={(value) => {
                     setSelectedOfficeId(value);
-                    setSelectedRoleId("all");
+                    setSelectedRole("all");
                     setCurrentPage(1);
                   }}
                 >
@@ -296,9 +301,9 @@ export default function StaffPage() {
             <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
               <SlidersHorizontal className="size-4 text-muted-foreground" />
               <Select
-                value={selectedRoleId}
+                value={selectedRole}
                 onValueChange={(value) => {
-                  setSelectedRoleId(value);
+                  setSelectedRole(value);
                   setCurrentPage(1);
                 }}
               >
@@ -307,9 +312,9 @@ export default function StaffPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
+                  {distinctRoles.map((role) => (
+                    <SelectItem key={role.key} value={role.key}>
+                      {role.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -415,7 +420,7 @@ export default function StaffPage() {
             page: currentPage,
             pageSize,
             search: searchQuery || undefined,
-            roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+            roleName: selectedRole !== "all" ? selectedRole : undefined,
             officeId: effectiveOfficeId,
           });
         }}

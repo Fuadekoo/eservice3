@@ -15,6 +15,30 @@ function parseQueryString(value: unknown): string | undefined {
   return str || undefined;
 }
 
+/**
+ * Resolve a role name to a concrete role id. Role names are not unique (they
+ * repeat per office, with mixed casing), so match case-insensitively and prefer
+ * the global role (officeId null) that base user roles are assigned from,
+ * falling back to any office role with that name.
+ */
+async function resolveRoleIdByName(
+  roleName: string,
+): Promise<string | undefined> {
+  const role =
+    (await prisma.role.findFirst({
+      where: {
+        name: { equals: roleName },
+        officeId: null,
+      },
+      select: { id: true },
+    })) ??
+    (await prisma.role.findFirst({
+      where: { name: { equals: roleName } },
+      select: { id: true },
+    }));
+  return role?.id;
+}
+
 const userInclude = {
   role: {
     select: { id: true, name: true },
@@ -65,7 +89,9 @@ export async function listUsers(req: AuthRequest, res: Response) {
     const pageSize = parseInt((req.query.pageSize as string) || "10", 10) || 10;
     const search = parseQueryString(req.query.search);
     const roleId = parseQueryString(req.query.roleId);
+    const roleName = parseQueryString(req.query.roleName);
     const officeId = parseQueryString(req.query.officeId);
+    const isActiveRaw = parseQueryString(req.query.isActive);
 
     const filters: any[] = [];
     if (search) {
@@ -89,7 +115,19 @@ export async function listUsers(req: AuthRequest, res: Response) {
       ]});
     }
     if (roleId) filters.push({ roleId });
+    // Roles are per-office and share names (e.g. many "MANAGER" records), so
+    // filter by role name to match every matching role across offices rather
+    // than a single per-office role id. MySQL's default collation makes the
+    // equality case-insensitive.
+    if (roleName)
+      filters.push({
+        role: {
+          is: { name: { equals: roleName } },
+        },
+      });
     if (officeId) filters.push({ staffs: { some: { officeId } } });
+    if (isActiveRaw === "true") filters.push({ isActive: true });
+    else if (isActiveRaw === "false") filters.push({ isActive: false });
 
     const where: any = filters.length > 0 ? { AND: filters } : {};
 
@@ -207,10 +245,7 @@ export async function createUser(req: AuthRequest, res: Response) {
 
     let resolvedRoleId = roleId;
     if (!resolvedRoleId && roleNameInput) {
-      const dbRole = await prisma.role.findFirst({
-        where: { name: roleNameInput },
-      });
-      if (dbRole) resolvedRoleId = dbRole.id;
+      resolvedRoleId = await resolveRoleIdByName(roleNameInput);
     }
 
     const newUser = await prisma.user.create({
@@ -303,10 +338,7 @@ export async function updateUser(req: AuthRequest, res: Response) {
 
     let resolvedRoleId = roleId;
     if (!resolvedRoleId && roleNameInput) {
-      const dbRole = await prisma.role.findFirst({
-        where: { name: roleNameInput },
-      });
-      if (dbRole) resolvedRoleId = dbRole.id;
+      resolvedRoleId = await resolveRoleIdByName(roleNameInput);
     }
     if (resolvedRoleId !== undefined)
       updateData.roleId = resolvedRoleId || null;

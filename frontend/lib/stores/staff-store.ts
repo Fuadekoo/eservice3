@@ -93,6 +93,7 @@ type StaffStore = {
     search?: string;
     status?: string;
     roleId?: string;
+    roleName?: string;
     officeId?: string;
   }) => Promise<void>;
   getStaff: (id: string) => Promise<StaffMember>;
@@ -121,12 +122,14 @@ export const useStaffStore = create<StaffStore>((set, get) => ({
         search,
         status,
         roleId,
+        roleName,
         officeId,
       } = opts;
       const params: Record<string, unknown> = { page, pageSize };
       if (search) params.search = search;
       if (status) params.status = status;
       if (roleId) params.roleId = roleId;
+      if (roleName) params.roleName = roleName;
       if (officeId) params.officeId = officeId;
 
       const response = (await axiosInstance.get<{

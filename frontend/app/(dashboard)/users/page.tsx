@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { useUserStore, type User } from "@/lib/stores/user-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
+import { dedupeRolesByName } from "@/lib/roles";
 import { PageLayout } from "@/components/dashboard/page-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,8 +48,13 @@ export default function UsersPage() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
-  const [selectedRoleId, setSelectedRoleId] = React.useState("all");
+  const [selectedRole, setSelectedRole] = React.useState("all");
   const [statusFilter, setStatusFilter] = React.useState<"all" | "active" | "inactive">("all");
+
+  // Roles are stored per-office and share names (e.g. many "MANAGER" records),
+  // so collapse them to distinct names for the filter. Filtering then happens
+  // by name so it matches users across every office that has that role.
+  const distinctRoles = React.useMemo(() => dedupeRolesByName(roles), [roles]);
 
   React.useEffect(() => {
     void fetchRoles();
@@ -59,19 +65,19 @@ export default function UsersPage() {
       page: currentPage,
       pageSize,
       search: searchQuery || undefined,
-      roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+      roleName: selectedRole !== "all" ? selectedRole : undefined,
       isActive: statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
     });
-  }, [currentPage, fetchUsers, pageSize, searchQuery, selectedRoleId, statusFilter]);
+  }, [currentPage, fetchUsers, pageSize, searchQuery, selectedRole, statusFilter]);
 
   React.useEffect(() => {
-    if (selectedRoleId === "all") return;
-    const selectedRoleStillExists = roles.some((role) => role.id === selectedRoleId);
+    if (selectedRole === "all") return;
+    const selectedRoleStillExists = distinctRoles.some((role) => role.key === selectedRole);
     if (!selectedRoleStillExists) {
-      setSelectedRoleId("all");
+      setSelectedRole("all");
       setCurrentPage(1);
     }
-  }, [roles, selectedRoleId]);
+  }, [distinctRoles, selectedRole]);
 
   const handleCreate = () => {
     setSelectedUser(null);
@@ -113,7 +119,7 @@ export default function UsersPage() {
       page: currentPage,
       pageSize,
       search: searchQuery || undefined,
-      roleId: selectedRoleId !== "all" ? selectedRoleId : undefined,
+      roleName: selectedRole !== "all" ? selectedRole : undefined,
       isActive: statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
     });
     toast.success("User list refreshed");
@@ -161,9 +167,9 @@ export default function UsersPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Select
-              value={selectedRoleId}
+              value={selectedRole}
               onValueChange={(value) => {
-                setSelectedRoleId(value);
+                setSelectedRole(value);
                 setCurrentPage(1);
               }}
             >
@@ -172,9 +178,9 @@ export default function UsersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                {roles.map((role) => (
-                  <SelectItem key={role.id} value={role.id}>
-                    {role.name}
+                {distinctRoles.map((role) => (
+                  <SelectItem key={role.key} value={role.key}>
+                    {role.label}
                   </SelectItem>
                 ))}
               </SelectContent>

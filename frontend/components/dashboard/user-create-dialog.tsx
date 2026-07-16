@@ -41,6 +41,7 @@ import {
   type User,
 } from "@/lib/stores/user-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
+import { dedupeRolesByName } from "@/lib/roles";
 import { useOfficeStore } from "@/lib/stores/office-store";
 import {
   ethiopianMobilePhoneSchema,
@@ -51,7 +52,9 @@ const userSchema = z.object({
   username: z.string().min(2, "Username is required"),
   phoneNumber: ethiopianMobilePhoneSchema,
   password: optionalStrongPasswordSchema,
-  roleId: z.string().min(1, "Role is required"),
+  // Holds a de-duplicated role name (lower-cased); the backend resolves it to a
+  // concrete role. Avoids listing the same role name once per office.
+  roleName: z.string().min(1, "Role is required"),
   officeId: z.string().optional().or(z.literal("")),
   isActive: z.boolean(),
 });
@@ -78,13 +81,15 @@ export function UserCreateDialog({
   const { offices, fetchOffices } = useOfficeStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const distinctRoles = React.useMemo(() => dedupeRolesByName(roles), [roles]);
+
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema) as Resolver<UserFormValues>,
     defaultValues: {
       username: "",
       phoneNumber: "",
       password: "",
-      roleId: "",
+      roleName: "",
       officeId: "",
       isActive: true,
     },
@@ -103,7 +108,7 @@ export function UserCreateDialog({
         username: user.username,
         phoneNumber: user.phoneNumber,
         password: "",
-        roleId: user.role?.id || "",
+        roleName: user.role?.name?.toLowerCase() || "",
         officeId: user.staff?.officeId || "",
         isActive: user.isActive,
       });
@@ -112,7 +117,7 @@ export function UserCreateDialog({
         username: "",
         phoneNumber: "",
         password: "",
-        roleId: "",
+        roleName: "",
         officeId: "",
         isActive: true,
       });
@@ -127,7 +132,7 @@ export function UserCreateDialog({
       const payload: UpdateUserPayload = {
         username: values.username,
         phoneNumber: normalizedPhone,
-        roleId: values.roleId,
+        roleName: values.roleName,
         officeId: values.officeId || undefined,
         password: values.password || undefined,
         isActive: values.isActive,
@@ -146,7 +151,7 @@ export function UserCreateDialog({
           username: values.username,
           phoneNumber: normalizedPhone,
           password: values.password,
-          roleId: values.roleId,
+          roleName: values.roleName,
           officeId: values.officeId || undefined,
           isActive: values.isActive,
         };
@@ -223,7 +228,7 @@ export function UserCreateDialog({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="roleId"
+                name="roleName"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Role</FormLabel>
@@ -234,9 +239,9 @@ export function UserCreateDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {roles.map((role) => (
-                          <SelectItem key={role.id} value={role.id}>
-                            {role.name}
+                        {distinctRoles.map((role) => (
+                          <SelectItem key={role.key} value={role.key}>
+                            {role.label}
                           </SelectItem>
                         ))}
                       </SelectContent>

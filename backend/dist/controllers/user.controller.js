@@ -7,6 +7,26 @@ function parseQueryString(value) {
     const str = typeof value === "string" ? value.trim() : undefined;
     return str || undefined;
 }
+/**
+ * Resolve a role name to a concrete role id. Role names are not unique (they
+ * repeat per office, with mixed casing), so match case-insensitively and prefer
+ * the global role (officeId null) that base user roles are assigned from,
+ * falling back to any office role with that name.
+ */
+async function resolveRoleIdByName(roleName) {
+    const role = (await prisma.role.findFirst({
+        where: {
+            name: { equals: roleName },
+            officeId: null,
+        },
+        select: { id: true },
+    })) ??
+        (await prisma.role.findFirst({
+            where: { name: { equals: roleName } },
+            select: { id: true },
+        }));
+    return role?.id;
+}
 const userInclude = {
     role: {
         select: { id: true, name: true },
@@ -53,7 +73,9 @@ export async function listUsers(req, res) {
         const pageSize = parseInt(req.query.pageSize || "10", 10) || 10;
         const search = parseQueryString(req.query.search);
         const roleId = parseQueryString(req.query.roleId);
+        const roleName = parseQueryString(req.query.roleName);
         const officeId = parseQueryString(req.query.officeId);
+        const isActiveRaw = parseQueryString(req.query.isActive);
         const filters = [];
         if (search) {
             filters.push({
@@ -78,8 +100,22 @@ export async function listUsers(req, res) {
         }
         if (roleId)
             filters.push({ roleId });
+        // Roles are per-office and share names (e.g. many "MANAGER" records), so
+        // filter by role name to match every matching role across offices rather
+        // than a single per-office role id. MySQL's default collation makes the
+        // equality case-insensitive.
+        if (roleName)
+            filters.push({
+                role: {
+                    is: { name: { equals: roleName } },
+                },
+            });
         if (officeId)
             filters.push({ staffs: { some: { officeId } } });
+        if (isActiveRaw === "true")
+            filters.push({ isActive: true });
+        else if (isActiveRaw === "false")
+            filters.push({ isActive: false });
         const where = filters.length > 0 ? { AND: filters } : {};
         const total = await prisma.user.count({ where });
         const users = await prisma.user.findMany({
@@ -176,11 +212,7 @@ export async function createUser(req, res) {
         const hashed = await hash(password, 10);
         let resolvedRoleId = roleId;
         if (!resolvedRoleId && roleNameInput) {
-            const dbRole = await prisma.role.findFirst({
-                where: { name: roleNameInput },
-            });
-            if (dbRole)
-                resolvedRoleId = dbRole.id;
+            resolvedRoleId = await resolveRoleIdByName(roleNameInput);
         }
         const newUser = await prisma.user.create({
             data: {
@@ -256,11 +288,7 @@ export async function updateUser(req, res) {
             updateData.password = await hash(password, 10);
         let resolvedRoleId = roleId;
         if (!resolvedRoleId && roleNameInput) {
-            const dbRole = await prisma.role.findFirst({
-                where: { name: roleNameInput },
-            });
-            if (dbRole)
-                resolvedRoleId = dbRole.id;
+            resolvedRoleId = await resolveRoleIdByName(roleNameInput);
         }
         if (resolvedRoleId !== undefined)
             updateData.roleId = resolvedRoleId || null;

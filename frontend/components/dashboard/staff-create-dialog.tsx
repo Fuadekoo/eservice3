@@ -39,6 +39,7 @@ import {
   type UpdateStaffMemberPayload,
 } from "@/lib/stores/staff-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
+import { dedupeRolesByName } from "@/lib/roles";
 import { useTranslation } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -60,7 +61,9 @@ const staffSchema = z.object({
     .optional()
     .or(z.literal("")),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
-  roleId: z.string().min(1, "Role is required"),
+  // Holds a de-duplicated role name (lower-cased); the backend resolves it to
+  // this office's role. Avoids repeating the same role name once per office.
+  roleName: z.string().min(1, "Role is required"),
   status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"]),
 });
 
@@ -88,6 +91,8 @@ export function StaffCreateDialog({
   const { roles, fetchRoles } = useSecurityStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const distinctRoles = React.useMemo(() => dedupeRolesByName(roles), [roles]);
+
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffSchema),
     defaultValues: {
@@ -98,7 +103,7 @@ export function StaffCreateDialog({
       username: "",
       password: "",
       gender: "MALE",
-      roleId: "",
+      roleName: "",
       status: "ACTIVE",
     },
   });
@@ -119,7 +124,7 @@ export function StaffCreateDialog({
         username: member.username,
         password: "",
         gender: member.gender,
-        roleId: member.role.id,
+        roleName: member.role?.name?.toLowerCase() || "",
         status: member.status,
       });
     } else {
@@ -131,7 +136,7 @@ export function StaffCreateDialog({
         username: "",
         password: "",
         gender: "MALE",
-        roleId: "",
+        roleName: "",
         status: "ACTIVE",
       });
     }
@@ -149,7 +154,7 @@ export function StaffCreateDialog({
         phone: normalizedPhone,
         username: values.username,
         gender: values.gender,
-        roleId: values.roleId,
+        roleName: values.roleName,
         status: values.status,
         officeId,
         password: values.password || undefined,
@@ -172,7 +177,7 @@ export function StaffCreateDialog({
           username: values.username,
           password: values.password,
           gender: values.gender,
-          roleId: values.roleId,
+          roleName: values.roleName,
           status: values.status,
           officeId,
         };
@@ -387,7 +392,7 @@ export function StaffCreateDialog({
 
                   <FormField
                     control={form.control}
-                    name="roleId"
+                    name="roleName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-bold text-xs uppercase tracking-tighter">
@@ -404,13 +409,13 @@ export function StaffCreateDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="rounded-xl border-border/50 shadow-xl">
-                            {roles.map((role) => (
+                            {distinctRoles.map((role) => (
                               <SelectItem
-                                key={role.id}
-                                value={role.id}
+                                key={role.key}
+                                value={role.key}
                                 className="rounded-lg"
                               >
-                                {role.name}
+                                {role.label}
                               </SelectItem>
                             ))}
                           </SelectContent>

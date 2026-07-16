@@ -35,6 +35,7 @@ export type CreateUserPayload = {
   phoneNumber: string;
   password?: string;
   roleId?: string;
+  roleName?: string;
   officeId?: string;
   isActive?: boolean;
 };
@@ -58,6 +59,7 @@ type UserStore = {
     pageSize?: number;
     search?: string;
     roleId?: string;
+    roleName?: string;
     officeId?: string;
     isActive?: boolean;
   }) => Promise<void>;
@@ -76,12 +78,13 @@ export const useUserStore = create<UserStore>((set) => ({
   fetchUsers: async (params = {}) => {
     set({ isLoading: true, error: null });
     try {
-      const { page = 1, pageSize = 10, search, roleId, officeId, isActive } = params;
+      const { page = 1, pageSize = 10, search, roleId, roleName, officeId, isActive } = params;
       const queryParams = new URLSearchParams();
       queryParams.append("page", page.toString());
       queryParams.append("pageSize", pageSize.toString());
       if (search) queryParams.append("search", search);
       if (roleId) queryParams.append("roleId", roleId);
+      if (roleName) queryParams.append("roleName", roleName);
       if (officeId) queryParams.append("officeId", officeId);
       if (isActive !== undefined) queryParams.append("isActive", isActive.toString());
 

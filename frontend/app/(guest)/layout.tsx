@@ -11,7 +11,6 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, LogOut } from "lucide-react";
 import { isAuthenticated, logout } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { GuestNav, GuestMobileNav } from "@/components/guest/guest-nav";
 
@@ -39,7 +38,6 @@ export default function GuestLayout({
 }
 
 function Header() {
-  const router = useRouter();
   const [authenticated, setAuthenticated] = React.useState(false);
   const { getTranslationForKey } = useLanguagesStore();
 
@@ -49,9 +47,9 @@ function Header() {
     setAuthenticated(isAuthenticated());
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    router.refresh();
+  const handleLogout = async () => {
+    // logout() revokes the server session, clears local state, then redirects.
+    await logout();
   };
 
   return (

@@ -294,9 +294,35 @@ export async function verifyTwoFactor(
 }
 
 /**
- * Logout user
+ * Logout user.
+ *
+ * Revokes the current session on the server (POST /auth/logout deletes this
+ * session's row) BEFORE clearing local auth state, so the token is still
+ * present to authenticate the request. The server call is best-effort: if it
+ * fails (offline, server down) we still clear the local session and redirect,
+ * so the device always ends up signed out. `keepalive` lets the request finish
+ * even though we navigate away immediately after.
  */
-export function logout(): void {
+export async function logout(): Promise<void> {
+  if (typeof window !== "undefined") {
+    const token = getToken();
+    if (token) {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "/back-api";
+      try {
+        await fetch(`${apiBase}/auth/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          keepalive: true,
+        });
+      } catch {
+        // Best-effort: ignore network/server errors and still sign out locally.
+      }
+    }
+  }
+
   removeToken();
   if (typeof window !== "undefined") {
     window.location.href = "/";

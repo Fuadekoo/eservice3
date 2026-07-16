@@ -152,9 +152,9 @@ function UserAvatarDropdown() {
   }, []);
 
   const handleLogout = React.useCallback(async () => {
-    logout();
-    router.refresh();
-  }, [router]);
+    // logout() revokes the server session, clears local state, then redirects.
+    await logout();
+  }, []);
 
   const initials =
     user?.name

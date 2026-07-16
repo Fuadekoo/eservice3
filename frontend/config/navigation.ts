@@ -105,6 +105,28 @@ export const NAVIGATION: NavSection[] = [
         href: "/about-management",
         roles: ["ADMIN"],
       },
+      {
+        titleKey: "Security",
+        icon: Shield,
+        roles: ["ADMIN"],
+        items: [
+          {
+            titleKey: "Roles",
+            href: "/security/roles",
+            permissions: ["page:admin:roles"],
+          },
+          {
+            titleKey: "Permissions",
+            href: "/security/permissions",
+            permissions: ["page:admin:permissions"],
+          },
+          {
+            titleKey: "Audit Logs",
+            href: "/security/audit-logs",
+            permissions: ["page:admin:audit-logs"],
+          },
+        ],
+      },
     ],
   },
   // ── Admin / Manager: office-level operations ───────────────────
@@ -236,33 +258,6 @@ export const NAVIGATION: NavSection[] = [
         icon: MessageSquare,
         href: "/feedback",
         roles: ["CUSTOMER"],
-      },
-    ],
-  },
-  // ── Security: role & permission management ─────────────────────
-  {
-    labelKey: "Security",
-    items: [
-      {
-        titleKey: "Roles",
-        icon: Shield,
-        href: "/security/roles",
-        permissions: ["roles.view"],
-        roles: ["SYSTEM_ADMIN"],
-      },
-      {
-        titleKey: "Permissions",
-        icon: ShieldCheck,
-        href: "/security/permissions",
-        permissions: ["permissions.view"],
-        roles: ["SYSTEM_ADMIN"],
-      },
-      {
-        titleKey: "Audit Logs",
-        icon: ShieldCheck,
-        href: "/security/audit-logs",
-        permissions: ["audit_logs.view"],
-        roles: ["SYSTEM_ADMIN"],
       },
     ],
   },

@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   ChevronDown,
   Zap,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,6 +59,13 @@ import {
   ethiopianMobilePhoneSchema,
   normalizeEthiopianMobilePhone,
 } from "@/lib/phone";
+import {
+  DEMO_ACCOUNTS,
+  DEMO_PASSWORD,
+  DEMO_ROLES,
+  type DemoAccount,
+} from "@/lib/demo-accounts";
+import { Badge } from "@/components/ui/badge";
 
 function getErrorMessage(error: unknown): string | undefined {
   return error instanceof Error ? error.message : undefined;
@@ -88,32 +96,9 @@ const loginSchema = z.object({
 
 type LoginSchema = z.infer<typeof loginSchema>;
 
-const DEMO_CREDENTIALS = [
-  {
-    role: "Admin",
-    phone: "251900000000",
-    password: "password123",
-    description: "System Administrator",
-  },
-  {
-    role: "Manager",
-    phone: "251911111111",
-    password: "password123",
-    description: "Office Manager",
-  },
-  {
-    role: "Staff",
-    phone: "251922222222",
-    password: "password123",
-    description: "Office Staff",
-  },
-  {
-    role: "Customer",
-    phone: "251933333333",
-    password: "password123",
-    description: "Test Customer",
-  },
-];
+const DEMO_ROLE_FILTERS = ["All", ...DEMO_ROLES] as const;
+
+type DemoRoleFilter = (typeof DEMO_ROLE_FILTERS)[number];
 
 function SignInContent() {
   const router = useRouter();
@@ -159,12 +144,28 @@ function SignInContent() {
   });
 
   const fillDemoCredentials = React.useCallback(
-    (phone: string, password: string) => {
-      form.setValue("phone", phone);
-      form.setValue("password", password);
+    (account: DemoAccount) => {
+      form.setValue("phone", account.phone, { shouldValidate: true });
+      form.setValue("password", DEMO_PASSWORD, { shouldValidate: true });
     },
     [form],
   );
+
+  const [demoRole, setDemoRole] = React.useState<DemoRoleFilter>("All");
+  const [demoQuery, setDemoQuery] = React.useState("");
+
+  const visibleDemoAccounts = React.useMemo(() => {
+    const q = demoQuery.trim().toLowerCase();
+    return DEMO_ACCOUNTS.filter((a) => {
+      if (demoRole !== "All" && a.role !== demoRole) return false;
+      if (!q) return true;
+      return (
+        a.office?.toLowerCase().includes(q) ||
+        a.username.toLowerCase().includes(q) ||
+        a.phone.includes(q)
+      );
+    });
+  }, [demoRole, demoQuery]);
 
   const onSubmit = form.handleSubmit(async (credentials) => {
     try {
@@ -524,27 +525,76 @@ function SignInContent() {
               <ChevronDown className="size-4 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform duration-200" />
             </CollapsibleTrigger>
             <CollapsibleContent className="border-t bg-muted/30">
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {DEMO_CREDENTIALS.map((cred) => (
-                  <button
-                    key={cred.role}
-                    type="button"
-                    onClick={() =>
-                      fillDemoCredentials(cred.phone, cred.password)
-                    }
-                    className="flex flex-col items-start gap-1 p-3 rounded-lg border bg-card hover:border-primary/50 hover:shadow-sm transition-all text-left group"
-                  >
-                    <span className="text-xs font-bold text-primary group-hover:text-primary/80">
-                      {getTranslationForKey(cred.role)}
-                    </span>
-                    <span className="text-[11px] font-medium text-foreground/70">
-                      {cred.phone}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground italic">
-                      {getTranslationForKey(cred.description)}
-                    </span>
-                  </button>
-                ))}
+              <div className="p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    {DEMO_ROLE_FILTERS.map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setDemoRole(role)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                          demoRole === role
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card text-muted-foreground hover:border-primary/50",
+                        )}
+                      >
+                        {getTranslationForKey(role)}
+                      </button>
+                    ))}
+                  </div>
+                  <InputGroup className="rounded-full sm:ml-auto sm:max-w-xs">
+                    <InputGroupAddon>
+                      <Search className="size-3.5 text-muted-foreground" />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      value={demoQuery}
+                      onChange={(e) => setDemoQuery(e.target.value)}
+                      placeholder={getTranslationForKey("Search office")}
+                      className="text-xs"
+                    />
+                  </InputGroup>
+                </div>
+
+                {visibleDemoAccounts.length === 0 ? (
+                  <p className="py-6 text-center text-xs text-muted-foreground">
+                    {getTranslationForKey("No matching account")}
+                  </p>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {visibleDemoAccounts.map((account) => (
+                      <button
+                        key={account.username}
+                        type="button"
+                        onClick={() => fillDemoCredentials(account)}
+                        className="flex flex-col items-start gap-1 p-3 rounded-lg border bg-card hover:border-primary/50 hover:shadow-sm transition-all text-left group"
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0 font-bold text-primary"
+                          >
+                            {getTranslationForKey(account.role)}
+                          </Badge>
+                          <span className="text-[11px] font-medium text-foreground/70 ml-auto tabular-nums">
+                            {account.phone}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground line-clamp-2">
+                          {account.office ?? getTranslationForKey("No office")}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-center text-muted-foreground">
+                  {getTranslationForKey("All demo accounts use the password")}{" "}
+                  <span className="font-mono font-medium text-foreground/70">
+                    {DEMO_PASSWORD}
+                  </span>
+                </p>
               </div>
             </CollapsibleContent>
           </Collapsible>

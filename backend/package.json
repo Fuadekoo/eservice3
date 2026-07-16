@@ -7,7 +7,8 @@
     "dev": "nodemon",
     "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/server.js",
-    "tsx": "npx tsx src/server.ts --watch"
+    "tsx": "npx tsx src/server.ts --watch",
+    "seed": "npx tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",

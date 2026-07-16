@@ -1,712 +1,779 @@
-{
+import { hash } from "bcryptjs";
+import type { Prisma } from "../src/lib/prisma-client.ts";
+import { prisma } from "../src/lib/db.ts";
+
+/**
+ * Seeds the real East Shoa dataset (previously exported to seed-data.json,
+ * now embedded directly in this file as a typed constant).
+ *
+ * Passwords: the exported rows carried per-user bcrypt hashes from the live
+ * database. Those are intentionally discarded here — every seeded user is given
+ * the shared development password below, hashed with bcrypt at seed time, so the
+ * database still stores an encrypted value (never plaintext).
+ *
+ * Runtime tables (session, otp, audit_log) and transactional ones (request,
+ * requestForOther, appointment, customerSatisfaction, fileData) are
+ * deliberately excluded — the application writes those itself, and seeding them
+ * would fabricate login sessions, live OTP codes and audit history.
+ */
+
+/** Plain development password. Login with this; the DB stores its bcrypt hash. */
+const SEED_PASSWORD = "password123";
+
+/**
+ * The shared password, bcrypt-hashed once at module load. Every user row below
+ * references this directly, so the seed data never carries a plaintext value or
+ * a stale per-user hash — the database always stores this single encrypted hash.
+ */
+const hashedPassword = await hash(SEED_PASSWORD, 10);
+
+type Row = Record<string, unknown>;
+
+type SeedData = {
+  permission: Row[];
+  office: Row[];
+  role: Row[];
+  rolePermission: Row[];
+  user: Row[];
+  staff: Row[];
+  officeAvailability: Row[];
+  service: Row[];
+  requirement: Row[];
+  serviceFor: Row[];
+  serviceStaffAssignment: Row[];
+  gallery: Row[];
+  galleryImage: Row[];
+  administration: Row[];
+  report: Row[];
+};
+
+const data: SeedData = {
   "permission": [
     {
       "id": "cmjh76umb0000jsie46o4uy33",
-      "name": "user:create",
-      "createdAt": "2025-12-22T13:34:36.419Z",
-      "updatedAt": "2025-12-22T13:34:36.419Z"
+      "code": "user:create",
+      "name": "Create User",
+      "description": "Create user information"
     },
     {
       "id": "cmjh76umx0001jsieq3hfgly9",
-      "name": "user:read",
-      "createdAt": "2025-12-22T13:34:36.441Z",
-      "updatedAt": "2025-12-22T13:34:36.441Z"
+      "code": "user:read",
+      "name": "View User",
+      "description": "View user information"
     },
     {
       "id": "cmjh76un90002jsie9feum0rl",
-      "name": "user:update",
-      "createdAt": "2025-12-22T13:34:36.453Z",
-      "updatedAt": "2025-12-22T13:34:36.453Z"
+      "code": "user:update",
+      "name": "Update User",
+      "description": "Update user information"
     },
     {
       "id": "cmjh76unh0003jsiejp3wzolw",
-      "name": "user:delete",
-      "createdAt": "2025-12-22T13:34:36.461Z",
-      "updatedAt": "2025-12-22T13:34:36.461Z"
+      "code": "user:delete",
+      "name": "Delete User",
+      "description": "Delete user information"
     },
     {
       "id": "cmjh76unr0004jsiep9cmqkz2",
-      "name": "user:manage",
-      "createdAt": "2025-12-22T13:34:36.471Z",
-      "updatedAt": "2025-12-22T13:34:36.471Z"
+      "code": "user:manage",
+      "name": "Manage User",
+      "description": "Manage user information"
     },
     {
       "id": "cmjh76uny0005jsiewwvpv2lp",
-      "name": "office:create",
-      "createdAt": "2025-12-22T13:34:36.478Z",
-      "updatedAt": "2025-12-22T13:34:36.478Z"
+      "code": "office:create",
+      "name": "Create Office",
+      "description": "Create office information"
     },
     {
       "id": "cmjh76uo70006jsielypypd0n",
-      "name": "office:read",
-      "createdAt": "2025-12-22T13:34:36.488Z",
-      "updatedAt": "2025-12-22T13:34:36.488Z"
+      "code": "office:read",
+      "name": "View Office",
+      "description": "View office information"
     },
     {
       "id": "cmjh76uop0007jsiein1j2wwt",
-      "name": "office:update",
-      "createdAt": "2025-12-22T13:34:36.499Z",
-      "updatedAt": "2025-12-22T13:34:36.499Z"
+      "code": "office:update",
+      "name": "Update Office",
+      "description": "Update office information"
     },
     {
       "id": "cmjh76uoz0008jsieog1j2xv7",
-      "name": "office:delete",
-      "createdAt": "2025-12-22T13:34:36.515Z",
-      "updatedAt": "2025-12-22T13:34:36.515Z"
+      "code": "office:delete",
+      "name": "Delete Office",
+      "description": "Delete office information"
     },
     {
       "id": "cmjh76up40009jsiege1qrl1s",
-      "name": "office:manage",
-      "createdAt": "2025-12-22T13:34:36.521Z",
-      "updatedAt": "2025-12-22T13:34:36.521Z"
+      "code": "office:manage",
+      "name": "Manage Office",
+      "description": "Manage office information"
     },
     {
       "id": "cmjh76upb000ajsie3hcogxvy",
-      "name": "office:configure",
-      "createdAt": "2025-12-22T13:34:36.528Z",
-      "updatedAt": "2025-12-22T13:34:36.528Z"
+      "code": "office:configure",
+      "name": "Configure Office",
+      "description": "Configure office information"
     },
     {
       "id": "cmjh76uph000bjsierv1hjnj6",
-      "name": "service:create",
-      "createdAt": "2025-12-22T13:34:36.534Z",
-      "updatedAt": "2025-12-22T13:34:36.534Z"
+      "code": "service:create",
+      "name": "Create Service",
+      "description": "Create service information"
     },
     {
       "id": "cmjh76upn000cjsiekiwoxn4s",
-      "name": "service:read",
-      "createdAt": "2025-12-22T13:34:36.539Z",
-      "updatedAt": "2025-12-22T13:34:36.539Z"
+      "code": "service:read",
+      "name": "View Service",
+      "description": "View service information"
     },
     {
       "id": "cmjh76upv000djsieaoqlvlx4",
-      "name": "service:update",
-      "createdAt": "2025-12-22T13:34:36.547Z",
-      "updatedAt": "2025-12-22T13:34:36.547Z"
+      "code": "service:update",
+      "name": "Update Service",
+      "description": "Update service information"
     },
     {
       "id": "cmjh76uq3000ejsieh5md11h1",
-      "name": "service:delete",
-      "createdAt": "2025-12-22T13:34:36.555Z",
-      "updatedAt": "2025-12-22T13:34:36.555Z"
+      "code": "service:delete",
+      "name": "Delete Service",
+      "description": "Delete service information"
     },
     {
       "id": "cmjh76uq9000fjsieyqei6yxk",
-      "name": "service:manage",
-      "createdAt": "2025-12-22T13:34:36.561Z",
-      "updatedAt": "2025-12-22T13:34:36.561Z"
+      "code": "service:manage",
+      "name": "Manage Service",
+      "description": "Manage service information"
     },
     {
       "id": "cmjh76uqd000gjsie3ouwn84p",
-      "name": "service:assign-staff",
-      "createdAt": "2025-12-22T13:34:36.566Z",
-      "updatedAt": "2025-12-22T13:34:36.566Z"
+      "code": "service:assign-staff",
+      "name": "Assign Staff Service",
+      "description": "Assign Staff service information"
     },
     {
       "id": "cmjh76uqk000hjsiezw0qnwsj",
-      "name": "request:create",
-      "createdAt": "2025-12-22T13:34:36.572Z",
-      "updatedAt": "2025-12-22T13:34:36.572Z"
+      "code": "request:create",
+      "name": "Create Request",
+      "description": "Create request information"
     },
     {
       "id": "cmjh76uqp000ijsie8wx2b03q",
-      "name": "request:read",
-      "createdAt": "2025-12-22T13:34:36.578Z",
-      "updatedAt": "2025-12-22T13:34:36.578Z"
+      "code": "request:read",
+      "name": "View Request",
+      "description": "View request information"
     },
     {
       "id": "cmjh76uqv000jjsied22vb9h1",
-      "name": "request:update",
-      "createdAt": "2025-12-22T13:34:36.583Z",
-      "updatedAt": "2025-12-22T13:34:36.583Z"
+      "code": "request:update",
+      "name": "Update Request",
+      "description": "Update request information"
     },
     {
       "id": "cmjh76ur2000kjsieofld4ais",
-      "name": "request:delete",
-      "createdAt": "2025-12-22T13:34:36.590Z",
-      "updatedAt": "2025-12-22T13:34:36.590Z"
+      "code": "request:delete",
+      "name": "Delete Request",
+      "description": "Delete request information"
     },
     {
       "id": "cmjh76ur7000ljsie0ujofyyf",
-      "name": "request:approve-staff",
-      "createdAt": "2025-12-22T13:34:36.596Z",
-      "updatedAt": "2025-12-22T13:34:36.596Z"
+      "code": "request:approve-staff",
+      "name": "Approve Staff Request",
+      "description": "Approve Staff request information"
     },
     {
       "id": "cmjh76urc000mjsievcb2o1q3",
-      "name": "request:approve-manager",
-      "createdAt": "2025-12-22T13:34:36.600Z",
-      "updatedAt": "2025-12-22T13:34:36.600Z"
+      "code": "request:approve-manager",
+      "name": "Approve Manager Request",
+      "description": "Approve Manager request information"
     },
     {
       "id": "cmjh76urg000njsieub4ojasn",
-      "name": "request:approve-admin",
-      "createdAt": "2025-12-22T13:34:36.605Z",
-      "updatedAt": "2025-12-22T13:34:36.605Z"
+      "code": "request:approve-admin",
+      "name": "Approve Admin Request",
+      "description": "Approve Admin request information"
     },
     {
       "id": "cmjh76urm000ojsie9i6uens7",
-      "name": "request:view-all",
-      "createdAt": "2025-12-22T13:34:36.610Z",
-      "updatedAt": "2025-12-22T13:34:36.610Z"
+      "code": "request:view-all",
+      "name": "View All Request",
+      "description": "View All request information"
     },
     {
       "id": "cmjh76urp000pjsiep27rrydb",
-      "name": "appointment:create",
-      "createdAt": "2025-12-22T13:34:36.614Z",
-      "updatedAt": "2025-12-22T13:34:36.614Z"
+      "code": "appointment:create",
+      "name": "Create Appointment",
+      "description": "Create appointment information"
     },
     {
       "id": "cmjh76urv000qjsiefmyzpdgg",
-      "name": "appointment:read",
-      "createdAt": "2025-12-22T13:34:36.619Z",
-      "updatedAt": "2025-12-22T13:34:36.619Z"
+      "code": "appointment:read",
+      "name": "View Appointment",
+      "description": "View appointment information"
     },
     {
       "id": "cmjh76urz000rjsiec5lspjuf",
-      "name": "appointment:update",
-      "createdAt": "2025-12-22T13:34:36.623Z",
-      "updatedAt": "2025-12-22T13:34:36.623Z"
+      "code": "appointment:update",
+      "name": "Update Appointment",
+      "description": "Update appointment information"
     },
     {
       "id": "cmjh76us2000sjsieebjpoaq5",
-      "name": "appointment:delete",
-      "createdAt": "2025-12-22T13:34:36.627Z",
-      "updatedAt": "2025-12-22T13:34:36.627Z"
+      "code": "appointment:delete",
+      "name": "Delete Appointment",
+      "description": "Delete appointment information"
     },
     {
       "id": "cmjh76us7000tjsie7lv4oixt",
-      "name": "appointment:approve",
-      "createdAt": "2025-12-22T13:34:36.632Z",
-      "updatedAt": "2025-12-22T13:34:36.632Z"
+      "code": "appointment:approve",
+      "name": "Approve Appointment",
+      "description": "Approve appointment information"
     },
     {
       "id": "cmjh76usd000ujsieo2c8qbsr",
-      "name": "appointment:manage",
-      "createdAt": "2025-12-22T13:34:36.637Z",
-      "updatedAt": "2025-12-22T13:34:36.637Z"
+      "code": "appointment:manage",
+      "name": "Manage Appointment",
+      "description": "Manage appointment information"
     },
     {
       "id": "cmjh76usi000vjsiela3z5gwx",
-      "name": "staff:create",
-      "createdAt": "2025-12-22T13:34:36.643Z",
-      "updatedAt": "2025-12-22T13:34:36.643Z"
+      "code": "staff:create",
+      "name": "Create Staff",
+      "description": "Create staff information"
     },
     {
       "id": "cmjh76uso000wjsie8xwxyyhl",
-      "name": "staff:read",
-      "createdAt": "2025-12-22T13:34:36.648Z",
-      "updatedAt": "2025-12-22T13:34:36.648Z"
+      "code": "staff:read",
+      "name": "View Staff",
+      "description": "View staff information"
     },
     {
       "id": "cmjh76uss000xjsieg5s09qqw",
-      "name": "staff:update",
-      "createdAt": "2025-12-22T13:34:36.653Z",
-      "updatedAt": "2025-12-22T13:34:36.653Z"
+      "code": "staff:update",
+      "name": "Update Staff",
+      "description": "Update staff information"
     },
     {
       "id": "cmjh76usx000yjsiel76mrf3q",
-      "name": "staff:delete",
-      "createdAt": "2025-12-22T13:34:36.658Z",
-      "updatedAt": "2025-12-22T13:34:36.658Z"
+      "code": "staff:delete",
+      "name": "Delete Staff",
+      "description": "Delete staff information"
     },
     {
       "id": "cmjh76ut3000zjsiengrs0fey",
-      "name": "staff:assign-office",
-      "createdAt": "2025-12-22T13:34:36.663Z",
-      "updatedAt": "2025-12-22T13:34:36.663Z"
+      "code": "staff:assign-office",
+      "name": "Assign Office Staff",
+      "description": "Assign Office staff information"
     },
     {
       "id": "cmjh76ut80010jsieuzo2odgg",
-      "name": "staff:manage",
-      "createdAt": "2025-12-22T13:34:36.668Z",
-      "updatedAt": "2025-12-22T13:34:36.668Z"
+      "code": "staff:manage",
+      "name": "Manage Staff",
+      "description": "Manage staff information"
     },
     {
       "id": "cmjh76utd0011jsiez69hjwsl",
-      "name": "report:create",
-      "createdAt": "2025-12-22T13:34:36.674Z",
-      "updatedAt": "2025-12-22T13:34:36.674Z"
+      "code": "report:create",
+      "name": "Create Report",
+      "description": "Create report information"
     },
     {
       "id": "cmjh76utj0012jsieci4b8fss",
-      "name": "report:read",
-      "createdAt": "2025-12-22T13:34:36.679Z",
-      "updatedAt": "2025-12-22T13:34:36.679Z"
+      "code": "report:read",
+      "name": "View Report",
+      "description": "View report information"
     },
     {
       "id": "cmjh76utr0013jsie0u7qojwf",
-      "name": "report:update",
-      "createdAt": "2025-12-22T13:34:36.687Z",
-      "updatedAt": "2025-12-22T13:34:36.687Z"
+      "code": "report:update",
+      "name": "Update Report",
+      "description": "Update report information"
     },
     {
       "id": "cmjh76utw0014jsiexni8sl3a",
-      "name": "report:delete",
-      "createdAt": "2025-12-22T13:34:36.692Z",
-      "updatedAt": "2025-12-22T13:34:36.692Z"
+      "code": "report:delete",
+      "name": "Delete Report",
+      "description": "Delete report information"
     },
     {
       "id": "cmjh76uu30015jsiefwllun1i",
-      "name": "report:send",
-      "createdAt": "2025-12-22T13:34:36.700Z",
-      "updatedAt": "2025-12-22T13:34:36.700Z"
+      "code": "report:send",
+      "name": "Send Report",
+      "description": "Send report information"
     },
     {
       "id": "cmjh76uu80016jsie2fjowpyk",
-      "name": "report:approve",
-      "createdAt": "2025-12-22T13:34:36.705Z",
-      "updatedAt": "2025-12-22T13:34:36.705Z"
+      "code": "report:approve",
+      "name": "Approve Report",
+      "description": "Approve report information"
     },
     {
       "id": "cmjh76uud0017jsiei0tsk16c",
-      "name": "report:view-all",
-      "createdAt": "2025-12-22T13:34:36.709Z",
-      "updatedAt": "2025-12-22T13:34:36.709Z"
+      "code": "report:view-all",
+      "name": "View All Report",
+      "description": "View All report information"
     },
     {
       "id": "cmjh76uug0018jsieh4jpx8gj",
-      "name": "gallery:create",
-      "createdAt": "2025-12-22T13:34:36.713Z",
-      "updatedAt": "2025-12-22T13:34:36.713Z"
+      "code": "gallery:create",
+      "name": "Create Gallery",
+      "description": "Create gallery information"
     },
     {
       "id": "cmjh76uum0019jsiep0ould0o",
-      "name": "gallery:read",
-      "createdAt": "2025-12-22T13:34:36.719Z",
-      "updatedAt": "2025-12-22T13:34:36.719Z"
+      "code": "gallery:read",
+      "name": "View Gallery",
+      "description": "View gallery information"
     },
     {
       "id": "cmjh76uur001ajsienq59c8i9",
-      "name": "gallery:update",
-      "createdAt": "2025-12-22T13:34:36.723Z",
-      "updatedAt": "2025-12-22T13:34:36.723Z"
+      "code": "gallery:update",
+      "name": "Update Gallery",
+      "description": "Update gallery information"
     },
     {
       "id": "cmjh76uuv001bjsieuch0oah6",
-      "name": "gallery:delete",
-      "createdAt": "2025-12-22T13:34:36.728Z",
-      "updatedAt": "2025-12-22T13:34:36.728Z"
+      "code": "gallery:delete",
+      "name": "Delete Gallery",
+      "description": "Delete gallery information"
     },
     {
       "id": "cmjh76uv0001cjsiex7ul7cdp",
-      "name": "gallery:manage",
-      "createdAt": "2025-12-22T13:34:36.733Z",
-      "updatedAt": "2025-12-22T13:34:36.733Z"
+      "code": "gallery:manage",
+      "name": "Manage Gallery",
+      "description": "Manage gallery information"
     },
     {
       "id": "cmjh76uv5001djsiebno83xh8",
-      "name": "gallery:upload-images",
-      "createdAt": "2025-12-22T13:34:36.737Z",
-      "updatedAt": "2025-12-22T13:34:36.737Z"
+      "code": "gallery:upload-images",
+      "name": "Upload Images Gallery",
+      "description": "Upload Images gallery information"
     },
     {
       "id": "cmjh76uva001ejsierkti5ml1",
-      "name": "role:create",
-      "createdAt": "2025-12-22T13:34:36.742Z",
-      "updatedAt": "2025-12-22T13:34:36.742Z"
+      "code": "role:create",
+      "name": "Create Role",
+      "description": "Create role information"
     },
     {
       "id": "cmjh76uvh001fjsie9lbo1y1j",
-      "name": "role:read",
-      "createdAt": "2025-12-22T13:34:36.749Z",
-      "updatedAt": "2025-12-22T13:34:36.749Z"
+      "code": "role:read",
+      "name": "View Role",
+      "description": "View role information"
     },
     {
       "id": "cmjh76uvq001gjsiex4ixy9hj",
-      "name": "role:update",
-      "createdAt": "2025-12-22T13:34:36.758Z",
-      "updatedAt": "2025-12-22T13:34:36.758Z"
+      "code": "role:update",
+      "name": "Update Role",
+      "description": "Update role information"
     },
     {
       "id": "cmjh76uw0001hjsiem016el01",
-      "name": "role:delete",
-      "createdAt": "2025-12-22T13:34:36.768Z",
-      "updatedAt": "2025-12-22T13:34:36.768Z"
+      "code": "role:delete",
+      "name": "Delete Role",
+      "description": "Delete role information"
     },
     {
       "id": "cmjh76uw7001ijsie7vtwzh18",
-      "name": "role:assign-permissions",
-      "createdAt": "2025-12-22T13:34:36.775Z",
-      "updatedAt": "2025-12-22T13:34:36.775Z"
+      "code": "role:assign-permissions",
+      "name": "Assign Permissions Role",
+      "description": "Assign Permissions role information"
     },
     {
       "id": "cmjh76uwg001jjsie26od5e5b",
-      "name": "role:manage",
-      "createdAt": "2025-12-22T13:34:36.784Z",
-      "updatedAt": "2025-12-22T13:34:36.784Z"
+      "code": "role:manage",
+      "name": "Manage Role",
+      "description": "Manage role information"
     },
     {
       "id": "cmjh76uwn001kjsie776w3kgv",
-      "name": "permission:read",
-      "createdAt": "2025-12-22T13:34:36.791Z",
-      "updatedAt": "2025-12-22T13:34:36.791Z"
+      "code": "permission:read",
+      "name": "View Permission",
+      "description": "View permission information"
     },
     {
       "id": "cmjh76uws001ljsie1vza1flo",
-      "name": "permission:manage",
-      "createdAt": "2025-12-22T13:34:36.796Z",
-      "updatedAt": "2025-12-22T13:34:36.796Z"
+      "code": "permission:manage",
+      "name": "Manage Permission",
+      "description": "Manage permission information"
     },
     {
       "id": "cmjh76uwy001mjsies5xy1o80",
-      "name": "language:read",
-      "createdAt": "2025-12-22T13:34:36.802Z",
-      "updatedAt": "2025-12-22T13:34:36.802Z"
+      "code": "language:read",
+      "name": "View Language",
+      "description": "View language information"
     },
     {
       "id": "cmjh76ux3001njsiee59zu1m3",
-      "name": "language:update",
-      "createdAt": "2025-12-22T13:34:36.807Z",
-      "updatedAt": "2025-12-22T13:34:36.807Z"
+      "code": "language:update",
+      "name": "Update Language",
+      "description": "Update language information"
     },
     {
       "id": "cmjh76ux7001ojsie0zq62tba",
-      "name": "language:manage",
-      "createdAt": "2025-12-22T13:34:36.812Z",
-      "updatedAt": "2025-12-22T13:34:36.812Z"
+      "code": "language:manage",
+      "name": "Manage Language",
+      "description": "Manage language information"
     },
     {
       "id": "cmjh76uxb001pjsievpxr3p8r",
-      "name": "about:read",
-      "createdAt": "2025-12-22T13:34:36.815Z",
-      "updatedAt": "2025-12-22T13:34:36.815Z"
+      "code": "about:read",
+      "name": "View About",
+      "description": "View about information"
     },
     {
       "id": "cmjh76uxf001qjsie9tpjyimi",
-      "name": "about:update",
-      "createdAt": "2025-12-22T13:34:36.820Z",
-      "updatedAt": "2025-12-22T13:34:36.820Z"
+      "code": "about:update",
+      "name": "Update About",
+      "description": "Update about information"
     },
     {
       "id": "cmjh76uxl001rjsieyxiiocr9",
-      "name": "about:manage",
-      "createdAt": "2025-12-22T13:34:36.826Z",
-      "updatedAt": "2025-12-22T13:34:36.826Z"
+      "code": "about:manage",
+      "name": "Manage About",
+      "description": "Manage about information"
     },
     {
       "id": "cmjh76uxr001sjsieokcan77h",
-      "name": "administration:read",
-      "createdAt": "2025-12-22T13:34:36.832Z",
-      "updatedAt": "2025-12-22T13:34:36.832Z"
+      "code": "administration:read",
+      "name": "View Administration",
+      "description": "View administration information"
     },
     {
       "id": "cmjh76uxw001tjsie8q4hb618",
-      "name": "administration:update",
-      "createdAt": "2025-12-22T13:34:36.836Z",
-      "updatedAt": "2025-12-22T13:34:36.836Z"
+      "code": "administration:update",
+      "name": "Update Administration",
+      "description": "Update administration information"
     },
     {
       "id": "cmjh76uy3001ujsie8l6n5n20",
-      "name": "administration:manage",
-      "createdAt": "2025-12-22T13:34:36.843Z",
-      "updatedAt": "2025-12-22T13:34:36.843Z"
+      "code": "administration:manage",
+      "name": "Manage Administration",
+      "description": "Manage administration information"
     },
     {
       "id": "cmjh76uy9001vjsienl2seli5",
-      "name": "feedback:read",
-      "createdAt": "2025-12-22T13:34:36.850Z",
-      "updatedAt": "2025-12-22T13:34:36.850Z"
+      "code": "feedback:read",
+      "name": "View Feedback",
+      "description": "View feedback information"
     },
     {
       "id": "cmjh76uyf001wjsiefsqh293m",
-      "name": "feedback:create",
-      "createdAt": "2025-12-22T13:34:36.856Z",
-      "updatedAt": "2025-12-22T13:34:36.856Z"
+      "code": "feedback:create",
+      "name": "Create Feedback",
+      "description": "Create feedback information"
     },
     {
       "id": "cmjh76uyk001xjsieqmzesycz",
-      "name": "feedback:manage",
-      "createdAt": "2025-12-22T13:34:36.861Z",
-      "updatedAt": "2025-12-22T13:34:36.861Z"
+      "code": "feedback:manage",
+      "name": "Manage Feedback",
+      "description": "Manage feedback information"
     },
     {
       "id": "cmjh76uyp001yjsiegbm9805v",
-      "name": "file:upload",
-      "createdAt": "2025-12-22T13:34:36.866Z",
-      "updatedAt": "2025-12-22T13:34:36.866Z"
+      "code": "file:upload",
+      "name": "Upload File",
+      "description": "Upload file information"
     },
     {
       "id": "cmjh76uyv001zjsiel7cfuymc",
-      "name": "file:download",
-      "createdAt": "2025-12-22T13:34:36.872Z",
-      "updatedAt": "2025-12-22T13:34:36.872Z"
+      "code": "file:download",
+      "name": "Download File",
+      "description": "Download file information"
     },
     {
       "id": "cmjh76uyz0020jsie5832xd3u",
-      "name": "file:delete",
-      "createdAt": "2025-12-22T13:34:36.876Z",
-      "updatedAt": "2025-12-22T13:34:36.876Z"
+      "code": "file:delete",
+      "name": "Delete File",
+      "description": "Delete file information"
     },
     {
       "id": "cmjh76uz30021jsierx13saji",
-      "name": "file:manage",
-      "createdAt": "2025-12-22T13:34:36.880Z",
-      "updatedAt": "2025-12-22T13:34:36.880Z"
+      "code": "file:manage",
+      "name": "Manage File",
+      "description": "Manage file information"
     },
     {
       "id": "cmjh76uz90022jsiejgni3z3r",
-      "name": "dashboard:view",
-      "createdAt": "2025-12-22T13:34:36.885Z",
-      "updatedAt": "2025-12-22T13:34:36.885Z"
+      "code": "dashboard:view",
+      "name": "View Dashboard",
+      "description": "View dashboard information"
     },
     {
       "id": "cmjh76uzi0023jsie53rnner0",
-      "name": "dashboard:admin",
-      "createdAt": "2025-12-22T13:34:36.895Z",
-      "updatedAt": "2025-12-22T13:34:36.895Z"
+      "code": "dashboard:admin",
+      "name": "Dashboard Admin",
+      "description": "Admin dashboard access"
     },
     {
       "id": "cmjh76uzo0024jsie0jlamd27",
-      "name": "dashboard:manager",
-      "createdAt": "2025-12-22T13:34:36.900Z",
-      "updatedAt": "2025-12-22T13:34:36.900Z"
+      "code": "dashboard:manager",
+      "name": "Dashboard Manager",
+      "description": "Manager dashboard access"
     },
     {
       "id": "cmjh76uzs0025jsieo194xhu2",
-      "name": "dashboard:staff",
-      "createdAt": "2025-12-22T13:34:36.905Z",
-      "updatedAt": "2025-12-22T13:34:36.905Z"
+      "code": "dashboard:staff",
+      "name": "Dashboard Staff",
+      "description": "Staff dashboard access"
     },
     {
       "id": "cmjh76uzz0026jsie6ujclihe",
-      "name": "dashboard:customer",
-      "createdAt": "2025-12-22T13:34:36.911Z",
-      "updatedAt": "2025-12-22T13:34:36.911Z"
+      "code": "dashboard:customer",
+      "name": "Dashboard Customer",
+      "description": "Customer dashboard access"
     },
     {
       "id": "cmjh76v040027jsie2shswag2",
-      "name": "page:admin:overview",
-      "createdAt": "2025-12-22T13:34:36.916Z",
-      "updatedAt": "2025-12-22T13:34:36.916Z"
+      "code": "page:admin:overview",
+      "name": "Overview Page (Admin)",
+      "description": "Access the admin overview page"
     },
     {
       "id": "cmjh76v090028jsie7n3krc6k",
-      "name": "page:admin:user-management",
-      "createdAt": "2025-12-22T13:34:36.922Z",
-      "updatedAt": "2025-12-22T13:34:36.922Z"
+      "code": "page:admin:user-management",
+      "name": "User Management Page (Admin)",
+      "description": "Access the admin user management page"
     },
     {
       "id": "cmjh76v0e0029jsiegu14yz2g",
-      "name": "page:admin:office",
-      "createdAt": "2025-12-22T13:34:36.926Z",
-      "updatedAt": "2025-12-22T13:34:36.926Z"
+      "code": "page:admin:office",
+      "name": "Office Page (Admin)",
+      "description": "Access the admin office page"
     },
     {
       "id": "cmjh76v0l002ajsie480ndnmb",
-      "name": "page:admin:my-office",
-      "createdAt": "2025-12-22T13:34:36.934Z",
-      "updatedAt": "2025-12-22T13:34:36.934Z"
+      "code": "page:admin:my-office",
+      "name": "My Office Page (Admin)",
+      "description": "Access the admin my office page"
     },
     {
       "id": "cmjh76v0r002bjsiexgbsqtqu",
-      "name": "page:admin:request-management",
-      "createdAt": "2025-12-22T13:34:36.940Z",
-      "updatedAt": "2025-12-22T13:34:36.940Z"
+      "code": "page:admin:request-management",
+      "name": "Request Management Page (Admin)",
+      "description": "Access the admin request management page"
     },
     {
       "id": "cmjh76v0w002cjsiexnzmq6ag",
-      "name": "page:admin:report",
-      "createdAt": "2025-12-22T13:34:36.944Z",
-      "updatedAt": "2025-12-22T13:34:36.944Z"
+      "code": "page:admin:report",
+      "name": "Report Page (Admin)",
+      "description": "Access the admin report page"
     },
     {
       "id": "cmjh76v11002djsie0jmgyv47",
-      "name": "page:admin:languages",
-      "createdAt": "2025-12-22T13:34:36.949Z",
-      "updatedAt": "2025-12-22T13:34:36.949Z"
+      "code": "page:admin:languages",
+      "name": "Languages Page (Admin)",
+      "description": "Access the admin languages page"
     },
     {
       "id": "cmjh76v18002ejsie0i0hw5ar",
-      "name": "page:admin:gallery",
-      "createdAt": "2025-12-22T13:34:36.956Z",
-      "updatedAt": "2025-12-22T13:34:36.956Z"
+      "code": "page:admin:gallery",
+      "name": "Gallery Page (Admin)",
+      "description": "Access the admin gallery page"
     },
     {
       "id": "cmjh76v1e002fjsies6jvyu4e",
-      "name": "page:admin:about",
-      "createdAt": "2025-12-22T13:34:36.962Z",
-      "updatedAt": "2025-12-22T13:34:36.962Z"
+      "code": "page:admin:about",
+      "name": "About Page (Admin)",
+      "description": "Access the admin about page"
     },
     {
       "id": "cmjh76v1l002gjsiesjygsdul",
-      "name": "page:admin:profile",
-      "createdAt": "2025-12-22T13:34:36.969Z",
-      "updatedAt": "2025-12-22T13:34:36.969Z"
+      "code": "page:admin:profile",
+      "name": "Profile Page (Admin)",
+      "description": "Access the admin profile page"
+    },
+    {
+      "id": "cmkpadminroles0000000001a",
+      "code": "page:admin:roles",
+      "name": "Roles Page (Admin)",
+      "description": "Access the admin roles page"
+    },
+    {
+      "id": "cmkpadminperms0000000001a",
+      "code": "page:admin:permissions",
+      "name": "Permissions Page (Admin)",
+      "description": "Access the admin permissions page"
+    },
+    {
+      "id": "cmkpadminaudit0000000001a",
+      "code": "page:admin:audit-logs",
+      "name": "Audit Logs Page (Admin)",
+      "description": "Access the admin audit logs page"
     },
     {
       "id": "cmjh76v1q002hjsiewnru9ufd",
-      "name": "page:manager:overview",
-      "createdAt": "2025-12-22T13:34:36.975Z",
-      "updatedAt": "2025-12-22T13:34:36.975Z"
+      "code": "page:manager:overview",
+      "name": "Overview Page (Manager)",
+      "description": "Access the manager overview page"
     },
     {
       "id": "cmjh76v1v002ijsiexx72lpq8",
-      "name": "page:manager:services",
-      "createdAt": "2025-12-22T13:34:36.980Z",
-      "updatedAt": "2025-12-22T13:34:36.980Z"
+      "code": "page:manager:services",
+      "name": "Services Page (Manager)",
+      "description": "Access the manager services page"
     },
     {
       "id": "cmjh76v21002jjsiej4m4n43u",
-      "name": "page:manager:staff",
-      "createdAt": "2025-12-22T13:34:36.986Z",
-      "updatedAt": "2025-12-22T13:34:36.986Z"
+      "code": "page:manager:staff",
+      "name": "Staff Page (Manager)",
+      "description": "Access the manager staff page"
     },
     {
       "id": "cmjh76v29002kjsiesdifd3u4",
-      "name": "page:manager:request-management",
-      "createdAt": "2025-12-22T13:34:36.993Z",
-      "updatedAt": "2025-12-22T13:34:36.993Z"
+      "code": "page:manager:request-management",
+      "name": "Request Management Page (Manager)",
+      "description": "Access the manager request management page"
     },
     {
       "id": "cmjh76v2g002ljsie32el2ea5",
-      "name": "page:manager:report",
-      "createdAt": "2025-12-22T13:34:37.001Z",
-      "updatedAt": "2025-12-22T13:34:37.001Z"
+      "code": "page:manager:report",
+      "name": "Report Page (Manager)",
+      "description": "Access the manager report page"
     },
     {
       "id": "cmjh76v2p002mjsiekgcoow0z",
-      "name": "page:manager:appointment",
-      "createdAt": "2025-12-22T13:34:37.010Z",
-      "updatedAt": "2025-12-22T13:34:37.010Z"
+      "code": "page:manager:appointment",
+      "name": "Appointment Page (Manager)",
+      "description": "Access the manager appointment page"
     },
     {
       "id": "cmjh76v2x002njsie9vwhqayi",
-      "name": "page:manager:configuration",
-      "createdAt": "2025-12-22T13:34:37.017Z",
-      "updatedAt": "2025-12-22T13:34:37.017Z"
+      "code": "page:manager:configuration",
+      "name": "Configuration Page (Manager)",
+      "description": "Access the manager configuration page"
     },
     {
       "id": "cmjh76v34002ojsiexylzwqcl",
-      "name": "page:manager:availability",
-      "createdAt": "2025-12-22T13:34:37.024Z",
-      "updatedAt": "2025-12-22T13:34:37.024Z"
+      "code": "page:manager:availability",
+      "name": "Availability Page (Manager)",
+      "description": "Access the manager availability page"
     },
     {
       "id": "cmjh76v3d002pjsieypgqrb7a",
-      "name": "page:staff:overview",
-      "createdAt": "2025-12-22T13:34:37.033Z",
-      "updatedAt": "2025-12-22T13:34:37.033Z"
+      "code": "page:staff:overview",
+      "name": "Overview Page (Staff)",
+      "description": "Access the staff overview page"
     },
     {
       "id": "cmjh76v3n002qjsiedn3c7pqp",
-      "name": "page:staff:request-management",
-      "createdAt": "2025-12-22T13:34:37.043Z",
-      "updatedAt": "2025-12-22T13:34:37.043Z"
+      "code": "page:staff:request-management",
+      "name": "Request Management Page (Staff)",
+      "description": "Access the staff request management page"
     },
     {
       "id": "cmjh76v3t002rjsievt9j1xr6",
-      "name": "page:staff:appointment",
-      "createdAt": "2025-12-22T13:34:37.049Z",
-      "updatedAt": "2025-12-22T13:34:37.049Z"
+      "code": "page:staff:appointment",
+      "name": "Appointment Page (Staff)",
+      "description": "Access the staff appointment page"
     },
     {
       "id": "cmjh76v40002sjsie6thoe0q5",
-      "name": "page:staff:service-management",
-      "createdAt": "2025-12-22T13:34:37.056Z",
-      "updatedAt": "2025-12-22T13:34:37.056Z"
+      "code": "page:staff:service-management",
+      "name": "Service Management Page (Staff)",
+      "description": "Access the staff service management page"
     },
     {
       "id": "cmjh76v48002tjsieiv19zyne",
-      "name": "page:staff:report",
-      "createdAt": "2025-12-22T13:34:37.065Z",
-      "updatedAt": "2025-12-22T13:34:37.065Z"
+      "code": "page:staff:report",
+      "name": "Report Page (Staff)",
+      "description": "Access the staff report page"
     },
     {
       "id": "cmjh76v4h002ujsiej6fso2o4",
-      "name": "page:staff:profile",
-      "createdAt": "2025-12-22T13:34:37.073Z",
-      "updatedAt": "2025-12-22T13:34:37.073Z"
+      "code": "page:staff:profile",
+      "name": "Profile Page (Staff)",
+      "description": "Access the staff profile page"
     },
     {
       "id": "cmjh76v4n002vjsiei71lk677",
-      "name": "page:customer:overview",
-      "createdAt": "2025-12-22T13:34:37.079Z",
-      "updatedAt": "2025-12-22T13:34:37.079Z"
+      "code": "page:customer:overview",
+      "name": "Overview Page (Customer)",
+      "description": "Access the customer overview page"
     },
     {
       "id": "cmjh76v4z002wjsieo7mdz7tk",
-      "name": "page:customer:apply-service",
-      "createdAt": "2025-12-22T13:34:37.091Z",
-      "updatedAt": "2025-12-22T13:34:37.091Z"
+      "code": "page:customer:apply-service",
+      "name": "Apply Service Page (Customer)",
+      "description": "Access the customer apply service page"
     },
     {
       "id": "cmjh76v56002xjsiegfh6nlr8",
-      "name": "page:customer:request",
-      "createdAt": "2025-12-22T13:34:37.098Z",
-      "updatedAt": "2025-12-22T13:34:37.098Z"
+      "code": "page:customer:request",
+      "name": "Request Page (Customer)",
+      "description": "Access the customer request page"
     },
     {
       "id": "cmjh76v5h002yjsiejaeqsjoe",
-      "name": "page:customer:appointment",
-      "createdAt": "2025-12-22T13:34:37.109Z",
-      "updatedAt": "2025-12-22T13:34:37.109Z"
+      "code": "page:customer:appointment",
+      "name": "Appointment Page (Customer)",
+      "description": "Access the customer appointment page"
     },
     {
       "id": "cmjh76v5q002zjsie5b1frp94",
-      "name": "page:customer:feedback",
-      "createdAt": "2025-12-22T13:34:37.119Z",
-      "updatedAt": "2025-12-22T13:34:37.119Z"
+      "code": "page:customer:feedback",
+      "name": "Feedback Page (Customer)",
+      "description": "Access the customer feedback page"
     },
     {
       "id": "cmjh76v5x0030jsie8a2rsb8i",
-      "name": "page:customer:profile",
-      "createdAt": "2025-12-22T13:34:37.126Z",
-      "updatedAt": "2025-12-22T13:34:37.126Z"
+      "code": "page:customer:profile",
+      "name": "Profile Page (Customer)",
+      "description": "Access the customer profile page"
     },
     {
       "id": "cmjh76v640031jsiemxriz296",
-      "name": "configuration:read",
-      "createdAt": "2025-12-22T13:34:37.132Z",
-      "updatedAt": "2025-12-22T13:34:37.132Z"
+      "code": "configuration:read",
+      "name": "View Configuration",
+      "description": "View configuration information"
     },
     {
       "id": "cmjh76v6c0032jsieavspktz8",
-      "name": "configuration:update",
-      "createdAt": "2025-12-22T13:34:37.140Z",
-      "updatedAt": "2025-12-22T13:34:37.140Z"
+      "code": "configuration:update",
+      "name": "Update Configuration",
+      "description": "Update configuration information"
     },
     {
       "id": "cmjh76v6i0033jsiepkrgry2v",
-      "name": "configuration:manage",
-      "createdAt": "2025-12-22T13:34:37.147Z",
-      "updatedAt": "2025-12-22T13:34:37.147Z"
+      "code": "configuration:manage",
+      "name": "Manage Configuration",
+      "description": "Manage configuration information"
     },
     {
       "id": "cmjh76v6p0034jsie0aecold6",
-      "name": "profile:read",
-      "createdAt": "2025-12-22T13:34:37.154Z",
-      "updatedAt": "2025-12-22T13:34:37.154Z"
+      "code": "profile:read",
+      "name": "View Profile",
+      "description": "View profile information"
     },
     {
       "id": "cmjh76v6y0035jsieua5ys3pn",
-      "name": "profile:update",
-      "createdAt": "2025-12-22T13:34:37.163Z",
-      "updatedAt": "2025-12-22T13:34:37.163Z"
+      "code": "profile:update",
+      "name": "Update Profile",
+      "description": "Update profile information"
     },
     {
       "id": "cmjh76v780036jsiekp2pdpd4",
-      "name": "profile:change-password",
-      "createdAt": "2025-12-22T13:34:37.172Z",
-      "updatedAt": "2025-12-22T13:34:37.172Z"
+      "code": "profile:change-password",
+      "name": "Change Password Profile",
+      "description": "Change Password profile information"
     },
     {
       "id": "cmjh76v7f0037jsiep08v8wx2",
-      "name": "sms:send",
-      "createdAt": "2025-12-22T13:34:37.179Z",
-      "updatedAt": "2025-12-22T13:34:37.179Z"
+      "code": "sms:send",
+      "name": "Send Sms",
+      "description": "Send sms information"
     },
     {
       "id": "cmjh76v7t0038jsielq9cyidy",
-      "name": "otp:send",
-      "createdAt": "2025-12-22T13:34:37.193Z",
-      "updatedAt": "2025-12-22T13:34:37.193Z"
+      "code": "otp:send",
+      "name": "Send Otp",
+      "description": "Send otp information"
     },
     {
       "id": "cmjh76v850039jsied5btgjld",
-      "name": "otp:verify",
-      "createdAt": "2025-12-22T13:34:37.205Z",
-      "updatedAt": "2025-12-22T13:34:37.205Z"
+      "code": "otp:verify",
+      "name": "Verify Otp",
+      "description": "Verify otp information"
     }
   ],
   "office": [
@@ -722,8 +789,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T03:23:38.534Z",
-      "createdAt": "2025-12-08T03:27:13.574Z",
-      "updatedAt": "2025-12-10T14:49:46.109Z"
     },
     {
       "id": "cmiwtbrih0000jsmvxk1kww3f",
@@ -737,8 +802,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:08:12.224Z",
-      "createdAt": "2025-12-08T07:11:07.528Z",
-      "updatedAt": "2025-12-10T14:43:16.319Z"
     },
     {
       "id": "cmiwtftvd0001jsmvnaiv0eka",
@@ -752,8 +815,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:11:16.625Z",
-      "createdAt": "2025-12-08T07:14:17.210Z",
-      "updatedAt": "2025-12-10T04:30:31.623Z"
     },
     {
       "id": "cmiwtiz420002jsmvzoblvc02",
@@ -767,8 +828,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:14:26.349Z",
-      "createdAt": "2025-12-08T07:16:43.970Z",
-      "updatedAt": "2025-12-10T14:40:58.584Z"
     },
     {
       "id": "cmiwtl9ma0003jsmvqgo0nji3",
@@ -782,8 +841,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:16:51.235Z",
-      "createdAt": "2025-12-08T07:18:30.899Z",
-      "updatedAt": "2025-12-10T19:19:00.871Z"
     },
     {
       "id": "cmiwtowsm0004jsmvphmlc4z5",
@@ -797,8 +854,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:19:11.638Z",
-      "createdAt": "2025-12-08T07:21:20.903Z",
-      "updatedAt": "2025-12-10T04:39:50.393Z"
     },
     {
       "id": "cmiwtrp780005jsmvjob5rfok",
@@ -812,8 +867,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:21:34.336Z",
-      "createdAt": "2025-12-08T07:23:31.029Z",
-      "updatedAt": "2025-12-10T19:20:54.109Z"
     },
     {
       "id": "cmiwu1g5d0007jsmvkltn6oq3",
@@ -827,8 +880,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:29:01.147Z",
-      "createdAt": "2025-12-08T07:31:05.857Z",
-      "updatedAt": "2025-12-10T20:05:28.546Z"
     },
     {
       "id": "cmiwu4izk0008jsmve2lcslgp",
@@ -842,8 +893,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:32:11.311Z",
-      "createdAt": "2025-12-08T07:33:29.504Z",
-      "updatedAt": "2025-12-10T18:48:57.926Z"
     },
     {
       "id": "cmiwu7x6m0009jsmvjbc45zv5",
@@ -857,8 +906,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:34:30.013Z",
-      "createdAt": "2025-12-08T07:36:07.870Z",
-      "updatedAt": "2025-12-10T19:26:43.683Z"
     },
     {
       "id": "cmiwua43n000ajsmvogq5fg4p",
@@ -872,8 +919,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:36:34.684Z",
-      "createdAt": "2025-12-08T07:37:50.147Z",
-      "updatedAt": "2025-12-10T14:38:20.949Z"
     },
     {
       "id": "cmiwucdsm000bjsmv0hkq50cy",
@@ -887,8 +932,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:38:16.553Z",
-      "createdAt": "2025-12-08T07:39:36.022Z",
-      "updatedAt": "2025-12-10T04:38:40.895Z"
     },
     {
       "id": "cmiwuixeh000cjsmvdd516hqa",
@@ -902,8 +945,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:40:41.891Z",
-      "createdAt": "2025-12-08T07:44:41.369Z",
-      "updatedAt": "2025-12-10T18:52:08.176Z"
     },
     {
       "id": "cmiwukmpq000djsmv89g4bk05",
@@ -917,8 +958,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:44:47.751Z",
-      "createdAt": "2025-12-08T07:46:00.831Z",
-      "updatedAt": "2025-12-10T03:46:48.709Z"
     },
     {
       "id": "cmiwun4l6000ejsmvic2y9emc",
@@ -932,8 +971,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:46:44.416Z",
-      "createdAt": "2025-12-08T07:47:57.307Z",
-      "updatedAt": "2025-12-10T04:36:07.220Z"
     },
     {
       "id": "cmiwupjpr000fjsmvz77cek4a",
@@ -947,8 +984,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:48:40.806Z",
-      "createdAt": "2025-12-08T07:49:50.224Z",
-      "updatedAt": "2025-12-10T04:37:21.740Z"
     },
     {
       "id": "cmiwuv4ar000gjsmvn7thi4qz",
@@ -962,8 +997,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:50:38.162Z",
-      "createdAt": "2025-12-08T07:54:10.180Z",
-      "updatedAt": "2025-12-10T19:22:37.717Z"
     },
     {
       "id": "cmiwve9qh000hjsmv1ktd3i4r",
@@ -977,8 +1010,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T07:57:41.725Z",
-      "createdAt": "2025-12-08T08:09:03.690Z",
-      "updatedAt": "2025-12-10T04:34:55.358Z"
     },
     {
       "id": "cmiwvt0pm000ijsmvqgicrbqs",
@@ -992,8 +1023,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T08:17:03.082Z",
-      "createdAt": "2025-12-08T08:20:31.834Z",
-      "updatedAt": "2025-12-18T07:59:43.642Z"
     },
     {
       "id": "cmiww0myi000jjsmvyhxxlz3o",
@@ -1007,8 +1036,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T08:24:33.706Z",
-      "createdAt": "2025-12-08T08:26:27.259Z",
-      "updatedAt": "2025-12-10T19:28:24.636Z"
     },
     {
       "id": "cmixqur860010jsn7l58up53s",
@@ -1022,8 +1049,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-08T22:48:53.786Z",
-      "createdAt": "2025-12-08T22:49:40.951Z",
-      "updatedAt": "2025-12-15T06:54:49.261Z"
     },
     {
       "id": "cmj0g35y30000js4678hrglup",
@@ -1037,8 +1062,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-10T20:06:00.820Z",
-      "createdAt": "2025-12-10T20:11:36.027Z",
-      "updatedAt": "2025-12-10T20:11:36.027Z"
     },
     {
       "id": "cmj6sdygu0006js064fd2lgpr",
@@ -1052,8 +1075,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-15T06:41:22.595Z",
-      "createdAt": "2025-12-15T06:42:31.998Z",
-      "updatedAt": "2025-12-15T06:55:05.743Z"
     },
     {
       "id": "cmj6syico0007js06qt4vpskb",
@@ -1067,8 +1088,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-15T06:55:28.495Z",
-      "createdAt": "2025-12-15T06:58:30.889Z",
-      "updatedAt": "2025-12-15T06:58:30.889Z"
     },
     {
       "id": "cmj6t45fm0008js06xip4001x",
@@ -1082,8 +1101,6 @@
       "settings": {},
       "status": true,
       "startedAt": "2025-12-15T07:00:15.098Z",
-      "createdAt": "2025-12-15T07:02:54.082Z",
-      "updatedAt": "2026-01-03T07:30:44.604Z"
     }
   ],
   "role": [
@@ -1091,190 +1108,136 @@
       "id": "cmiwl338h0000jsnoikvgm780",
       "name": "admin",
       "officeId": null,
-      "createdAt": "2025-12-08T03:20:25.889Z",
-      "updatedAt": "2025-12-08T03:20:25.889Z"
     },
     {
       "id": "cmiwl338t0001jsno43wxxf9k",
       "name": "manager",
       "officeId": null,
-      "createdAt": "2025-12-08T03:20:25.901Z",
-      "updatedAt": "2025-12-08T03:20:25.901Z"
     },
     {
       "id": "cmiwl338z0002jsnorjywaoi9",
       "name": "staff",
       "officeId": null,
-      "createdAt": "2025-12-08T03:20:25.908Z",
-      "updatedAt": "2025-12-08T03:20:25.908Z"
     },
     {
       "id": "cmiwl33970003jsnogvq91lb2",
       "name": "customer",
       "officeId": null,
-      "createdAt": "2025-12-08T03:20:25.916Z",
-      "updatedAt": "2025-12-08T03:20:25.916Z"
     },
     {
       "id": "cmix3x7g8000ljsmvxx6a4mui",
       "name": "MANAGER",
       "officeId": "cmiwua43n000ajsmvogq5fg4p",
-      "createdAt": "2025-12-08T12:07:43.937Z",
-      "updatedAt": "2025-12-08T12:07:43.937Z"
     },
     {
       "id": "cmix40eyw000pjsmvu2zao9dy",
       "name": "MANAGER",
       "officeId": "cmiwucdsm000bjsmv0hkq50cy",
-      "createdAt": "2025-12-08T12:10:13.833Z",
-      "updatedAt": "2025-12-08T12:10:13.833Z"
     },
     {
       "id": "cmix427xl000tjsmvj4jtd0wy",
       "name": "MANAGER",
       "officeId": "cmiwukmpq000djsmv89g4bk05",
-      "createdAt": "2025-12-08T12:11:38.026Z",
-      "updatedAt": "2025-12-08T12:11:38.026Z"
     },
     {
       "id": "cmix44qfr000xjsmv3eto671i",
       "name": "MANAGER",
       "officeId": "cmiwuixeh000cjsmvdd516hqa",
-      "createdAt": "2025-12-08T12:13:35.319Z",
-      "updatedAt": "2025-12-08T12:13:35.319Z"
     },
     {
       "id": "cmix4dnyt0011jsmv3151p66h",
       "name": "manager",
       "officeId": "cmiwuv4ar000gjsmvn7thi4qz",
-      "createdAt": "2025-12-08T12:20:32.022Z",
-      "updatedAt": "2025-12-08T12:20:32.022Z"
     },
     {
       "id": "cmix4f7fv0015jsmve8j45rlg",
       "name": "MANAGER",
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-08T12:21:43.916Z",
-      "updatedAt": "2025-12-08T12:21:43.916Z"
     },
     {
       "id": "cmixk7tv90001jsoaanj1lrue",
       "name": "MANAGER",
       "officeId": "cmiwun4l6000ejsmvic2y9emc",
-      "createdAt": "2025-12-08T19:43:53.588Z",
-      "updatedAt": "2025-12-08T19:43:53.588Z"
     },
     {
       "id": "cmixk97zm0005jsoa33guagkb",
       "name": "MANAGER",
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2025-12-08T19:44:58.546Z",
-      "updatedAt": "2025-12-08T19:44:58.546Z"
     },
     {
       "id": "cmixkaik60009jsoa4domcmj0",
       "name": "MANAGER",
       "officeId": "cmiwve9qh000hjsmv1ktd3i4r",
-      "createdAt": "2025-12-08T19:45:58.902Z",
-      "updatedAt": "2025-12-08T19:45:58.902Z"
     },
     {
       "id": "cmixkbt47000djsoada3l5ljc",
       "name": "MANAGER",
       "officeId": "cmiww0myi000jjsmvyhxxlz3o",
-      "createdAt": "2025-12-08T19:46:59.239Z",
-      "updatedAt": "2025-12-08T19:46:59.239Z"
     },
     {
       "id": "cmixq8wjr0001jsn7b1bwnkz9",
       "name": "MANAGER",
       "officeId": "cmiwu4izk0008jsmve2lcslgp",
-      "createdAt": "2025-12-08T22:32:41.414Z",
-      "updatedAt": "2025-12-08T22:32:41.414Z"
     },
     {
       "id": "cmixqbp5a0005jsn7kqdr3dy8",
       "name": "MANAGER",
       "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
-      "createdAt": "2025-12-08T22:34:51.791Z",
-      "updatedAt": "2025-12-08T22:34:51.791Z"
     },
     {
       "id": "cmixqf1kn0009jsn7xqozuf6t",
       "name": "MANAGER",
       "officeId": "cmiwu1g5d0007jsmvkltn6oq3",
-      "createdAt": "2025-12-08T22:37:27.863Z",
-      "updatedAt": "2025-12-08T22:37:27.863Z"
     },
     {
       "id": "cmixqh413000djsn794qlq7cm",
       "name": "MANAGER",
       "officeId": "cmiwtbrih0000jsmvxk1kww3f",
-      "createdAt": "2025-12-08T22:39:04.360Z",
-      "updatedAt": "2025-12-08T22:39:04.360Z"
     },
     {
       "id": "cmixqkini000hjsn76t9opcog",
       "name": "MANAGER",
       "officeId": "cmiwtftvd0001jsmvnaiv0eka",
-      "createdAt": "2025-12-08T22:41:43.278Z",
-      "updatedAt": "2025-12-08T22:41:43.278Z"
     },
     {
       "id": "cmixqlsr3000ljsn70jr1l89p",
       "name": "MANAGER",
       "officeId": "cmiwtiz420002jsmvzoblvc02",
-      "createdAt": "2025-12-08T22:42:43.024Z",
-      "updatedAt": "2025-12-08T22:42:43.024Z"
     },
     {
       "id": "cmixqn9b6000pjsn7r5k4dfud",
       "name": "MANAGER",
       "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
-      "createdAt": "2025-12-08T22:43:51.139Z",
-      "updatedAt": "2025-12-08T22:43:51.139Z"
     },
     {
       "id": "cmixqolmv000tjsn73z9hlzz7",
       "name": "MANAGER",
       "officeId": "cmiwtowsm0004jsmvphmlc4z5",
-      "createdAt": "2025-12-08T22:44:53.767Z",
-      "updatedAt": "2025-12-08T22:44:53.767Z"
     },
     {
       "id": "cmixqqbjq000xjsn79taubd2y",
       "name": "MANAGER",
       "officeId": "cmiwtrp780005jsmvjob5rfok",
-      "createdAt": "2025-12-08T22:46:14.007Z",
-      "updatedAt": "2025-12-08T22:46:14.007Z"
     },
     {
       "id": "cmixqvv1q0012jsn7lkppuv1b",
       "name": "MANAGER",
       "officeId": "cmixqur860010jsn7l58up53s",
-      "createdAt": "2025-12-08T22:50:32.559Z",
-      "updatedAt": "2025-12-08T22:50:32.559Z"
     },
     {
       "id": "cmjciihoe0001jsc0fqm56l5u",
       "name": "MANAGER",
       "officeId": "cmj6t45fm0008js06xip4001x",
-      "createdAt": "2025-12-19T06:52:44.413Z",
-      "updatedAt": "2025-12-19T06:52:44.413Z"
     },
     {
       "id": "cmjcj6r660005jsc0o9nsji40",
       "name": "MANAGER",
       "officeId": "cmj6syico0007js06qt4vpskb",
-      "createdAt": "2025-12-19T07:11:36.463Z",
-      "updatedAt": "2025-12-19T07:11:36.463Z"
     },
     {
       "id": "cmjcj83h90009jsc0lvjniek1",
       "name": "MANAGER",
       "officeId": "cmj0g35y30000js4678hrglup",
-      "createdAt": "2025-12-19T07:12:39.069Z",
-      "updatedAt": "2025-12-19T07:12:39.069Z"
     }
   ],
   "rolePermission": [
@@ -1282,8791 +1245,6334 @@
       "id": "cmjh77hz30000jsjvx6o22wh2",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76umb0000jsie46o4uy33",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30001jsjvbx6pibov",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76umx0001jsieq3hfgly9",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30002jsjvbm58juez",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76un90002jsie9feum0rl",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30003jsjv41zalw8h",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76unh0003jsiejp3wzolw",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30004jsjv3upz4mbb",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76unr0004jsiep9cmqkz2",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30005jsjvx3o7ck7f",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uny0005jsiewwvpv2lp",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30006jsjv47f6h5fe",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30007jsjvqizc4j6m",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uop0007jsiein1j2wwt",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30008jsjvs2sabk6u",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uoz0008jsieog1j2xv7",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30009jsjvwdbpqu6v",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76up40009jsiege1qrl1s",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000ajsjvdjeta0l0",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000bjsjve56t3ate",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000cjsjvrhwsqgm0",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000djsjvocbglqsm",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000ejsjv9arhn516",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000fjsjvyg4c7o22",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000gjsjvktd03t0p",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000hjsjvxksjogw5",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uqk000hjsiezw0qnwsj",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000ijsjvbrtrnyur",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000jjsjv7993aeu0",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000kjsjvivi001z6",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76ur2000kjsieofld4ais",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000ljsjvnt7ntq54",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76ur7000ljsie0ujofyyf",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000mjsjvi87d32k7",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000njsjvm21en1f6",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76urg000njsieub4ojasn",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000ojsjvo796l1gq",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000pjsjveg5p2o8s",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76urp000pjsiep27rrydb",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000qjsjv8km7srs0",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000rjsjv03fhz3xy",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000sjsjv88whnpr6",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76us2000sjsieebjpoaq5",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000tjsjvvzktxmf7",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76us7000tjsie7lv4oixt",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000ujsjvrhv92o8o",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000vjsjvsgudelux",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000wjsjvqwii67xg",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000xjsjv1rbroclb",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000yjsjvql3j8qrj",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3000zjsjvxo9xcs8i",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30010jsjvhu1ql75e",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30011jsjvkyicw7fj",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30012jsjv5jpyw67h",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30013jsjvkzivpit9",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30014jsjvg1tlr57i",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30015jsjvvdjps1zf",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30016jsjvkarkcru6",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30017jsjvp5osl4jq",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30018jsjv7odvlu71",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uug0018jsieh4jpx8gj",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30019jsjvyjsv55j3",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uum0019jsiep0ould0o",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001ajsjverbpqizf",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uur001ajsienq59c8i9",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001bjsjvlqt6bjt8",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uuv001bjsieuch0oah6",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001cjsjvmzawp62e",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uv0001cjsiex7ul7cdp",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001djsjvjptfwlno",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uv5001djsiebno83xh8",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001ejsjvgkg862rw",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uva001ejsierkti5ml1",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001fjsjv6qoyl3r9",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uvh001fjsie9lbo1y1j",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001gjsjvb9fo2im6",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uvq001gjsiex4ixy9hj",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001hjsjveu266sz6",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uw0001hjsiem016el01",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001ijsjv35n7xisi",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uw7001ijsie7vtwzh18",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001jjsjvvs6fxbte",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uwg001jjsie26od5e5b",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001kjsjv56l1p7ev",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uwn001kjsie776w3kgv",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001ljsjvjd5pd8rg",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uws001ljsie1vza1flo",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001mjsjvxbylp4ak",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uwy001mjsies5xy1o80",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001njsjvegx3upzp",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76ux3001njsiee59zu1m3",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001ojsjvx3m57gqz",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76ux7001ojsie0zq62tba",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001pjsjvrwsnpo0n",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uxb001pjsievpxr3p8r",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001qjsjvi0wshr1a",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uxf001qjsie9tpjyimi",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001rjsjv8envb0ac",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uxl001rjsieyxiiocr9",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001sjsjvqkypqeru",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uxr001sjsieokcan77h",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001tjsjv19fv6b3f",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uxw001tjsie8q4hb618",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001ujsjvf3e9r6nq",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uy3001ujsie8l6n5n20",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001vjsjvyiyphc80",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uy9001vjsienl2seli5",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001wjsjv9vxvijui",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uyf001wjsiefsqh293m",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001xjsjvw0dv06hs",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uyk001xjsieqmzesycz",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001yjsjvxux6n4qy",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3001zjsjvwsnhe0si",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30020jsjvj809so23",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uyz0020jsie5832xd3u",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30021jsjvnzsg1ulo",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uz30021jsierx13saji",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30022jsjvtgx1d951",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30023jsjvw2v7w6st",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uzi0023jsie53rnner0",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30024jsjv0uvd6k11",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30025jsjvo2x54643",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uzs0025jsieo194xhu2",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30026jsjvo3bwsada",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76uzz0026jsie6ujclihe",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30027jsjvwdj3nv9e",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v040027jsie2shswag2",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30028jsjvkto8vnut",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v090028jsie7n3krc6k",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30029jsjvm4hg0ln5",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v0e0029jsiegu14yz2g",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002ajsjvu2kakr8g",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v0l002ajsie480ndnmb",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002bjsjvxodtflv1",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v0r002bjsiexgbsqtqu",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002cjsjvxt81tbul",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v0w002cjsiexnzmq6ag",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002djsjvdl65dc6c",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v11002djsie0jmgyv47",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002ejsjv214dlhvh",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v18002ejsie0i0hw5ar",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002fjsjvfx81n1gb",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v1e002fjsies6jvyu4e",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002gjsjvozw31n1w",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v1l002gjsiesjygsdul",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002hjsjv8g29w3pm",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002ijsjvohs74rz8",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002jjsjvvwtlzp9t",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002kjsjv6hvfr0pu",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002ljsjv17pssni4",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002mjsjv1amav9zd",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002njsjvkp1mtz4e",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002ojsjvoenerhh2",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002pjsjve31y6sae",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v3d002pjsieypgqrb7a",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002qjsjv88imcu4e",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v3n002qjsiedn3c7pqp",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002rjsjv5y0arrj2",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v3t002rjsievt9j1xr6",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002sjsjvknye242w",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v40002sjsie6thoe0q5",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002tjsjvcg8azvl3",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v48002tjsieiv19zyne",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002ujsjvwu5b5zbg",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v4h002ujsiej6fso2o4",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002vjsjvxt175uem",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v4n002vjsiei71lk677",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002wjsjvod4b9y2t",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v4z002wjsieo7mdz7tk",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002xjsjvc592ggef",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v56002xjsiegfh6nlr8",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002yjsjvghkwwbxl",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v5h002yjsiejaeqsjoe",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz3002zjsjvsvomhsw0",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v5q002zjsie5b1frp94",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30030jsjv9gj2nqjv",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v5x0030jsie8a2rsb8i",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30031jsjv3g2rpoxj",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30032jsjv8ko8gb63",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz30033jsjvm8lw8pau",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v6i0033jsiepkrgry2v",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz40034jsjvd8gddcu3",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz40035jsjvegf1ntex",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz40036jsjvmb8ai0j2",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz40037jsjve6rxehn9",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v7f0037jsiep08v8wx2",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz40038jsjv80p3mah6",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v7t0038jsielq9cyidy",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
     },
     {
       "id": "cmjh77hz40039jsjvzai4gjw7",
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "permissionId": "cmjh76v850039jsied5btgjld",
-      "createdAt": "2025-12-22T13:35:06.687Z",
-      "updatedAt": "2025-12-22T13:35:06.687Z"
+    },
+    {
+      "id": "cmkprpadminroles00000001a",
+      "roleId": "cmiwl338h0000jsnoikvgm780",
+      "permissionId": "cmkpadminroles0000000001a",
+    },
+    {
+      "id": "cmkprpadminperms00000001a",
+      "roleId": "cmiwl338h0000jsnoikvgm780",
+      "permissionId": "cmkpadminperms0000000001a",
+    },
+    {
+      "id": "cmkprpadminaudit00000001a",
+      "roleId": "cmiwl338h0000jsnoikvgm780",
+      "permissionId": "cmkpadminaudit0000000001a",
     },
     {
       "id": "cmjh7g7qw0000jsnx48snf60b",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qw0001jsnxd7hr9ip7",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0002jsnxtt9c6ek3",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0003jsnxfz38qmqr",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0004jsnxx9z7zfju",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0005jsnxzbltgykm",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0006jsnx6b5t9gct",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0007jsnx1r7fisfi",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0008jsnxv8ulxjil",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0009jsnxlwmw8gnr",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000ajsnxttvf6ulc",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000bjsnxc49l1ctr",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000cjsnxgib0k4ok",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000djsnxh2j3vndm",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000ejsnxsdokcu1w",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000fjsnx95laapsy",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000gjsnxm96k0fe9",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000hjsnxyzx9byvi",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000ijsnxws346z7g",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000jjsnxpsfbvid9",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000kjsnxl9tflrdh",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000ljsnxcf5icafq",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000mjsnx1khi89i5",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000njsnxg7evz3s4",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000ojsnxrp49jn8c",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000pjsnxgw6mjif8",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000qjsnx0nes9h4c",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000rjsnx79cn9ogi",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000sjsnx9ga2tast",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000tjsnxlcfvlvcc",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000ujsnxxr9k3jsj",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000vjsnxewkucvnm",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000wjsnx7cknxnnl",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000xjsnxx2cdxvhb",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000yjsnx8zvdovps",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx000zjsnxyx7vpphx",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0010jsnxcy7qayvl",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0011jsnxgcamemn9",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0012jsnx5lftx5ej",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0013jsnx7uiw8scv",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0014jsnxrcoq04wh",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0015jsnxvdny5ujy",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0016jsnxpp0o8c03",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0017jsnxlwkrhg39",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7g7qx0018jsnx3fb80u5u",
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T13:41:53.337Z",
-      "updatedAt": "2025-12-22T13:41:53.337Z"
     },
     {
       "id": "cmjh7gfw40019jsnxqoxbk958",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001ajsnx2s74dcbp",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001bjsnx8zd2g86x",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001cjsnxjvgx31v3",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001djsnxldtg2qys",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001ejsnxvlodlh6l",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001fjsnxv3wx04l0",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001gjsnxexp1db3o",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001hjsnxkinaz2sh",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001ijsnx7cwn2tqe",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001jjsnxzk4hn2rt",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001kjsnxc85rixbd",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001ljsnxowu223rz",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001mjsnxfzre62zk",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001njsnxed2rc89o",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001ojsnx7v4e1q5a",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001pjsnxljja6ue0",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001qjsnxgq0kb25x",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001rjsnxi5pv15hs",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001sjsnxlvupnd5c",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001tjsnxwgrh7b1g",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001ujsnx1ns23u6a",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001vjsnx6ehkg69w",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001wjsnxhu8s1nzi",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001xjsnxcboaoebv",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001yjsnxxnvnclhg",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4001zjsnxp5be7ga3",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40020jsnxnjm93c62",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40021jsnxc93yn95j",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40022jsnxuttvq9xs",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40023jsnxyirtuw7a",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40024jsnx1yht94br",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40025jsnxy9p9g1p1",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40026jsnxqpk579v7",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40027jsnx1d19k8ai",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40028jsnx3c77h21k",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw40029jsnxwx4schba",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4002ajsnxl9txs2o6",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4002bjsnxcc1xn0dj",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4002cjsnxyu8p9t5k",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4002djsnxhhum8cq5",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4002ejsnxmpjqgsyr",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4002fjsnxlo2sm97o",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4002gjsnx51ufakzr",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gfw4002hjsnxwcopa2fg",
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T13:42:03.893Z",
-      "updatedAt": "2025-12-22T13:42:03.893Z"
     },
     {
       "id": "cmjh7gq3r002ijsnxns94x78p",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002jjsnx6gq6rzpz",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002kjsnxvlybw0sb",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002ljsnxjqwfk7p5",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76ur7000ljsie0ujofyyf",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002mjsnxhdu6gcq7",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002njsnx09h4n9dq",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002ojsnx6dvg4613",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76us7000tjsie7lv4oixt",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002pjsnxuyd4m2q7",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002qjsnxgujgmvg6",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002rjsnxvos7mftv",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002sjsnxhvxb56fq",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002tjsnxp3mtsh04",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002ujsnxte44zu6b",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002vjsnxak8fxni6",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002wjsnxpk079zlr",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76uzs0025jsieo194xhu2",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002xjsnxfiop3z7a",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v3d002pjsieypgqrb7a",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002yjsnxf1r375if",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v3n002qjsiedn3c7pqp",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r002zjsnxdbc02lx5",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v3t002rjsievt9j1xr6",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r0030jsnxo7uwcqx8",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v40002sjsie6thoe0q5",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r0031jsnxuusfgzqb",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v48002tjsieiv19zyne",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r0032jsnxf590uyae",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v4h002ujsiej6fso2o4",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r0033jsnxo1g74h5c",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r0034jsnxwlzbafwv",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjh7gq3r0035jsnx4uydm464",
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T13:42:17.127Z",
-      "updatedAt": "2025-12-22T13:42:17.127Z"
     },
     {
       "id": "cmjhfxjtd0036jsnxmkc0bs9s",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0037jsnxjb3fqibv",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0038jsnxgs9szlxo",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0039jsnxnc93a0nv",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003ajsnxaat9h3ja",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003bjsnxkmi7tr2i",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003cjsnxh4c30100",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003djsnxq2kcct85",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003ejsnxglv0a58a",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003fjsnxekgg7gwl",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003gjsnxbvspkitx",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003hjsnxy1u4g7zi",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003ijsnx1519e1s8",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003jjsnx0ysti5z3",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003kjsnxbh4xhq8p",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003ljsnxv9hu5w3i",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003mjsnxu7cuddqs",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003njsnxffn7rkmk",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003ojsnx61h9ywp5",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003pjsnx8ce0b3ii",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003qjsnxnp1gi7un",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003rjsnxpxpsopgk",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003sjsnxhqhzf0xf",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003tjsnxq7omr48h",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003ujsnxehkncqhc",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003vjsnxitmfocpz",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003wjsnx5qxpf3ub",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003xjsnxv6cwl4v7",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003yjsnxcau1etna",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte003zjsnxic6nhwsb",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0040jsnxijik1k2s",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0041jsnxmdpuihzz",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0042jsnxyahmo6h0",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0043jsnx7v22daht",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0044jsnxlgxj79yo",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0045jsnxajlhmw3w",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0046jsnxwys6rb0m",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0047jsnxu3cjzrf1",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0048jsnxu6kydxyn",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte0049jsnx0zcfu0t6",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte004ajsnxnhb08c26",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte004bjsnxayniqdal",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte004cjsnxtaw6hl0a",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte004djsnxfe5odrjt",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxjte004ejsnxdunufj65",
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:39:19.057Z",
-      "updatedAt": "2025-12-22T17:39:19.057Z"
     },
     {
       "id": "cmjhfxpr0004fjsnxx1coeltc",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004gjsnxn5ddt9x6",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004hjsnxqc545wtq",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uqk000hjsiezw0qnwsj",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004ijsnx8tc0pkuy",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004jjsnxh6ag9e5z",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004kjsnxkgwagtov",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76ur2000kjsieofld4ais",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004ljsnxjtgog55c",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76urp000pjsiep27rrydb",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004mjsnx06bvhvna",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004njsnxrmobkuhc",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004ojsnxowzoick1",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76us2000sjsieebjpoaq5",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004pjsnxxf2zcfyl",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uy9001vjsienl2seli5",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004qjsnxg2trkorm",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uyf001wjsiefsqh293m",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004rjsnxukuj4gpo",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004sjsnxmpowb8c0",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004tjsnxenre8pqx",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004ujsnxvo0j8mct",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76uzz0026jsie6ujclihe",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004vjsnx185siune",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v4n002vjsiei71lk677",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004wjsnx1b78toi3",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v4z002wjsieo7mdz7tk",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004xjsnxlnm2e52v",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v56002xjsiegfh6nlr8",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004yjsnx75a0dqh3",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v5h002yjsiejaeqsjoe",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr0004zjsnxxaz3t9m2",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v5q002zjsie5b1frp94",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr00050jsnxzg3c1hs4",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v5x0030jsie8a2rsb8i",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr00051jsnxjgw21r61",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr00052jsnxc0be6a3x",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxpr00053jsnxe1cxggdf",
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:39:26.748Z",
-      "updatedAt": "2025-12-22T17:39:26.748Z"
     },
     {
       "id": "cmjhfxw5d0054jsnxzsjoi1yt",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0055jsnxovc5vpxa",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0056jsnxwo0eaiu7",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0057jsnx6uwo3aix",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0058jsnxe052wq3s",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0059jsnxs3335zz1",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005ajsnxscq6kwk6",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005bjsnxfgld3gn8",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005cjsnx9b4wfe8a",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005djsnx18fiqdvw",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005ejsnxk76yb2ez",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005fjsnx8whuttbq",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005gjsnxknsljpn6",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005hjsnx8lrsvmfx",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005ijsnxyeovte6i",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005jjsnx7jcdv1xa",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005kjsnx0msvlvz7",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005ljsnx1r6dyvdz",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005mjsnxxy6jbivw",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005njsnx4r6v063z",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005ojsnxouorrf77",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005pjsnxd3xnlraz",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005qjsnx2krbfc99",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005rjsnxrlla9ojg",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005sjsnx9kf5dnum",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005tjsnxmeyx9w13",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005ujsnxi9ni6vvi",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005vjsnxcwkz84iv",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005wjsnxhfvsmy16",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005xjsnxki18pior",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005yjsnxs69sx36e",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d005zjsnxu5crhh29",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0060jsnxsa119lnz",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0061jsnxc1n8zg43",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0062jsnx5jxamhsi",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0063jsnx8zj2fafu",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0064jsnxuxnjhocg",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0065jsnxt1kf65n3",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0066jsnx6pclrbs5",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0067jsnxazprukjc",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0068jsnxxc92816j",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d0069jsnxdhjixaxp",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d006ajsnxwh5sltse",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d006bjsnxvpn3zvv3",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfxw5d006cjsnxgh5s2x8q",
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:39:35.042Z",
-      "updatedAt": "2025-12-22T17:39:35.042Z"
     },
     {
       "id": "cmjhfy2hn006djsnxiac3o6zm",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006ejsnx7w5h5mu3",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006fjsnxl8semesy",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006gjsnxtsz1sg8k",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006hjsnxtgmmiybk",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006ijsnxd5ocz53u",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006jjsnxrntghium",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006kjsnxh1fr766g",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006ljsnx5x94dum1",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006mjsnxdga9d8dy",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006njsnx2m0bxpea",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006ojsnxgroccucp",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006pjsnxoijs3kxw",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006qjsnx3r5m3jwk",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006rjsnxpvtc7k6n",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006sjsnx6e394g4j",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006tjsnxa7lmfi22",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006ujsnx16e61ro7",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006vjsnxfotumdrz",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006wjsnxacw0v1gu",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006xjsnx8mf61ezt",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006yjsnxge99ew44",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn006zjsnx749gwaeg",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn0070jsnxdv9cwkoa",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2hn0071jsnxaxe8yhdf",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho0072jsnxlv9u6m4z",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho0073jsnxs1rxwhso",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho0074jsnxac2e29h7",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho0075jsnxwr5v0lda",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho0076jsnxagtgrl83",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho0077jsnxu3farxed",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho0078jsnxdu0g1548",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho0079jsnx86avvyuj",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007ajsnxj8pr6em9",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007bjsnxoashztyb",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007cjsnxoan5bbrt",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007djsnxjar3g15i",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007ejsnxxhbrj74s",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007fjsnx4bjxr1ec",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007gjsnxu0xuqzbt",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007hjsnxrbczliuq",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007ijsnxthbytgb3",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007jjsnx7p6zfwkh",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007kjsnx0t0upefh",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfy2ho007ljsnxfvpcyjyn",
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:39:43.260Z",
-      "updatedAt": "2025-12-22T17:39:43.260Z"
     },
     {
       "id": "cmjhfye16007mjsnx764zdsbn",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007njsnxpfavu403",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007ojsnxbz4nzufo",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007pjsnxu1tt02i6",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007qjsnxrgjfo3oc",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007rjsnxe5y2bfc0",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007sjsnxqrw4dh5y",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007tjsnxi2q7w1j5",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007ujsnx06nmpjic",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007vjsnxiys8w6t7",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007wjsnxsyoh6lw5",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007xjsnxva9il5to",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007yjsnxyn9rm4wq",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16007zjsnxdja9ozp4",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160080jsnxk292ggi0",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160081jsnxza8gol42",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160082jsnxxbhi8gj2",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160083jsnx72pdyhuz",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160084jsnxy07v8x9s",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160085jsnx6ewqu4aq",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160086jsnx1bjaxnln",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160087jsnxort6ts1q",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160088jsnxj8h8cv0p",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye160089jsnxqr3ftghn",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008ajsnxc57vqb1d",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008bjsnxu2ninlpg",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008cjsnx6ougyk9e",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008djsnxwn1iuzgs",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008ejsnxthjxtz0n",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008fjsnxgm6vup4o",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008gjsnxyt3n51vv",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008hjsnx29kp8yoz",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008ijsnxypomm14g",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008jjsnx7jrrts6s",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008kjsnxwknpk9nn",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008ljsnx2ghrpafx",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008mjsnx9f7tpqhu",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008njsnxi2yk9pje",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008ojsnx2ivs218t",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008pjsnxxfynluba",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008qjsnxyzdm75ut",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008rjsnxdbga7v1p",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008sjsnxm93ta0ni",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008tjsnxty6j72ol",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfye16008ujsnx9etb7wns",
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:39:58.218Z",
-      "updatedAt": "2025-12-22T17:39:58.218Z"
     },
     {
       "id": "cmjhfyriv00a4jsnxdn4w1of0",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00a5jsnxwyj2jkxv",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00a6jsnx6spjx36o",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00a7jsnxpxavv0a5",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00a8jsnx0stey24n",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00a9jsnxvwt6qxxg",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00aajsnx91kdjpkw",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00abjsnx1mzj1j9b",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00acjsnx5jzlm49r",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00adjsnxg90wvarc",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00aejsnxaxnb1ix4",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00afjsnxrhsdld80",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00agjsnxdo3xe0qm",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00ahjsnx7uowdwir",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00aijsnx147775mn",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00ajjsnxq46wzek2",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00akjsnxkouqvs1h",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00aljsnxc5gahfli",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00amjsnxaj32aoll",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00anjsnxnrddkyxg",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00aojsnxt4mmeybo",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00apjsnx6ffbupfh",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00aqjsnxj6j73ass",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00arjsnxj4tlnnk3",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00asjsnxcdyjfcv5",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00atjsnx6j03y6pl",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00aujsnxd4d9ejsh",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00avjsnx7qv2knj9",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00awjsnxas68vw4c",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00axjsnx4wgfkimk",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00ayjsnxkd5740g4",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00azjsnx7um815qe",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b0jsnxyqfmghhr",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b1jsnxtesxq1nx",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b2jsnxftnxihmt",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b3jsnxwbo6mwfq",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b4jsnx2bzwp7r9",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b5jsnxjckjypn4",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b6jsnxmc6k1djf",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b7jsnx1zq6e5wv",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b8jsnxb0sexnm6",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriv00b9jsnx2dazdh5v",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriw00bajsnxs9sj6uy0",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriw00bbjsnx7viakrdp",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfyriw00bcjsnxrvsav3t7",
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:40:15.704Z",
-      "updatedAt": "2025-12-22T17:40:15.704Z"
     },
     {
       "id": "cmjhfz1w900cmjsnxaqvdwqsi",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cnjsnxq7miaybo",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cojsnxpygylabb",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cpjsnxobivng2d",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cqjsnxx38hxdku",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900crjsnxk3x3pdv3",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900csjsnx2wsyzfky",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900ctjsnx4rgvozhd",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cujsnx0z2fa6iz",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cvjsnx539p7iz9",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cwjsnxmw8bocrv",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cxjsnxxp0df5ic",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900cyjsnxqu38756f",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900czjsnxn4l8ps6h",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d0jsnxcgi38r57",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d1jsnxdrgoiopr",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d2jsnxa6di8tsg",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d3jsnxh1tyi31y",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d4jsnxukev5eqc",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d5jsnx5pjrwp5p",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d6jsnx8ob9t298",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d7jsnxasgsualy",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d8jsnxvpff5v1i",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900d9jsnxbgyw9f9z",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dajsnxgsetma1d",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dbjsnx5mwpzyjs",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dcjsnx6qf36c4v",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900ddjsnxsf5mp9ur",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dejsnxxh9myrce",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dfjsnxv4txsg5u",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dgjsnxzkcoato9",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dhjsnxvgyt870n",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dijsnx15p8c9mb",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900djjsnx8a9eytci",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dkjsnxn8oajh8r",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dljsnxystv3oqx",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dmjsnxjsnq3wb7",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dnjsnxy5n2y0xo",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dojsnx9gto3zcj",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dpjsnxrheoy9dw",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dqjsnxhxptd571",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900drjsnxukq5nsd0",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dsjsnxizxulq1e",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dtjsnxa27vij8h",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfz1w900dujsnxw13582t8",
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:40:29.145Z",
-      "updatedAt": "2025-12-22T17:40:29.145Z"
     },
     {
       "id": "cmjhfzdac00f4jsnxx2sc47mc",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00f5jsnxeg6wnfcu",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00f6jsnxjhpfp10h",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00f7jsnxd9h8cgux",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00f8jsnxe4scfbdi",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00f9jsnxnxcru090",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fajsnxtcbtt3q2",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fbjsnxk058tmm5",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fcjsnx3wzgi9wm",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fdjsnxyv1towrz",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fejsnx0hds1yet",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00ffjsnxxkz1259v",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fgjsnxbht1gfjy",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fhjsnx4bs1p2gh",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fijsnxli8zrhnc",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fjjsnxm75blrc6",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fkjsnxcownoboi",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fljsnx9lnzcw9f",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fmjsnxdtz5yspx",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fnjsnxvah697ba",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fojsnxqh71bii1",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fpjsnxy2vrg39z",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fqjsnxg29mkfk4",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00frjsnxqkkjnhqf",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fsjsnxfq2mi5d0",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00ftjsnx1edcidpi",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fujsnx26juenja",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fvjsnx0rfh2nmn",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fwjsnxw9l32ymc",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fxjsnx7hbiysvn",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdac00fyjsnxbeckuyb1",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00fzjsnx2ch8ashk",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g0jsnxexrzp2lq",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g1jsnxz0q1ncut",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g2jsnxr2iceekq",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g3jsnxy8v1hcmo",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g4jsnxhgkhd0jm",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g5jsnxooo6yr05",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g6jsnxd6dhnoaj",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g7jsnx8u0i9obe",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g8jsnxj9maj091",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00g9jsnx93pcqv0h",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00gajsnxle5ttunp",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00gbjsnx14vgnuox",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzdad00gcjsnxu8o15w1f",
       "roleId": "cmixqkini000hjsn76t9opcog",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:40:43.909Z",
-      "updatedAt": "2025-12-22T17:40:43.909Z"
     },
     {
       "id": "cmjhfzttx00hmjsnx0a7btkb8",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hnjsnxl2xzl39q",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hojsnxgud8zmos",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hpjsnx4ts29agf",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hqjsnxp8lxpyub",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hrjsnx0qfvdte5",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hsjsnxq9ivb8dc",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00htjsnxjcmk26ts",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hujsnxvha29dyw",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hvjsnxm5mbxup3",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hwjsnx6tqcvy3t",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hxjsnxwf398dmc",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hyjsnxtgqzg9wt",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00hzjsnxql63u06v",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i0jsnxgy4g2h1x",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i1jsnxol33bq2o",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i2jsnx56u63524",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i3jsnxvtgioeft",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i4jsnxiyszc674",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i5jsnxcfhgs0li",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i6jsnx7jf5l1yb",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i7jsnxx9t91g7v",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i8jsnxc0ijr6vm",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00i9jsnxndyjdc3u",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00iajsnxamm4bn8m",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00ibjsnx5f3wk13o",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00icjsnx7d39vvp4",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00idjsnxzemocygd",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00iejsnx52jmbv8f",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00ifjsnxky8n20tb",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00igjsnxqp6wdzdd",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00ihjsnxm3kccn3b",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00iijsnx9nfq29hg",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00ijjsnxj9n361t2",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00ikjsnxvsgj1bc8",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00iljsnxin56mmzo",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00imjsnxe5xxgcli",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00injsnx26lk5cp9",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00iojsnx513psbs8",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00ipjsnxactj0pqu",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00iqjsnxi4l42ek0",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00irjsnx9u88b3vj",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00isjsnx2wpnaput",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00itjsnxn1bfz18w",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhfzttx00iujsnxb39s7x9i",
       "roleId": "cmixqh413000djsn794qlq7cm",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:41:05.349Z",
-      "updatedAt": "2025-12-22T17:41:05.349Z"
     },
     {
       "id": "cmjhg05pw00k4jsnxtr3tf2by",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00k5jsnxc0foxj2a",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00k6jsnx2klje1uc",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00k7jsnxexjpjxag",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00k8jsnxette6p7l",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00k9jsnxzzkuxhnm",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kajsnxxvzvxqee",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kbjsnxkv12zyvw",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kcjsnx6oiddzry",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kdjsnx20x5f9gi",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kejsnx5vzg8ent",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kfjsnx3r2uj22u",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kgjsnxoskme3py",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00khjsnxdfo2j0ce",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kijsnxrjm87wsw",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kjjsnxx82nzi6v",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kkjsnx8f54i5jw",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kljsnxu5wed57b",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kmjsnxqlh6y77y",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00knjsnxsox5b68h",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kojsnx8cnoo2lh",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kpjsnx55rk7k7f",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kqjsnxyoontxfw",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00krjsnx4rweis3q",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00ksjsnxjyxxxs8e",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00ktjsnxy7inpeim",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kujsnxpppfhszg",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kvjsnxyrib7dpu",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kwjsnxbew6vb7c",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kxjsnxmn78j4zm",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kyjsnxizrzou5u",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00kzjsnxhu1ifpjo",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l0jsnxtsh1hjy4",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l1jsnxuswdgujn",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l2jsnxgkln6tar",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l3jsnxn27k9vuw",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l4jsnxk1xsepfm",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l5jsnx1m5hsz43",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l6jsnxeg2rap42",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l7jsnxf1w7hqw1",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l8jsnxskvagpv3",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00l9jsnxddwjooxg",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00lajsnxuz4mj0bm",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00lbjsnx8jfktgl0",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg05pw00lcjsnx46o18g0v",
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:41:20.756Z",
-      "updatedAt": "2025-12-22T17:41:20.756Z"
     },
     {
       "id": "cmjhg0e7y00ldjsnxmwbt71hh",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lejsnxj8w4w5zx",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lfjsnxb5bvzvee",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lgjsnxp6yno5r8",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lhjsnxl7is2vq9",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lijsnx8lrajjuv",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00ljjsnxbjk34xyl",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lkjsnxlb1qaf8v",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lljsnxyb15yadz",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lmjsnx1wzfzwdb",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lnjsnxmlsoevy9",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lojsnx0kbb3rvj",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lpjsnx23l5yqij",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lqjsnxkubhwl26",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lrjsnxlvv3ljb9",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lsjsnxzeq8hgyd",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00ltjsnxjt6xmb36",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lujsnxup31nkvs",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lvjsnxertniap3",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lwjsnx4qg2nksl",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lxjsnx882egxxd",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lyjsnx4ucdlg1w",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00lzjsnxb0ouo1ks",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m0jsnxdia0fody",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m1jsnxn3pry3sv",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m2jsnxbrsxpe2r",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m3jsnxfae77ub8",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m4jsnx7ppo9o3o",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m5jsnxrdml9fv8",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m6jsnx76wvyp41",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m7jsnxunqvst9v",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m8jsnxx0qz1ra9",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00m9jsnxtj1g5r5a",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00majsnx53i8shh7",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mbjsnx2sq818zk",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mcjsnxvzbo5w2d",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mdjsnxwsud9h0m",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mejsnxtlsal0aa",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mfjsnxuyz3iaci",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mgjsnxo2yqmflr",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mhjsnxf6g29w8p",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mijsnx7lwdsktu",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mjjsnxnkdubpmr",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mkjsnx9ezab5td",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0e7y00mljsnxjq3j2b2e",
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:41:31.775Z",
-      "updatedAt": "2025-12-22T17:41:31.775Z"
     },
     {
       "id": "cmjhg0lc600mmjsnx4kaw5wp6",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mnjsnxbeghh5bh",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mojsnxoptrbkd2",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mpjsnxge30fpsi",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mqjsnxxovnwfbz",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mrjsnxtmsomm6e",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600msjsnxp9mfyzvr",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mtjsnx3q0ugw53",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mujsnxblwxh3jk",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mvjsnxtst83yen",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mwjsnxben601v1",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mxjsnxnt5rlqhe",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600myjsnxlink2vvc",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600mzjsnxgiqgac3d",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n0jsnx73t6950e",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n1jsnxg61ihjn2",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n2jsnxg3x64nqo",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n3jsnxtngk4c46",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n4jsnxthbeevcg",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n5jsnxy9nn7ffw",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n6jsnxp4xu305n",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n7jsnxvcvwn1t0",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n8jsnx4nfzrn9y",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600n9jsnxqy5b8lxg",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600najsnx4xaievdh",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nbjsnxeven6tv1",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600ncjsnxom23iu38",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600ndjsnx6omv983d",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nejsnx7sv6vwv3",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nfjsnxj1jebghn",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600ngjsnx8s3pagyl",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nhjsnxrnmwz58e",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nijsnxh62u1prz",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600njjsnx4evdlmfz",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nkjsnxy7j64trr",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nljsnxs1wotm0v",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nmjsnx4dhgtyxt",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nnjsnxf8p2kf1l",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nojsnx9z7vng9o",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600npjsnxpxcubiwf",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nqjsnxqvif2iq8",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nrjsnxq4kml2a3",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nsjsnx6d12fngp",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600ntjsnxahprbwkx",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0lc600nujsnx1a64njp6",
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:41:40.998Z",
-      "updatedAt": "2025-12-22T17:41:40.998Z"
     },
     {
       "id": "cmjhg0qwj00nvjsnx0xuocbzd",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00nwjsnxz2r2zowq",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00nxjsnxd5nv76o4",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00nyjsnx88ssb73v",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00nzjsnxj3hfvl6e",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o0jsnxe5vsd8up",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o1jsnxgo7evijx",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o2jsnxle01t752",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o3jsnx6f6n31ju",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o4jsnxwwrza9bc",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o5jsnxiww8l41c",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o6jsnx7exgjxsm",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o7jsnx8zhwtryg",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o8jsnx0243jhqj",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00o9jsnxnjnn3xeu",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oajsnxt0g61av1",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00objsnxpcztte1e",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00ocjsnxi9ezck6y",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00odjsnxv5uqqu51",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oejsnxec650dju",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00ofjsnx9l8r77k3",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00ogjsnxntx4w696",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00ohjsnx419ail0p",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oijsnxnvrw5bhs",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00ojjsnxvnst8gf4",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00okjsnxn58pevf3",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oljsnxom4u6srz",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00omjsnxv0ewnlg0",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00onjsnxutx7nus4",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oojsnx4n2u6zm1",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00opjsnxoxjy2jmc",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oqjsnxhxuzvgg0",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00orjsnxxmp7laq8",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00osjsnxbi4jh43v",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00otjsnxprh1iers",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oujsnx1hxq3kns",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00ovjsnxezxtdxq1",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00owjsnxcxe8nrem",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oxjsnxruon2oc7",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00oyjsnx7mznjrcc",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00ozjsnx33674mi9",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00p0jsnxl7bi86hh",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00p1jsnxb99s337o",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00p2jsnxyz8x94x2",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0qwj00p3jsnx5gezcdqt",
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:41:48.211Z",
-      "updatedAt": "2025-12-22T17:41:48.211Z"
     },
     {
       "id": "cmjhg0wzk00p4jsnx085be692",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00p5jsnxlfevtp8a",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00p6jsnxngi4ea0u",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00p7jsnx7fzxdqvy",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00p8jsnx4upuyv5v",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00p9jsnxo1n5kkuf",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pajsnxf3vn3uaa",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pbjsnx5mlt58h1",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pcjsnxvcji7ij3",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pdjsnxrqu6jfi3",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pejsnx2pkucemn",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pfjsnx540jz0lr",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pgjsnx0e1atn7j",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00phjsnxke7vtop8",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pijsnx7b5mvqvl",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pjjsnxfq2z6rsl",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pkjsnx25mh0929",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pljsnxjn8rg0t4",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pmjsnx4zsvfj1a",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pnjsnxzpri26sr",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pojsnxv42fq8x4",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00ppjsnxxbam63a8",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pqjsnx4ju1t8mh",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00prjsnx1fmio53k",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00psjsnxn96bhri6",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00ptjsnxy3gb51df",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pujsnx6z40zllm",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pvjsnxgchfbaxd",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pwjsnxhka1m029",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pxjsnx2zfr5fmy",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pyjsnxb3elk8hi",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00pzjsnxytsyrur6",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q0jsnxnuju803g",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q1jsnxjll9vwgl",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q2jsnx4e152n04",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q3jsnx7c8nf86e",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q4jsnxj1qvn3cp",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q5jsnxscnd1ysf",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q6jsnxegsdh135",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q7jsnxzblfcdev",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q8jsnx77iqf1jc",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00q9jsnxj0k1ex7z",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00qajsnxtzc0d3du",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00qbjsnxr9eaymiq",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg0wzk00qcjsnx12bltywa",
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:41:56.097Z",
-      "updatedAt": "2025-12-22T17:41:56.097Z"
     },
     {
       "id": "cmjhg1a1j00qdjsnxvz39ek53",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qejsnx9i90o4x5",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qfjsnx7ofsbcdy",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qgjsnxjzsethfa",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qhjsnx5wz03etf",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qijsnx0o81lqrf",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qjjsnxy2zdollg",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qkjsnxzh9cdikg",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qljsnxoa6yjab4",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qmjsnxfd0pfnq6",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qnjsnxdmlqnkcm",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qojsnxk357un1n",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qpjsnxqywe2kfx",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qqjsnx1gkrmkjc",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qrjsnxqm4ga72t",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qsjsnx5xva4ice",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qtjsnxxpc8uc6z",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qujsnxe4jd2hlo",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qvjsnx7ge26tuf",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qwjsnxwbi9xb4d",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qxjsnxml0y2bls",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qyjsnx2t3vicky",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00qzjsnxzbi3jb4h",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r0jsnx9hobzp60",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r1jsnxf3srdghx",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r2jsnxdlk992w0",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r3jsnxvnf1qyon",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r4jsnxtiwclpl9",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r5jsnx4pa7mnla",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r6jsnx44tcvw3y",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r7jsnxjshf51e8",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r8jsnxolqkjywm",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00r9jsnxwnfc78a1",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00rajsnx8376jgpj",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00rbjsnx3g8boef9",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00rcjsnxhu1sav88",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00rdjsnx5e46khg6",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1j00rejsnxmrfyal4s",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1k00rfjsnx9r4obi2x",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1k00rgjsnx7x2q80bw",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1k00rhjsnxrloyo5qm",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1k00rijsnxsw961ejk",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1k00rjjsnx1f405wh9",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1k00rkjsnx6hb244qa",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg1a1k00rljsnxvd3j9bnn",
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:42:13.016Z",
-      "updatedAt": "2025-12-22T17:42:13.016Z"
     },
     {
       "id": "cmjhg2szl00rmjsnxhcnp1b33",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rnjsnxcmuobsdj",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rojsnx1vtosi45",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rpjsnx62tu7x2a",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rqjsnxhphqz6ba",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rrjsnxrk4tmn3m",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rsjsnxkmdonidu",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rtjsnx02bblqa5",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rujsnxbwxbmh5b",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rvjsnxdpocmpkn",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rwjsnxlqt6t0gp",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rxjsnx1t6ofjww",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00ryjsnx83l8r17i",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00rzjsnx9c9xmh03",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s0jsnxenbvpgav",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s1jsnxtrzivhal",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s2jsnx6uneme8m",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s3jsnx7dx92exv",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s4jsnxc8miz60v",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s5jsnxzye6fq2x",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s6jsnxgwepiaun",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s7jsnx8h81gu6m",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s8jsnxr3abdqkm",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00s9jsnxbo9gbczn",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sajsnxruh920pu",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sbjsnxlqo05azq",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00scjsnxgik6057c",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sdjsnxmgsdaa4t",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sejsnx3fma8kpw",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sfjsnxdeqiehjr",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sgjsnxublsqfom",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00shjsnxk41adp4u",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sijsnx34vl9iwp",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sjjsnxwj6sqq65",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00skjsnxowa5gvv0",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sljsnx2y5j3ykv",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00smjsnxik1izunj",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00snjsnx4lyjnt60",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sojsnxz3hfucgz",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00spjsnxyoudx6so",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sqjsnxkegfhh5h",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00srjsnx1yyr5hzv",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00ssjsnxwn58jsmi",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00stjsnxl1h5wjwa",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2szl00sujsnx8qk5c3ut",
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:43:24.225Z",
-      "updatedAt": "2025-12-22T17:43:24.225Z"
     },
     {
       "id": "cmjhg2xt900svjsnx6vzaakb3",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900swjsnxk8scpv7n",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900sxjsnxdb1o06bi",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900syjsnx622hmol4",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900szjsnxfv2fxj7q",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t0jsnxevn79lm4",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t1jsnxzfccwaqe",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t2jsnx2z5zbwtr",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t3jsnx0aw62mr7",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t4jsnxu3twtvt1",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t5jsnxta4wtark",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t6jsnxpp0zm4ng",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t7jsnxq72g4bxy",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t8jsnx45qv8wk0",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900t9jsnxkhgisjr4",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tajsnxz7zmtiu7",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tbjsnxzo8hhaof",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tcjsnxsv3dt3a1",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tdjsnx0jm329ta",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tejsnx9qwfsdq0",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tfjsnx2ys525l4",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tgjsnxjm47yjqd",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900thjsnxhiq44yfm",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tijsnxt9o44dwp",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tjjsnxt3ptp8x1",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tkjsnxjmcb2hug",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tljsnxqin1h21f",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tmjsnx8751ojli",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tnjsnx0h99s5ve",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tojsnxp4zvcqk6",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tpjsnxec21lmnr",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tqjsnxnvq83iam",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900trjsnx5se4zs8x",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tsjsnxirmkxbdt",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900ttjsnxke7vnyw7",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tujsnx2xvhgi7y",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tvjsnx942g2kfy",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900twjsnxf1jzhhzy",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900txjsnxez553e31",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tyjsnxwme8kl3o",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900tzjsnxnyf8rp3e",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900u0jsnx9zf7y9i4",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900u1jsnx5kwmecqn",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900u2jsnxnxz7cpmz",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg2xt900u3jsnxhkd6fpmb",
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:43:30.478Z",
-      "updatedAt": "2025-12-22T17:43:30.478Z"
     },
     {
       "id": "cmjhg32b300u4jsnx74sufwjh",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300u5jsnx9994185v",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300u6jsnx84onboz9",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300u7jsnxkoxaf8ke",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300u8jsnxafuyk574",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300u9jsnxhw3200pf",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uajsnxn29kjj1p",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300ubjsnxfjymmsnr",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300ucjsnxffjet3i8",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300udjsnx4u9ibgpj",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uejsnxjzxrj9xm",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300ufjsnxf2pinn63",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300ugjsnxb9lp6zed",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uhjsnxv5rtnmeh",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uijsnxrw50g9o4",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300ujjsnxhy1q7vgk",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300ukjsnxk0rn61x2",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uljsnxocyf9o93",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300umjsnxdn4zhfmn",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300unjsnx5u4r3y9x",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uojsnx2y2ydhw0",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300upjsnxco4ccaul",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uqjsnx7b38r0dk",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300urjsnxnpapny82",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300usjsnx9osr0ux8",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300utjsnxai22xq3s",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uujsnxyclqj0h2",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uvjsnxmjtso9tn",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uwjsnxkbg29kn9",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uxjsnxo4441vy1",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uyjsnxwlfywv6s",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300uzjsnxc8gdykoj",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v0jsnxr62chrov",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v1jsnxsk4kkbh9",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v2jsnxrf85yaqa",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v3jsnxte6llb3j",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v4jsnxkiusrw4i",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v5jsnxm6qvwqm7",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v6jsnxgsxe6dyi",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v7jsnxwnqqwgaf",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v8jsnxl0yp4sxg",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300v9jsnx53peuccs",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300vajsnxc40zmu8q",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300vbjsnx75bp8gbq",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg32b300vcjsnxvhjepml8",
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:43:36.303Z",
-      "updatedAt": "2025-12-22T17:43:36.303Z"
     },
     {
       "id": "cmjhg37wb00vdjsnxa8ueehwe",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vejsnx79xns6tu",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vfjsnx2gvs6309",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vgjsnx6az7zufe",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vhjsnx1391iffn",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vijsnxozyfnhli",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vjjsnxe6ac4kp6",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vkjsnx4yb9nw1m",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vljsnx84n1slfm",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vmjsnxwqhjd3sh",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vnjsnx1jzwe24t",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vojsnx4f2pc49x",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vpjsnx7jef5fxg",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vqjsnx0bx6kqde",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vrjsnx7fwgco68",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vsjsnx6hynfrj2",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vtjsnxtmx0fr31",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vujsnxs5edulvn",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vvjsnxz0emdsvv",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vwjsnx3uly39af",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vxjsnx4i0jb3fh",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vyjsnx3axgvfgh",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00vzjsnxpe7japi3",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w0jsnxecxil0ya",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w1jsnxgdod6avg",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w2jsnxo8541qca",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w3jsnxoil1ady8",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w4jsnxgo41wjui",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w5jsnxko8x06zr",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w6jsnx1z86rsbq",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w7jsnx3hwpwcf3",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w8jsnxa4hm4bua",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00w9jsnx21e5s2kq",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wajsnxh6oghssq",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wbjsnxbp8n4mh3",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wcjsnxqeiu499j",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wdjsnxrm9y39ul",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wejsnxszx2jddw",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wfjsnxbdvu87a7",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wgjsnx8dboxqmt",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00whjsnxt0tvek18",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wijsnx5d3ydws1",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wjjsnxg8cuwdox",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wkjsnx6hsv1yu3",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg37wb00wljsnxlmpnte3m",
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:43:43.547Z",
-      "updatedAt": "2025-12-22T17:43:43.547Z"
     },
     {
       "id": "cmjhg3dgt00wmjsnxes10khl3",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wnjsnxbqo08vss",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wojsnx267wsl5s",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wpjsnxej9u8dbr",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wqjsnxjrtv1pgn",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wrjsnx5vuvkp4j",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wsjsnx3ajhl9iv",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wtjsnxkob2mk4n",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wujsnx26cqvo4b",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wvjsnxdghi72x8",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wwjsnx41gdzufe",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wxjsnxnwh5tvtx",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wyjsnx9zr8k9dt",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00wzjsnxctv9oedk",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x0jsnx1bmided3",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x1jsnxzv54byzr",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x2jsnxbtx8q90r",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x3jsnx7lehdrv5",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x4jsnx8i2vcdsh",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x5jsnxv5afbyrg",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x6jsnxl89y3sfo",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x7jsnxt37zr70g",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x8jsnx7zvkwzxu",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00x9jsnxb0cl7td7",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xajsnxbw8qelfc",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xbjsnxra4ft4vy",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xcjsnx0ox8yso3",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xdjsnx3ttiz3nt",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xejsnxsb8tlb6g",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xfjsnx1ivg8rei",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xgjsnxjsuntwc0",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xhjsnxin7a7p72",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xijsnxx5z4qzbc",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xjjsnx2vnm99qv",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xkjsnx8marp62c",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xljsnx6nny5gpj",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xmjsnxhx1a1abs",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xnjsnxr8ikypnv",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xojsnxhpy44tp3",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xpjsnx48h3qub0",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xqjsnx8nx9vpee",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xrjsnxtu6v1ak6",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xsjsnxj65tev1h",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xtjsnx8huez4tg",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3dgt00xujsnx8uszcfa2",
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:43:50.765Z",
-      "updatedAt": "2025-12-22T17:43:50.765Z"
     },
     {
       "id": "cmjhg3mj000z4jsnx1wom99kd",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000z5jsnxdfegea3g",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000z6jsnxp5emaeye",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000z7jsnxyn6h6abz",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000z8jsnxjn30twb1",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000z9jsnxw9qtal8c",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zajsnxen7142e1",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zbjsnxii5cxe97",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zcjsnxroaca2xa",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zdjsnx4n295jy3",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zejsnxx4y7xt85",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zfjsnx7gihzouz",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zgjsnxh41ckmqk",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zhjsnxr0puayr5",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zijsnxn0lbj0pu",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zjjsnxp3bpattl",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zkjsnxafmcl1ci",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zljsnx30cmulty",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zmjsnxcafqtkkm",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000znjsnxk1a68i6i",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zojsnxu6in3vtd",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zpjsnxhxgtcin1",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zqjsnxm14xgqtr",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zrjsnxq8t5r836",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zsjsnxuntb1jkp",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000ztjsnxi552jzve",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zujsnxvqz4uvz0",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zvjsnx511w9yhn",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zwjsnxk6xjc7mu",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zxjsnxl9f0clcd",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zyjsnxspvkwe8u",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj000zzjsnxult8ol16",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00100jsnxnh36y4yh",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00101jsnxvcscj3y3",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00102jsnx2ek95pfn",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00103jsnxswf8slwy",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00104jsnxiuju85l6",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00105jsnx7hanhvfv",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00106jsnxq2v0da0t",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00107jsnxug3naww9",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00108jsnx3ebmyyse",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj00109jsnxzt5uskht",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj0010ajsnxpai60sal",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj0010bjsnx4grvoonm",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3mj0010cjsnxthqr0zah",
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:44:02.508Z",
-      "updatedAt": "2025-12-22T17:44:02.508Z"
     },
     {
       "id": "cmjhg3srz010djsnxr1kk0pn1",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uo70006jsielypypd0n",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010ejsnx3x83sb3t",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76upb000ajsie3hcogxvy",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010fjsnxqsn3tmq2",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uph000bjsierv1hjnj6",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010gjsnxecmt6fjy",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76upn000cjsiekiwoxn4s",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010hjsnx1etzir11",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76upv000djsieaoqlvlx4",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010ijsnx31421k2v",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uq3000ejsieh5md11h1",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010jjsnxukcao1ty",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uq9000fjsieyqei6yxk",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010kjsnx6uc2m3bc",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uqd000gjsie3ouwn84p",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010ljsnxgybwp6vg",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uqp000ijsie8wx2b03q",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010mjsnxjfejacce",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uqv000jjsied22vb9h1",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010njsnxhw07ib7p",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76urc000mjsievcb2o1q3",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010ojsnxwaaylscf",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76urm000ojsie9i6uens7",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010pjsnxg03qwaur",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76urv000qjsiefmyzpdgg",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010qjsnxgwd8kaxy",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76urz000rjsiec5lspjuf",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010rjsnxisk57uky",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76usd000ujsieo2c8qbsr",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010sjsnxfluwmh4p",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76usi000vjsiela3z5gwx",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010tjsnxlo8voz8b",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uso000wjsie8xwxyyhl",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010ujsnxdx0bpvuf",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uss000xjsieg5s09qqw",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010vjsnx4g8g7g3y",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76usx000yjsiel76mrf3q",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010wjsnx2ioukfub",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76ut3000zjsiengrs0fey",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010xjsnxuhbiuk3w",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76ut80010jsieuzo2odgg",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010yjsnx66adzxnp",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76utd0011jsiez69hjwsl",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz010zjsnxn0xfep7e",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76utj0012jsieci4b8fss",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0110jsnxo399x8br",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76utr0013jsie0u7qojwf",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0111jsnx45i4k00s",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76utw0014jsiexni8sl3a",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0112jsnxrbupfcgw",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uu30015jsiefwllun1i",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0113jsnx48nx9vxr",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uu80016jsie2fjowpyk",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0114jsnx6hu8bmhd",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uud0017jsiei0tsk16c",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0115jsnxg77l8jk6",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uyp001yjsiegbm9805v",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0116jsnxzsz6okbx",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uyv001zjsiel7cfuymc",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0117jsnxuhej2qse",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uz90022jsiejgni3z3r",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0118jsnxghf75t1n",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76uzo0024jsie0jlamd27",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz0119jsnx22mpppi8",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v1q002hjsiewnru9ufd",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011ajsnx7h5h058a",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v1v002ijsiexx72lpq8",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011bjsnxpremci99",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v21002jjsiej4m4n43u",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011cjsnxoggqbjac",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v29002kjsiesdifd3u4",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011djsnxmkn61jo5",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v2g002ljsie32el2ea5",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011ejsnxkzae8k1z",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v2p002mjsiekgcoow0z",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011fjsnxdtiqbi84",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v2x002njsie9vwhqayi",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011gjsnx4bvf11vq",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v34002ojsiexylzwqcl",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011hjsnxri3t16c0",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v640031jsiemxriz296",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011ijsnx9z99o82z",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v6c0032jsieavspktz8",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011jjsnxoev7occv",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v6p0034jsie0aecold6",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011kjsnxkpgvx5d2",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v6y0035jsieua5ys3pn",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     },
     {
       "id": "cmjhg3srz011ljsnxf2nmxx8m",
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "permissionId": "cmjh76v780036jsiekp2pdpd4",
-      "createdAt": "2025-12-22T17:44:10.607Z",
-      "updatedAt": "2025-12-22T17:44:10.607Z"
     }
   ],
   "user": [
     {
       "id": "00d33b46-3ff8-4c4b-8769-e5c9aff69e04",
       "username": "manager24",
-      "phoneNumber": "+251910000024",
-      "password": "$2b$12$E7r4VMmFzfJn6T8FzruszuryuISA4mtM282zKd96oWZ69Gq3VpUmS",
+      "phoneNumber": "251910000024",
+      "password": hashedPassword,
       "roleId": "cmjciihoe0001jsc0fqm56l5u",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-19T06:52:53.984Z",
-      "updatedAt": "2025-12-19T06:52:53.984Z"
     },
     {
       "id": "03966033-4099-421b-b766-6aadfa7bc5f7",
       "username": "manager6",
-      "phoneNumber": "+251910000006",
-      "password": "$2b$12$cx9iwkw0IZGtZwAQ5c8jo.EIc0dAHsMtsh5ybmqzsEKLKT.CL5RLq",
+      "phoneNumber": "251910000006",
+      "password": hashedPassword,
       "roleId": "cmix4f7fv0015jsmve8j45rlg",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T12:22:15.516Z",
-      "updatedAt": "2025-12-08T12:22:15.516Z"
     },
     {
       "id": "03a02df9-0ec4-4b48-b86a-4b074aa409ee",
       "username": "manager3",
-      "phoneNumber": "+251910000003",
-      "password": "$2b$12$9yUJd2Ed1kxHeRGBMEA3qebm2Xx.awJ2JNK5Jk4o.EgL3480aFBua",
+      "phoneNumber": "251910000003",
+      "password": hashedPassword,
       "roleId": "cmix427xl000tjsmvj4jtd0wy",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T12:11:51.325Z",
-      "updatedAt": "2025-12-08T12:11:51.325Z"
     },
     {
       "id": "057547c7-2dd2-440c-a7f8-92159bcbdfcf",
       "username": "manager12",
-      "phoneNumber": "+251910000012",
-      "password": "$2b$12$8jtIAtN1.tlaqoGYlO.qcOpryL.ubwAXJZQejYl8bOpT5ERVqPlk2",
+      "phoneNumber": "251910000012",
+      "password": hashedPassword,
       "roleId": "cmixqbp5a0005jsn7kqdr3dy8",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:35:01.131Z",
-      "updatedAt": "2025-12-08T22:35:01.131Z"
     },
     {
       "id": "1a81234b-8aa2-4668-a84f-2af3000f61c8",
       "username": "fayyaastaff",
-      "phoneNumber": "+251920000014",
-      "password": "$2b$12$OadBgO/2wn.vgrCgNdNMkOxh77J81hGWU7GG1EP.eEZ/USe/y/.hu",
+      "phoneNumber": "251920000014",
+      "password": hashedPassword,
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2026-01-04T07:04:26.424Z",
-      "updatedAt": "2026-01-04T07:04:26.424Z"
     },
     {
       "id": "1c6181ed-6bce-4c5c-b27d-084d9ca28606",
       "username": "addisnagaash_7548",
-      "phoneNumber": "+251934927548",
-      "password": "$2b$10$UN0xqSHVlO3vs6DiDUXEzOP2IWOSmdoY7slF77u1Ch6Vj4Ea9.wse",
+      "phoneNumber": "251934927548",
+      "password": hashedPassword,
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "isActive": true,
       "phoneVerified": true,
-      "createdAt": "2026-01-08T11:43:38.764Z",
-      "updatedAt": "2026-01-08T11:43:38.764Z"
     },
     {
       "id": "2e19400b-408e-48fa-845a-4e6121590f86",
       "username": "manager2",
-      "phoneNumber": "+251910000002",
-      "password": "$2b$12$eiXRMYoSXgJ/ViJPsqsWOuHQhqHEvEowGj2V8Le/ZeLHHanDEvw7O",
+      "phoneNumber": "251910000002",
+      "password": hashedPassword,
       "roleId": "cmix40eyw000pjsmvu2zao9dy",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T12:10:40.837Z",
-      "updatedAt": "2025-12-08T12:10:40.837Z"
     },
     {
       "id": "317db05b-6566-4ea1-9cac-1199de666065",
       "username": "manager8",
-      "phoneNumber": "+251910000008",
-      "password": "$2b$12$sPik47omkogX4r75vs7AUeGK5ZcrvHG9rLEl.4nRHL4mz8LtB6Z9.",
+      "phoneNumber": "251910000008",
+      "password": hashedPassword,
       "roleId": "cmixk97zm0005jsoa33guagkb",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T19:45:12.075Z",
-      "updatedAt": "2025-12-08T19:45:12.075Z"
     },
     {
       "id": "3c320305-f2f8-4236-b71e-5a2847bfb6b0",
       "username": "manager",
-      "phoneNumber": "+251910000001",
-      "password": "$2b$12$CVcX7NCaU8eH/0pNznPod.yKljjiQc8wlwnoexAlFYeVYuLNZ7KkG",
+      "phoneNumber": "251910000001",
+      "password": hashedPassword,
       "roleId": "cmix3x7g8000ljsmvxx6a4mui",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T12:08:10.532Z",
-      "updatedAt": "2025-12-08T12:08:10.532Z"
     },
     {
       "id": "3fc75fa4-52ed-481f-9250-a2aa309fb9f9",
       "username": "manager22",
-      "phoneNumber": "+251910000022",
-      "password": "$2b$12$nQxy.dOPdvtAdhQx3djpO.LVKygLFmMBuQLDwcH1zKdzh62wwR0Nm",
+      "phoneNumber": "251910000022",
+      "password": hashedPassword,
       "roleId": "cmjcj83h90009jsc0lvjniek1",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-19T07:12:48.382Z",
-      "updatedAt": "2025-12-19T07:12:48.382Z"
     },
     {
       "id": "4988eb73-73dc-4068-a098-c3dd9650dbfb",
       "username": "manager19",
-      "phoneNumber": "+251910000019",
-      "password": "$2b$12$KqzzR5UmXKtYH5eyHNWpS.cYuUpr32AEr34.rKnm3l5DntIX3jN.G",
+      "phoneNumber": "251910000019",
+      "password": hashedPassword,
       "roleId": "cmixqqbjq000xjsn79taubd2y",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:46:43.360Z",
-      "updatedAt": "2025-12-08T22:46:43.360Z"
     },
     {
       "id": "49e8f5ff-d7c3-4519-9112-ef80062780b0",
       "username": "admin3",
-      "phoneNumber": "+251900112239",
-      "password": "$2b$12$6PgUZJ4MfGej3j.K1LXMIuZpB28BAMkj7k73qG6gmMc.kFBtTD52u",
+      "phoneNumber": "251900112239",
+      "password": hashedPassword,
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-22T13:35:06.640Z",
-      "updatedAt": "2025-12-22T13:35:06.640Z"
     },
     {
       "id": "4a0a2f19-0f05-4f65-8230-a59eaef86b6c",
       "username": "manager5",
-      "phoneNumber": "+251910000005",
-      "password": "$2b$12$P5XVOXKrS657/4/duowyLeRabRuNA8eDt1OhJq9f0T5V4.7ONbJae",
+      "phoneNumber": "251910000005",
+      "password": hashedPassword,
       "roleId": "cmix4dnyt0011jsmv3151p66h",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T12:20:32.127Z",
-      "updatedAt": "2025-12-08T12:20:32.127Z"
     },
     {
       "id": "54035188-a90c-4915-9f5d-ceb05529b3f4",
       "username": "manager20",
-      "phoneNumber": "+251910000020",
-      "password": "$2b$12$2QETTkzZ9oN84ddmrYToo.c9GB2lZ6JKyyL24hdS4u.NpgHZcr9Ia",
+      "phoneNumber": "251910000020",
+      "password": hashedPassword,
       "roleId": "cmixqvv1q0012jsn7lkppuv1b",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:50:42.102Z",
-      "updatedAt": "2025-12-15T07:46:43.508Z"
     },
     {
       "id": "54a38039-4aae-4a95-b898-7d35cccb7e8f",
       "username": "manager15",
-      "phoneNumber": "+251910000015",
-      "password": "$2b$12$d23r7VX38SlPTsHD2zWLD.QSdSCg.jxvotWtXHZH2mFtq.b0bGgsu",
+      "phoneNumber": "251910000015",
+      "password": hashedPassword,
       "roleId": "cmixqkini000hjsn76t9opcog",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:41:53.762Z",
-      "updatedAt": "2025-12-08T22:41:53.762Z"
     },
     {
       "id": "671a5c8d-bca6-4212-9c82-b14571ff469e",
       "username": "seidabdurehman_9866",
-      "phoneNumber": "+251934689866",
-      "password": "$2b$10$h1Pp/pqcxS1I.fKH/WFaSeoXxNOpjU/1hEkEGVJEtZ3zN1AsUjiXu",
+      "phoneNumber": "251934689866",
+      "password": hashedPassword,
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "isActive": true,
       "phoneVerified": true,
-      "createdAt": "2025-12-14T21:19:40.879Z",
-      "updatedAt": "2025-12-14T21:19:40.879Z"
     },
     {
       "id": "6b722204-a224-4ca8-a39f-943260b45692",
       "username": "manager11",
-      "phoneNumber": "+251910000011",
-      "password": "$2b$12$WHb.nwOwcoz4NfmzaMLASeP7gNDPZvCkUSLbnNWrYlkm0Ql9oM.2G",
+      "phoneNumber": "251910000011",
+      "password": hashedPassword,
       "roleId": "cmixq8wjr0001jsn7b1bwnkz9",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:32:51.478Z",
-      "updatedAt": "2025-12-08T22:32:51.478Z"
     },
     {
       "id": "6c571fbe-b3d4-4179-8563-2a390d88f518",
       "username": "manager13",
-      "phoneNumber": "+251910000013",
-      "password": "$2b$12$zkwkhmHRXPFk7MidoSbNa.OuY8EVGbmy3Gc.ZKbTuTKU15hgCedhC",
+      "phoneNumber": "251910000013",
+      "password": hashedPassword,
       "roleId": "cmixqf1kn0009jsn7xqozuf6t",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:38:06.405Z",
-      "updatedAt": "2025-12-08T22:38:06.405Z"
     },
     {
       "id": "7c77f8b4-a145-48a9-99c2-1d3c9ca71f04",
       "username": "manager7",
-      "phoneNumber": "+251910000007",
-      "password": "$2b$12$mDVbPA/x.PP.TvREpRFe8ujPdFHCjBCywZLZTaAdXyG6FQqjEy7xu",
+      "phoneNumber": "251910000007",
+      "password": hashedPassword,
       "roleId": "cmixk7tv90001jsoaanj1lrue",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T19:44:05.321Z",
-      "updatedAt": "2025-12-08T19:44:05.321Z"
     },
     {
       "id": "803c16b5-dfdb-40ff-9409-d4bcf94b5937",
       "username": "manager21",
-      "phoneNumber": "+251910000021",
-      "password": "$2b$12$Dz3K/d8cOZdPUEz6k5HMZOgLllAON3ASgzJwwIqua9XzpGclfyqW.",
+      "phoneNumber": "251910000021",
+      "password": hashedPassword,
       "roleId": "cmjcj6r660005jsc0o9nsji40",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-19T07:11:51.978Z",
-      "updatedAt": "2025-12-19T07:11:51.978Z"
     },
     {
       "id": "8de91ac8-7ba0-4c33-b5c6-aab17504d91b",
       "username": "manager4",
-      "phoneNumber": "+251910000004",
-      "password": "$2b$12$EZ.8gitQO6lZgh/QBTwjZ.c9AYagzAzI2/O9AOzl03LxePhSWMRA6",
+      "phoneNumber": "251910000004",
+      "password": hashedPassword,
       "roleId": "cmix44qfr000xjsmv3eto671i",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T12:14:23.919Z",
-      "updatedAt": "2025-12-08T12:14:23.919Z"
     },
     {
       "id": "94af81f2-290c-48fe-8783-bc6f8220e2e3",
       "username": "manager9",
-      "phoneNumber": "+251910000009",
-      "password": "$2b$12$Qxn5oqUlnR76YVfGFjpRuO7tdAUixiza4H9ks627TJFSCMjlgWWDC",
+      "phoneNumber": "251910000009",
+      "password": hashedPassword,
       "roleId": "cmixkaik60009jsoa4domcmj0",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T19:46:11.441Z",
-      "updatedAt": "2025-12-08T19:46:11.441Z"
     },
     {
       "id": "95f9bb7c-07e6-498d-917e-4a4a47f18cae",
       "username": "manager17",
-      "phoneNumber": "+251910000017",
-      "password": "$2b$12$HEyB/gfsMJArInA.9P7cluogKS.W2avftXDctTTj33cAKjQgKZ1HS",
+      "phoneNumber": "251910000017",
+      "password": hashedPassword,
       "roleId": "cmixqn9b6000pjsn7r5k4dfud",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:44:03.055Z",
-      "updatedAt": "2025-12-08T22:44:03.055Z"
     },
     {
       "id": "9a0d9d9a-4ebb-477d-97bd-e5ebfad8ea7f",
       "username": "fuadabdurahman_7199",
-      "phoneNumber": "+251910737199",
-      "password": "$2b$10$p.lpbcIyssctrtZYXKXwIulGpqGgTeQP9PeUtabkz7Y0E30hbiUhO",
+      "phoneNumber": "251910737199",
+      "password": hashedPassword,
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "isActive": true,
       "phoneVerified": true,
-      "createdAt": "2025-12-25T21:19:43.159Z",
-      "updatedAt": "2025-12-25T21:19:43.159Z"
     },
     {
       "id": "a143c76a-0e10-4c5e-9900-f74ae2ab78b4",
       "username": "manager14",
-      "phoneNumber": "+251910000014",
-      "password": "$2b$12$Qdq.11NLBPV8DLVnYyAgiOhdTbty0ar.89ki7zOu8brwXdz.LAV/2",
+      "phoneNumber": "251910000014",
+      "password": hashedPassword,
       "roleId": "cmixqh413000djsn794qlq7cm",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:39:12.661Z",
-      "updatedAt": "2025-12-08T22:39:12.661Z"
     },
     {
       "id": "aacf0873-50a6-4204-b2a8-29621f8e68be",
       "username": "admin",
-      "phoneNumber": "+251900112233",
-      "password": "$2b$12$ulckg5SOkeX2ccBLdtCyOOI9HuJZMlGkBrKo/6gLuLgOHmFpfMab2",
+      "phoneNumber": "251900112233",
+      "password": hashedPassword,
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T03:20:26.279Z",
-      "updatedAt": "2025-12-08T03:20:26.279Z"
     },
     {
       "id": "b2999ba6-bda2-4248-9506-6edb04bb8da7",
       "username": "ahmadmuhammad_4215",
-      "phoneNumber": "+251918914215",
-      "password": "$2b$10$aOTee941oix6gjjRFyUTk.nIaqJmpkpeQHyqlkO/0lwJsfXVaFX8K",
+      "phoneNumber": "251918914215",
+      "password": hashedPassword,
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "isActive": true,
       "phoneVerified": true,
-      "createdAt": "2026-01-08T10:40:08.397Z",
-      "updatedAt": "2026-01-08T10:40:08.397Z"
     },
     {
       "id": "bd2a28a1-bef5-46d1-96ab-7b35e1d6bce9",
       "username": "staff1",
-      "phoneNumber": "+251920000004",
-      "password": "$2b$12$3pGPgS7f5GpSZ1HxJ9iCa.sqNn.a1RDWKR2Pl4dhOgf2AwJWFdkZq",
+      "phoneNumber": "251920000004",
+      "password": hashedPassword,
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-11T05:57:20.041Z",
-      "updatedAt": "2025-12-11T05:57:20.041Z"
     },
     {
       "id": "ddd14824-609b-4883-b6b2-e742fa79666b",
       "username": "customer",
-      "phoneNumber": "+251900112236",
-      "password": "$2b$12$ulckg5SOkeX2ccBLdtCyOOI9HuJZMlGkBrKo/6gLuLgOHmFpfMab2",
+      "phoneNumber": "251900112236",
+      "password": hashedPassword,
       "roleId": "cmiwl33970003jsnogvq91lb2",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T03:20:26.311Z",
-      "updatedAt": "2025-12-08T03:20:26.311Z"
     },
     {
       "id": "de2b062a-3efa-4090-9390-4b1b46e45aa1",
       "username": "manager10",
-      "phoneNumber": "+251910000010",
-      "password": "$2b$12$Hj3crhbEeNAPungOWiBe6eEd.Tm09RzTKl4pJLsfU4sUplBuDPRQ2",
+      "phoneNumber": "251910000010",
+      "password": hashedPassword,
       "roleId": "cmixkbt47000djsoada3l5ljc",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T19:47:25.263Z",
-      "updatedAt": "2025-12-08T19:47:25.263Z"
     },
     {
       "id": "e1ce808d-c5d0-4b18-9369-07615f154878",
       "username": "admin2",
-      "phoneNumber": "+251900112238",
-      "password": "$2b$12$6PgUZJ4MfGej3j.K1LXMIuZpB28BAMkj7k73qG6gmMc.kFBtTD52u",
+      "phoneNumber": "251900112238",
+      "password": hashedPassword,
       "roleId": "cmiwl338h0000jsnoikvgm780",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-22T13:35:06.628Z",
-      "updatedAt": "2025-12-22T13:35:06.628Z"
     },
     {
       "id": "ee9819f5-23a8-465b-8d99-13600a7a4b15",
       "username": "Staffnahenya",
-      "phoneNumber": "+251910000036",
-      "password": "$2b$12$wQKeqyzyZ0ks1RB/0ZxRUedWZ.bKdvhdAQtsrJpRP9fBjXUNLRvse",
+      "phoneNumber": "251910000036",
+      "password": hashedPassword,
       "roleId": "cmiwl338z0002jsnorjywaoi9",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-09T04:01:20.289Z",
-      "updatedAt": "2025-12-09T04:01:20.289Z"
     },
     {
       "id": "f4a0bb35-ee0e-4c5e-8ef9-1c6b62f865fc",
       "username": "manager18",
-      "phoneNumber": "+251910000018",
-      "password": "$2b$12$hou2TNrKRHURFxrjJ4OgBO2cRVE5RSxNmhLfOJjEW..jN1TKAVF6a",
+      "phoneNumber": "251910000018",
+      "password": hashedPassword,
       "roleId": "cmixqolmv000tjsn73z9hlzz7",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:45:06.013Z",
-      "updatedAt": "2025-12-08T22:45:06.013Z"
     },
     {
       "id": "f6c9dc47-6e64-4125-81fe-d4f1ccf63b44",
       "username": "manager16",
-      "phoneNumber": "+251910000016",
-      "password": "$2b$12$rHymW/F99BWjtIKfHGs4euT02Xn9CV/pz5YN4A8Q2cjYfRVUoFe.a",
+      "phoneNumber": "251910000016",
+      "password": hashedPassword,
       "roleId": "cmixqlsr3000ljsn70jr1l89p",
       "isActive": true,
       "phoneVerified": false,
-      "createdAt": "2025-12-08T22:42:52.506Z",
-      "updatedAt": "2025-12-08T22:42:52.506Z"
     }
   ],
   "staff": [
@@ -10074,190 +7580,136 @@
       "id": "10db531b-bdce-4be8-afe7-3416340ff539",
       "userId": "ee9819f5-23a8-465b-8d99-13600a7a4b15",
       "officeId": "cmiwun4l6000ejsmvic2y9emc",
-      "createdAt": "2025-12-09T04:01:20.295Z",
-      "updatedAt": "2025-12-09T04:01:20.295Z"
     },
     {
       "id": "6b414f29-cc4e-420c-adb5-fb2887b37a6a",
       "userId": "1a81234b-8aa2-4668-a84f-2af3000f61c8",
       "officeId": "cmiwtbrih0000jsmvxk1kww3f",
-      "createdAt": "2026-01-04T07:04:26.433Z",
-      "updatedAt": "2026-01-04T07:04:26.433Z"
     },
     {
       "id": "b01174d5-8c27-4ba1-942f-2c76506a4862",
       "userId": "bd2a28a1-bef5-46d1-96ab-7b35e1d6bce9",
       "officeId": "cmiwuixeh000cjsmvdd516hqa",
-      "createdAt": "2025-12-11T05:57:20.074Z",
-      "updatedAt": "2025-12-11T05:57:20.074Z"
     },
     {
       "id": "cmiwlcme80002jsp6pgv7h46q",
       "userId": "aacf0873-50a6-4204-b2a8-29621f8e68be",
       "officeId": "cmiwlbtt20000jsp6ch1mh3lp",
-      "createdAt": "2025-12-08T03:27:50.625Z",
-      "updatedAt": "2025-12-08T03:27:50.625Z"
     },
     {
       "id": "cmix3xrwh000njsmvoq9p6omh",
       "userId": "3c320305-f2f8-4236-b71e-5a2847bfb6b0",
       "officeId": "cmiwua43n000ajsmvogq5fg4p",
-      "createdAt": "2025-12-08T12:08:10.625Z",
-      "updatedAt": "2025-12-08T12:08:10.625Z"
     },
     {
       "id": "cmix40zya000rjsmvpc6hcukh",
       "userId": "2e19400b-408e-48fa-845a-4e6121590f86",
       "officeId": "cmiwucdsm000bjsmv0hkq50cy",
-      "createdAt": "2025-12-08T12:10:41.027Z",
-      "updatedAt": "2025-12-08T12:10:41.027Z"
     },
     {
       "id": "cmix42i77000vjsmvghpx019c",
       "userId": "03a02df9-0ec4-4b48-b86a-4b074aa409ee",
       "officeId": "cmiwukmpq000djsmv89g4bk05",
-      "createdAt": "2025-12-08T12:11:51.331Z",
-      "updatedAt": "2025-12-08T12:11:51.331Z"
     },
     {
       "id": "cmix462fm000zjsmvxagfg3hq",
       "userId": "8de91ac8-7ba0-4c33-b5c6-aab17504d91b",
       "officeId": "cmiwuixeh000cjsmvdd516hqa",
-      "createdAt": "2025-12-08T12:14:37.325Z",
-      "updatedAt": "2025-12-08T12:14:37.325Z"
     },
     {
       "id": "cmix4do7d0013jsmv7kjuz10f",
       "userId": "4a0a2f19-0f05-4f65-8230-a59eaef86b6c",
       "officeId": "cmiwuv4ar000gjsmvn7thi4qz",
-      "createdAt": "2025-12-08T12:20:32.329Z",
-      "updatedAt": "2025-12-08T12:20:32.329Z"
     },
     {
       "id": "cmix4fwob0017jsmvgod6dewb",
       "userId": "03966033-4099-421b-b766-6aadfa7bc5f7",
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-08T12:22:16.620Z",
-      "updatedAt": "2025-12-08T12:22:16.620Z"
     },
     {
       "id": "cmixk82xb0003jsoa1p588srm",
       "userId": "7c77f8b4-a145-48a9-99c2-1d3c9ca71f04",
       "officeId": "cmiwun4l6000ejsmvic2y9emc",
-      "createdAt": "2025-12-08T19:44:05.327Z",
-      "updatedAt": "2025-12-08T19:44:05.327Z"
     },
     {
       "id": "cmixk9ifm0007jsoaet7zdvr4",
       "userId": "317db05b-6566-4ea1-9cac-1199de666065",
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2025-12-08T19:45:12.083Z",
-      "updatedAt": "2025-12-08T19:45:12.083Z"
     },
     {
       "id": "cmixkas8n000bjsoatjhiexmc",
       "userId": "94af81f2-290c-48fe-8783-bc6f8220e2e3",
       "officeId": "cmiwve9qh000hjsmv1ktd3i4r",
-      "createdAt": "2025-12-08T19:46:11.448Z",
-      "updatedAt": "2025-12-08T19:46:11.448Z"
     },
     {
       "id": "cmixkcd77000fjsoanoyorz8h",
       "userId": "de2b062a-3efa-4090-9390-4b1b46e45aa1",
       "officeId": "cmiww0myi000jjsmvyhxxlz3o",
-      "createdAt": "2025-12-08T19:47:25.268Z",
-      "updatedAt": "2025-12-08T19:47:25.268Z"
     },
     {
       "id": "cmixq94bn0003jsn7tputoylf",
       "userId": "6b722204-a224-4ca8-a39f-943260b45692",
       "officeId": "cmiwu4izk0008jsmve2lcslgp",
-      "createdAt": "2025-12-08T22:32:51.491Z",
-      "updatedAt": "2025-12-08T22:32:51.491Z"
     },
     {
       "id": "cmixqbwd60007jsn7rtmbi2ta",
       "userId": "057547c7-2dd2-440c-a7f8-92159bcbdfcf",
       "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
-      "createdAt": "2025-12-08T22:35:01.146Z",
-      "updatedAt": "2025-12-08T22:35:01.146Z"
     },
     {
       "id": "cmixqfvbc000bjsn7gpuhi16v",
       "userId": "6c571fbe-b3d4-4179-8563-2a390d88f518",
       "officeId": "cmiwu1g5d0007jsmvkltn6oq3",
-      "createdAt": "2025-12-08T22:38:06.409Z",
-      "updatedAt": "2025-12-08T22:38:06.409Z"
     },
     {
       "id": "cmixqhag0000fjsn7ac027ge2",
       "userId": "a143c76a-0e10-4c5e-9900-f74ae2ab78b4",
       "officeId": "cmiwtbrih0000jsmvxk1kww3f",
-      "createdAt": "2025-12-08T22:39:12.672Z",
-      "updatedAt": "2025-12-08T22:39:12.672Z"
     },
     {
       "id": "cmixqkqqv000jjsn77j15onhj",
       "userId": "54a38039-4aae-4a95-b898-7d35cccb7e8f",
       "officeId": "cmiwtftvd0001jsmvnaiv0eka",
-      "createdAt": "2025-12-08T22:41:53.768Z",
-      "updatedAt": "2025-12-08T22:41:53.768Z"
     },
     {
       "id": "cmixqm02o000njsn78uk65a59",
       "userId": "f6c9dc47-6e64-4125-81fe-d4f1ccf63b44",
       "officeId": "cmiwtiz420002jsmvzoblvc02",
-      "createdAt": "2025-12-08T22:42:52.512Z",
-      "updatedAt": "2025-12-08T22:42:52.512Z"
     },
     {
       "id": "cmixqniif000rjsn7h6k462lc",
       "userId": "95f9bb7c-07e6-498d-917e-4a4a47f18cae",
       "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
-      "createdAt": "2025-12-08T22:44:03.063Z",
-      "updatedAt": "2025-12-08T22:44:03.063Z"
     },
     {
       "id": "cmixqov3a000vjsn7w3g5l6zh",
       "userId": "f4a0bb35-ee0e-4c5e-8ef9-1c6b62f865fc",
       "officeId": "cmiwtowsm0004jsmvphmlc4z5",
-      "createdAt": "2025-12-08T22:45:06.023Z",
-      "updatedAt": "2025-12-08T22:45:06.023Z"
     },
     {
       "id": "cmixqqy7f000zjsn7ffsdqu7t",
       "userId": "4988eb73-73dc-4068-a098-c3dd9650dbfb",
       "officeId": "cmiwtrp780005jsmvjob5rfok",
-      "createdAt": "2025-12-08T22:46:43.372Z",
-      "updatedAt": "2025-12-08T22:46:43.372Z"
     },
     {
       "id": "cmixqw2ez0014jsn7h5x2op2v",
       "userId": "54035188-a90c-4915-9f5d-ceb05529b3f4",
       "officeId": "cmixqur860010jsn7l58up53s",
-      "createdAt": "2025-12-08T22:50:42.107Z",
-      "updatedAt": "2025-12-08T22:50:42.107Z"
     },
     {
       "id": "cmjciip2d0003jsc0ovcroukr",
       "userId": "00d33b46-3ff8-4c4b-8769-e5c9aff69e04",
       "officeId": "cmj6t45fm0008js06xip4001x",
-      "createdAt": "2025-12-19T06:52:53.990Z",
-      "updatedAt": "2025-12-19T06:52:53.990Z"
     },
     {
       "id": "cmjcj735h0007jsc0qhkofab0",
       "userId": "803c16b5-dfdb-40ff-9409-d4bcf94b5937",
       "officeId": "cmj6syico0007js06qt4vpskb",
-      "createdAt": "2025-12-19T07:11:51.989Z",
-      "updatedAt": "2025-12-19T07:11:51.989Z"
     },
     {
       "id": "cmjcj8aoa000bjsc0ohzv8c8y",
       "userId": "3fc75fa4-52ed-481f-9250-a2aa309fb9f9",
       "officeId": "cmj0g35y30000js4678hrglup",
-      "createdAt": "2025-12-19T07:12:48.394Z",
-      "updatedAt": "2025-12-19T07:12:48.394Z"
     }
   ],
   "officeAvailability": [
@@ -10305,8 +7757,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2025-12-09T03:09:23.278Z",
-      "updatedAt": "2025-12-09T03:09:23.278Z"
     },
     {
       "id": "cmiycb1k00001jsnbqbouxc2z",
@@ -10352,8 +7802,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2025-12-09T08:50:12.766Z",
-      "updatedAt": "2025-12-09T08:50:12.766Z"
     },
     {
       "id": "cmj5hw3540003jsy7iioz0v03",
@@ -10399,8 +7847,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2025-12-14T09:00:55.911Z",
-      "updatedAt": "2025-12-14T09:00:55.911Z"
     },
     {
       "id": "cmj68bjbk0005js06co2d84sb",
@@ -10446,8 +7892,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2025-12-14T21:20:46.735Z",
-      "updatedAt": "2025-12-14T21:20:46.735Z"
     },
     {
       "id": "cmjlzha9h0001js0r21k05x68",
@@ -10493,8 +7937,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2025-12-25T21:57:37.205Z",
-      "updatedAt": "2025-12-25T21:57:37.205Z"
     },
     {
       "id": "cmjxcmizf0001krxddmyrdgu8",
@@ -10540,8 +7982,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2026-01-02T20:51:04.732Z",
-      "updatedAt": "2026-01-02T20:51:04.732Z"
     },
     {
       "id": "cmpjv16kx0001krzq62wmcg6r",
@@ -10587,8 +8027,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2026-05-24T14:15:49.134Z",
-      "updatedAt": "2026-05-24T14:15:49.134Z"
     },
     {
       "id": "cmq17vkpo0003krzql2kvloh8",
@@ -10634,8 +8072,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2026-06-05T17:47:27.514Z",
-      "updatedAt": "2026-06-05T17:47:27.514Z"
     },
     {
       "id": "cmq1zcvcv0005krzqwttl96a2",
@@ -10681,8 +8117,6 @@
       "unavailableDateRanges": [],
       "unavailableDates": [],
       "dateOverrides": {},
-      "createdAt": "2026-06-06T06:36:44.094Z",
-      "updatedAt": "2026-06-06T06:36:44.094Z"
     }
   ],
   "service": [
@@ -10693,8 +8127,6 @@
       "timeToTake": "Sa'aatii 1",
       "roomNumber": null,
       "officeId": "cmiwtftvd0001jsmvnaiv0eka",
-      "createdAt": "2025-12-09T20:13:38.606Z",
-      "updatedAt": "2025-12-10T09:07:34.272Z"
     },
     {
       "id": "03861060-a202-432f-810e-3aab203188e1",
@@ -10703,8 +8135,6 @@
       "timeToTake": "Guyaa 1",
       "roomNumber": null,
       "officeId": "cmiwun4l6000ejsmvic2y9emc",
-      "createdAt": "2025-12-09T03:59:49.030Z",
-      "updatedAt": "2025-12-23T06:46:17.548Z"
     },
     {
       "id": "06659662-1aae-43dd-972a-260dee1f3ed8",
@@ -10713,8 +8143,6 @@
       "timeToTake": "Daqiiqaa 30 - Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwun4l6000ejsmvic2y9emc",
-      "createdAt": "2025-12-23T13:30:11.276Z",
-      "updatedAt": "2025-12-23T13:30:11.276Z"
     },
     {
       "id": "081af485-b176-46f4-8ec3-29bcc49508c9",
@@ -10723,8 +8151,6 @@
       "timeToTake": "guyyaa 1 fi sana oll",
       "roomNumber": null,
       "officeId": "cmiwlbtt20000jsp6ch1mh3lp",
-      "createdAt": "2025-12-08T03:35:39.587Z",
-      "updatedAt": "2025-12-08T03:35:39.587Z"
     },
     {
       "id": "0851495e-b516-4e2b-a490-0f5e685f3b68",
@@ -10733,8 +8159,6 @@
       "timeToTake": "Sa'aatii 1",
       "roomNumber": null,
       "officeId": "cmiwu1g5d0007jsmvkltn6oq3",
-      "createdAt": "2025-12-10T14:21:22.544Z",
-      "updatedAt": "2025-12-10T14:21:22.544Z"
     },
     {
       "id": "0a8f009c-be2b-4176-b348-823d62060fc6",
@@ -10743,8 +8167,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmiwtiz420002jsmvzoblvc02",
-      "createdAt": "2025-12-09T09:37:55.654Z",
-      "updatedAt": "2025-12-09T09:37:55.654Z"
     },
     {
       "id": "13222ab3-b1e9-4c42-bc13-1ec42a00f89a",
@@ -10753,8 +8175,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmiwtbrih0000jsmvxk1kww3f",
-      "createdAt": "2025-12-09T09:22:00.219Z",
-      "updatedAt": "2025-12-09T09:22:00.219Z"
     },
     {
       "id": "179f8fae-275e-49c1-8ad9-ef10b33854c7",
@@ -10763,8 +8183,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwtiz420002jsmvzoblvc02",
-      "createdAt": "2025-12-09T09:45:13.353Z",
-      "updatedAt": "2025-12-09T09:45:13.353Z"
     },
     {
       "id": "18c5c8f5-baa4-4e9b-bad7-7b49acd8ac62",
@@ -10773,8 +8191,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiwu4izk0008jsmve2lcslgp",
-      "createdAt": "2025-12-10T14:08:44.204Z",
-      "updatedAt": "2025-12-10T14:12:33.052Z"
     },
     {
       "id": "1b87687c-254a-4160-a2da-a518520c19ae",
@@ -10783,8 +8199,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiww0myi000jjsmvyhxxlz3o",
-      "createdAt": "2025-12-10T13:46:41.278Z",
-      "updatedAt": "2025-12-10T13:46:41.278Z"
     },
     {
       "id": "1be5cfba-dcd7-46a4-bfee-a5f7b1abbb20",
@@ -10793,8 +8207,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa  Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiwtrp780005jsmvjob5rfok",
-      "createdAt": "2026-02-09T07:52:49.968Z",
-      "updatedAt": "2026-02-09T07:52:49.968Z"
     },
     {
       "id": "1de5f168-0255-4599-8c53-c101ad0cdc96",
@@ -10803,8 +8215,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwtrp780005jsmvjob5rfok",
-      "createdAt": "2026-02-09T07:57:26.908Z",
-      "updatedAt": "2026-02-09T07:57:26.908Z"
     },
     {
       "id": "209fd0ea-5389-43aa-ad45-30eddd0c32ce",
@@ -10813,8 +8223,6 @@
       "timeToTake": "Daqiiqaa 35",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-05T06:53:31.701Z",
-      "updatedAt": "2026-02-05T06:53:31.701Z"
     },
     {
       "id": "22adc289-c497-4075-a931-35be5bc9f931",
@@ -10823,8 +8231,6 @@
       "timeToTake": "daqiiqaa 30 - guyyaa 2",
       "roomNumber": null,
       "officeId": "cmiwlbtt20000jsp6ch1mh3lp",
-      "createdAt": "2025-12-08T11:44:02.178Z",
-      "updatedAt": "2025-12-08T11:44:02.178Z"
     },
     {
       "id": "26190bdc-9647-4d42-b06c-3f0b0fee3441",
@@ -10833,8 +8239,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiww0myi000jjsmvyhxxlz3o",
-      "createdAt": "2025-12-10T13:55:42.781Z",
-      "updatedAt": "2025-12-10T13:55:42.781Z"
     },
     {
       "id": "28a3145d-6b17-4c63-a002-b0ccac96493e",
@@ -10843,8 +8247,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwua43n000ajsmvogq5fg4p",
-      "createdAt": "2025-12-10T08:20:27.414Z",
-      "updatedAt": "2025-12-10T08:22:29.055Z"
     },
     {
       "id": "29bedd98-d936-4203-984f-d1797be4ef0b",
@@ -10853,8 +8255,6 @@
       "timeToTake": "Guyyaa 5",
       "roomNumber": null,
       "officeId": "cmiwtftvd0001jsmvnaiv0eka",
-      "createdAt": "2025-12-10T03:31:43.251Z",
-      "updatedAt": "2025-12-10T09:06:57.333Z"
     },
     {
       "id": "29f44708-f88f-4232-802a-95027d7de1fa",
@@ -10863,8 +8263,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
-      "createdAt": "2025-12-11T03:04:38.485Z",
-      "updatedAt": "2025-12-11T03:04:38.485Z"
     },
     {
       "id": "2dd72ac4-5d84-4aa7-9797-fce1fdcc8d8c",
@@ -10873,8 +8271,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmj6t45fm0008js06xip4001x",
-      "createdAt": "2025-12-19T07:32:10.728Z",
-      "updatedAt": "2025-12-19T07:32:10.728Z"
     },
     {
       "id": "2f8c6004-33ed-4115-a425-f4ba9c019409",
@@ -10883,8 +8279,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiww0myi000jjsmvyhxxlz3o",
-      "createdAt": "2025-12-10T13:53:40.441Z",
-      "updatedAt": "2025-12-10T13:53:40.441Z"
     },
     {
       "id": "326d9f37-c2b5-4e91-89c1-e6d0cc9afa32",
@@ -10893,8 +8287,6 @@
       "timeToTake": "Daqiiqaa 15 ykn Guyyaaa 15",
       "roomNumber": null,
       "officeId": "cmiwtowsm0004jsmvphmlc4z5",
-      "createdAt": "2025-12-10T13:02:17.684Z",
-      "updatedAt": "2025-12-10T13:02:17.684Z"
     },
     {
       "id": "335add8c-a208-43a5-a9df-4a75212e2e7d",
@@ -10903,8 +8295,6 @@
       "timeToTake": "Dhimmicha Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmj6syico0007js06qt4vpskb",
-      "createdAt": "2026-03-16T07:44:29.864Z",
-      "updatedAt": "2026-03-16T07:44:29.864Z"
     },
     {
       "id": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
@@ -10913,8 +8303,6 @@
       "timeToTake": "Guyyaa 10 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "360087c9-2136-411d-a8f0-22df4d81bafa",
@@ -10923,8 +8311,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwtrp780005jsmvjob5rfok",
-      "createdAt": "2026-02-09T07:45:27.956Z",
-      "updatedAt": "2026-02-09T07:45:27.956Z"
     },
     {
       "id": "36830254-7603-49f4-80ac-14c0b9ca121c",
@@ -10933,8 +8319,6 @@
       "timeToTake": "Daqiiqaa 45",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
@@ -10943,8 +8327,6 @@
       "timeToTake": "Guyyaa  3-5",
       "roomNumber": null,
       "officeId": "cmiwve9qh000hjsmv1ktd3i4r",
-      "createdAt": "2026-02-09T08:51:11.840Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "392c931c-c5e1-47db-ae80-186d2a96cce5",
@@ -10953,8 +8335,6 @@
       "timeToTake": "Daqiiqaa 45",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-09T07:12:15.091Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
@@ -10963,8 +8343,6 @@
       "timeToTake": "Guyyaa 15",
       "roomNumber": null,
       "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
@@ -10973,8 +8351,6 @@
       "timeToTake": "Daqiiqaa 45",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-09T07:21:21.508Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
@@ -10983,8 +8359,6 @@
       "timeToTake": "Battalumatti",
       "roomNumber": null,
       "officeId": "cmj6syico0007js06qt4vpskb",
-      "createdAt": "2026-02-24T08:17:10.112Z",
-      "updatedAt": "2026-03-16T07:41:39.711Z"
     },
     {
       "id": "450a78c4-1776-4dc5-9850-8f5062013f5b",
@@ -10993,8 +8367,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwua43n000ajsmvogq5fg4p",
-      "createdAt": "2025-12-10T08:27:22.047Z",
-      "updatedAt": "2025-12-10T08:27:22.047Z"
     },
     {
       "id": "4654175b-4cef-4637-9803-77fcdfbe2cf8",
@@ -11003,8 +8375,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiww0myi000jjsmvyhxxlz3o",
-      "createdAt": "2025-12-10T13:50:20.000Z",
-      "updatedAt": "2025-12-10T13:50:20.000Z"
     },
     {
       "id": "4b6c3fc8-d4f9-4d78-8975-8fe6ceb70e92",
@@ -11013,8 +8383,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa  Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiwu4izk0008jsmve2lcslgp",
-      "createdAt": "2025-12-10T14:11:35.733Z",
-      "updatedAt": "2025-12-10T14:11:35.733Z"
     },
     {
       "id": "4d5c048b-8d64-46e1-90a4-1bd904943795",
@@ -11023,8 +8391,6 @@
       "timeToTake": "Daqiiqaa 35",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-01-29T07:06:40.645Z",
-      "updatedAt": "2026-01-29T07:06:40.645Z"
     },
     {
       "id": "4d846a21-e5f8-49f2-a967-d3a94fdf8864",
@@ -11033,8 +8399,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwtrp780005jsmvjob5rfok",
-      "createdAt": "2026-02-09T07:48:23.351Z",
-      "updatedAt": "2026-02-09T07:48:23.351Z"
     },
     {
       "id": "4eff135e-2db7-40b7-acaa-98ab47190114",
@@ -11043,8 +8407,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmixqur860010jsn7l58up53s",
-      "createdAt": "2025-12-11T03:30:56.150Z",
-      "updatedAt": "2025-12-15T06:33:02.103Z"
     },
     {
       "id": "4f58f171-0956-48f5-a997-f1e50bf6a311",
@@ -11053,8 +8415,6 @@
       "timeToTake": "guyyaa 5 fi sana ol",
       "roomNumber": null,
       "officeId": "cmiwuixeh000cjsmvdd516hqa",
-      "createdAt": "2025-12-11T04:36:09.059Z",
-      "updatedAt": "2025-12-11T04:36:09.059Z"
     },
     {
       "id": "501f51e5-9844-428f-b021-769667aaa312",
@@ -11063,8 +8423,6 @@
       "timeToTake": "Daqiiqaa 45",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-09T07:06:32.286Z",
-      "updatedAt": "2026-02-09T07:06:32.286Z"
     },
     {
       "id": "514a02c8-6986-4155-a199-edfd734ae0f8",
@@ -11073,8 +8431,6 @@
       "timeToTake": "Guyyaa 1 ",
       "roomNumber": null,
       "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
-      "createdAt": "2025-12-11T02:45:03.366Z",
-      "updatedAt": "2025-12-11T02:45:03.366Z"
     },
     {
       "id": "549854a7-c1ae-4899-93a7-89854f339890",
@@ -11083,8 +8439,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmixqur860010jsn7l58up53s",
-      "createdAt": "2025-12-11T03:28:56.643Z",
-      "updatedAt": "2025-12-11T03:28:56.643Z"
     },
     {
       "id": "57e54c18-bf04-4052-8156-686b4cf06687",
@@ -11093,8 +8447,6 @@
       "timeToTake": "Guyyaa 10 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwtiz420002jsmvzoblvc02",
-      "createdAt": "2025-12-09T09:54:37.546Z",
-      "updatedAt": "2025-12-09T09:54:37.546Z"
     },
     {
       "id": "58edfa34-0e84-419e-95fe-f4af36bc1099",
@@ -11103,8 +8455,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwua43n000ajsmvogq5fg4p",
-      "createdAt": "2025-12-10T08:10:59.852Z",
-      "updatedAt": "2025-12-10T08:10:59.852Z"
     },
     {
       "id": "5b83e2e7-aa86-480b-8b57-eeec355d1b03",
@@ -11113,8 +8463,6 @@
       "timeToTake": "Daqiiqaa 35",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-01-29T06:57:20.713Z",
-      "updatedAt": "2026-01-29T06:57:20.713Z"
     },
     {
       "id": "5d7158db-5005-48de-87e3-41de50e24521",
@@ -11123,8 +8471,6 @@
       "timeToTake": "Guyyaa 10 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "601e4598-e1aa-4804-abc8-6d0b7cc08fd6",
@@ -11133,8 +8479,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmixqur860010jsn7l58up53s",
-      "createdAt": "2025-12-15T06:37:46.563Z",
-      "updatedAt": "2025-12-15T06:37:46.563Z"
     },
     {
       "id": "65e1c5c6-dd89-4fba-b71b-666b0581a236",
@@ -11143,8 +8487,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiwu4izk0008jsmve2lcslgp",
-      "createdAt": "2025-12-10T14:06:44.865Z",
-      "updatedAt": "2025-12-10T14:12:54.872Z"
     },
     {
       "id": "6695f1d1-d96b-49cd-bda2-1bc4a9caaee0",
@@ -11153,8 +8495,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwlbtt20000jsp6ch1mh3lp",
-      "createdAt": "2025-12-08T08:38:55.248Z",
-      "updatedAt": "2025-12-08T08:38:55.248Z"
     },
     {
       "id": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
@@ -11163,8 +8503,6 @@
       "timeToTake": "Sa'aatii 1",
       "roomNumber": null,
       "officeId": "cmiwtftvd0001jsmvnaiv0eka",
-      "createdAt": "2025-12-10T03:36:41.604Z",
-      "updatedAt": "2025-12-10T09:06:36.444Z"
     },
     {
       "id": "6b291339-4335-45fd-af55-0c7ecbd60474",
@@ -11173,8 +8511,6 @@
       "timeToTake": "Daqiiqaa 5",
       "roomNumber": null,
       "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
-      "createdAt": "2025-12-10T08:03:37.596Z",
-      "updatedAt": "2025-12-10T08:03:37.596Z"
     },
     {
       "id": "6fdde07d-81f5-4040-be9b-767cc0215f40",
@@ -11183,8 +8519,6 @@
       "timeToTake": "Daqiiqaa 45",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-03T08:04:22.866Z",
-      "updatedAt": "2026-02-03T08:04:22.866Z"
     },
     {
       "id": "71e8c566-9c54-4933-b8a8-a89ed4b2a99d",
@@ -11193,8 +8527,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwua43n000ajsmvogq5fg4p",
-      "createdAt": "2025-12-10T08:18:17.570Z",
-      "updatedAt": "2025-12-10T08:18:17.570Z"
     },
     {
       "id": "7472e7c7-c839-484c-bf6e-49b4a5fdc864",
@@ -11203,8 +8535,6 @@
       "timeToTake": "Sa'aatii 1",
       "roomNumber": null,
       "officeId": "cmiwu1g5d0007jsmvkltn6oq3",
-      "createdAt": "2025-12-10T14:16:31.084Z",
-      "updatedAt": "2025-12-10T14:18:01.864Z"
     },
     {
       "id": "753ad252-2ed5-4da9-89ea-4203a744db49",
@@ -11213,8 +8543,6 @@
       "timeToTake": "Dhimmicha Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmj6syico0007js06qt4vpskb",
-      "createdAt": "2026-03-16T07:42:34.050Z",
-      "updatedAt": "2026-03-16T07:42:34.050Z"
     },
     {
       "id": "7bbfae6e-b6ff-403b-82bb-6d5b12319158",
@@ -11223,8 +8551,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmixqur860010jsn7l58up53s",
-      "createdAt": "2025-12-11T03:27:10.129Z",
-      "updatedAt": "2025-12-11T03:27:10.129Z"
     },
     {
       "id": "824e2b8b-e831-4541-9a45-2a54ae9b0c4c",
@@ -11233,8 +8559,6 @@
       "timeToTake": "Daqiiqaa 35",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-09T07:01:45.735Z",
-      "updatedAt": "2026-02-09T07:01:45.735Z"
     },
     {
       "id": "82e60402-e65b-48c5-acc1-e95cb62186f9",
@@ -11243,8 +8567,6 @@
       "timeToTake": "Sa'aatii 1",
       "roomNumber": null,
       "officeId": "cmiwu1g5d0007jsmvkltn6oq3",
-      "createdAt": "2025-12-10T14:23:27.815Z",
-      "updatedAt": "2025-12-10T14:23:27.815Z"
     },
     {
       "id": "84352a7b-79a1-444e-a100-22d5c4dabb46",
@@ -11253,8 +8575,6 @@
       "timeToTake": "Sa'aatii 1",
       "roomNumber": null,
       "officeId": "cmiwu1g5d0007jsmvkltn6oq3",
-      "createdAt": "2025-12-10T14:25:34.216Z",
-      "updatedAt": "2025-12-10T14:25:34.216Z"
     },
     {
       "id": "845ed3fe-f137-4693-b80b-652b10249918",
@@ -11263,8 +8583,6 @@
       "timeToTake": "Guyyaa 4",
       "roomNumber": null,
       "officeId": "cmiwtbrih0000jsmvxk1kww3f",
-      "createdAt": "2025-12-09T09:01:00.959Z",
-      "updatedAt": "2025-12-09T09:01:00.959Z"
     },
     {
       "id": "8529fa35-d948-48c0-85ad-7f1723ca7293",
@@ -11273,8 +8591,6 @@
       "timeToTake": "Daqiiqaa 10- Guyyaa 1",
       "roomNumber": null,
       "officeId": "cmj6t45fm0008js06xip4001x",
-      "createdAt": "2025-12-19T07:51:34.596Z",
-      "updatedAt": "2025-12-19T07:51:34.596Z"
     },
     {
       "id": "86396516-cf9c-4876-9bd7-4af29ca82637",
@@ -11283,8 +8599,6 @@
       "timeToTake": "Torbaan Tokko",
       "roomNumber": null,
       "officeId": "cmiwlbtt20000jsp6ch1mh3lp",
-      "createdAt": "2025-12-08T11:40:39.171Z",
-      "updatedAt": "2025-12-08T11:40:39.171Z"
     },
     {
       "id": "86f3511e-648a-4e91-a791-9401dc15eab1",
@@ -11293,8 +8607,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmiwtbrih0000jsmvxk1kww3f",
-      "createdAt": "2025-12-09T09:09:54.792Z",
-      "updatedAt": "2025-12-09T09:09:54.792Z"
     },
     {
       "id": "88a011fc-6c83-4a49-b750-5a61d06dc797",
@@ -11303,8 +8615,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T12:17:02.070Z",
-      "updatedAt": "2025-12-10T12:17:02.070Z"
     },
     {
       "id": "8cc00cb2-c8a4-47c0-8849-32ce6291f8bc",
@@ -11313,8 +8623,6 @@
       "timeToTake": "Sa'aatii 5",
       "roomNumber": null,
       "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
-      "createdAt": "2025-12-11T03:20:24.316Z",
-      "updatedAt": "2025-12-11T03:20:24.316Z"
     },
     {
       "id": "8dae1245-4642-4d15-a338-52e88e21bc18",
@@ -11323,8 +8631,6 @@
       "timeToTake": "Dhimmicha Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiwu4izk0008jsmve2lcslgp",
-      "createdAt": "2025-12-10T13:59:18.089Z",
-      "updatedAt": "2025-12-10T14:03:18.365Z"
     },
     {
       "id": "928edd8e-1ed2-4b28-a73e-6f1a12028b2d",
@@ -11333,8 +8639,6 @@
       "timeToTake": "Daqiiqaa 45",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-03T08:26:19.493Z",
-      "updatedAt": "2026-02-03T08:26:19.493Z"
     },
     {
       "id": "94fe6660-e196-4d3f-a3b6-1c614d41f439",
@@ -11343,8 +8647,6 @@
       "timeToTake": "Daqiiqaa 30",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-03T08:47:02.361Z",
-      "updatedAt": "2026-02-03T08:47:02.361Z"
     },
     {
       "id": "952fe9ae-b0c7-4e7c-89e3-be4914fb40b7",
@@ -11353,8 +8655,6 @@
       "timeToTake": "Guyyaa 5",
       "roomNumber": null,
       "officeId": "cmiwtftvd0001jsmvnaiv0eka",
-      "createdAt": "2025-12-10T03:31:43.509Z",
-      "updatedAt": "2025-12-10T09:07:12.016Z"
     },
     {
       "id": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
@@ -11363,8 +8663,6 @@
       "timeToTake": "Daqiiqaa 35",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-01-29T07:11:28.777Z",
-      "updatedAt": "2026-01-29T07:11:28.777Z"
     },
     {
       "id": "964a9011-c8e8-4b27-b773-67f83af9aff6",
@@ -11373,8 +8671,6 @@
       "timeToTake": "Guyyaa 10 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "976f2107-33f7-4529-a1a9-da874364f973",
@@ -11383,8 +8679,6 @@
       "timeToTake": "Daqiiqaa 5",
       "roomNumber": null,
       "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
-      "createdAt": "2025-12-10T07:50:43.963Z",
-      "updatedAt": "2025-12-10T07:50:43.963Z"
     },
     {
       "id": "9a8ac3f2-0606-4c3b-bb05-217248b68f89",
@@ -11393,8 +8687,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
-      "createdAt": "2025-12-11T02:52:49.723Z",
-      "updatedAt": "2025-12-11T02:52:49.723Z"
     },
     {
       "id": "9d4a7897-4c04-4626-92cf-e772d4776368",
@@ -11403,8 +8695,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T12:01:08.421Z",
-      "updatedAt": "2025-12-10T12:01:08.421Z"
     },
     {
       "id": "9f9afed5-a7e0-463e-8c63-e37c3ed27f74",
@@ -11413,8 +8703,6 @@
       "timeToTake": "Daqiiqaa 5",
       "roomNumber": null,
       "officeId": "cmiww0myi000jjsmvyhxxlz3o",
-      "createdAt": "2025-12-10T13:38:33.132Z",
-      "updatedAt": "2025-12-10T13:38:33.132Z"
     },
     {
       "id": "a4172090-d35f-44d6-9c8f-a4fe62dfcbb7",
@@ -11423,8 +8711,6 @@
       "timeToTake": "Daqiiqaa 30",
       "roomNumber": null,
       "officeId": "cmiwtowsm0004jsmvphmlc4z5",
-      "createdAt": "2025-12-10T12:40:39.649Z",
-      "updatedAt": "2025-12-10T12:40:39.649Z"
     },
     {
       "id": "a61909fb-89ff-4e99-923f-922b36c0f8db",
@@ -11433,8 +8719,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmixqur860010jsn7l58up53s",
-      "createdAt": "2025-12-15T06:35:49.565Z",
-      "updatedAt": "2025-12-15T06:35:49.565Z"
     },
     {
       "id": "aa46f53c-01b5-4b51-a0bb-0d4e255e8164",
@@ -11443,8 +8727,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T12:04:24.500Z",
-      "updatedAt": "2025-12-10T12:04:24.500Z"
     },
     {
       "id": "b0ffb9b2-83f1-4d29-aa51-728eb37c7cc5",
@@ -11453,8 +8735,6 @@
       "timeToTake": "Guyyaa 20 -ji'a 3",
       "roomNumber": null,
       "officeId": "cmj6t45fm0008js06xip4001x",
-      "createdAt": "2025-12-19T07:39:24.780Z",
-      "updatedAt": "2025-12-19T07:44:35.696Z"
     },
     {
       "id": "b527d5a0-1f08-4c9b-b905-9ae5b431b70c",
@@ -11463,8 +8743,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
-      "createdAt": "2025-12-10T07:34:22.309Z",
-      "updatedAt": "2025-12-10T07:34:22.309Z"
     },
     {
       "id": "bd07182b-e95c-426f-9ddc-522c6c851b5b",
@@ -11473,8 +8751,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwtowsm0004jsmvphmlc4z5",
-      "createdAt": "2025-12-10T12:46:37.501Z",
-      "updatedAt": "2025-12-10T12:55:53.091Z"
     },
     {
       "id": "be39f394-53ee-497f-b39d-4d191bcaf357",
@@ -11483,8 +8759,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiww0myi000jjsmvyhxxlz3o",
-      "createdAt": "2025-12-10T13:42:03.666Z",
-      "updatedAt": "2025-12-10T13:42:03.666Z"
     },
     {
       "id": "c0b7148a-2d2b-4341-bc17-c9d60b460047",
@@ -11493,8 +8767,6 @@
       "timeToTake": "guyyaa 2 fi sana oll",
       "roomNumber": null,
       "officeId": "cmiwuixeh000cjsmvdd516hqa",
-      "createdAt": "2025-12-11T04:25:18.631Z",
-      "updatedAt": "2025-12-11T04:25:18.631Z"
     },
     {
       "id": "c13f72f3-4334-4047-8d2f-a3999f412b85",
@@ -11503,8 +8775,6 @@
       "timeToTake": "Guyyaa 10 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwlbtt20000jsp6ch1mh3lp",
-      "createdAt": "2025-12-08T09:02:57.023Z",
-      "updatedAt": "2025-12-08T09:02:57.023Z"
     },
     {
       "id": "c17b9a58-3905-4aaa-ad84-96d017177013",
@@ -11513,8 +8783,6 @@
       "timeToTake": "Torbaan 1",
       "roomNumber": null,
       "officeId": "cmiwtbrih0000jsmvxk1kww3f",
-      "createdAt": "2025-12-09T08:50:02.821Z",
-      "updatedAt": "2025-12-09T08:50:02.821Z"
     },
     {
       "id": "c5f0fb23-c51a-48e8-a5aa-88965a3144a7",
@@ -11523,8 +8791,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwlbtt20000jsp6ch1mh3lp",
-      "createdAt": "2025-12-08T08:48:49.990Z",
-      "updatedAt": "2025-12-08T08:48:49.990Z"
     },
     {
       "id": "c6554f1b-3970-45ca-9d1a-f4a0f92de745",
@@ -11533,8 +8799,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwua43n000ajsmvogq5fg4p",
-      "createdAt": "2025-12-10T08:12:54.782Z",
-      "updatedAt": "2025-12-10T08:12:54.782Z"
     },
     {
       "id": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
@@ -11543,8 +8807,6 @@
       "timeToTake": "Sa'atii 1",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-01-29T06:52:45.481Z",
-      "updatedAt": "2026-01-29T06:52:45.481Z"
     },
     {
       "id": "c8f335a2-25f3-479a-b8c9-50e5297f8a34",
@@ -11553,8 +8815,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwtowsm0004jsmvphmlc4z5",
-      "createdAt": "2025-12-10T12:46:37.525Z",
-      "updatedAt": "2025-12-10T12:46:37.525Z"
     },
     {
       "id": "cb0b7afc-8097-46bf-9572-00de031d8e64",
@@ -11563,8 +8823,6 @@
       "timeToTake": "Daqiiqaa 3",
       "roomNumber": null,
       "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
-      "createdAt": "2025-12-10T07:37:58.294Z",
-      "updatedAt": "2025-12-10T07:37:58.294Z"
     },
     {
       "id": "cc35c70f-05df-4e13-bdd2-8d3cccde6fa0",
@@ -11573,8 +8831,6 @@
       "timeToTake": "Guyyaa 1 YKN Bellama MM",
       "roomNumber": null,
       "officeId": "cmj6t45fm0008js06xip4001x",
-      "createdAt": "2025-12-19T07:36:47.572Z",
-      "updatedAt": "2025-12-19T07:36:47.572Z"
     },
     {
       "id": "d15e78a5-15da-47f8-a165-aa7a1f61657c",
@@ -11583,8 +8839,6 @@
       "timeToTake": "Guyyaa 3 ",
       "roomNumber": null,
       "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
-      "createdAt": "2025-12-11T03:07:08.946Z",
-      "updatedAt": "2025-12-11T03:11:11.859Z"
     },
     {
       "id": "d1a85619-efba-497c-b854-a47a8c66b3c2",
@@ -11593,8 +8847,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "d3f1698a-579c-4dab-acab-c2d526569448",
@@ -11603,8 +8855,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmixqur860010jsn7l58up53s",
-      "createdAt": "2025-12-11T03:25:36.804Z",
-      "updatedAt": "2025-12-11T03:25:36.804Z"
     },
     {
       "id": "d78c9717-9361-4383-8009-ff4b4766efbf",
@@ -11613,8 +8863,6 @@
       "timeToTake": "Daqiiqaa 30",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-03T08:53:34.685Z",
-      "updatedAt": "2026-02-03T08:53:34.685Z"
     },
     {
       "id": "dbc68074-704e-4de2-9510-e34f3cc50ca8",
@@ -11623,8 +8871,6 @@
       "timeToTake": "Guyyaa 1 ykn Akka Barbaachisummaa Isaatti",
       "roomNumber": null,
       "officeId": "cmj6syico0007js06qt4vpskb",
-      "createdAt": "2026-03-16T07:37:10.672Z",
-      "updatedAt": "2026-03-16T07:37:10.672Z"
     },
     {
       "id": "dbf0a495-0321-4d28-8b87-7770642faa02",
@@ -11633,8 +8879,6 @@
       "timeToTake": "Guyyaa 1",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T12:12:28.603Z",
-      "updatedAt": "2025-12-10T12:12:28.603Z"
     },
     {
       "id": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
@@ -11643,8 +8887,6 @@
       "timeToTake": "Daqiiqaa 30",
       "roomNumber": null,
       "officeId": "cmiwun4l6000ejsmvic2y9emc",
-      "createdAt": "2025-12-23T12:13:33.070Z",
-      "updatedAt": "2025-12-23T12:13:33.070Z"
     },
     {
       "id": "e0408764-e6bd-4c00-bd69-074fdd206c15",
@@ -11653,8 +8895,6 @@
       "timeToTake": "Daqiiqaa 40",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-02-03T07:55:49.228Z",
-      "updatedAt": "2026-02-03T07:55:49.228Z"
     },
     {
       "id": "e56aadd7-c402-4428-a302-acb1fc4e87eb",
@@ -11663,8 +8903,6 @@
       "timeToTake": "Guyyaa 1",
       "roomNumber": null,
       "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
-      "createdAt": "2025-12-11T02:57:16.237Z",
-      "updatedAt": "2025-12-11T02:57:16.237Z"
     },
     {
       "id": "e6fff1c2-a36a-414c-9256-1dafa2a979be",
@@ -11673,8 +8911,6 @@
       "timeToTake": "guyyaa 2,Anaa ji'a 1,magalaf ji'a 2,biroo ji'a3",
       "roomNumber": null,
       "officeId": "cmiwuixeh000cjsmvdd516hqa",
-      "createdAt": "2025-12-11T04:33:47.847Z",
-      "updatedAt": "2025-12-11T04:33:47.847Z"
     },
     {
       "id": "e8f0a7bd-a60d-4e68-9224-6876b38cad7c",
@@ -11683,8 +8919,6 @@
       "timeToTake": "Daqiiqaa 30",
       "roomNumber": null,
       "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
-      "createdAt": "2025-12-10T12:08:47.136Z",
-      "updatedAt": "2025-12-10T12:08:47.136Z"
     },
     {
       "id": "eca2a955-dbff-4cc6-876d-b60044be9f67",
@@ -11693,8 +8927,6 @@
       "timeToTake": "Guyyaa 3",
       "roomNumber": null,
       "officeId": "cmiwua43n000ajsmvogq5fg4p",
-      "createdAt": "2025-12-10T08:15:13.074Z",
-      "updatedAt": "2025-12-10T08:15:13.074Z"
     },
     {
       "id": "ed7c6c1c-448b-423a-88a3-d98f6f734ebe",
@@ -11703,8 +8935,6 @@
       "timeToTake": "Haala Ragaa Qabatamaa Abbaan Dhimmaa Fidee Irratti Hunda'a",
       "roomNumber": null,
       "officeId": "cmiwtrp780005jsmvjob5rfok",
-      "createdAt": "2026-02-09T08:02:04.372Z",
-      "updatedAt": "2026-02-09T08:02:04.372Z"
     },
     {
       "id": "f473e8c7-80cf-4787-9e10-6dbd79d5877d",
@@ -11713,8 +8943,6 @@
       "timeToTake": "Guyyaa 1-3",
       "roomNumber": null,
       "officeId": "cmj6t45fm0008js06xip4001x",
-      "createdAt": "2025-12-19T07:56:14.095Z",
-      "updatedAt": "2025-12-19T07:56:14.095Z"
     },
     {
       "id": "f8408180-afba-428f-be89-069f699e128e",
@@ -11723,8 +8951,6 @@
       "timeToTake": "Daqiiqaa 5",
       "roomNumber": null,
       "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
-      "createdAt": "2025-12-10T07:29:19.184Z",
-      "updatedAt": "2025-12-10T07:29:19.184Z"
     },
     {
       "id": "f944d9a0-64b7-4056-b8f7-f0ba50fe2c73",
@@ -11733,8 +8959,6 @@
       "timeToTake": "guyyaa 4  fi sanna oll",
       "roomNumber": null,
       "officeId": "cmiwuixeh000cjsmvdd516hqa",
-      "createdAt": "2025-12-11T04:29:29.376Z",
-      "updatedAt": "2025-12-11T04:29:29.376Z"
     },
     {
       "id": "fbbb1ad5-98bc-495e-8d8a-029fb908291c",
@@ -11743,8 +8967,6 @@
       "timeToTake": "Sa'aatii 1",
       "roomNumber": null,
       "officeId": "cmiwu1g5d0007jsmvkltn6oq3",
-      "createdAt": "2025-12-10T14:28:00.717Z",
-      "updatedAt": "2025-12-10T14:28:00.717Z"
     },
     {
       "id": "fdbf28c0-c9c1-4327-b884-221bfbdd7cbb",
@@ -11753,8 +8975,6 @@
       "timeToTake": "Daqiiqaa 35",
       "roomNumber": null,
       "officeId": "cmiwupjpr000fjsmvz77cek4a",
-      "createdAt": "2026-01-29T07:20:41.352Z",
-      "updatedAt": "2026-02-03T07:23:49.783Z"
     }
   ],
   "requirement": [
@@ -11763,2656 +8983,1992 @@
       "name": "Ragaa Guutu Abbaa DHimmaa Barbaachisuu",
       "description": null,
       "serviceId": "1b87687c-254a-4160-a2da-a518520c19ae",
-      "createdAt": "2025-12-10T13:46:41.278Z",
-      "updatedAt": "2025-12-10T13:46:41.278Z"
     },
     {
       "id": "033622b2-baf9-4cee-8e16-948a88b7b32b",
       "name": "Ragaa Mana Amantaa",
       "description": null,
       "serviceId": "2f8c6004-33ed-4115-a425-f4ba9c019409",
-      "createdAt": "2025-12-10T13:53:40.441Z",
-      "updatedAt": "2025-12-10T13:53:40.441Z"
     },
     {
       "id": "037d7be2-0f91-4cf3-b492-932acce28afc",
       "name": "Dhimma Koomishiinii Naamusaa fi Farra Malaanmaltummaattin Qabamee Ilaalamaa Jiruu fi  Murtaa'e Irratti Kan Hin Taane Ta'uu Qaba",
       "description": null,
       "serviceId": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
-      "createdAt": "2025-12-23T12:13:33.070Z",
-      "updatedAt": "2025-12-23T12:13:33.070Z"
     },
     {
       "id": "03bc159d-f6f2-4b32-b85c-e5d7e181c92d",
       "name": "Meedikaala Buufata  Fayyaa Mootumma irraa",
       "description": null,
       "serviceId": "94fe6660-e196-4d3f-a3b6-1c614d41f439",
-      "createdAt": "2026-02-03T08:47:02.361Z",
-      "updatedAt": "2026-02-03T08:47:02.361Z"
     },
     {
       "id": "04b651db-e9cc-4e16-993a-bee0b517a379",
       "name": "Waraqaa Enyummaa Dhiyeeffachu",
       "description": null,
       "serviceId": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
-      "createdAt": "2026-01-29T07:11:28.777Z",
-      "updatedAt": "2026-01-29T07:11:28.777Z"
     },
     {
       "id": "05529c42-b1df-4d2f-9911-008990747d61",
       "name": "Bakka Bu'insaa Konkolaataa Qaama Dhiyaachu fi Ogeessi Sanadaa  fi KonkolaataaWaliin Mirkanessu",
       "description": null,
       "serviceId": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
-      "createdAt": "2026-01-29T06:52:45.481Z",
-      "updatedAt": "2026-01-29T06:52:45.481Z"
     },
     {
       "id": "05fa3928-aaaf-4321-8f3c-fed7af0c3f0a",
       "name": "waraqaa enyumma haromfamee qabachuu",
       "description": null,
       "serviceId": "4f58f171-0956-48f5-a997-f1e50bf6a311",
-      "createdAt": "2025-12-11T04:36:09.059Z",
-      "updatedAt": "2025-12-11T04:36:09.059Z"
     },
     {
       "id": "07bcaee4-a097-415d-a649-b71ef73725f4",
       "name": "Iddoo Gita Hojii Banaa",
       "description": null,
       "serviceId": "4654175b-4cef-4637-9803-77fcdfbe2cf8",
-      "createdAt": "2025-12-10T13:50:20.000Z",
-      "updatedAt": "2025-12-10T13:50:20.000Z"
     },
     {
       "id": "07f81129-6d5c-4aaa-941b-2f7e80441812",
       "name": "Waraqaa Qaama Seerrummaa,Barreeffama Hundeffamaa Waldaa fi Dambii Ittin Bulmaataa",
       "description": null,
       "serviceId": "01f10b33-2c44-40c1-94d5-e8601272d08a",
-      "createdAt": "2025-12-10T09:07:34.272Z",
-      "updatedAt": "2025-12-10T09:07:34.272Z"
     },
     {
       "id": "08e32a31-22ce-400d-9c71-60af9902061c",
       "name": "Nagahee Tele birrin Itti Kaffalame",
       "description": null,
       "serviceId": "8cc00cb2-c8a4-47c0-8849-32ce6291f8bc",
-      "createdAt": "2025-12-11T03:20:24.316Z",
-      "updatedAt": "2025-12-11T03:20:24.316Z"
     },
     {
       "id": "08fa596d-99ca-445f-afce-d7f58814dc79",
       "name": "Iddoo fi Sa'aatii Itti Argamuu Qaban  Adda Baasuu",
       "description": null,
       "serviceId": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
-      "createdAt": "2026-03-16T07:41:39.711Z",
-      "updatedAt": "2026-03-16T07:41:39.711Z"
     },
     {
       "id": "0a593d92-0886-4422-8e23-ca8e555eb582",
       "name": "Waraqaa Enyuymmaa Miseensa Hundaa",
       "description": null,
       "serviceId": "29bedd98-d936-4203-984f-d1797be4ef0b",
-      "createdAt": "2025-12-10T09:06:57.333Z",
-      "updatedAt": "2025-12-10T09:06:57.333Z"
     },
     {
       "id": "0a6cf6dd-f0d5-4162-9358-4f42b0c2a40e",
       "name": "Ragaa Gutuu Waldaa",
       "description": null,
       "serviceId": "eca2a955-dbff-4cc6-876d-b60044be9f67",
-      "createdAt": "2025-12-10T08:15:13.074Z",
-      "updatedAt": "2025-12-10T08:15:13.074Z"
     },
     {
       "id": "0af12337-98f0-42f3-a518-783b2b97dca0",
       "name": "Xalayaa Enyummaa",
       "description": null,
       "serviceId": "bd07182b-e95c-426f-9ddc-522c6c851b5b",
-      "createdAt": "2025-12-10T12:55:53.091Z",
-      "updatedAt": "2025-12-10T12:55:53.091Z"
     },
     {
       "id": "0cc1d016-c490-4d36-be34-612679057a71",
       "name": "Madda Bishaanii",
       "description": null,
       "serviceId": "a4172090-d35f-44d6-9c8f-a4fe62dfcbb7",
-      "createdAt": "2025-12-10T12:40:39.649Z",
-      "updatedAt": "2025-12-10T12:40:39.649Z"
     },
     {
       "id": "0ceeef96-5d2e-4b33-b80e-95e46dcb88ff",
       "name": "Waligaltee fi EAIA",
       "description": null,
       "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "0d70a05a-e89e-4bfe-a94a-21e42bca60ff",
       "name": "Ragaa Fayyaa Kan Ji'a Jahaa",
       "description": null,
       "serviceId": "845ed3fe-f137-4693-b80b-652b10249918",
-      "createdAt": "2025-12-09T09:01:00.959Z",
-      "updatedAt": "2025-12-09T09:01:00.959Z"
     },
     {
       "id": "0dc09838-b16b-41fa-999c-c01ec6a31ba0",
       "name": "Xalayaa Kaartaa Akka Kennamuu Jedhu Biroo Lafaa Irraa",
       "description": null,
       "serviceId": "9d4a7897-4c04-4626-92cf-e772d4776368",
-      "createdAt": "2025-12-10T12:01:08.421Z",
-      "updatedAt": "2025-12-10T12:01:08.421Z"
     },
     {
       "id": "0ef0b434-fa7c-4973-9209-5b045fa0b86d",
       "name": "Qaama Seerummaa , Dambii Ittin Bulmaataa, Bu'aa Odiitii Bara fi Waraqaa Ragaa Sadarkaa Ibsu",
       "description": null,
       "serviceId": "952fe9ae-b0c7-4e7c-89e3-be4914fb40b7",
-      "createdAt": "2025-12-10T09:07:12.016Z",
-      "updatedAt": "2025-12-10T09:07:12.016Z"
     },
     {
       "id": "0f0d486c-3a21-4412-802f-973c490a49f6",
       "name": "Qaboo yaa'ii Baniinsa Caalbaasii",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "0f37426a-e1b3-4f8a-9b82-672a9840e4c0",
       "name": "Barreeffama Hundeeffamaa fi Dambii Ittin Bulmaata",
       "description": null,
       "serviceId": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
-      "createdAt": "2025-12-10T09:06:36.444Z",
-      "updatedAt": "2025-12-10T09:06:36.444Z"
     },
     {
       "id": "10941481-0aaa-497f-bb23-2bc265735929",
       "name": "Tajaajilamtoota Alaa Yoo Ta'aan Ammoo Gaaffi Xalayaa Deggarsaa Dhiheefachuu Qaba",
       "description": null,
       "serviceId": "06659662-1aae-43dd-972a-260dee1f3ed8",
-      "createdAt": "2025-12-23T13:30:11.276Z",
-      "updatedAt": "2025-12-23T13:30:11.276Z"
     },
     {
       "id": "10c91bc0-be3f-46f6-8a0e-06f2b495a199",
       "name": "Hojii Hojjatame Waliin Kan Wal Gitu Dokmantiin Kaffaltii Karaa Qulqullu Ta'een Dhiyaachuu Qaba",
       "description": null,
       "serviceId": "1de5f168-0255-4599-8c53-c101ad0cdc96",
-      "createdAt": "2026-02-09T07:57:26.908Z",
-      "updatedAt": "2026-02-09T07:57:26.908Z"
     },
     {
       "id": "11342047-a952-4bff-9d61-8d3859b12ccd",
       "name": "Ragaa Mana Sirressaa",
       "description": null,
       "serviceId": "2f8c6004-33ed-4115-a425-f4ba9c019409",
-      "createdAt": "2025-12-10T13:53:40.441Z",
-      "updatedAt": "2025-12-10T13:53:40.441Z"
     },
     {
       "id": "117f85fd-5db5-4a40-b296-817bc175853c",
       "name": "Qaaman Argamuu",
       "description": null,
       "serviceId": "209fd0ea-5389-43aa-ad45-30eddd0c32ce",
-      "createdAt": "2026-02-05T06:53:31.701Z",
-      "updatedAt": "2026-02-05T06:53:31.701Z"
     },
     {
       "id": "11d5f436-3d39-4f36-8dc9-88ca2599be4a",
       "name": "Ragaa qabatamaa Abbaa Dhimmaa Wajjin Hidhata Qabu",
       "description": null,
       "serviceId": "2f8c6004-33ed-4115-a425-f4ba9c019409",
-      "createdAt": "2025-12-10T13:53:40.441Z",
-      "updatedAt": "2025-12-10T13:53:40.441Z"
     },
     {
       "id": "126e028c-fcb1-4916-8f51-cd9a9c98f0e3",
       "name": "Xalayaa Deggarsaa Iddo Dhaabbatichi Argamu Irraa",
       "description": null,
       "serviceId": "86f3511e-648a-4e91-a791-9401dc15eab1",
-      "createdAt": "2025-12-09T09:09:54.792Z",
-      "updatedAt": "2025-12-09T09:09:54.792Z"
     },
     {
       "id": "12f21841-e3d0-45bf-b674-181aa8f2f91a",
       "name": "Sababa Midiiyaan Afferamuf",
       "description": null,
       "serviceId": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
-      "createdAt": "2026-03-16T07:41:39.711Z",
-      "updatedAt": "2026-03-16T07:41:39.711Z"
     },
     {
       "id": "13a51bbc-5204-4faf-92b1-3ec3648fad66",
       "name": "Kaffaltoota Gibira Idaa Taaksii Qabab Qabeenyii Dhaabbataa fi Socho'aa Isaani Addaa Bahuu Qaba",
       "description": null,
       "serviceId": "29f44708-f88f-4232-802a-95027d7de1fa",
-      "createdAt": "2025-12-11T03:04:38.485Z",
-      "updatedAt": "2025-12-11T03:04:38.485Z"
     },
     {
       "id": "164f73f4-1e07-4021-ac2f-9897bc6e3843",
       "name": "Heyyama Investamantii",
       "description": null,
       "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "168cc509-0572-4276-9c7f-4814d45920dc",
       "name": "Xalayaa Iyyanno",
       "description": null,
       "serviceId": "88a011fc-6c83-4a49-b750-5a61d06dc797",
-      "createdAt": "2025-12-10T12:17:02.070Z",
-      "updatedAt": "2025-12-10T12:17:02.070Z"
     },
     {
       "id": "16ad1f46-717d-46f3-b2c4-4173a15c1a87",
       "name": "Dhimma Mana Murtitti Ilaalamaa Jiruu fi Kan Murteen Itti Hin kennamiin Ta'uu Qaba",
       "description": null,
       "serviceId": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
-      "createdAt": "2025-12-23T12:13:33.070Z",
-      "updatedAt": "2025-12-23T12:13:33.070Z"
     },
     {
       "id": "1943da87-31c8-40db-b88d-77dc2c252c7d",
       "name": "TOR",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "19607911-27e1-43d1-8054-cbba532ab64d",
       "name": "Sababa Hanqinni Bishaani Umameef",
       "description": null,
       "serviceId": "cb0b7afc-8097-46bf-9572-00de031d8e64",
-      "createdAt": "2025-12-10T07:37:58.294Z",
-      "updatedAt": "2025-12-10T07:37:58.294Z"
     },
     {
       "id": "1a94b101-55b4-4e95-a56f-99a9df26e42c",
       "name": "Eeruu Kenname Irratti Hunda'u",
       "description": null,
       "serviceId": "450a78c4-1776-4dc5-9850-8f5062013f5b",
-      "createdAt": "2025-12-10T08:27:22.047Z",
-      "updatedAt": "2025-12-10T08:27:22.047Z"
     },
     {
       "id": "1a999d65-ec85-4cc3-8476-34085d5cc6b8",
       "name": "Gaaffi Iyyannoo",
       "description": null,
       "serviceId": "71e8c566-9c54-4933-b8a8-a89ed4b2a99d",
-      "createdAt": "2025-12-10T08:18:17.570Z",
-      "updatedAt": "2025-12-10T08:18:17.570Z"
     },
     {
       "id": "1bf91628-4b36-4a0b-b945-2a4117df411e",
       "name": "Oggessa Fayyaa Ta'uu Qaba",
       "description": null,
       "serviceId": "845ed3fe-f137-4693-b80b-652b10249918",
-      "createdAt": "2025-12-09T09:01:00.959Z",
-      "updatedAt": "2025-12-09T09:01:00.959Z"
     },
     {
       "id": "1c374c94-6d96-4571-88ca-8881da07379a",
       "name": "Waliigaltee Investimantii fi Hayyama Investmantii",
       "description": null,
       "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "1c9ad981-0f94-4a60-af1f-53f91e3f7f77",
       "name": "Iyyata Barrefamaa",
       "description": null,
       "serviceId": "06659662-1aae-43dd-972a-260dee1f3ed8",
-      "createdAt": "2025-12-23T13:30:11.276Z",
-      "updatedAt": "2025-12-23T13:30:11.276Z"
     },
     {
       "id": "1da1bede-3177-4092-86e9-85263bc8624a",
       "name": "Ragaa Qulqullinaa  Waajjira Galii fi Waldaa Irraa Dhiyyefachuu",
       "description": null,
       "serviceId": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
-      "createdAt": "2026-01-29T07:11:28.777Z",
-      "updatedAt": "2026-01-29T07:11:28.777Z"
     },
     {
       "id": "1e38dd6b-2910-4d32-98d6-bcfeb1984dd6",
       "name": "Iyyataa Hayyamni Akka Kennamuf Gaafatu",
       "description": null,
       "serviceId": "8529fa35-d948-48c0-85ad-7f1723ca7293",
-      "createdAt": "2025-12-19T07:51:34.596Z",
-      "updatedAt": "2025-12-19T07:51:34.596Z"
     },
     {
       "id": "1ece268a-0091-41db-9054-174d7aec0ec7",
       "name": "Lakk kaffalti Gibiraa",
       "description": null,
       "serviceId": "952fe9ae-b0c7-4e7c-89e3-be4914fb40b7",
-      "createdAt": "2025-12-10T09:07:12.016Z",
-      "updatedAt": "2025-12-10T09:07:12.016Z"
     },
     {
       "id": "1f1dfe12-3514-497f-9c2a-d7d4907c6325",
       "name": "Heyyama OPP",
       "description": null,
       "serviceId": "501f51e5-9844-428f-b021-769667aaa312",
-      "createdAt": "2026-02-09T07:06:32.286Z",
-      "updatedAt": "2026-02-09T07:06:32.286Z"
     },
     {
       "id": "1f595c26-ace1-4ebc-925f-4103b82563e5",
       "name": "Saayit Plaanii Iddoo dizaayiniin Itti Qophaa'u",
       "description": null,
       "serviceId": "57e54c18-bf04-4052-8156-686b4cf06687",
-      "createdAt": "2025-12-09T09:54:37.546Z",
-      "updatedAt": "2025-12-09T09:54:37.546Z"
     },
     {
       "id": "20d4e412-02b1-4bf6-898a-a0a3ac40b253",
       "name": "Waligaltee fi EAIA",
       "description": null,
       "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "21be6277-f753-4bce-b636-5bc83de9f3b6",
       "name": "Iyyata ykn Eeruu Odeeffanno yakkaa Raawwatamee",
       "description": null,
       "serviceId": "2dd72ac4-5d84-4aa7-9797-fce1fdcc8d8c",
-      "createdAt": "2025-12-19T07:32:10.728Z",
-      "updatedAt": "2025-12-19T07:32:10.728Z"
     },
     {
       "id": "223afc8c-43d3-4eab-8ffd-50862f53268b",
       "name": "Gabaasa Ji'a",
       "description": null,
       "serviceId": "84352a7b-79a1-444e-a100-22d5c4dabb46",
-      "createdAt": "2025-12-10T14:25:34.216Z",
-      "updatedAt": "2025-12-10T14:25:34.216Z"
     },
     {
       "id": "2458e528-cfee-409f-8a3d-9c14954b79c3",
       "name": "Chaappaa Waldaa",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "2484857c-8dc8-4406-859f-65a061a23089",
       "name": "Ragaa Abbaa Dhimmaa Harka Jiruu",
       "description": null,
       "serviceId": "e8f0a7bd-a60d-4e68-9224-6876b38cad7c",
-      "createdAt": "2025-12-10T12:08:47.136Z",
-      "updatedAt": "2025-12-10T12:08:47.136Z"
     },
     {
       "id": "2505f4c2-c8fa-4b8f-a5f9-23693c6cd099",
       "name": "Xalayaa Deggarsaa Aaanaa Dhabbattichi Itti Argamu Irra  Barraa'e",
       "description": null,
       "serviceId": "13222ab3-b1e9-4c42-bc13-1ec42a00f89a",
-      "createdAt": "2025-12-09T09:22:00.219Z",
-      "updatedAt": "2025-12-09T09:22:00.219Z"
     },
     {
       "id": "259cf127-1e2d-46c5-a06e-ebdc7d6cea91",
       "name": "Xalayaa Iskiimicha Ibsu",
       "description": null,
       "serviceId": "6b291339-4335-45fd-af55-0c7ecbd60474",
-      "createdAt": "2025-12-10T08:03:37.596Z",
-      "updatedAt": "2025-12-10T08:03:37.596Z"
     },
     {
       "id": "25d072c2-909f-4017-a82e-19220cdd762d",
       "name": "Unkaa To'aanno Dhaabbatichaa Iddoo Dhabbatichi Ittii Argamu Irraa Guutamme",
       "description": null,
       "serviceId": "13222ab3-b1e9-4c42-bc13-1ec42a00f89a",
-      "createdAt": "2025-12-09T09:22:00.219Z",
-      "updatedAt": "2025-12-09T09:22:00.219Z"
     },
     {
       "id": "260f9b56-7622-41c5-aea0-5b0d0d3e6cf3",
       "name": "Waraqaa Ragaa Abbaa Qabbiyyummaa",
       "description": null,
       "serviceId": "88a011fc-6c83-4a49-b750-5a61d06dc797",
-      "createdAt": "2025-12-10T12:17:02.070Z",
-      "updatedAt": "2025-12-10T12:17:02.070Z"
     },
     {
       "id": "264e45ef-3160-4487-a55c-b819442c731a",
       "name": "Istaandardii iddoo Ilaalu",
       "description": null,
       "serviceId": "fdbf28c0-c9c1-4327-b884-221bfbdd7cbb",
-      "createdAt": "2026-02-03T07:23:49.783Z",
-      "updatedAt": "2026-02-03T07:23:49.783Z"
     },
     {
       "id": "2770d87d-32de-4367-a60f-7bbc97da7473",
       "name": "Kan Hawaasummaa",
       "description": null,
       "serviceId": "26190bdc-9647-4d42-b06c-3f0b0fee3441",
-      "createdAt": "2025-12-10T13:55:42.781Z",
-      "updatedAt": "2025-12-10T13:55:42.781Z"
     },
     {
       "id": "279aba9a-f67d-446e-9418-9e6964dc7979",
       "name": "Ragaa Gabaasa Xinxala Bu'aa Qabessumma Dinaagdee '' Economic Benefit Analaysis Report ''",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "28514295-1fea-43e0-863f-4a7d599e3bad",
       "name": "Waraqaa Enyummaa Miseensa Hundaa",
       "description": null,
       "serviceId": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
-      "createdAt": "2025-12-10T09:06:36.444Z",
-      "updatedAt": "2025-12-10T09:06:36.444Z"
     },
     {
       "id": "28be5e2b-bd07-4c27-8191-4a0e533a1d1e",
       "name": "Xalayaa Gaaffii Abbaa Piroojeektii",
       "description": null,
       "serviceId": "179f8fae-275e-49c1-8ad9-ef10b33854c7",
-      "createdAt": "2025-12-09T09:45:13.353Z",
-      "updatedAt": "2025-12-09T09:45:13.353Z"
     },
     {
       "id": "2c8de0c2-00ae-4a02-aaa0-904591dd930a",
       "name": "Nagaheee Qusannaa Ittin Galcheee",
       "description": null,
       "serviceId": "f8408180-afba-428f-be89-069f699e128e",
-      "createdAt": "2025-12-10T07:29:19.184Z",
-      "updatedAt": "2025-12-10T07:29:19.184Z"
     },
     {
       "id": "2cee839f-c440-42b1-ba52-78f5cb552c72",
       "name": "Iyyanno ; Qaboo Yaa'ii Tarrefama  amis/Mallataa'ee",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "2cf64d62-924c-400c-8b3b-65f16faa3912",
       "name": "Muxxannoo Hojii",
       "description": null,
       "serviceId": "8529fa35-d948-48c0-85ad-7f1723ca7293",
-      "createdAt": "2025-12-19T07:51:34.596Z",
-      "updatedAt": "2025-12-19T07:51:34.596Z"
     },
     {
       "id": "2e12aa8f-74e6-48ef-adae-d0f8edc8236d",
       "name": "Kuufama Idaa Taaksii Ragaan Guutuun Gare Hordoffi fi Sassaabbi Irra Dhiyeessu",
       "description": null,
       "serviceId": "29f44708-f88f-4232-802a-95027d7de1fa",
-      "createdAt": "2025-12-11T03:04:38.485Z",
-      "updatedAt": "2025-12-11T03:04:38.485Z"
     },
     {
       "id": "308ad4bb-a94b-421d-9b62-40792688763e",
       "name": "Isteetmantii Baankii",
       "description": null,
       "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "30c6a29b-244f-4907-8387-24d0f9077f0c",
       "name": "Moggaassa Maqaa DalDalaa",
       "description": null,
       "serviceId": "01f10b33-2c44-40c1-94d5-e8601272d08a",
-      "createdAt": "2025-12-10T09:07:34.272Z",
-      "updatedAt": "2025-12-10T09:07:34.272Z"
     },
     {
       "id": "31f00668-3c73-42ca-87e7-33723e779f61",
       "name": "Sadarkaa Bara Darbee Dhiyeefachuu Qaba",
       "description": null,
       "serviceId": "928edd8e-1ed2-4b28-a73e-6f1a12028b2d",
-      "createdAt": "2026-02-03T08:26:19.493Z",
-      "updatedAt": "2026-02-03T08:26:19.493Z"
     },
     {
       "id": "3223f594-3233-4e88-9839-47d1bceb39ee",
       "name": "Hirmaattoota Qophessu",
       "description": null,
       "serviceId": "4b6c3fc8-d4f9-4d78-8975-8fe6ceb70e92",
-      "createdAt": "2025-12-10T14:11:35.733Z",
-      "updatedAt": "2025-12-10T14:11:35.733Z"
     },
     {
       "id": "32db2b90-d592-4c60-8032-174a74a3c775",
       "name": "Qaboo Yaa'ii Dizaayiniin Fedhii Hawaaasa  Bu'urreffattu Ta'uu Ibsu",
       "description": null,
       "serviceId": "57e54c18-bf04-4052-8156-686b4cf06687",
-      "createdAt": "2025-12-09T09:54:37.546Z",
-      "updatedAt": "2025-12-09T09:54:37.546Z"
     },
     {
       "id": "331f1d59-ec51-4bf7-8546-3475844d5d69",
       "name": "' Invitation letter ' Sanada Caalbaasii Gidduu Gala Godhatee Qophaa'ee",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "3393ea47-45b3-42a7-a07e-dc698e113451",
       "name": "Kan Maatiin Walitti Fiduu",
       "description": null,
       "serviceId": "26190bdc-9647-4d42-b06c-3f0b0fee3441",
-      "createdAt": "2025-12-10T13:55:42.781Z",
-      "updatedAt": "2025-12-10T13:55:42.781Z"
     },
     {
       "id": "33d0ad20-2460-411a-85dd-4134040a4b97",
       "name": "Waligaltee Bittaf Gurgurtaa",
       "description": null,
       "serviceId": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
-      "createdAt": "2026-01-29T07:11:28.777Z",
-      "updatedAt": "2026-01-29T07:11:28.777Z"
     },
     {
       "id": "346ee977-9689-4c76-a642-28cebb9555e9",
       "name": "Sadarkaa Bara Darbee Dhiyeefachuu Qaba",
       "description": null,
       "serviceId": "6fdde07d-81f5-4040-be9b-767cc0215f40",
-      "createdAt": "2026-02-03T08:04:22.866Z",
-      "updatedAt": "2026-02-03T08:04:22.866Z"
     },
     {
       "id": "3576e006-0073-48e0-a996-2bbe50a04bac",
       "name": "Iyyanno ; Qaboo yaa'ii  Tarrefama Amis/mallattaa'e",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "368d8708-03b8-4d22-bd19-b66dba22a4a3",
       "name": "Lakk Kaffaltii Gibiraa",
       "description": null,
       "serviceId": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
-      "createdAt": "2025-12-10T09:06:36.444Z",
-      "updatedAt": "2025-12-10T09:06:36.444Z"
     },
     {
       "id": "36a0e64b-b5a4-4b01-9d25-8e892b3340a0",
       "name": "Ragaa Sakkata'iinsa Konkolaataa Waggaa  Bolloo",
       "description": null,
       "serviceId": "501f51e5-9844-428f-b021-769667aaa312",
-      "createdAt": "2026-02-09T07:06:32.286Z",
-      "updatedAt": "2026-02-09T07:06:32.286Z"
     },
     {
       "id": "37051180-c6ed-4585-8406-080c5cd69166",
       "name": "Ragaa  Qabiyyee Konkolaataa ykn Libre Koopii",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "384f2c60-12a3-4a71-93b2-b7fcc95da039",
       "name": "baay'ina Humna Namaa Akkaata Istaandardiin Ilaalu",
       "description": null,
       "serviceId": "fdbf28c0-c9c1-4327-b884-221bfbdd7cbb",
-      "createdAt": "2026-02-03T07:23:49.783Z",
-      "updatedAt": "2026-02-03T07:23:49.783Z"
     },
     {
       "id": "387cb60a-2270-4371-8360-0093e8559122",
       "name": "Hayyama Oggessotaa Dhaabbatichaaf Hojjatan Kan Haroomee",
       "description": null,
       "serviceId": "86f3511e-648a-4e91-a791-9401dc15eab1",
-      "createdAt": "2025-12-09T09:09:54.792Z",
-      "updatedAt": "2025-12-09T09:09:54.792Z"
     },
     {
       "id": "3895fd4c-c919-4b31-b06f-d6c337bce9b1",
       "name": "Ragaa Heyyama opp",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "394eeb66-e278-4c80-bb0e-fad860caa821",
       "name": "Ragaa Barbaadan Sana Tuqanii Xalayaan  Nu Gaafachuu Qabu",
       "description": null,
       "serviceId": "335add8c-a208-43a5-a9df-4a75212e2e7d",
-      "createdAt": "2026-03-16T07:44:29.864Z",
-      "updatedAt": "2026-03-16T07:44:29.864Z"
     },
     {
       "id": "39a1fa36-f353-4ac1-af1b-dfe4051fb4b1",
       "name": "Heeyyama Hojii Daldalaa",
       "description": null,
       "serviceId": "01f10b33-2c44-40c1-94d5-e8601272d08a",
-      "createdAt": "2025-12-10T09:07:34.272Z",
-      "updatedAt": "2025-12-10T09:07:34.272Z"
     },
     {
       "id": "3a9ac235-7f4a-4a22-80d1-7f5bda541a84",
       "name": "Ragaa Kaffalttin Rawwachuu Ibsu Waldaa Irraa",
       "description": null,
       "serviceId": "eca2a955-dbff-4cc6-876d-b60044be9f67",
-      "createdAt": "2025-12-10T08:15:13.074Z",
-      "updatedAt": "2025-12-10T08:15:13.074Z"
     },
     {
       "id": "3d564642-0a2c-49ff-9d0a-af82dc95bade",
       "name": "OL-iyyanno",
       "description": null,
       "serviceId": "22adc289-c497-4075-a931-35be5bc9f931",
-      "createdAt": "2025-12-08T11:44:02.178Z",
-      "updatedAt": "2025-12-08T11:44:02.178Z"
     },
     {
       "id": "3d84c8a9-9e48-4a52-bad3-13b9ea969cce",
       "name": "Waldaan Gurmaa'uuf Fedhiin Jiraaachuu",
       "description": null,
       "serviceId": "b527d5a0-1f08-4c9b-b905-9ae5b431b70c",
-      "createdAt": "2025-12-10T07:34:22.309Z",
-      "updatedAt": "2025-12-10T07:34:22.309Z"
     },
     {
       "id": "3e7b8f55-4588-405a-9c27-d690f9d80fd4",
       "name": "jirratoota nanon sanii ta'uu",
       "description": null,
       "serviceId": "4f58f171-0956-48f5-a997-f1e50bf6a311",
-      "createdAt": "2025-12-11T04:36:09.059Z",
-      "updatedAt": "2025-12-11T04:36:09.059Z"
     },
     {
       "id": "4058eeee-1347-4953-86e6-ebef72021fdf",
       "name": "Ragaa Qorrannoo Guutuu fi Dizaayinii Hojjatamee",
       "description": null,
       "serviceId": "326d9f37-c2b5-4e91-89c1-e6d0cc9afa32",
-      "createdAt": "2025-12-10T13:02:17.684Z",
-      "updatedAt": "2025-12-10T13:02:17.684Z"
     },
     {
       "id": "41a0af59-0848-4732-89e6-cfbd395437ef",
       "name": "Barreffama Hundeffamaa fi Dambii Ittin Bulmaata",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "42df4493-d576-4cf3-96ea-f79e16e3cb3e",
       "name": "Kaffalaa Gibira Kenya",
       "description": null,
       "serviceId": "d15e78a5-15da-47f8-a165-aa7a1f61657c",
-      "createdAt": "2025-12-11T03:11:11.859Z",
-      "updatedAt": "2025-12-11T03:11:11.859Z"
     },
     {
       "id": "42f210a8-8ac7-43c6-b8f9-c18ca7552c37",
       "name": "Dizaayini Mirkanaa'ee",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "42ff031f-8069-47d7-916e-c3f2a2de644a",
       "name": "Yaada Murtee koree",
       "description": null,
       "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "4352bf2d-b49c-471c-ad0d-845714890930",
       "name": "Waraqaa Qaamas Seerummaa",
       "description": null,
       "serviceId": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
-      "createdAt": "2025-12-10T09:06:36.444Z",
-      "updatedAt": "2025-12-10T09:06:36.444Z"
     },
     {
       "id": "44521080-f62e-4105-8b31-07655193ceac",
       "name": "Lafa Jallisii Ta'uu Jiraachuu",
       "description": null,
       "serviceId": "b527d5a0-1f08-4c9b-b905-9ae5b431b70c",
-      "createdAt": "2025-12-10T07:34:22.309Z",
-      "updatedAt": "2025-12-10T07:34:22.309Z"
     },
     {
       "id": "44ebfed2-ed45-445c-9804-5fbc167d85b2",
       "name": "Ibsaa Miidhama Qaqqabee fi Gosa Suphaa",
       "description": null,
       "serviceId": "6b291339-4335-45fd-af55-0c7ecbd60474",
-      "createdAt": "2025-12-10T08:03:37.596Z",
-      "updatedAt": "2025-12-10T08:03:37.596Z"
     },
     {
       "id": "470a5a68-969d-40f1-bf56-166ac1f86b81",
       "name": "Qaamolee Nageenyaa (Miseensa RIB, Poolisii, milishaa fi Hojjatoota Waajjira  Bul.nageenyaa) Ta'uu Qaba",
       "description": null,
       "serviceId": "06659662-1aae-43dd-972a-260dee1f3ed8",
-      "createdAt": "2025-12-23T13:30:11.276Z",
-      "updatedAt": "2025-12-23T13:30:11.276Z"
     },
     {
       "id": "474552ee-08ad-4655-82dc-cce6d85485aa",
       "name": "Xalayaa Gaaffi fi Ragaa",
       "description": null,
       "serviceId": "0a8f009c-be2b-4176-b348-823d62060fc6",
-      "createdAt": "2025-12-09T09:37:55.654Z",
-      "updatedAt": "2025-12-09T09:37:55.654Z"
     },
     {
       "id": "4ae3292e-1d8e-4c67-b96b-091195af4560",
       "name": "Bal'ina Lafa Waldichaa",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "4b91bfbf-295e-40ca-a862-b87223e60819",
       "name": "Midhama Paampichaa (Salphaa,G/galeessa fi Guddaa)",
       "description": null,
       "serviceId": "976f2107-33f7-4529-a1a9-da874364f973",
-      "createdAt": "2025-12-10T07:50:43.963Z",
-      "updatedAt": "2025-12-10T07:50:43.963Z"
     },
     {
       "id": "4be91c90-355f-44e4-b42a-524545ae069f",
       "name": "Waligaltee fi EAIA",
       "description": null,
       "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "4ce29d39-b634-4f7b-b718-e9acd2672695",
       "name": "Guyyaa 15 Booda Libree Garagalchaa Hojjechuu",
       "description": null,
       "serviceId": "4d5c048b-8d64-46e1-90a4-1bd904943795",
-      "createdAt": "2026-01-29T07:06:40.645Z",
-      "updatedAt": "2026-01-29T07:06:40.645Z"
     },
     {
       "id": "4d03e0eb-fd71-4517-bcc9-a28b9f34aa60",
       "name": "Sadarkaa Gitaa",
       "description": null,
       "serviceId": "be39f394-53ee-497f-b39d-4d191bcaf357",
-      "createdAt": "2025-12-10T13:42:03.666Z",
-      "updatedAt": "2025-12-10T13:42:03.666Z"
     },
     {
       "id": "4d211bc4-f558-4967-aff8-ad19ed60eded",
       "name": "Xalayaa Gaaffanno Qorranno Dhaabbille Hawaasa Irraa Dhihaatu",
       "description": null,
       "serviceId": "326d9f37-c2b5-4e91-89c1-e6d0cc9afa32",
-      "createdAt": "2025-12-10T13:02:17.684Z",
-      "updatedAt": "2025-12-10T13:02:17.684Z"
     },
     {
       "id": "4d70dda8-f26b-4bac-94ce-e3ab2f4a9126",
       "name": "Nagahee Galii fi Baasii",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "4e8402ee-ad95-404e-abec-ca857dbf918a",
       "name": "Waraqaa Qulqullumaa Qaaama Dhimmi ilaallatu Irraa",
       "description": null,
       "serviceId": "8dae1245-4642-4d15-a338-52e88e21bc18",
-      "createdAt": "2025-12-10T14:03:18.365Z",
-      "updatedAt": "2025-12-10T14:03:18.365Z"
     },
     {
       "id": "4e9345e1-c767-4be9-8404-13fc4aef9388",
       "name": "Suuraa 3*4 lama",
       "description": null,
       "serviceId": "9d4a7897-4c04-4626-92cf-e772d4776368",
-      "createdAt": "2025-12-10T12:01:08.421Z",
-      "updatedAt": "2025-12-10T12:01:08.421Z"
     },
     {
       "id": "4ed05fbc-5e6f-4bcb-8099-d9634d68bca6",
       "name": "Karoora Piroojaktii",
       "description": null,
       "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "4fa2e69e-6c80-4563-a5ea-05aaf19cac36",
       "name": "Ragaa mana Galmee Kessa Jiruu",
       "description": null,
       "serviceId": "e8f0a7bd-a60d-4e68-9224-6876b38cad7c",
-      "createdAt": "2025-12-10T12:08:47.136Z",
-      "updatedAt": "2025-12-10T12:08:47.136Z"
     },
     {
       "id": "4fa4b19c-1e12-404c-9d48-673acf988712",
       "name": "Kaffaltti Barbaachisuu Kaffallu",
       "description": null,
       "serviceId": "aa46f53c-01b5-4b51-a0bb-0d4e255e8164",
-      "createdAt": "2025-12-10T12:04:24.500Z",
-      "updatedAt": "2025-12-10T12:04:24.500Z"
     },
     {
       "id": "5044ce45-3ebf-43dd-945f-24c46f08d1fe",
       "name": "Ragaa Leenjii Qabaachuu Qaba",
       "description": null,
       "serviceId": "18c5c8f5-baa4-4e9b-bad7-7b49acd8ac62",
-      "createdAt": "2025-12-10T14:12:33.052Z",
-      "updatedAt": "2025-12-10T14:12:33.052Z"
     },
     {
       "id": "52130b09-b367-4ce5-82b5-d6e8e0a04816",
       "name": "Ragaa Abbaa Dhimmaa Harka Jiruu",
       "description": null,
       "serviceId": "dbf0a495-0321-4d28-8b87-7770642faa02",
-      "createdAt": "2025-12-10T12:12:28.603Z",
-      "updatedAt": "2025-12-10T12:12:28.603Z"
     },
     {
       "id": "52f957f5-4a5a-4310-a2de-1f2a676021b6",
       "name": "Qaboo Yaa'ii",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "53962b66-addd-435e-ba3a-969ddd1f2582",
       "name": "Gaaffanno Xalayaa",
       "description": null,
       "serviceId": "bd07182b-e95c-426f-9ddc-522c6c851b5b",
-      "createdAt": "2025-12-10T12:55:53.091Z",
-      "updatedAt": "2025-12-10T12:55:53.091Z"
     },
     {
       "id": "54608605-fc19-4f79-a85f-08d9371909fd",
       "name": "Konkolaataan Qaamaan Dhiyaaate Ilaalchisuu",
       "description": null,
       "serviceId": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
-      "createdAt": "2026-01-29T07:11:28.777Z",
-      "updatedAt": "2026-01-29T07:11:28.777Z"
     },
     {
       "id": "548e51e2-00cc-4195-baed-0ecaa48fc5a0",
       "name": "Kiliraansii Waajjira Galii fi Waajjira Daldalaa ; Sakkata'insa Teknikaa Abbaan Dhimmaa Kusaa Isaa ni Baasa fi Sadarkaa Konkolaataa Fandii Daandii",
       "description": null,
       "serviceId": "e0408764-e6bd-4c00-bd69-074fdd206c15",
-      "createdAt": "2026-02-03T07:55:49.228Z",
-      "updatedAt": "2026-02-03T07:55:49.228Z"
     },
     {
       "id": "555e5211-5bfb-4171-9ed2-e4929d72465a",
       "name": "Hayyama Daldala fi TIN number",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "5799c2ea-ce26-4c03-a061-58e89211dfdc",
       "name": "Xalayaa  Murtee",
       "description": null,
       "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "59009b2c-9fce-4fc2-b633-15d23ff63ec9",
       "name": "Kan jijjirra Hojii",
       "description": null,
       "serviceId": "26190bdc-9647-4d42-b06c-3f0b0fee3441",
-      "createdAt": "2025-12-10T13:55:42.781Z",
-      "updatedAt": "2025-12-10T13:55:42.781Z"
     },
     {
       "id": "595f0b32-6383-4c87-88c4-3222c8e5048d",
       "name": "Hundeffama Waldaa",
       "description": null,
       "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "5b026658-50e4-4189-b408-a15ec4290630",
       "name": "Hundeffama Waldaa",
       "description": null,
       "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "5b54ea19-a8e5-4e7d-9e0f-bcfd9ec4eb39",
       "name": "Sanada Konkolaataa Abbaa Dhimmaatiin Dhiyaate Guutu Ta'uu Isaa  Mirkanesssu fi Automized Gochu",
       "description": null,
       "serviceId": "5b83e2e7-aa86-480b-8b57-eeec355d1b03",
-      "createdAt": "2026-01-29T06:57:20.713Z",
-      "updatedAt": "2026-01-29T06:57:20.713Z"
     },
     {
       "id": "5bc92f6b-e309-4693-b694-3a0f0c657abb",
       "name": "Barreffama Qaboo ya'ii fi Barreffama Dhabbi KKF",
       "description": null,
       "serviceId": "8529fa35-d948-48c0-85ad-7f1723ca7293",
-      "createdAt": "2025-12-19T07:51:34.596Z",
-      "updatedAt": "2025-12-19T07:51:34.596Z"
     },
     {
       "id": "5c32c2ff-abd8-4121-92b6-d17f6da3ae74",
       "name": "Gabaasa Oditi Alaa",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "5c51e13b-abee-450a-836c-8106480425c2",
       "name": "Qaama Galme nu Biraa Qabu",
       "description": null,
       "serviceId": "d15e78a5-15da-47f8-a165-aa7a1f61657c",
-      "createdAt": "2025-12-11T03:11:11.859Z",
-      "updatedAt": "2025-12-11T03:11:11.859Z"
     },
     {
       "id": "5c6bdcb4-2732-456d-97c6-64db8f36c91b",
       "name": "Gosa Iskiimi fi Iddoo Itti argamuu",
       "description": null,
       "serviceId": "6b291339-4335-45fd-af55-0c7ecbd60474",
-      "createdAt": "2025-12-10T08:03:37.596Z",
-      "updatedAt": "2025-12-10T08:03:37.596Z"
     },
     {
       "id": "5cba4a0a-9307-4bfa-a327-1796cf233c0b",
       "name": "Bu'aa Odiitii",
       "description": null,
       "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "5ce1a52f-2b75-4e06-8991-b2b4693cad33",
       "name": "Sanada Teknikaa fi Faaynansii Dorgoomtootaa",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "5cf052f9-2dc1-42fc-8ab2-48ca32294ed1",
       "name": "Xalayaa Unkaa Pressitti Barressu",
       "description": null,
       "serviceId": "4d5c048b-8d64-46e1-90a4-1bd904943795",
-      "createdAt": "2026-01-29T07:06:40.645Z",
-      "updatedAt": "2026-01-29T07:06:40.645Z"
     },
     {
       "id": "5ddff7b1-0dc9-402c-ad40-784d615d840f",
       "name": "Ragaa Abbaa Qabbiyyumma YKN Libree Koopi",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "5dfe884e-33ee-49be-b5ac-b9223525e664",
       "name": "Xalayaa Komii",
       "description": null,
       "serviceId": "9f9afed5-a7e0-463e-8c63-e37c3ed27f74",
-      "createdAt": "2025-12-10T13:38:33.132Z",
-      "updatedAt": "2025-12-10T13:38:33.132Z"
     },
     {
       "id": "608c6fec-7a76-42ef-9cb1-e116b336fe5f",
       "name": "Dizaayiniin Hojjattammu Sadarkaa C Yoo Ta'ee Qorranno Biyyoo",
       "description": null,
       "serviceId": "57e54c18-bf04-4052-8156-686b4cf06687",
-      "createdAt": "2025-12-09T09:54:37.546Z",
-      "updatedAt": "2025-12-09T09:54:37.546Z"
     },
     {
       "id": "61367ced-609c-49f2-9417-a934cffb367a",
       "name": "Eeruu Toora Bilbilaan YKN Barreffamaan",
       "description": null,
       "serviceId": "9f9afed5-a7e0-463e-8c63-e37c3ed27f74",
-      "createdAt": "2025-12-10T13:38:33.132Z",
-      "updatedAt": "2025-12-10T13:38:33.132Z"
     },
     {
       "id": "617fca32-9af8-48ec-9ed3-6ae9108c68a0",
       "name": "Bu'uraaleen Jallisii JIraachuu",
       "description": null,
       "serviceId": "b527d5a0-1f08-4c9b-b905-9ae5b431b70c",
-      "createdAt": "2025-12-10T07:34:22.309Z",
-      "updatedAt": "2025-12-10T07:34:22.309Z"
     },
     {
       "id": "6193fc51-befc-4580-bba7-9bd0e2c7928b",
       "name": "Muxxanno Hojii",
       "description": null,
       "serviceId": "be39f394-53ee-497f-b39d-4d191bcaf357",
-      "createdAt": "2025-12-10T13:42:03.666Z",
-      "updatedAt": "2025-12-10T13:42:03.666Z"
     },
     {
       "id": "61ccc5db-8dbd-4b80-9ad2-b4903f51d9fc",
       "name": "Ragaa Hayyama Opp",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "63f580e5-3491-4267-94ee-8651850f562d",
       "name": "Eeruu Naamusaa",
       "description": null,
       "serviceId": "8529fa35-d948-48c0-85ad-7f1723ca7293",
-      "createdAt": "2025-12-19T07:51:34.596Z",
-      "updatedAt": "2025-12-19T07:51:34.596Z"
     },
     {
       "id": "643cb903-eb23-4cb0-822b-074e3a7e0e99",
       "name": "Waraqaaa Enyummaa",
       "description": null,
       "serviceId": "01f10b33-2c44-40c1-94d5-e8601272d08a",
-      "createdAt": "2025-12-10T09:07:34.272Z",
-      "updatedAt": "2025-12-10T09:07:34.272Z"
     },
     {
       "id": "6514cc6a-4c91-4e86-88b6-0121ce454d18",
       "name": "Abban Dhimma Ragaa Isaa Mana Galmee irraa Baasi godhachuu",
       "description": null,
       "serviceId": "4d5c048b-8d64-46e1-90a4-1bd904943795",
-      "createdAt": "2026-01-29T07:06:40.645Z",
-      "updatedAt": "2026-01-29T07:06:40.645Z"
     },
     {
       "id": "6562dee5-8f9c-466a-add2-1fe76285f977",
       "name": "Ragaaa Kuufama Albuuda Jiraachu Ibsu",
       "description": null,
       "serviceId": "c6554f1b-3970-45ca-9d1a-f4a0f92de745",
-      "createdAt": "2025-12-10T08:12:54.782Z",
-      "updatedAt": "2025-12-10T08:12:54.782Z"
     },
     {
       "id": "6585bb89-64bb-4fe7-ba9b-5b61d21f0f67",
       "name": "Abbaa Dhimmaa Sadarkaa Waajjirra Galiiwwaan Godinaa fi Aanaaleef  Magaaloota Godinaa Ta'uu Qaba",
       "description": null,
       "serviceId": "514a02c8-6986-4155-a199-edfd734ae0f8",
-      "createdAt": "2025-12-11T02:45:03.366Z",
-      "updatedAt": "2025-12-11T02:45:03.366Z"
     },
     {
       "id": "65cdae14-b023-459a-b08e-8a05e3edb24f",
       "name": "Gaaffii ,Komii fi Iyyaannoo Dhimmoota Nageenyaan Wajjin Walqabatu Ta'uu fi Rakkoo Nageenyaa uumu Danda'an Jedhame Kan Yaadamu Ta'uu Qaba",
       "description": null,
       "serviceId": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
-      "createdAt": "2025-12-23T12:13:33.070Z",
-      "updatedAt": "2025-12-23T12:13:33.070Z"
     },
     {
       "id": "66016590-6d70-4fa4-9cfe-b8ce430c957e",
       "name": "Sanada Caalbaasii (SBD) MIrkanaa'ee fi priced (BOQ)",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "6a4f448e-d762-479e-8c1e-de6e0ae8a7d6",
       "name": "Karoora Piroojaktii",
       "description": null,
       "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "6a8a463b-a369-4258-aa63-56558a35c95b",
       "name": "Waldaa Paampii Itti Fayyadamaa Turee",
       "description": null,
       "serviceId": "976f2107-33f7-4529-a1a9-da874364f973",
-      "createdAt": "2025-12-10T07:50:43.963Z",
-      "updatedAt": "2025-12-10T07:50:43.963Z"
     },
     {
       "id": "6a96104c-6e77-46bf-941c-7353b2095d11",
       "name": "Sanada Caalbaasi (SBD) Qaama Dhimmi Ilaallatuun Qophaa'ee mirkanaa'e",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "6ad07230-2b35-4620-b1d8-ecc0be03f5c9",
       "name": "Sadarkaa Barnootaa",
       "description": null,
       "serviceId": "be39f394-53ee-497f-b39d-4d191bcaf357",
-      "createdAt": "2025-12-10T13:42:03.666Z",
-      "updatedAt": "2025-12-10T13:42:03.666Z"
     },
     {
       "id": "6adbdcbf-c669-48a4-aa9b-e4f84d9e78ee",
       "name": "Lakkofsa Kaffatii Gibiraa TIN",
       "description": null,
       "serviceId": "01f10b33-2c44-40c1-94d5-e8601272d08a",
-      "createdAt": "2025-12-10T09:07:34.272Z",
-      "updatedAt": "2025-12-10T09:07:34.272Z"
     },
     {
       "id": "6bb21893-3ecb-49f0-91b5-f2be833828c6",
       "name": "Temporary fi Student Copy",
       "description": null,
       "serviceId": "845ed3fe-f137-4693-b80b-652b10249918",
-      "createdAt": "2025-12-09T09:01:00.959Z",
-      "updatedAt": "2025-12-09T09:01:00.959Z"
     },
     {
       "id": "6be1eb9a-5660-4f3f-97bb-7cdc4705e7f5",
       "name": "Lakk TIN ,Kaartaa Lafaa,Qabbiyye Lafaa,EIA hojjachisuuKaffaltii Hayyama Bishaanii",
       "description": null,
       "serviceId": "bd07182b-e95c-426f-9ddc-522c6c851b5b",
-      "createdAt": "2025-12-10T12:55:53.091Z",
-      "updatedAt": "2025-12-10T12:55:53.091Z"
     },
     {
       "id": "6c1a07de-aef6-4768-ab52-fe4a4cfad18d",
       "name": "Abbaa Qabbiyyumma",
       "description": null,
       "serviceId": "aa46f53c-01b5-4b51-a0bb-0d4e255e8164",
-      "createdAt": "2025-12-10T12:04:24.500Z",
-      "updatedAt": "2025-12-10T12:04:24.500Z"
     },
     {
       "id": "6c98928e-24ce-4f4b-a546-c42e80caee8d",
       "name": "Gosa Midiyaa Barbaadanii",
       "description": null,
       "serviceId": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
-      "createdAt": "2026-03-16T07:41:39.711Z",
-      "updatedAt": "2026-03-16T07:41:39.711Z"
     },
     {
       "id": "6ca6dc43-35bc-4ed1-a169-4f93b1b73122",
       "name": "Paampichi Yoom Akka Kennamee",
       "description": null,
       "serviceId": "976f2107-33f7-4529-a1a9-da874364f973",
-      "createdAt": "2025-12-10T07:50:43.963Z",
-      "updatedAt": "2025-12-10T07:50:43.963Z"
     },
     {
       "id": "6d3fc9e4-e323-408b-9ff0-a661946c1f36",
       "name": "Moggaassa Maqaa",
       "description": null,
       "serviceId": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
-      "createdAt": "2025-12-10T09:06:36.444Z",
-      "updatedAt": "2025-12-10T09:06:36.444Z"
     },
     {
       "id": "6d659a88-5e33-4a80-bdc9-24b282422c1e",
       "name": "Gosa Paampii Barbaadame",
       "description": null,
       "serviceId": "f8408180-afba-428f-be89-069f699e128e",
-      "createdAt": "2025-12-10T07:29:19.184Z",
-      "updatedAt": "2025-12-10T07:29:19.184Z"
     },
     {
       "id": "70c5e4b0-74ca-484b-9da5-350f7d1be9ba",
       "name": "xalayaa dhimman wau hidhatuu qanbachu qaabaa",
       "description": null,
       "serviceId": "081af485-b176-46f4-8ec3-29bcc49508c9",
-      "createdAt": "2025-12-08T03:35:39.587Z",
-      "updatedAt": "2025-12-08T03:35:39.587Z"
     },
     {
       "id": "70e5a0fa-9abf-40d3-bd82-3076a5645140",
       "name": "Ajaja Mana murtii",
       "description": null,
       "serviceId": "f473e8c7-80cf-4787-9e10-6dbd79d5877d",
-      "createdAt": "2025-12-19T07:56:14.095Z",
-      "updatedAt": "2025-12-19T07:56:14.095Z"
     },
     {
       "id": "72033284-46f6-4a33-b180-d0d3ed517631",
       "name": "Maqaa Koreewwannii",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "727a19be-39f9-4243-b430-6de0b5e5c55d",
       "name": "Oddeffanno Xalayaa Irratti Barrefama fi Dabalataa",
       "description": null,
       "serviceId": "c8f335a2-25f3-479a-b8c9-50e5297f8a34",
-      "createdAt": "2025-12-10T12:46:37.525Z",
-      "updatedAt": "2025-12-10T12:46:37.525Z"
     },
     {
       "id": "72b680ba-36bb-4adc-b5b0-be64ebfc4cb3",
       "name": "Miseensa Waldaa Ta'uu",
       "description": null,
       "serviceId": "cb0b7afc-8097-46bf-9572-00de031d8e64",
-      "createdAt": "2025-12-10T07:37:58.294Z",
-      "updatedAt": "2025-12-10T07:37:58.294Z"
     },
     {
       "id": "736fe018-2674-4eca-bacd-f108562fe100",
       "name": "Heyyama Investamantii",
       "description": null,
       "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "739800cb-b550-4e33-a421-56e982e2d5d0",
       "name": "Xalayaa Fedhii",
       "description": null,
       "serviceId": "f8408180-afba-428f-be89-069f699e128e",
-      "createdAt": "2025-12-10T07:29:19.184Z",
-      "updatedAt": "2025-12-10T07:29:19.184Z"
     },
     {
       "id": "73a4dd2a-78da-4f18-ae11-bdbc2e04bfa6",
       "name": "Ragaalee Gara Garaa  Adeemsa Bittaa Ibsan",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "7423dc71-d40f-4502-814d-31dd63f35592",
       "name": "Waliigaltee Kiraa Lafaa mallattessu",
       "description": null,
       "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "74637ea2-6331-45b2-a7d5-f811e4d946f5",
       "name": "Hayyama Daldalaa",
       "description": null,
       "serviceId": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
-      "createdAt": "2025-12-10T09:06:36.444Z",
-      "updatedAt": "2025-12-10T09:06:36.444Z"
     },
     {
       "id": "74952eee-943c-4a3c-bb88-8fd1f7af180c",
       "name": "Lenjistoota fi Lenjitoota Qophesuu",
       "description": null,
       "serviceId": "65e1c5c6-dd89-4fba-b71b-666b0581a236",
-      "createdAt": "2025-12-10T14:12:54.872Z",
-      "updatedAt": "2025-12-10T14:12:54.872Z"
     },
     {
       "id": "749a33bb-2cbf-461d-9555-403e3fe6b701",
       "name": "inshuraansii",
       "description": null,
       "serviceId": "6fdde07d-81f5-4040-be9b-767cc0215f40",
-      "createdAt": "2026-02-03T08:04:22.866Z",
-      "updatedAt": "2026-02-03T08:04:22.866Z"
     },
     {
       "id": "74c03696-3291-4108-9e6b-7fe0e434e99e",
       "name": "Bu'aa Qorranno CPD Sa'aatti 82",
       "description": null,
       "serviceId": "845ed3fe-f137-4693-b80b-652b10249918",
-      "createdAt": "2025-12-09T09:01:00.959Z",
-      "updatedAt": "2025-12-09T09:01:00.959Z"
     },
     {
       "id": "77572a6b-9a37-478b-80ab-9ce3966015a1",
       "name": "Gosa Ispoortii Adda Baasu",
       "description": null,
       "serviceId": "4b6c3fc8-d4f9-4d78-8975-8fe6ceb70e92",
-      "createdAt": "2025-12-10T14:11:35.733Z",
-      "updatedAt": "2025-12-10T14:11:35.733Z"
     },
     {
       "id": "78310c18-7c8f-4f37-8a4c-e19274e563d2",
       "name": "Xalayaa Komii",
       "description": null,
       "serviceId": "cb0b7afc-8097-46bf-9572-00de031d8e64",
-      "createdAt": "2025-12-10T07:37:58.294Z",
-      "updatedAt": "2025-12-10T07:37:58.294Z"
     },
     {
       "id": "784e7a9e-8308-479f-9e9c-4f9fac92e2d0",
       "name": "Xalayaa Waajjira Poolisi Irra Ragaan Baduu Isaa Ibsu Fiduu",
       "description": null,
       "serviceId": "4d5c048b-8d64-46e1-90a4-1bd904943795",
-      "createdAt": "2026-01-29T07:06:40.645Z",
-      "updatedAt": "2026-01-29T07:06:40.645Z"
     },
     {
       "id": "796443b7-65ec-4ff5-bb7b-07c485afae13",
       "name": "abaa dhimaa tauu qaba",
       "description": null,
       "serviceId": "081af485-b176-46f4-8ec3-29bcc49508c9",
-      "createdAt": "2025-12-08T03:35:39.587Z",
-      "updatedAt": "2025-12-08T03:35:39.587Z"
     },
     {
       "id": "7b34eb11-4bff-45da-845a-b561d6d0d543",
       "name": "Galmee Kuusaa Baasuu",
       "description": null,
       "serviceId": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
-      "createdAt": "2026-01-29T07:11:28.777Z",
-      "updatedAt": "2026-01-29T07:11:28.777Z"
     },
     {
       "id": "7b547db8-96f4-4994-839b-fd1f49363e31",
       "name": "Karoora Ka'uumsaa",
       "description": null,
       "serviceId": "86396516-cf9c-4876-9bd7-4af29ca82637",
-      "createdAt": "2025-12-08T11:40:39.171Z",
-      "updatedAt": "2025-12-08T11:40:39.171Z"
     },
     {
       "id": "7ba95648-1ab0-4f22-a3e7-b7ebfd9e5d1e",
       "name": "Ragaa Mana Yaalaa",
       "description": null,
       "serviceId": "2f8c6004-33ed-4115-a425-f4ba9c019409",
-      "createdAt": "2025-12-10T13:53:40.441Z",
-      "updatedAt": "2025-12-10T13:53:40.441Z"
     },
     {
       "id": "7d890a77-f49b-483b-b9fe-580797276aa8",
       "name": "Ganda Wirtuu Leenjii Itti Banu Irraa Waraqaa Deggarsaa",
       "description": null,
       "serviceId": "8dae1245-4642-4d15-a338-52e88e21bc18",
-      "createdAt": "2025-12-10T14:03:18.365Z",
-      "updatedAt": "2025-12-10T14:03:18.365Z"
     },
     {
       "id": "7daa45d3-3c28-4da9-80ae-c829e4798404",
       "name": "Guyyaa 2 Dursani Xalayaa Mana Hojiif Barressuu Qabuu",
       "description": null,
       "serviceId": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
-      "createdAt": "2026-03-16T07:41:39.711Z",
-      "updatedAt": "2026-03-16T07:41:39.711Z"
     },
     {
       "id": "7dd66415-e15b-4706-b124-52ab0cd7b42c",
       "name": "Hayyamma Dhabbatichaa Kan Bara Darbee",
       "description": null,
       "serviceId": "86f3511e-648a-4e91-a791-9401dc15eab1",
-      "createdAt": "2025-12-09T09:09:54.792Z",
-      "updatedAt": "2025-12-09T09:09:54.792Z"
     },
     {
       "id": "7f66f000-d735-49b4-8f1c-81b53f1f271e",
       "name": "Waraqaa Enyummaa Ragaa Abbaa Qabenyumman Waliigalteen Irrattii Rawwatamu",
       "description": null,
       "serviceId": "8529fa35-d948-48c0-85ad-7f1723ca7293",
-      "createdAt": "2025-12-19T07:51:34.596Z",
-      "updatedAt": "2025-12-19T07:51:34.596Z"
     },
     {
       "id": "804c1594-eaba-43d0-a179-049b0d9fbd09",
       "name": "Iyyanoo ; Qaboo yaa'ii Tarrefama amis/Mallataa'e",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "805f14f5-ff2e-4b7b-a1e8-c36fec25a116",
       "name": "Gamaaggammi Teknikaa",
       "description": null,
       "serviceId": "58edfa34-0e84-419e-95fe-f4af36bc1099",
-      "createdAt": "2025-12-10T08:10:59.852Z",
-      "updatedAt": "2025-12-10T08:10:59.852Z"
     },
     {
       "id": "8113f62d-9da7-4d3d-aa7d-1b4b497893da",
       "name": "Iyyanno",
       "description": null,
       "serviceId": "450a78c4-1776-4dc5-9850-8f5062013f5b",
-      "createdAt": "2025-12-10T08:27:22.047Z",
-      "updatedAt": "2025-12-10T08:27:22.047Z"
     },
     {
       "id": "8147a3ee-17c8-4d24-87bb-823b91dbb489",
       "name": "Gabaasa Ji'aa",
       "description": null,
       "serviceId": "0851495e-b516-4e2b-a490-0f5e685f3b68",
-      "createdAt": "2025-12-10T14:21:22.544Z",
-      "updatedAt": "2025-12-10T14:21:22.544Z"
     },
     {
       "id": "81bd540a-43e3-41af-8df7-63e5a0614ddc",
       "name": "Heyyama Fichisisaa",
       "description": null,
       "serviceId": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
-      "createdAt": "2026-01-29T06:52:45.481Z",
-      "updatedAt": "2026-01-29T06:52:45.481Z"
     },
     {
       "id": "84368049-8578-47d5-99d5-9074ed9be836",
       "name": "Omishni Gahuu Isaa Mirkana'uu Qaba",
       "description": null,
       "serviceId": "a61909fb-89ff-4e99-923f-922b36c0f8db",
-      "createdAt": "2025-12-15T06:35:49.565Z",
-      "updatedAt": "2025-12-15T06:35:49.565Z"
     },
     {
       "id": "847e2cd5-ee3c-4a77-82bd-cf631c23e3b7",
       "name": "Baajata Lenjii Qophessu",
       "description": null,
       "serviceId": "65e1c5c6-dd89-4fba-b71b-666b0581a236",
-      "createdAt": "2025-12-10T14:12:54.872Z",
-      "updatedAt": "2025-12-10T14:12:54.872Z"
     },
     {
       "id": "84e189e7-5a2e-49d9-8d64-fa7d27ba360a",
       "name": "W/ra Investimantii fi Industrii Irraa Xalayaa Cehumsaa",
       "description": null,
       "serviceId": "9d4a7897-4c04-4626-92cf-e772d4776368",
-      "createdAt": "2025-12-10T12:01:08.421Z",
-      "updatedAt": "2025-12-10T12:01:08.421Z"
     },
     {
       "id": "85c52198-a9dd-462f-a2ad-81785bfdd23e",
       "name": "Specification fi BOQ Mirkanaa'ee ( Both Priced BOQ and Non Priced BOQ )",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "86ded842-efca-4022-ab4b-677f0bc7c8ab",
       "name": "Meeshaalee suphaaf Barbaachisan Akkaataa Istaandardii Gutachuu Ilaalu",
       "description": null,
       "serviceId": "fdbf28c0-c9c1-4327-b884-221bfbdd7cbb",
-      "createdAt": "2026-02-03T07:23:49.783Z",
-      "updatedAt": "2026-02-03T07:23:49.783Z"
     },
     {
       "id": "876e1007-9c42-4dae-8af5-aab2cbb7720e",
       "name": "Hayyama Oggummaa Yeroo Duraa fi Suraa 2",
       "description": null,
       "serviceId": "845ed3fe-f137-4693-b80b-652b10249918",
-      "createdAt": "2025-12-09T09:01:00.959Z",
-      "updatedAt": "2025-12-09T09:01:00.959Z"
     },
     {
       "id": "8809a8f0-1d15-4de4-8470-4d1680d4df49",
       "name": "Isteetmantii Baankii",
       "description": null,
       "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "885c244c-79aa-45c6-855e-39736a3c34ea",
       "name": "Ragaaa Qorrannoo",
       "description": null,
       "serviceId": "a4172090-d35f-44d6-9c8f-a4fe62dfcbb7",
-      "createdAt": "2025-12-10T12:40:39.649Z",
-      "updatedAt": "2025-12-10T12:40:39.649Z"
     },
     {
       "id": "8ab5e244-1c59-4c4c-a32e-a9653c24530b",
       "name": "Sakkata'insaa Taasaa",
       "description": null,
       "serviceId": "450a78c4-1776-4dc5-9850-8f5062013f5b",
-      "createdAt": "2025-12-10T08:27:22.047Z",
-      "updatedAt": "2025-12-10T08:27:22.047Z"
     },
     {
       "id": "8ae2901a-1938-4c37-a32e-806dc9999eac",
       "name": "Konfaraansii Seensaa fi Bahiinsa Irratti KG Qaamaan Ykn Bakka Bu'uumma seera Qabbessa Nama Qabuun Hirmaachuu Qaba",
       "description": null,
       "serviceId": "9a8ac3f2-0606-4c3b-bb05-217248b68f89",
-      "createdAt": "2025-12-11T02:52:49.723Z",
-      "updatedAt": "2025-12-11T02:52:49.723Z"
     },
     {
       "id": "8ae74ac1-f441-4688-a45e-eb1202c8a8b1",
       "name": "Bal'ina Lafa Misoomuu",
       "description": null,
       "serviceId": "6b291339-4335-45fd-af55-0c7ecbd60474",
-      "createdAt": "2025-12-10T08:03:37.596Z",
-      "updatedAt": "2025-12-10T08:03:37.596Z"
     },
     {
       "id": "8e12f20a-667c-4723-bae0-523ecf75fe94",
       "name": "Declaration ,B/loading,Removal,RTA,Certificate,",
       "description": null,
       "serviceId": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
-      "createdAt": "2026-01-29T06:52:45.481Z",
-      "updatedAt": "2026-01-29T06:52:45.481Z"
     },
     {
       "id": "8f114c3c-2869-4df7-aa1c-2fbb32b98c6b",
       "name": "Gabaasa Bu'aa Mana Murtii",
       "description": null,
       "serviceId": "dbf0a495-0321-4d28-8b87-7770642faa02",
-      "createdAt": "2025-12-10T12:12:28.603Z",
-      "updatedAt": "2025-12-10T12:12:28.603Z"
     },
     {
       "id": "8f436377-ffb0-4802-b5ae-1c515475bedd",
       "name": "Barrefama  Hundeffamaa fi dambii Ittin Bulmaaata",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "8fa51f20-4bc8-4875-9603-3c3479c92525",
       "name": "Baajata Qophessu",
       "description": null,
       "serviceId": "4b6c3fc8-d4f9-4d78-8975-8fe6ceb70e92",
-      "createdAt": "2025-12-10T14:11:35.733Z",
-      "updatedAt": "2025-12-10T14:11:35.733Z"
     },
     {
       "id": "8ff7a5b0-fe75-4048-a6ee-52c6512bd030",
       "name": "Hojjatta Waajjirra Ta'uu qaba",
       "description": null,
       "serviceId": "6695f1d1-d96b-49cd-bda2-1bc4a9caaee0",
-      "createdAt": "2025-12-08T08:38:55.248Z",
-      "updatedAt": "2025-12-08T08:38:55.248Z"
     },
     {
       "id": "909fc119-34b2-4dac-b344-f7c34b27c248",
       "name": "Gabaasa Hojii fi Bajataa",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "91de01f4-8905-4af8-854f-2d1d0dd2d77b",
       "name": "Konfaransi Seensaa fi Bahiinsaa Irratti KG Qaamaan ykn Bakka Bu'uumma Seera Qabeessa Nama Qabuun Hirmaachuu Qaba",
       "description": null,
       "serviceId": "d15e78a5-15da-47f8-a165-aa7a1f61657c",
-      "createdAt": "2025-12-11T03:11:11.859Z",
-      "updatedAt": "2025-12-11T03:11:11.859Z"
     },
     {
       "id": "92b30ba5-477c-4f36-8680-14ad633e2382",
       "name": "Xalayaa Deggarsaa Bakka Hojii Irraa",
       "description": null,
       "serviceId": "845ed3fe-f137-4693-b80b-652b10249918",
-      "createdAt": "2025-12-09T09:01:00.959Z",
-      "updatedAt": "2025-12-09T09:01:00.959Z"
     },
     {
       "id": "930f2910-5d5a-4191-bc10-729863bef376",
       "name": "Kan Dhukkubaa",
       "description": null,
       "serviceId": "26190bdc-9647-4d42-b06c-3f0b0fee3441",
-      "createdAt": "2025-12-10T13:55:42.781Z",
-      "updatedAt": "2025-12-10T13:55:42.781Z"
     },
     {
       "id": "9447f598-970d-4675-b070-b2a72d377788",
       "name": "Heyyama Orijinaala Qabatanii Dhuyaachuu",
       "description": null,
       "serviceId": "d78c9717-9361-4383-8009-ff4b4766efbf",
-      "createdAt": "2026-02-03T08:53:34.685Z",
-      "updatedAt": "2026-02-03T08:53:34.685Z"
     },
     {
       "id": "946baa54-1922-4f48-a7a0-7cad87470ef7",
       "name": "Xalayaa  Murtee",
       "description": null,
       "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "96864412-4c7a-42af-a758-9683d156a5bf",
       "name": "Kabachisa Kaffaltii Duraa Dhiyeefachu Qaba",
       "description": null,
       "serviceId": "1be5cfba-dcd7-46a4-bfee-a5f7b1abbb20",
-      "createdAt": "2026-02-09T07:52:49.968Z",
-      "updatedAt": "2026-02-09T07:52:49.968Z"
     },
     {
       "id": "970b9553-95bd-48bb-ad00-3abec0c6bfc8",
       "name": "Gabaasa Ji'aa",
       "description": null,
       "serviceId": "82e60402-e65b-48c5-acc1-e95cb62186f9",
-      "createdAt": "2025-12-10T14:23:27.815Z",
-      "updatedAt": "2025-12-10T14:23:27.815Z"
     },
     {
       "id": "97bcdf67-057d-4291-9e0c-75e50a3e24e2",
       "name": "Hundeffama Waldaa",
       "description": null,
       "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "9a443aa6-a90d-4d79-828e-88d65a3ab06c",
       "name": "Karoora Piroojaktii",
       "description": null,
       "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "9b17556f-c2b2-4869-8446-2864e95c55ab",
       "name": "namaa dhimmii ilalatuu tauu qabuu",
       "description": null,
       "serviceId": "c0b7148a-2d2b-4341-bc17-c9d60b460047",
-      "createdAt": "2025-12-11T04:25:18.631Z",
-      "updatedAt": "2025-12-11T04:25:18.631Z"
     },
     {
       "id": "9b78bc1b-eaef-4909-a970-d5e40c1c0fdd",
       "name": "Dhimma Abbaa Taayitaa Galiiwwaan Waliin Wal-qabatee Ilaalamaa Jiruu fi Murta'e Irratti Kan Hin Taane Ta'uu Qaba",
       "description": null,
       "serviceId": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
-      "createdAt": "2025-12-23T12:13:33.070Z",
-      "updatedAt": "2025-12-23T12:13:33.070Z"
     },
     {
       "id": "9c1a85d0-21f6-4602-8063-018930a29a91",
       "name": "Dambii Ittin Bulmaata Waldaa",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "9e2c206c-c0e3-481a-bf9b-29f2bc38efa9",
       "name": "Xalayaa Deggarsaa",
       "description": null,
       "serviceId": "88a011fc-6c83-4a49-b750-5a61d06dc797",
-      "createdAt": "2025-12-10T12:17:02.070Z",
-      "updatedAt": "2025-12-10T12:17:02.070Z"
     },
     {
       "id": "9eadfa8a-1f30-435e-af43-0f0cffdddcb7",
       "name": "Maddii Bishaan Jallissi Ta'uu JIraachuu",
       "description": null,
       "serviceId": "b527d5a0-1f08-4c9b-b905-9ae5b431b70c",
-      "createdAt": "2025-12-10T07:34:22.309Z",
-      "updatedAt": "2025-12-10T07:34:22.309Z"
     },
     {
       "id": "a011e91b-5ba6-4d1f-b8bb-8ad1f8b15743",
       "name": "Ragaa Gaha Qabaachuu",
       "description": null,
       "serviceId": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
-      "createdAt": "2026-03-16T07:41:39.711Z",
-      "updatedAt": "2026-03-16T07:41:39.711Z"
     },
     {
       "id": "a0caaa4e-cfd1-4ab5-bae5-7d4abbedfa7d",
       "name": "Iyyata Gaaffi M/W ykn ol-iyyatni akka Gaafatamu",
       "description": null,
       "serviceId": "cc35c70f-05df-4e13-bdd2-8d3cccde6fa0",
-      "createdAt": "2025-12-19T07:36:47.572Z",
-      "updatedAt": "2025-12-19T07:36:47.572Z"
     },
     {
       "id": "a1877ac5-9ed9-4515-95fd-bcbdddafcb08",
       "name": "Baajatni Piroojektichaaf Qabame Jiraachuu Qaba",
       "description": null,
       "serviceId": "4d846a21-e5f8-49f2-a967-d3a94fdf8864",
-      "createdAt": "2026-02-09T07:48:23.351Z",
-      "updatedAt": "2026-02-09T07:48:23.351Z"
     },
     {
       "id": "a194387a-fbe2-404a-943b-d37d84a31289",
       "name": "Waraqaa Ragaa Abbaa Qabbiyyumma Duraa",
       "description": null,
       "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "a2449991-b49c-4570-a96a-332c72476179",
       "name": "Konkolaataan Qaaman Dhiyaatu Qaba ; Inshuransiin Abbaa Dhimmaa Kuusaa Kessaa Bahuu Qaba",
       "description": null,
       "serviceId": "6fdde07d-81f5-4040-be9b-767cc0215f40",
-      "createdAt": "2026-02-03T08:04:22.866Z",
-      "updatedAt": "2026-02-03T08:04:22.866Z"
     },
     {
       "id": "a265503a-7430-4d61-94be-ce568c3a2e54",
       "name": "Hayyama Daldalaa fi TIN number",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "a2753b6c-d79e-4fe8-8598-16bd0ec55464",
       "name": "Ragaa Kuufama Idaa Taaksii Sirruummaan isaa Mirkanaa'ee",
       "description": null,
       "serviceId": "29f44708-f88f-4232-802a-95027d7de1fa",
-      "createdAt": "2025-12-11T03:04:38.485Z",
-      "updatedAt": "2025-12-11T03:04:38.485Z"
     },
     {
       "id": "a59b8256-d4dc-41c0-bea3-284b66a68f85",
       "name": "Xalayaa Iyyataa",
       "description": null,
       "serviceId": "e8f0a7bd-a60d-4e68-9224-6876b38cad7c",
-      "createdAt": "2025-12-10T12:08:47.136Z",
-      "updatedAt": "2025-12-10T12:08:47.136Z"
     },
     {
       "id": "a67648da-85c9-412e-975f-bc4e4e746bdd",
       "name": "Xalayaa  Murtee",
       "description": null,
       "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "a68c0dd7-e9c9-40bc-a338-4bdedf74c503",
       "name": "Ragaa '' EIA '' Qaama  Aangoo Qabuun Mirkanaa'e",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "a702f1fa-0581-4997-802f-86d0ad5c9ee2",
       "name": "Waraqaa Ragaa Abbaa QabbiyyummaaQaama dhimmi Ilaalun Mirkana'ee",
       "description": null,
       "serviceId": "9d4a7897-4c04-4626-92cf-e772d4776368",
-      "createdAt": "2025-12-10T12:01:08.421Z",
-      "updatedAt": "2025-12-10T12:01:08.421Z"
     },
     {
       "id": "a7c52a0c-060c-44e5-8854-ac774ea86e6e",
       "name": "Heyyamma Daldalaa",
       "description": null,
       "serviceId": "29bedd98-d936-4203-984f-d1797be4ef0b",
-      "createdAt": "2025-12-10T09:06:57.333Z",
-      "updatedAt": "2025-12-10T09:06:57.333Z"
     },
     {
       "id": "a92dde4b-7e48-4451-8c76-445ab811ae5e",
       "name": "Murtii Mana Mana Mareetiin  Kan Hin Murtoofne",
       "description": null,
       "serviceId": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
-      "createdAt": "2025-12-23T12:13:33.070Z",
-      "updatedAt": "2025-12-23T12:13:33.070Z"
     },
     {
       "id": "a9986fc5-90de-4977-93fa-cb2eca7ff746",
       "name": "Hayyamma Dhaabbattichaa Kan Bara Darbee",
       "description": null,
       "serviceId": "13222ab3-b1e9-4c42-bc13-1ec42a00f89a",
-      "createdAt": "2025-12-09T09:22:00.219Z",
-      "updatedAt": "2025-12-09T09:22:00.219Z"
     },
     {
       "id": "aae0b028-fb67-4544-9f36-39356732fe67",
       "name": "Ragaa Gaa'ilaa Dhiyeessuu",
       "description": null,
       "serviceId": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
-      "createdAt": "2026-01-29T07:11:28.777Z",
-      "updatedAt": "2026-01-29T07:11:28.777Z"
     },
     {
       "id": "ad0d042a-5ba2-4ab1-81ce-84b418ee8473",
       "name": "Xalayaa Mana Murtii Ykn Qaama Dhimmichi Ilaalu Irraa Xalayaa Fiduu Qabu",
       "description": null,
       "serviceId": "dbc68074-704e-4de2-9510-e34f3cc50ca8",
-      "createdAt": "2026-03-16T07:37:10.672Z",
-      "updatedAt": "2026-03-16T07:37:10.672Z"
     },
     {
       "id": "adc9e777-3639-4885-9724-5c508d5d7fcd",
       "name": "Lakk kaffalti Gibiraa",
       "description": null,
       "serviceId": "29bedd98-d936-4203-984f-d1797be4ef0b",
-      "createdAt": "2025-12-10T09:06:57.333Z",
-      "updatedAt": "2025-12-10T09:06:57.333Z"
     },
     {
       "id": "afafd4a2-2338-42ee-8d85-bf338f2d9e7d",
       "name": "Waraqaa Enyummaa Haaroome fi Xalayaa Deggarsaa W/Galii Aanaa Irraa",
       "description": null,
       "serviceId": "e56aadd7-c402-4428-a302-acb1fc4e87eb",
-      "createdAt": "2025-12-11T02:57:16.237Z",
-      "updatedAt": "2025-12-11T02:57:16.237Z"
     },
     {
       "id": "b03fe3a4-f998-4a92-9f00-5f854d98f5cc",
       "name": "waldaa Tahuu Qaba",
       "description": null,
       "serviceId": "601e4598-e1aa-4804-abc8-6d0b7cc08fd6",
-      "createdAt": "2025-12-15T06:37:46.563Z",
-      "updatedAt": "2025-12-15T06:37:46.563Z"
     },
     {
       "id": "b1442eb9-6199-40fa-8225-a846e54fd4a4",
       "name": "Iyyata Qaamani",
       "description": null,
       "serviceId": "cc35c70f-05df-4e13-bdd2-8d3cccde6fa0",
-      "createdAt": "2025-12-19T07:36:47.572Z",
-      "updatedAt": "2025-12-19T07:36:47.572Z"
     },
     {
       "id": "b2b32600-ffc3-434f-9224-4df6923957a9",
       "name": "Gaaffi Tajaajilaa Mannen Hojii Mootummaa irra Dhiyaatu",
       "description": null,
       "serviceId": "f473e8c7-80cf-4787-9e10-6dbd79d5877d",
-      "createdAt": "2025-12-19T07:56:14.095Z",
-      "updatedAt": "2025-12-19T07:56:14.095Z"
     },
     {
       "id": "b2d7d6c0-4aa8-4113-b8cc-9b91e798d7ff",
       "name": "Qaboo Yaa'ii",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "b3bfd871-bb4e-4397-8a85-ea7a8aaa1b5c",
       "name": "Piroojektiin Akkaataa Walii Galteetiin  Dhumachuu Isaa  Kan Ibsu Ragaan Gutuun Jiraachuu Qaba",
       "description": null,
       "serviceId": "ed7c6c1c-448b-423a-88a3-d98f6f734ebe",
-      "createdAt": "2026-02-09T08:02:04.372Z",
-      "updatedAt": "2026-02-09T08:02:04.372Z"
     },
     {
       "id": "b400c6c3-46a3-453e-8372-633caa508099",
       "name": "Hojjataa Mottummsaa Nu Biratti Mindaa Kaffalu",
       "description": null,
       "serviceId": "e56aadd7-c402-4428-a302-acb1fc4e87eb",
-      "createdAt": "2025-12-11T02:57:16.237Z",
-      "updatedAt": "2025-12-11T02:57:16.237Z"
     },
     {
       "id": "b40869d3-1b2d-45d7-abe5-745a4003882f",
       "name": "Bu'aa Odiitii",
       "description": null,
       "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "b425d4a1-d2e5-4a66-ac8f-a14dd264a980",
       "name": "Isteetmantii Baankii",
       "description": null,
       "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "b6ac342c-ee72-4267-a2fc-07ea5d2d07f3",
       "name": "Sanadoota Eeruu kennamu Wajjin hidhaata Qabuu",
       "description": null,
       "serviceId": "c13f72f3-4334-4047-8d2f-a3999f412b85",
-      "createdAt": "2025-12-08T09:02:57.023Z",
-      "updatedAt": "2025-12-08T09:02:57.023Z"
     },
     {
       "id": "b72205f5-5f61-4a0c-9b05-30e1301679bf",
       "name": "Waraqaa Enyummaa'",
       "description": null,
       "serviceId": "88a011fc-6c83-4a49-b750-5a61d06dc797",
-      "createdAt": "2025-12-10T12:17:02.070Z",
-      "updatedAt": "2025-12-10T12:17:02.070Z"
     },
     {
       "id": "b811a55f-4a25-41be-b874-58fdc888c674",
       "name": "Ragaalee Adda Addaa Waa'ee Kaffaltii Sanaa Ibsuu",
       "description": null,
       "serviceId": "8cc00cb2-c8a4-47c0-8849-32ce6291f8bc",
-      "createdAt": "2025-12-11T03:20:24.316Z",
-      "updatedAt": "2025-12-11T03:20:24.316Z"
     },
     {
       "id": "b8f0d547-e9fe-4064-864e-afc11f4c243e",
       "name": "Kaffalaa Gibiraa Kenya Ta'uu Qaba",
       "description": null,
       "serviceId": "9a8ac3f2-0606-4c3b-bb05-217248b68f89",
-      "createdAt": "2025-12-11T02:52:49.723Z",
-      "updatedAt": "2025-12-11T02:52:49.723Z"
     },
     {
       "id": "b9af32a7-545a-4174-ae45-5a2d6dd4cfc1",
       "name": "Hojjataa motumma tauu",
       "description": null,
       "serviceId": "03861060-a202-432f-810e-3aab203188e1",
-      "createdAt": "2025-12-23T06:46:17.548Z",
-      "updatedAt": "2025-12-23T06:46:17.548Z"
     },
     {
       "id": "b9e3ef0b-7278-4514-8b8b-2fd047a75a04",
       "name": "Ragaa Guutuu Dabarsaa Lafaa",
       "description": null,
       "serviceId": "9d4a7897-4c04-4626-92cf-e772d4776368",
-      "createdAt": "2025-12-10T12:01:08.421Z",
-      "updatedAt": "2025-12-10T12:01:08.421Z"
     },
     {
       "id": "ba6fe422-b215-4901-bda2-277b721bb538",
       "name": "Gabaasa Ji'aa",
       "description": null,
       "serviceId": "7472e7c7-c839-484c-bf6e-49b4a5fdc864",
-      "createdAt": "2025-12-10T14:18:01.864Z",
-      "updatedAt": "2025-12-10T14:18:01.864Z"
     },
     {
       "id": "bc323394-0db5-47e4-bc15-b2dafde5b41e",
       "name": "Sanada Dorgomtootaa",
       "description": null,
       "serviceId": "179f8fae-275e-49c1-8ad9-ef10b33854c7",
-      "createdAt": "2025-12-09T09:45:13.353Z",
-      "updatedAt": "2025-12-09T09:45:13.353Z"
     },
     {
       "id": "bdbfea61-8cd0-4a3a-a256-8ad80732b4c9",
       "name": "Kaffaltiin Akka Raawwatamu  Xalayaa Seera Qabbessa Ta'een Gaafachuu",
       "description": null,
       "serviceId": "1de5f168-0255-4599-8c53-c101ad0cdc96",
-      "createdAt": "2026-02-09T07:57:26.908Z",
-      "updatedAt": "2026-02-09T07:57:26.908Z"
     },
     {
       "id": "bee7f3e3-e812-4bc8-ad63-33b852d323d4",
       "name": "Waraqaa Enyuymmaa Miseensa Hundaa",
       "description": null,
       "serviceId": "952fe9ae-b0c7-4e7c-89e3-be4914fb40b7",
-      "createdAt": "2025-12-10T09:07:12.016Z",
-      "updatedAt": "2025-12-10T09:07:12.016Z"
     },
     {
       "id": "c0d556e6-73fc-4f25-9a03-60a78f2cc92e",
       "name": "Kiliraansii Waajjirra Galii Irraa Dhiyesuu",
       "description": null,
       "serviceId": "fdbf28c0-c9c1-4327-b884-221bfbdd7cbb",
-      "createdAt": "2026-02-03T07:23:49.783Z",
-      "updatedAt": "2026-02-03T07:23:49.783Z"
     },
     {
       "id": "c109bc31-e1eb-40a4-8cf1-ef4648d93741",
       "name": "Guyyaa Itti Midiyaa Barbaadan",
       "description": null,
       "serviceId": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
-      "createdAt": "2026-03-16T07:41:39.711Z",
-      "updatedAt": "2026-03-16T07:41:39.711Z"
     },
     {
       "id": "c1172d33-13b9-4440-9aaa-72bb522f2647",
       "name": "Gabaasa Odiiti Alaa",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "c182efe1-ed2f-49f5-a837-fbec01667d85",
       "name": "Heyyamma Daldalaa",
       "description": null,
       "serviceId": "952fe9ae-b0c7-4e7c-89e3-be4914fb40b7",
-      "createdAt": "2025-12-10T09:07:12.016Z",
-      "updatedAt": "2025-12-10T09:07:12.016Z"
     },
     {
       "id": "c18d38eb-9519-497a-a2ef-3fad30f5deaa",
       "name": "Baay'ina Fayyadamtootaa",
       "description": null,
       "serviceId": "6b291339-4335-45fd-af55-0c7ecbd60474",
-      "createdAt": "2025-12-10T08:03:37.596Z",
-      "updatedAt": "2025-12-10T08:03:37.596Z"
     },
     {
       "id": "c3128af6-94cf-45a7-a4be-e4c9863a66ef",
       "name": "Qaboo Yaa'ii fi Gabaasa Guutuu Koree Bittaa",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "c3931f14-b037-4834-9196-e110c450d170",
       "name": "Xalayaa Gaaffii Maqaa Jijjirraf Dhiyaatee",
       "description": null,
       "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "c45808ed-9e97-4963-9c44-a8ef2beb7650",
       "name": "Xalayaa  Enyummaa",
       "description": null,
       "serviceId": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
-      "createdAt": "2026-01-29T06:52:45.481Z",
-      "updatedAt": "2026-01-29T06:52:45.481Z"
     },
     {
       "id": "c48e259d-597a-4586-bd72-860e06eb0e0a",
       "name": "Waraqaa Hojii Dhabdummaa",
       "description": null,
       "serviceId": "01f10b33-2c44-40c1-94d5-e8601272d08a",
-      "createdAt": "2025-12-10T09:07:34.272Z",
-      "updatedAt": "2025-12-10T09:07:34.272Z"
     },
     {
       "id": "c518c4c7-fd42-44ad-8e67-f87dc0f6a0dd",
       "name": "Ragaa Heyyama Opp",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "c6421b00-fbaa-4209-a65e-a4b5d6208ed9",
       "name": "Aangoo Abbaa Taayiitaan Maxxansissu",
       "description": null,
       "serviceId": "28a3145d-6b17-4c63-a002-b0ccac96493e",
-      "createdAt": "2025-12-10T08:22:29.055Z",
-      "updatedAt": "2025-12-10T08:22:29.055Z"
     },
     {
       "id": "c66c527d-06aa-4994-9246-9600a7f1dc6b",
       "name": "Isteetmantii Baankii",
       "description": null,
       "serviceId": "88a011fc-6c83-4a49-b750-5a61d06dc797",
-      "createdAt": "2025-12-10T12:17:02.070Z",
-      "updatedAt": "2025-12-10T12:17:02.070Z"
     },
     {
       "id": "c68b390d-1219-4f19-982b-12e3dc8e85e9",
       "name": "Ajaja Mana Murtii",
       "description": null,
       "serviceId": "dbf0a495-0321-4d28-8b87-7770642faa02",
-      "createdAt": "2025-12-10T12:12:28.603Z",
-      "updatedAt": "2025-12-10T12:12:28.603Z"
     },
     {
       "id": "c792d003-2210-4fa4-9778-a4e54992ac5b",
       "name": "Dizaayinii Hojjatamee",
       "description": null,
       "serviceId": "a4172090-d35f-44d6-9c8f-a4fe62dfcbb7",
-      "createdAt": "2025-12-10T12:40:39.649Z",
-      "updatedAt": "2025-12-10T12:40:39.649Z"
     },
     {
       "id": "c830b550-305f-4180-b80f-3da7ab13ef6d",
       "name": "Xalayaa Mana Murtii fi Baankii Dhiyessu fi Faayila Mana Galmee Baasu",
       "description": null,
       "serviceId": "e0408764-e6bd-4c00-bd69-074fdd206c15",
-      "createdAt": "2026-02-03T07:55:49.228Z",
-      "updatedAt": "2026-02-03T07:55:49.228Z"
     },
     {
       "id": "c83a2c1c-4d0e-4a3e-84e8-ffa1d65eb0f9",
       "name": "Ragaa Guutuu Ta'ee",
       "description": null,
       "serviceId": "58edfa34-0e84-419e-95fe-f4af36bc1099",
-      "createdAt": "2025-12-10T08:10:59.852Z",
-      "updatedAt": "2025-12-10T08:10:59.852Z"
     },
     {
       "id": "c9477f4d-33da-449c-ad8d-92ae3f58e0f6",
       "name": "Qaama Seerummaa , Dambii Ittin Bulmaataa, Bu'aa Odiitii Bara fi Waraqaa Ragaa Sadarkaa Ibsu",
       "description": null,
       "serviceId": "29bedd98-d936-4203-984f-d1797be4ef0b",
-      "createdAt": "2025-12-10T09:06:57.333Z",
-      "updatedAt": "2025-12-10T09:06:57.333Z"
     },
     {
       "id": "ccc879d0-ae65-4eab-87e1-b021001debfb",
       "name": "Lakkofsa Mana Poostaa Irraa Ittin Ergame Qabatani Dhiyaachuu",
       "description": null,
       "serviceId": "824e2b8b-e831-4541-9a45-2a54ae9b0c4c",
-      "createdAt": "2026-02-09T07:01:45.735Z",
-      "updatedAt": "2026-02-09T07:01:45.735Z"
     },
     {
       "id": "ccdd7fd4-0974-4fe2-b018-8a1af5097ca1",
       "name": "Xalayaan Piroojekticha Akka Irraa Fudhamuu Gaafachu Qaba",
       "description": null,
       "serviceId": "ed7c6c1c-448b-423a-88a3-d98f6f734ebe",
-      "createdAt": "2026-02-09T08:02:04.372Z",
-      "updatedAt": "2026-02-09T08:02:04.372Z"
     },
     {
       "id": "cd64ef29-ac25-44a6-983e-e6d7c08271f3",
       "name": "Hayyama Daldalaa fi TIN number",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "ced724c5-9c73-493e-b2e4-10c1779c1d31",
       "name": "Heyyama Investamantii",
       "description": null,
       "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "d1723701-847b-4468-9b88-8d7c7e43c7b0",
       "name": "Lafa Jallisiif Ta'uu Qabaachuu",
       "description": null,
       "serviceId": "f8408180-afba-428f-be89-069f699e128e",
-      "createdAt": "2025-12-10T07:29:19.184Z",
-      "updatedAt": "2025-12-10T07:29:19.184Z"
     },
     {
       "id": "d181d63c-e1ed-4b3d-a3c4-f87eda8a403f",
       "name": "Moggaassa Maqaa Daldalaa",
       "description": null,
       "serviceId": "29bedd98-d936-4203-984f-d1797be4ef0b",
-      "createdAt": "2025-12-10T09:06:57.333Z",
-      "updatedAt": "2025-12-10T09:06:57.333Z"
     },
     {
       "id": "d1dfd252-af30-473c-8724-9aa40e40e00b",
       "name": "Ragaalee Ibsa Galmee Herregaa Isaa Waajjin Walqabate Qabaachuu Qaba",
       "description": null,
       "serviceId": "9a8ac3f2-0606-4c3b-bb05-217248b68f89",
-      "createdAt": "2025-12-11T02:52:49.723Z",
-      "updatedAt": "2025-12-11T02:52:49.723Z"
     },
     {
       "id": "d2dc6e37-4b89-41fd-8a9c-1df4df662681",
       "name": "Kaffalaa Gibiraa Kenya Ta'uu Qaba",
       "description": null,
       "serviceId": "e56aadd7-c402-4428-a302-acb1fc4e87eb",
-      "createdAt": "2025-12-11T02:57:16.237Z",
-      "updatedAt": "2025-12-11T02:57:16.237Z"
     },
     {
       "id": "d3606df2-3bae-4b2e-ac49-85d54a703965",
       "name": "Qusannaa Duraa %10 Qabaachuu",
       "description": null,
       "serviceId": "f8408180-afba-428f-be89-069f699e128e",
-      "createdAt": "2025-12-10T07:29:19.184Z",
-      "updatedAt": "2025-12-10T07:29:19.184Z"
     },
     {
       "id": "d3732158-4df9-40d3-a838-ba1e72481b50",
       "name": "Ragaa Guutuu Maagaaloota Irraa",
       "description": null,
       "serviceId": "0a8f009c-be2b-4176-b348-823d62060fc6",
-      "createdAt": "2025-12-09T09:37:55.654Z",
-      "updatedAt": "2025-12-09T09:37:55.654Z"
     },
     {
       "id": "d38ab521-541d-402b-a001-21d05a32618a",
       "name": "Gabaasa NTGA Duraan Fudhatamee",
       "description": null,
       "serviceId": "71e8c566-9c54-4933-b8a8-a89ed4b2a99d",
-      "createdAt": "2025-12-10T08:18:17.570Z",
-      "updatedAt": "2025-12-10T08:18:17.570Z"
     },
     {
       "id": "d55c915a-18bc-4936-a1a8-498d7534dabe",
       "name": "Gabaasa Hojii fi Bajataa",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "d5a441ca-9c37-405e-acd0-e4a8cbfd6b5c",
       "name": "Xalayaa Deggarsaa Aanaa irraa Hojjattu Irraa",
       "description": null,
       "serviceId": "c17b9a58-3905-4aaa-ad84-96d017177013",
-      "createdAt": "2025-12-09T08:50:02.821Z",
-      "updatedAt": "2025-12-09T08:50:02.821Z"
     },
     {
       "id": "d6ee787d-847e-49aa-be74-218d5cee68cd",
       "name": "Bara Wal-harkaa Fudhiinsa Ittin Raawwatamee",
       "description": null,
       "serviceId": "6b291339-4335-45fd-af55-0c7ecbd60474",
-      "createdAt": "2025-12-10T08:03:37.596Z",
-      "updatedAt": "2025-12-10T08:03:37.596Z"
     },
     {
       "id": "d71f7a20-639b-4ce9-9d54-89bc936b13da",
       "name": "Gabaasa Oditii Alaa",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "d7330a8b-3854-4aba-8056-7387d9f46c48",
       "name": "jirrata nano  sanii ta'uu",
       "description": null,
       "serviceId": "e6fff1c2-a36a-414c-9256-1dafa2a979be",
-      "createdAt": "2025-12-11T04:33:47.847Z",
-      "updatedAt": "2025-12-11T04:33:47.847Z"
     },
     {
       "id": "d7f413c2-e22e-44b9-83e4-b382660b5ae2",
       "name": "Moggaassa Maqaa Daldalaa",
       "description": null,
       "serviceId": "952fe9ae-b0c7-4e7c-89e3-be4914fb40b7",
-      "createdAt": "2025-12-10T09:07:12.016Z",
-      "updatedAt": "2025-12-10T09:07:12.016Z"
     },
     {
       "id": "d83caf71-578c-4be4-afad-092e35b6a502",
       "name": "Ragaa Sadarkessa Piroojektii fi Marii Hawaasa Naannoo Piroojektichaa Agarsiisu",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "d8c7193f-e5d3-492a-8b09-6c6f47a162c0",
       "name": "xalayaa Waajjira Poolisii Irraa Dhiheeffachuu",
       "description": null,
       "serviceId": "d78c9717-9361-4383-8009-ff4b4766efbf",
-      "createdAt": "2026-02-03T08:53:34.685Z",
-      "updatedAt": "2026-02-03T08:53:34.685Z"
     },
     {
       "id": "da10c482-7629-4712-9159-2c15ad7c9efe",
       "name": "Caalbaasii Mo'achu Isaa Kan Xalayaan Dhufu Qaba",
       "description": null,
       "serviceId": "1be5cfba-dcd7-46a4-bfee-a5f7b1abbb20",
-      "createdAt": "2026-02-09T07:52:49.968Z",
-      "updatedAt": "2026-02-09T07:52:49.968Z"
     },
     {
       "id": "db851857-e31c-44e2-815d-97c6684c3d30",
       "name": "Xalayaaa Mana Murtii Dhiyeefachuu",
       "description": null,
       "serviceId": "824e2b8b-e831-4541-9a45-2a54ae9b0c4c",
-      "createdAt": "2026-02-09T07:01:45.735Z",
-      "updatedAt": "2026-02-09T07:01:45.735Z"
     },
     {
       "id": "dc1bdafb-3d78-4848-8bb4-a7abfe9306f3",
       "name": "Ragaa Dhunfaa Seera Guttattee",
       "description": null,
       "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "dc8c116b-4949-41b4-9fbb-5c2273a58d8d",
       "name": "Gazeexaa  Beeksifni Iratti Bahe",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "dcfedc37-66ef-45a7-8c30-08f5b1a2e398",
       "name": "Xalayaa Gaaffanno",
       "description": null,
       "serviceId": "a4172090-d35f-44d6-9c8f-a4fe62dfcbb7",
-      "createdAt": "2025-12-10T12:40:39.649Z",
-      "updatedAt": "2025-12-10T12:40:39.649Z"
     },
     {
       "id": "df15f414-7f90-4dac-9d06-ffa0e74bdd54",
       "name": "Baajata Qabaachuu",
       "description": null,
       "serviceId": "4654175b-4cef-4637-9803-77fcdfbe2cf8",
-      "createdAt": "2025-12-10T13:50:20.000Z",
-      "updatedAt": "2025-12-10T13:50:20.000Z"
     },
     {
       "id": "df2d3419-cbd5-43fd-a89a-01e2f2ba2251",
       "name": "Konkolaataan  Qaaman Dhiyaatu  ; inshuraansii fi Abbaan Dhimmaa Kuusaa Isaa Baasu Qaba",
       "description": null,
       "serviceId": "928edd8e-1ed2-4b28-a73e-6f1a12028b2d",
-      "createdAt": "2026-02-03T08:26:19.493Z",
-      "updatedAt": "2026-02-03T08:26:19.493Z"
     },
     {
       "id": "e0231270-2396-442c-b9e1-d2c79068ba2f",
       "name": "Xalayaa Iyyanno Waldaa",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "e3e5900c-8a90-4a6a-aba0-71d1585164ac",
       "name": "Hayyama Daldalaa Dhiyeffachuu Qaba",
       "description": null,
       "serviceId": "928edd8e-1ed2-4b28-a73e-6f1a12028b2d",
-      "createdAt": "2026-02-03T08:26:19.493Z",
-      "updatedAt": "2026-02-03T08:26:19.493Z"
     },
     {
       "id": "e44495d0-9cdc-4cd9-8b47-e3afbeb9ba63",
       "name": "Hayyamma Oggessotaa Dhaabbattichaaf Hojjattan Kan Haaroomfame",
       "description": null,
       "serviceId": "13222ab3-b1e9-4c42-bc13-1ec42a00f89a",
-      "createdAt": "2025-12-09T09:22:00.219Z",
-      "updatedAt": "2025-12-09T09:22:00.219Z"
     },
     {
       "id": "e4bdb5b8-e1b5-46e0-ae69-57187d7e748c",
       "name": "Ragaa Qabbiyyumma Konkolaataa /Libree Koopii",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "e4d79146-18e3-4412-a57e-345a090eb0db",
       "name": "Invoice %2",
       "description": null,
       "serviceId": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
-      "createdAt": "2026-01-29T06:52:45.481Z",
-      "updatedAt": "2026-01-29T06:52:45.481Z"
     },
     {
       "id": "e5eff8ac-e262-4194-90fe-b5285f4d0af2",
       "name": "Gaaffi Itti Fayyadama Qabeenya Bishaanif Dhiyeessu",
       "description": null,
       "serviceId": "bd07182b-e95c-426f-9ddc-522c6c851b5b",
-      "createdAt": "2025-12-10T12:55:53.091Z",
-      "updatedAt": "2025-12-10T12:55:53.091Z"
     },
     {
       "id": "e62b584a-9abd-4194-818f-7ac60ab4f05c",
       "name": "Barrefama Hundefamaa fi Dambii Ittin Bulmaataa",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "e6496a9f-0fde-4c83-8749-758ac206cb9b",
       "name": "Ragaa Dirree Irratti Dhiyaate",
       "description": null,
       "serviceId": "e8f0a7bd-a60d-4e68-9224-6876b38cad7c",
-      "createdAt": "2025-12-10T12:08:47.136Z",
-      "updatedAt": "2025-12-10T12:08:47.136Z"
     },
     {
       "id": "e73645d8-956e-45b1-9468-31d309c04764",
       "name": "Xalayaa Jijjirra Maqaa",
       "description": null,
       "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "e7672a17-3842-4e1d-9b90-1f617ae66bb0",
       "name": "Karoora Hojii fi Bajataa",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "eaa421d8-0fd7-4132-a4c1-ee2693e00ae0",
       "name": "Gaaffi Qorranno Qulqullina Bishaanii",
       "description": null,
       "serviceId": "c8f335a2-25f3-479a-b8c9-50e5297f8a34",
-      "createdAt": "2025-12-10T12:46:37.525Z",
-      "updatedAt": "2025-12-10T12:46:37.525Z"
     },
     {
       "id": "ec44cef7-ded5-4371-98f7-2d2a28b26c78",
       "name": "Muxxannoo Lenjjissummaa Waggaa 2",
       "description": null,
       "serviceId": "8dae1245-4642-4d15-a338-52e88e21bc18",
-      "createdAt": "2025-12-10T14:03:18.365Z",
-      "updatedAt": "2025-12-10T14:03:18.365Z"
     },
     {
       "id": "ed073e58-f925-4afd-976c-bc8cea1e88ad",
       "name": "Xalayaa Qabatanii Dhiyaachuu",
       "description": null,
       "serviceId": "824e2b8b-e831-4541-9a45-2a54ae9b0c4c",
-      "createdAt": "2026-02-09T07:01:45.735Z",
-      "updatedAt": "2026-02-09T07:01:45.735Z"
     },
     {
       "id": "ed95a45b-1e6e-4e71-86c6-3b81adc1c9c4",
       "name": "waraqaa enyummaa ganda",
       "description": null,
       "serviceId": "e6fff1c2-a36a-414c-9256-1dafa2a979be",
-      "createdAt": "2025-12-11T04:33:47.847Z",
-      "updatedAt": "2025-12-11T04:33:47.847Z"
     },
     {
       "id": "ef152066-1ac4-4ded-93fa-6a54c7374ae2",
       "name": "xalayaa Dhorkaa Qaama Aangoo Dhorkuu   Qabu Irraa Barra'ee",
       "description": null,
       "serviceId": "aa46f53c-01b5-4b51-a0bb-0d4e255e8164",
-      "createdAt": "2025-12-10T12:04:24.500Z",
-      "updatedAt": "2025-12-10T12:04:24.500Z"
     },
     {
       "id": "ef6d7af6-8108-4558-a86a-d4c62a1b4d91",
       "name": "Baay'inna Ummataa",
       "description": null,
       "serviceId": "a4172090-d35f-44d6-9c8f-a4fe62dfcbb7",
-      "createdAt": "2025-12-10T12:40:39.649Z",
-      "updatedAt": "2025-12-10T12:40:39.649Z"
     },
     {
       "id": "efba713b-4ca9-44ce-9d5d-de8a8d8186d7",
       "name": "Dizaayini Sirri Ta'ee Qabatanii Dhiyaachu",
       "description": null,
       "serviceId": "360087c9-2136-411d-a8f0-22df4d81bafa",
-      "createdAt": "2026-02-09T07:45:27.956Z",
-      "updatedAt": "2026-02-09T07:45:27.956Z"
     },
     {
       "id": "f1556ad4-c887-43ba-9ea3-056ea859c1f9",
       "name": "Kiliraansii Waajjira Galii fi Waldaa Dhiyyessu ; Abbaan Dhimmaa kuusa Isaa ni Baasa fi Bolloo Baraa  kan godhate  tahuu Qaba",
       "description": null,
       "serviceId": "e0408764-e6bd-4c00-bd69-074fdd206c15",
-      "createdAt": "2026-02-03T07:55:49.228Z",
-      "updatedAt": "2026-02-03T07:55:49.228Z"
     },
     {
       "id": "f18f0850-e0be-4179-8eef-183bc790640a",
       "name": "Karoora Hojii fi Bajataa",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "f1b84ef7-19b0-4346-bbbd-10d8113cdc2f",
       "name": "Waraqaa Lenjissummaa DhiraafDaani 3ffaa fi Isaa Ol Dubaraaf 2ffaafi Isaa Ol",
       "description": null,
       "serviceId": "8dae1245-4642-4d15-a338-52e88e21bc18",
-      "createdAt": "2025-12-10T14:03:18.365Z",
-      "updatedAt": "2025-12-10T14:03:18.365Z"
     },
     {
       "id": "f1cb5274-71f6-41ae-9ac1-7168654a2562",
       "name": "Ssanadichi Taatewwan Qabaachut Irraa Eggamma",
       "description": null,
       "serviceId": "fbbb1ad5-98bc-495e-8d8a-029fb908291c",
-      "createdAt": "2025-12-10T14:28:00.717Z",
-      "updatedAt": "2025-12-10T14:28:00.717Z"
     },
     {
       "id": "f213d318-a3a3-4fe9-8057-2c0bf1ead765",
       "name": "Bu'aa Odiitii",
       "description": null,
       "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "f2319602-ef1a-407e-899b-c93f73544fba",
       "name": "Qaboo Ya'ii Koree Qindessittu Sadarkaa Sadarkaan Jiran Irra Dhufee",
       "description": null,
       "serviceId": "1b87687c-254a-4160-a2da-a518520c19ae",
-      "createdAt": "2025-12-10T13:46:41.278Z",
-      "updatedAt": "2025-12-10T13:46:41.278Z"
     },
     {
       "id": "f2505ff4-bbe8-4853-9bf6-c24d21af322a",
       "name": "Xalayaa",
       "description": null,
       "serviceId": "976f2107-33f7-4529-a1a9-da874364f973",
-      "createdAt": "2025-12-10T07:50:43.963Z",
-      "updatedAt": "2025-12-10T07:50:43.963Z"
     },
     {
       "id": "f3cfce25-e841-47b4-8835-77789e9a6400",
       "name": "Unkaa To'anno Aaanaa Dhabbattichi Itti  Argamu Irraa Gutame",
       "description": null,
       "serviceId": "86f3511e-648a-4e91-a791-9401dc15eab1",
-      "createdAt": "2025-12-09T09:09:54.792Z",
-      "updatedAt": "2025-12-09T09:09:54.792Z"
     },
     {
       "id": "f4d6dbb0-efb4-409f-bdda-7e880a9931ee",
       "name": "Iyyata  Barrefamaa fi Afaani",
       "description": null,
       "serviceId": "c5f0fb23-c51a-48e8-a5aa-88965a3144a7",
-      "createdAt": "2025-12-08T08:48:49.990Z",
-      "updatedAt": "2025-12-08T08:48:49.990Z"
     },
     {
       "id": "f511ca6d-82cf-48de-8abc-039aabcd1f42",
       "name": "Xalayaa Fedhii Dizaayiini Ibsu",
       "description": null,
       "serviceId": "57e54c18-bf04-4052-8156-686b4cf06687",
-      "createdAt": "2025-12-09T09:54:37.546Z",
-      "updatedAt": "2025-12-09T09:54:37.546Z"
     },
     {
       "id": "f54bc128-c1dd-41fb-a208-8a7906d4bf0f",
       "name": "Ragaa Orijinaala Akka Mirkana'uu Barbaadamu",
       "description": null,
       "serviceId": "8529fa35-d948-48c0-85ad-7f1723ca7293",
-      "createdAt": "2025-12-19T07:51:34.596Z",
-      "updatedAt": "2025-12-19T07:51:34.596Z"
     },
     {
       "id": "f6474ac4-17ad-4252-ab11-989c8f6f44e5",
       "name": "Baay;ina Miseensa Waldaa",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "f66b2d9f-9af9-46d0-b46d-ee04df4ee741",
       "name": "Xalayaa Seera Qabessa  Ta'een Gaafachuu",
       "description": null,
       "serviceId": "360087c9-2136-411d-a8f0-22df4d81bafa",
-      "createdAt": "2026-02-09T07:45:27.956Z",
-      "updatedAt": "2026-02-09T07:45:27.956Z"
     },
     {
       "id": "f75cd373-9263-4823-bcd0-831eda12bcad",
       "name": "Lakk Baankii",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "f8756121-c721-4582-9005-89ee2e6109ba",
       "name": "Baay'ina Ummataa, Fageenya Humna Ibsaa EEU Irraa jiruu fi Teknoolojii Barbaadamuu",
       "description": null,
       "serviceId": "326d9f37-c2b5-4e91-89c1-e6d0cc9afa32",
-      "createdAt": "2025-12-10T13:02:17.684Z",
-      "updatedAt": "2025-12-10T13:02:17.684Z"
     },
     {
       "id": "fa00117e-39a1-43f4-b708-0f62e8921edb",
       "name": "Gabaasa Hojii fi Bajataa",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "fae1b40b-1aa6-40a0-b552-6cd5e1d981d3",
       "name": "Ragaa Yakkoot Armaan Olii Waliin Hidhata Qabu",
       "description": null,
       "serviceId": "b0ffb9b2-83f1-4d29-aa51-728eb37c7cc5",
-      "createdAt": "2025-12-19T07:44:35.696Z",
-      "updatedAt": "2025-12-19T07:44:35.696Z"
     },
     {
       "id": "fb0c81de-d735-4d87-b414-8388a7f113bc",
       "name": "Qorranno Piroojaktii",
       "description": null,
       "serviceId": "88a011fc-6c83-4a49-b750-5a61d06dc797",
-      "createdAt": "2025-12-10T12:17:02.070Z",
-      "updatedAt": "2025-12-10T12:17:02.070Z"
     },
     {
       "id": "fb289957-631d-46ad-aa84-538bdcd32f7d",
       "name": "Dhimma Mana Hojii Oditara Muummichaattin Qabamee fi Qoratamaa Jiruu Irratti Kan Hin Taane Ta'uu Qaba",
       "description": null,
       "serviceId": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
-      "createdAt": "2025-12-23T12:13:33.070Z",
-      "updatedAt": "2025-12-23T12:13:33.070Z"
     },
     {
       "id": "fc2107d9-f0cb-4db5-b038-cec2fa192b7e",
       "name": "Ragaa Baasii fi Galii",
       "description": null,
       "serviceId": "549854a7-c1ae-4899-93a7-89854f339890",
-      "createdAt": "2025-12-11T03:28:56.643Z",
-      "updatedAt": "2025-12-11T03:28:56.643Z"
     },
     {
       "id": "fc7d4b01-bce7-465e-a359-94f70bcd9b4e",
       "name": "Gosa Paampii Suphamuu",
       "description": null,
       "serviceId": "976f2107-33f7-4529-a1a9-da874364f973",
-      "createdAt": "2025-12-10T07:50:43.963Z",
-      "updatedAt": "2025-12-10T07:50:43.963Z"
     },
     {
       "id": "fc896e69-61db-4da5-90b4-1b58ae547f08",
       "name": "Gosa Barnootaa",
       "description": null,
       "serviceId": "be39f394-53ee-497f-b39d-4d191bcaf357",
-      "createdAt": "2025-12-10T13:42:03.666Z",
-      "updatedAt": "2025-12-10T13:42:03.666Z"
     },
     {
       "id": "fcb8b239-43ae-465a-aaef-cd0ac2ed45e6",
       "name": "Performance Garanti Dhiyeessu Qaba",
       "description": null,
       "serviceId": "1be5cfba-dcd7-46a4-bfee-a5f7b1abbb20",
-      "createdAt": "2026-02-09T07:52:49.968Z",
-      "updatedAt": "2026-02-09T07:52:49.968Z"
     },
     {
       "id": "fe06388a-907d-4f24-bab5-26e931723a29",
       "name": "Karoora Hojii fi Bajata Qaboo Ya'ii",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "fee934b1-0302-4b3f-a136-4e92c733ebfa",
       "name": "Abbaan Dhimma Xalayaa Waajjira Poolisii Irraa Dhiyyessuu fi Kuusaa Isaa ni Baasa",
       "description": null,
       "serviceId": "e0408764-e6bd-4c00-bd69-074fdd206c15",
-      "createdAt": "2026-02-03T07:55:49.228Z",
-      "updatedAt": "2026-02-03T07:55:49.228Z"
     }
   ],
   "serviceFor": [
@@ -14421,880 +10977,660 @@
       "name": "Abbaa Dhimmaa Dhunfaa",
       "description": null,
       "serviceId": "824e2b8b-e831-4541-9a45-2a54ae9b0c4c",
-      "createdAt": "2026-02-09T07:01:45.735Z",
-      "updatedAt": "2026-02-09T07:01:45.735Z"
     },
     {
       "id": "088ab78a-ceab-478d-bc60-857c45af8dd5",
       "name": "Waldaalee",
       "description": null,
       "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
-      "createdAt": "2026-02-09T07:14:22.014Z",
-      "updatedAt": "2026-02-09T07:14:22.014Z"
     },
     {
       "id": "0e26ab3d-09ed-449c-87d3-15626646baa6",
       "name": "Aanootaa fi Magaaloota G/Shawaa Bahaa Jalatti Argaman",
       "description": null,
       "serviceId": "a4172090-d35f-44d6-9c8f-a4fe62dfcbb7",
-      "createdAt": "2025-12-10T12:40:39.649Z",
-      "updatedAt": "2025-12-10T12:40:39.649Z"
     },
     {
       "id": "105decf2-8771-44bf-b6f6-6476ffc0fe8a",
       "name": "Hojjattaa Fayyaa Sadarkaa Godinaa Irraa Hanga Kellaa fayya Jiran",
       "description": null,
       "serviceId": "c17b9a58-3905-4aaa-ad84-96d017177013",
-      "createdAt": "2025-12-09T08:50:02.821Z",
-      "updatedAt": "2025-12-09T08:50:02.821Z"
     },
     {
       "id": "113ff3a5-a9ed-4f62-a874-1f938b0d68cf",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "dbc68074-704e-4de2-9510-e34f3cc50ca8",
-      "createdAt": "2026-03-16T07:37:10.672Z",
-      "updatedAt": "2026-03-16T07:37:10.672Z"
     },
     {
       "id": "1189c257-85a7-4456-8a09-1167e05373a4",
       "name": "Aanoota fi Magaaloota G/shawa Bahaa Jalatti Argaman",
       "description": null,
       "serviceId": "bd07182b-e95c-426f-9ddc-522c6c851b5b",
-      "createdAt": "2025-12-10T12:55:53.091Z",
-      "updatedAt": "2025-12-10T12:55:53.091Z"
     },
     {
       "id": "13c47905-7f71-40be-b389-8471ac7aa0d3",
       "name": "Abbaa dhimmaa",
       "description": null,
       "serviceId": "f8408180-afba-428f-be89-069f699e128e",
-      "createdAt": "2025-12-10T07:29:19.184Z",
-      "updatedAt": "2025-12-10T07:29:19.184Z"
     },
     {
       "id": "16d5eef4-8bf3-490f-915b-c2f58f4ba88c",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman fi Akkasumas Sektaroota",
       "description": null,
       "serviceId": "0851495e-b516-4e2b-a490-0f5e685f3b68",
-      "createdAt": "2025-12-10T14:21:22.544Z",
-      "updatedAt": "2025-12-10T14:21:22.544Z"
     },
     {
       "id": "1ba34c16-5259-43a3-81e9-378450bebd4d",
       "name": "Heyyama Dhaabbilee Yoo THee Dhaabbilee Qofaatu Haaromsuu Danda'aa",
       "description": null,
       "serviceId": "fdbf28c0-c9c1-4327-b884-221bfbdd7cbb",
-      "createdAt": "2026-02-03T07:23:49.783Z",
-      "updatedAt": "2026-02-03T07:23:49.783Z"
     },
     {
       "id": "1c938826-72d4-4f38-8604-9735f897b30d",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman Akkasumas Sektaroota",
       "description": null,
       "serviceId": "fbbb1ad5-98bc-495e-8d8a-029fb908291c",
-      "createdAt": "2025-12-10T14:28:00.717Z",
-      "updatedAt": "2025-12-10T14:28:00.717Z"
     },
     {
       "id": "264480ee-0450-450b-8ac9-a07a94944373",
       "name": "Daareektara Dhaabbattichaa",
       "description": null,
       "serviceId": "13222ab3-b1e9-4c42-bc13-1ec42a00f89a",
-      "createdAt": "2025-12-09T09:22:00.219Z",
-      "updatedAt": "2025-12-09T09:22:00.219Z"
     },
     {
       "id": "278b6498-2460-4c72-a14c-c3be5b30dcfe",
       "name": "Abbaa Dhimma Dhunfaa ;Dhabbilee Adda Addaa fi Qaama Moottummaa",
       "description": null,
       "serviceId": "e0408764-e6bd-4c00-bd69-074fdd206c15",
-      "createdAt": "2026-02-03T07:55:49.228Z",
-      "updatedAt": "2026-02-03T07:55:49.228Z"
     },
     {
       "id": "279b4bb7-d2de-4b20-9154-21c4d07fa815",
       "name": "Hojjataa",
       "description": null,
       "serviceId": "2f8c6004-33ed-4115-a425-f4ba9c019409",
-      "createdAt": "2025-12-10T13:53:40.441Z",
-      "updatedAt": "2025-12-10T13:53:40.441Z"
     },
     {
       "id": "285751ef-2b83-4871-bf40-f5a09570ed66",
       "name": "Waldaalee",
       "description": null,
       "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
-      "createdAt": "2026-02-09T07:35:36.505Z",
-      "updatedAt": "2026-02-09T07:35:36.505Z"
     },
     {
       "id": "2ac6b6bd-c796-40b0-a284-a271252486ca",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "4d846a21-e5f8-49f2-a967-d3a94fdf8864",
-      "createdAt": "2026-02-09T07:48:23.351Z",
-      "updatedAt": "2026-02-09T07:48:23.351Z"
     },
     {
       "id": "2b7c98d8-a4d9-450b-a77e-40235dfb8c08",
       "name": "Qaamolee Nageenyaa  Hundaaf",
       "description": null,
       "serviceId": "06659662-1aae-43dd-972a-260dee1f3ed8",
-      "createdAt": "2025-12-23T13:30:11.276Z",
-      "updatedAt": "2025-12-23T13:30:11.276Z"
     },
     {
       "id": "2e930a31-244a-4f2e-b7f9-224d7a302a86",
       "name": "dubartootaaf",
       "description": null,
       "serviceId": "4f58f171-0956-48f5-a997-f1e50bf6a311",
-      "createdAt": "2025-12-11T04:36:09.059Z",
-      "updatedAt": "2025-12-11T04:36:09.059Z"
     },
     {
       "id": "387c1653-fc29-4449-9b54-43ddc6c4cdb6",
       "name": "Abbaaa Dhimmaa",
       "description": null,
       "serviceId": "b527d5a0-1f08-4c9b-b905-9ae5b431b70c",
-      "createdAt": "2025-12-10T07:34:22.309Z",
-      "updatedAt": "2025-12-10T07:34:22.309Z"
     },
     {
       "id": "39e93d45-f130-4d77-b3c4-b0cbe846d376",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman",
       "description": null,
       "serviceId": "326d9f37-c2b5-4e91-89c1-e6d0cc9afa32",
-      "createdAt": "2025-12-10T13:02:17.684Z",
-      "updatedAt": "2025-12-10T13:02:17.684Z"
     },
     {
       "id": "3b29a111-95a5-4a76-9fee-214c5303d4e1",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "cc35c70f-05df-4e13-bdd2-8d3cccde6fa0",
-      "createdAt": "2025-12-19T07:36:47.572Z",
-      "updatedAt": "2025-12-19T07:36:47.572Z"
     },
     {
       "id": "3c952071-04ed-4751-93d0-a699fe8de2f5",
       "name": "Waldaalee Interpiraayizii Ijaarsa Irratti Gurmaa'ana",
       "description": null,
       "serviceId": "01f10b33-2c44-40c1-94d5-e8601272d08a",
-      "createdAt": "2025-12-10T09:07:34.272Z",
-      "updatedAt": "2025-12-10T09:07:34.272Z"
     },
     {
       "id": "3cf9a5b6-727b-4531-a84c-9b15bc84da4c",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "26190bdc-9647-4d42-b06c-3f0b0fee3441",
-      "createdAt": "2025-12-10T13:55:42.781Z",
-      "updatedAt": "2025-12-10T13:55:42.781Z"
     },
     {
       "id": "3ee16b29-0957-4e99-a6d3-a8cada47ad52",
       "name": "Abbaa Dhimmaa DHunfaa",
       "description": null,
       "serviceId": "514a02c8-6986-4155-a199-edfd734ae0f8",
-      "createdAt": "2025-12-11T02:45:03.366Z",
-      "updatedAt": "2025-12-11T02:45:03.366Z"
     },
     {
       "id": "40dd239f-26f1-4016-8129-d13c34d5cbd4",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "c6554f1b-3970-45ca-9d1a-f4a0f92de745",
-      "createdAt": "2025-12-10T08:12:54.782Z",
-      "updatedAt": "2025-12-10T08:12:54.782Z"
     },
     {
       "id": "471836f1-d70b-471f-aeb5-a6e4ff9bd58c",
       "name": "Abbaa Dhimmaa Dhunfaa",
       "description": null,
       "serviceId": "209fd0ea-5389-43aa-ad45-30eddd0c32ce",
-      "createdAt": "2026-02-05T06:53:31.701Z",
-      "updatedAt": "2026-02-05T06:53:31.701Z"
     },
     {
       "id": "48205623-bccb-4212-bdb9-5e99640c2daa",
       "name": "Oggeessa Fayyaa",
       "description": null,
       "serviceId": "845ed3fe-f137-4693-b80b-652b10249918",
-      "createdAt": "2025-12-09T09:01:00.959Z",
-      "updatedAt": "2025-12-09T09:01:00.959Z"
     },
     {
       "id": "4a354783-d0a0-465b-87d0-576191bded70",
       "name": "Waldaalee",
       "description": null,
       "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
-      "createdAt": "2026-02-09T07:29:21.367Z",
-      "updatedAt": "2026-02-09T07:29:21.367Z"
     },
     {
       "id": "4fe83bbd-ebe6-4d99-ad56-78fa066f0261",
       "name": "Nama dhunfaa",
       "description": null,
       "serviceId": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
-      "createdAt": "2026-01-29T06:52:45.481Z",
-      "updatedAt": "2026-01-29T06:52:45.481Z"
     },
     {
       "id": "529b253f-8bee-4a72-88dc-f9bda13087f0",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "450a78c4-1776-4dc5-9850-8f5062013f5b",
-      "createdAt": "2025-12-10T08:27:22.047Z",
-      "updatedAt": "2025-12-10T08:27:22.047Z"
     },
     {
       "id": "52e9ffc1-3727-4a2c-b435-105f6cdcfe03",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
-      "createdAt": "2025-12-10T12:24:00.601Z",
-      "updatedAt": "2025-12-10T12:24:00.601Z"
     },
     {
       "id": "5657b374-ea78-4c1e-930b-b25ec9268322",
       "name": "Dhaabbilee mootummaa fi miti Mootummaa",
       "description": null,
       "serviceId": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
-      "createdAt": "2026-01-29T06:52:45.481Z",
-      "updatedAt": "2026-01-29T06:52:45.481Z"
     },
     {
       "id": "58bc2152-e41f-4d47-8be7-6d4308551059",
       "name": "hojjataaf",
       "description": null,
       "serviceId": "86396516-cf9c-4876-9bd7-4af29ca82637",
-      "createdAt": "2025-12-08T11:40:39.171Z",
-      "updatedAt": "2025-12-08T11:40:39.171Z"
     },
     {
       "id": "5a01b124-4033-46b5-b2d3-81c919c5c59b",
       "name": "Waldaalee Interpiraayizii",
       "description": null,
       "serviceId": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
-      "createdAt": "2025-12-10T09:06:36.444Z",
-      "updatedAt": "2025-12-10T09:06:36.444Z"
     },
     {
       "id": "63b29e91-dd48-490b-ab5e-2d584accf913",
       "name": "Hojataa motummatif",
       "description": null,
       "serviceId": "03861060-a202-432f-810e-3aab203188e1",
-      "createdAt": "2025-12-23T06:46:17.548Z",
-      "updatedAt": "2025-12-23T06:46:17.548Z"
     },
     {
       "id": "673a5a9c-020f-4980-859c-e4caa2908cf3",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "9f9afed5-a7e0-463e-8c63-e37c3ed27f74",
-      "createdAt": "2025-12-10T13:38:33.132Z",
-      "updatedAt": "2025-12-10T13:38:33.132Z"
     },
     {
       "id": "682d5754-212d-40c2-b134-0bb5d9ce9268",
       "name": "Abbaa Dhimmaa Kamuu",
       "description": null,
       "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
-      "createdAt": "2025-12-10T07:25:08.670Z",
-      "updatedAt": "2025-12-10T07:25:08.670Z"
     },
     {
       "id": "6aea0fae-f6da-45e5-8301-e3e11fe7e03f",
       "name": "Kaffaltoota Gibiraa",
       "description": null,
       "serviceId": "9a8ac3f2-0606-4c3b-bb05-217248b68f89",
-      "createdAt": "2025-12-11T02:52:49.723Z",
-      "updatedAt": "2025-12-11T02:52:49.723Z"
     },
     {
       "id": "6b82fe72-f1ba-43de-b759-bbc29b49ba59",
       "name": "Kaffaltoota Gibiraa",
       "description": null,
       "serviceId": "d15e78a5-15da-47f8-a165-aa7a1f61657c",
-      "createdAt": "2025-12-11T03:11:11.859Z",
-      "updatedAt": "2025-12-11T03:11:11.859Z"
     },
     {
       "id": "6d2c45cd-e622-42f9-9069-1f4c5d1a8979",
       "name": "Abbaa Dhimmaa  Hundaafuu",
       "description": null,
       "serviceId": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
-      "createdAt": "2026-03-16T07:41:39.711Z",
-      "updatedAt": "2026-03-16T07:41:39.711Z"
     },
     {
       "id": "6e9c079f-4322-42c7-8a89-14590c1b66c7",
       "name": "Abbaa Dhimma  Dhunfaa ; Dhaabbilee Adda Addaa fi Qaamolee Mootummaa",
       "description": null,
       "serviceId": "928edd8e-1ed2-4b28-a73e-6f1a12028b2d",
-      "createdAt": "2026-02-03T08:26:19.493Z",
-      "updatedAt": "2026-02-03T08:26:19.493Z"
     },
     {
       "id": "6ef43343-a5c0-49c1-9bbd-921d81dd7d36",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
-      "createdAt": "2025-12-10T12:23:49.296Z",
-      "updatedAt": "2025-12-10T12:23:49.296Z"
     },
     {
       "id": "768548e6-2591-4883-bbd2-cb4d42dfe729",
       "name": "Hawaasa Hundaaf",
       "description": null,
       "serviceId": "c13f72f3-4334-4047-8d2f-a3999f412b85",
-      "createdAt": "2025-12-08T09:02:57.023Z",
-      "updatedAt": "2025-12-08T09:02:57.023Z"
     },
     {
       "id": "769a7ba6-6b46-40d0-8a9c-b1d9e3a21a7c",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
-      "createdAt": "2025-12-23T12:13:33.070Z",
-      "updatedAt": "2025-12-23T12:13:33.070Z"
     },
     {
       "id": "77e3cb03-c8d3-42f0-b13e-0db99b28d083",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "b0ffb9b2-83f1-4d29-aa51-728eb37c7cc5",
-      "createdAt": "2025-12-19T07:44:35.696Z",
-      "updatedAt": "2025-12-19T07:44:35.696Z"
     },
     {
       "id": "793e2f61-571e-4807-920a-748a8a3abce5",
       "name": "Nama Dhunfaa Dhaabbilee Mootumma fi miti Mootummaa",
       "description": null,
       "serviceId": "fdbf28c0-c9c1-4327-b884-221bfbdd7cbb",
-      "createdAt": "2026-02-03T07:23:49.783Z",
-      "updatedAt": "2026-02-03T07:23:49.783Z"
     },
     {
       "id": "7e0eb43d-be72-4649-80fc-7bff5b190afd",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman Akkasumas Sektaroota",
       "description": null,
       "serviceId": "84352a7b-79a1-444e-a100-22d5c4dabb46",
-      "createdAt": "2025-12-10T14:25:34.216Z",
-      "updatedAt": "2025-12-10T14:25:34.216Z"
     },
     {
       "id": "80b90d7d-e7fd-4a0f-9bb3-7a5bb6790de1",
       "name": "Abbaa Dhimmaa Dhunfaa",
       "description": null,
       "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
-      "createdAt": "2026-02-09T09:02:51.024Z",
-      "updatedAt": "2026-02-09T09:02:51.024Z"
     },
     {
       "id": "86b4c656-468f-40c6-8b60-912ca9568747",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "aa46f53c-01b5-4b51-a0bb-0d4e255e8164",
-      "createdAt": "2025-12-10T12:04:24.500Z",
-      "updatedAt": "2025-12-10T12:04:24.500Z"
     },
     {
       "id": "87d56a00-044c-462d-af94-bd691e4f1dbd",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "e8f0a7bd-a60d-4e68-9224-6876b38cad7c",
-      "createdAt": "2025-12-10T12:08:47.136Z",
-      "updatedAt": "2025-12-10T12:08:47.136Z"
     },
     {
       "id": "890312cc-b783-40f2-a519-393f53675820",
       "name": "Gandootaa fi magalootaaf",
       "description": null,
       "serviceId": "f944d9a0-64b7-4056-b8f7-f0ba50fe2c73",
-      "createdAt": "2025-12-11T04:29:29.376Z",
-      "updatedAt": "2025-12-11T04:29:29.376Z"
     },
     {
       "id": "89caf65c-211b-486a-ab43-f17c9622fd9d",
       "name": "Kaffaltoota Gibiraa",
       "description": null,
       "serviceId": "e56aadd7-c402-4428-a302-acb1fc4e87eb",
-      "createdAt": "2025-12-11T02:57:16.237Z",
-      "updatedAt": "2025-12-11T02:57:16.237Z"
     },
     {
       "id": "8b530169-d4fc-41ed-9732-fe21e1131f2d",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "976f2107-33f7-4529-a1a9-da874364f973",
-      "createdAt": "2025-12-10T07:50:43.963Z",
-      "updatedAt": "2025-12-10T07:50:43.963Z"
     },
     {
       "id": "8c6032c4-7d8b-42a4-9fd3-3b4b06ec33ab",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "8529fa35-d948-48c0-85ad-7f1723ca7293",
-      "createdAt": "2025-12-19T07:51:34.596Z",
-      "updatedAt": "2025-12-19T07:51:34.596Z"
     },
     {
       "id": "8cdfa86e-a708-4a74-86fd-e5b4d2407237",
       "name": "Sektaroota Kessodhaaf",
       "description": null,
       "serviceId": "6695f1d1-d96b-49cd-bda2-1bc4a9caaee0",
-      "createdAt": "2025-12-08T08:38:55.248Z",
-      "updatedAt": "2025-12-08T08:38:55.248Z"
     },
     {
       "id": "8d9771ad-844f-4027-bed3-af6cb231b878",
       "name": "Abbaa Dhimma Hundaafu",
       "description": null,
       "serviceId": "22adc289-c497-4075-a931-35be5bc9f931",
-      "createdAt": "2025-12-08T11:44:02.178Z",
-      "updatedAt": "2025-12-08T11:44:02.178Z"
     },
     {
       "id": "8e9e9d79-25f7-4ffc-a993-4aef9594be01",
       "name": "Kaffaltoota Gibiraa fi Namoota Dhunfaa",
       "description": null,
       "serviceId": "8cc00cb2-c8a4-47c0-8849-32ce6291f8bc",
-      "createdAt": "2025-12-11T03:20:24.316Z",
-      "updatedAt": "2025-12-11T03:20:24.316Z"
     },
     {
       "id": "96bb20ef-d583-43ed-94f2-95ef6d23a5b6",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "65e1c5c6-dd89-4fba-b71b-666b0581a236",
-      "createdAt": "2025-12-10T14:12:54.872Z",
-      "updatedAt": "2025-12-10T14:12:54.872Z"
     },
     {
       "id": "9a5030a3-03a2-4955-bcd7-188ced026196",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
-      "createdAt": "2025-12-10T12:24:00.539Z",
-      "updatedAt": "2025-12-10T12:24:00.539Z"
     },
     {
       "id": "9b660560-37cc-47f9-88bb-c19c485d1285",
       "name": "Abbaa Dhimmaa Dhunfaa",
       "description": null,
       "serviceId": "d78c9717-9361-4383-8009-ff4b4766efbf",
-      "createdAt": "2026-02-03T08:53:34.685Z",
-      "updatedAt": "2026-02-03T08:53:34.685Z"
     },
     {
       "id": "a2894801-a43b-4402-9ced-76afd3e205f9",
       "name": "dubbartotaf",
       "description": null,
       "serviceId": "e6fff1c2-a36a-414c-9256-1dafa2a979be",
-      "createdAt": "2025-12-11T04:33:47.847Z",
-      "updatedAt": "2025-12-11T04:33:47.847Z"
     },
     {
       "id": "a2e2a94c-92e8-4adb-a696-80c33dc84540",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "ed7c6c1c-448b-423a-88a3-d98f6f734ebe",
-      "createdAt": "2026-02-09T08:02:04.372Z",
-      "updatedAt": "2026-02-09T08:02:04.372Z"
     },
     {
       "id": "a3424d4b-5087-4085-9a7f-82effb11d299",
       "name": "Nama Dhu nfaa ,Dhaabbilee Mootummmaa fi miiti Mootummaa",
       "description": null,
       "serviceId": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
-      "createdAt": "2026-01-29T07:11:28.777Z",
-      "updatedAt": "2026-01-29T07:11:28.777Z"
     },
     {
       "id": "a42eebe6-e4c7-41d6-85b2-80526ce1724c",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman",
       "description": null,
       "serviceId": "18c5c8f5-baa4-4e9b-bad7-7b49acd8ac62",
-      "createdAt": "2025-12-10T14:12:33.052Z",
-      "updatedAt": "2025-12-10T14:12:33.052Z"
     },
     {
       "id": "a4c9ab70-fa68-4f4a-bd2d-db6ecbb59dfa",
       "name": "Waldaalee Interpiraayizii Gurmaa'an",
       "description": null,
       "serviceId": "952fe9ae-b0c7-4e7c-89e3-be4914fb40b7",
-      "createdAt": "2025-12-10T09:07:12.016Z",
-      "updatedAt": "2025-12-10T09:07:12.016Z"
     },
     {
       "id": "a584cdfc-22ca-48c4-8741-347ca2df1a9a",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "360087c9-2136-411d-a8f0-22df4d81bafa",
-      "createdAt": "2026-02-09T07:45:27.956Z",
-      "updatedAt": "2026-02-09T07:45:27.956Z"
     },
     {
       "id": "adcd36ac-fc60-41f6-b0a1-dc949e8ab27e",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman",
       "description": null,
       "serviceId": "4b6c3fc8-d4f9-4d78-8975-8fe6ceb70e92",
-      "createdAt": "2025-12-10T14:11:35.733Z",
-      "updatedAt": "2025-12-10T14:11:35.733Z"
     },
     {
       "id": "ade72c5c-4445-4831-8ff5-c1002082c368",
       "name": "Abbaa Dhimma Dhunfaa ; Dhaabbilee Adda Addaa fi Qaama Mootumma",
       "description": null,
       "serviceId": "6fdde07d-81f5-4040-be9b-767cc0215f40",
-      "createdAt": "2026-02-03T08:04:22.866Z",
-      "updatedAt": "2026-02-03T08:04:22.866Z"
     },
     {
       "id": "b060e2f9-e6df-44da-b40a-0b967d2a1b6d",
       "name": "dubbartotaf",
       "description": null,
       "serviceId": "c0b7148a-2d2b-4341-bc17-c9d60b460047",
-      "createdAt": "2025-12-11T04:25:18.631Z",
-      "updatedAt": "2025-12-11T04:25:18.631Z"
     },
     {
       "id": "b9879493-4c4c-4684-9fc9-87a663c4260a",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "28a3145d-6b17-4c63-a002-b0ccac96493e",
-      "createdAt": "2025-12-10T08:22:29.055Z",
-      "updatedAt": "2025-12-10T08:22:29.055Z"
     },
     {
       "id": "bc84c43b-d61c-42ac-8e9b-413eb6333a22",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "549854a7-c1ae-4899-93a7-89854f339890",
-      "createdAt": "2025-12-11T03:28:56.643Z",
-      "updatedAt": "2025-12-11T03:28:56.643Z"
     },
     {
       "id": "bd9bc857-0ebe-4195-af19-879584a7553d",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman",
       "description": null,
       "serviceId": "65e1c5c6-dd89-4fba-b71b-666b0581a236",
-      "createdAt": "2025-12-10T14:12:54.872Z",
-      "updatedAt": "2025-12-10T14:12:54.872Z"
     },
     {
       "id": "be2e17a8-2241-41bc-a246-67da7fbd5c38",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "cb0b7afc-8097-46bf-9572-00de031d8e64",
-      "createdAt": "2025-12-10T07:37:58.294Z",
-      "updatedAt": "2025-12-10T07:37:58.294Z"
     },
     {
       "id": "bea24f8d-9d7a-41e0-b8d5-cb95ba119901",
       "name": "Aanoota fi Magaaloota G/shawa Bahaa Jalatti Argaman",
       "description": null,
       "serviceId": "c8f335a2-25f3-479a-b8c9-50e5297f8a34",
-      "createdAt": "2025-12-10T12:46:37.525Z",
-      "updatedAt": "2025-12-10T12:46:37.525Z"
     },
     {
       "id": "bfd90e30-65da-40fe-a16d-de8f38efc40d",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "7bbfae6e-b6ff-403b-82bb-6d5b12319158",
-      "createdAt": "2025-12-11T03:27:10.129Z",
-      "updatedAt": "2025-12-11T03:27:10.129Z"
     },
     {
       "id": "c032bbb5-9c30-4c81-9651-170b8f70b476",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman Akkasumas Sektaroota",
       "description": null,
       "serviceId": "82e60402-e65b-48c5-acc1-e95cb62186f9",
-      "createdAt": "2025-12-10T14:23:27.815Z",
-      "updatedAt": "2025-12-10T14:23:27.815Z"
     },
     {
       "id": "c1054b6c-b80c-406a-9b49-9a9a6f4fb3e6",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "1be5cfba-dcd7-46a4-bfee-a5f7b1abbb20",
-      "createdAt": "2026-02-09T07:52:49.968Z",
-      "updatedAt": "2026-02-09T07:52:49.968Z"
     },
     {
       "id": "c1d5eb0c-5b95-4fd5-89eb-759a080a56cd",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "8dae1245-4642-4d15-a338-52e88e21bc18",
-      "createdAt": "2025-12-10T14:03:18.365Z",
-      "updatedAt": "2025-12-10T14:03:18.365Z"
     },
     {
       "id": "c2773e6d-2e38-49c6-a96b-832c42568b7a",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "2dd72ac4-5d84-4aa7-9797-fce1fdcc8d8c",
-      "createdAt": "2025-12-19T07:32:10.728Z",
-      "updatedAt": "2025-12-19T07:32:10.728Z"
     },
     {
       "id": "c574f30c-bf94-464c-8cce-dd8fb9e8b9b2",
       "name": "Waldaa Hojii Gamtaa",
       "description": null,
       "serviceId": "601e4598-e1aa-4804-abc8-6d0b7cc08fd6",
-      "createdAt": "2025-12-15T06:37:46.563Z",
-      "updatedAt": "2025-12-15T06:37:46.563Z"
     },
     {
       "id": "c77802a4-e360-4856-b0c6-f855361e7308",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "f473e8c7-80cf-4787-9e10-6dbd79d5877d",
-      "createdAt": "2025-12-19T07:56:14.095Z",
-      "updatedAt": "2025-12-19T07:56:14.095Z"
     },
     {
       "id": "c9e22cb1-abe4-4658-8b76-065224539303",
       "name": "Waldaalee Interpiraayizii Gurmaa'an",
       "description": null,
       "serviceId": "29bedd98-d936-4203-984f-d1797be4ef0b",
-      "createdAt": "2025-12-10T09:06:57.333Z",
-      "updatedAt": "2025-12-10T09:06:57.333Z"
     },
     {
       "id": "ce9b8cb1-ece6-4981-8241-70fa81b9c2a4",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "9d4a7897-4c04-4626-92cf-e772d4776368",
-      "createdAt": "2025-12-10T12:01:08.421Z",
-      "updatedAt": "2025-12-10T12:01:08.421Z"
     },
     {
       "id": "cecbc42f-8c08-48e0-9c49-f6f61c853b0b",
       "name": "Nama Dhunfaa , Dhaabbilee Mootummaa fi miti Mootummaa",
       "description": null,
       "serviceId": "5b83e2e7-aa86-480b-8b57-eeec355d1b03",
-      "createdAt": "2026-01-29T06:57:20.713Z",
-      "updatedAt": "2026-01-29T06:57:20.713Z"
     },
     {
       "id": "d2de95ee-a891-4eb0-8dd1-40cda364f6fc",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "58edfa34-0e84-419e-95fe-f4af36bc1099",
-      "createdAt": "2025-12-10T08:10:59.852Z",
-      "updatedAt": "2025-12-10T08:10:59.852Z"
     },
     {
       "id": "d54346ad-3355-40e5-aa70-1266a8ee0888",
       "name": "hojetaa mottumaa",
       "description": null,
       "serviceId": "081af485-b176-46f4-8ec3-29bcc49508c9",
-      "createdAt": "2025-12-08T03:35:39.587Z",
-      "updatedAt": "2025-12-08T03:35:39.587Z"
     },
     {
       "id": "d68a4f9e-daf4-4ee3-bb4f-d5f660d51c32",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "4eff135e-2db7-40b7-acaa-98ab47190114",
-      "createdAt": "2025-12-15T06:33:02.103Z",
-      "updatedAt": "2025-12-15T06:33:02.103Z"
     },
     {
       "id": "d7949080-6d7f-4cef-86a1-5043090480c6",
       "name": "Harka qalayiif",
       "description": null,
       "serviceId": "c0b7148a-2d2b-4341-bc17-c9d60b460047",
-      "createdAt": "2025-12-11T04:25:18.631Z",
-      "updatedAt": "2025-12-11T04:25:18.631Z"
     },
     {
       "id": "d87dd75a-263d-4e4e-9cd7-578c18e6d485",
       "name": "Waldaa Hojii Gamtaa Tahuu Qaba",
       "description": null,
       "serviceId": "a61909fb-89ff-4e99-923f-922b36c0f8db",
-      "createdAt": "2025-12-15T06:35:49.565Z",
-      "updatedAt": "2025-12-15T06:35:49.565Z"
     },
     {
       "id": "d8e5c996-a2d4-41c3-8c9f-7fd18b567b71",
       "name": "Hawaasa Hundaa",
       "description": null,
       "serviceId": "c5f0fb23-c51a-48e8-a5aa-88965a3144a7",
-      "createdAt": "2025-12-08T08:48:49.990Z",
-      "updatedAt": "2025-12-08T08:48:49.990Z"
     },
     {
       "id": "de6649da-f99c-4dd6-b7c8-24077d7cc591",
       "name": "Kaffalaa Gibiraa",
       "description": null,
       "serviceId": "514a02c8-6986-4155-a199-edfd734ae0f8",
-      "createdAt": "2025-12-11T02:45:03.366Z",
-      "updatedAt": "2025-12-11T02:45:03.366Z"
     },
     {
       "id": "e06a4dd4-bc17-4529-ba1c-5f682b283e9d",
       "name": "Hoggansa",
       "description": null,
       "serviceId": "1b87687c-254a-4160-a2da-a518520c19ae",
-      "createdAt": "2025-12-10T13:46:41.278Z",
-      "updatedAt": "2025-12-10T13:46:41.278Z"
     },
     {
       "id": "e29cdb3c-37ac-4705-8d66-47775820a24c",
       "name": "Waldaalee IMX",
       "description": null,
       "serviceId": "514a02c8-6986-4155-a199-edfd734ae0f8",
-      "createdAt": "2025-12-11T02:45:03.366Z",
-      "updatedAt": "2025-12-11T02:45:03.366Z"
     },
     {
       "id": "e2cfd8dd-1d6b-4dd9-9c40-ac28d9056d7c",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "dbf0a495-0321-4d28-8b87-7770642faa02",
-      "createdAt": "2025-12-10T12:12:28.603Z",
-      "updatedAt": "2025-12-10T12:12:28.603Z"
     },
     {
       "id": "e33af99a-6db1-4238-b2fa-0022c4944a03",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
-      "createdAt": "2025-12-10T08:44:32.591Z",
-      "updatedAt": "2025-12-10T08:44:32.591Z"
     },
     {
       "id": "e3ac5a78-98b9-4fdb-9bb2-5625f3d013a4",
       "name": "Aanoota , Magaaloota fi Seektaroota Moottummaa Godina Shawaa Bahaa Jala Jiran",
       "description": null,
       "serviceId": "57e54c18-bf04-4052-8156-686b4cf06687",
-      "createdAt": "2025-12-09T09:54:37.546Z",
-      "updatedAt": "2025-12-09T09:54:37.546Z"
     },
     {
       "id": "e3c515c3-eace-491f-a31f-be1e5346bee4",
       "name": "Aanoota fi Magaaloota G/shawaa Bahaa Jalatti Argaman Akkasumas Sektaroota",
       "description": null,
       "serviceId": "7472e7c7-c839-484c-bf6e-49b4a5fdc864",
-      "createdAt": "2025-12-10T14:18:01.864Z",
-      "updatedAt": "2025-12-10T14:18:01.864Z"
     },
     {
       "id": "e5a2fb65-54cc-4596-8f32-19955a5d1b59",
       "name": "Kaffaltoota Gibiraa",
       "description": null,
       "serviceId": "29f44708-f88f-4232-802a-95027d7de1fa",
-      "createdAt": "2025-12-11T03:04:38.485Z",
-      "updatedAt": "2025-12-11T03:04:38.485Z"
     },
     {
       "id": "e62d8dbc-538f-4474-a6bf-145449907d15",
       "name": "Dhaabbille Dhunfaa",
       "description": null,
       "serviceId": "514a02c8-6986-4155-a199-edfd734ae0f8",
-      "createdAt": "2025-12-11T02:45:03.366Z",
-      "updatedAt": "2025-12-11T02:45:03.366Z"
     },
     {
       "id": "e751c162-0da4-4d06-8dfd-f964e81679b5",
       "name": "Mannen Hojii",
       "description": null,
       "serviceId": "4654175b-4cef-4637-9803-77fcdfbe2cf8",
-      "createdAt": "2025-12-10T13:50:20.000Z",
-      "updatedAt": "2025-12-10T13:50:20.000Z"
     },
     {
       "id": "e7537036-afa2-4a61-8bea-e4fa60a5cdde",
       "name": "Oggessa Hayyama Dhabbatichaaf Baasee",
       "description": null,
       "serviceId": "86f3511e-648a-4e91-a791-9401dc15eab1",
-      "createdAt": "2025-12-09T09:09:54.792Z",
-      "updatedAt": "2025-12-09T09:09:54.792Z"
     },
     {
       "id": "edde60be-3ae1-4c01-ae46-c76cac4a7b0c",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "71e8c566-9c54-4933-b8a8-a89ed4b2a99d",
-      "createdAt": "2025-12-10T08:18:17.570Z",
-      "updatedAt": "2025-12-10T08:18:17.570Z"
     },
     {
       "id": "f427172a-383e-4725-8303-895b5e6e52b8",
       "name": "Leenji'aa",
       "description": null,
       "serviceId": "18c5c8f5-baa4-4e9b-bad7-7b49acd8ac62",
-      "createdAt": "2025-12-10T14:12:33.052Z",
-      "updatedAt": "2025-12-10T14:12:33.052Z"
     },
     {
       "id": "f513db8b-ad08-4638-9f88-f8f4c1391948",
       "name": "Qaama Moottummaa fi Kontiraaktara",
       "description": null,
       "serviceId": "179f8fae-275e-49c1-8ad9-ef10b33854c7",
-      "createdAt": "2025-12-09T09:45:13.353Z",
-      "updatedAt": "2025-12-09T09:45:13.353Z"
     },
     {
       "id": "f6095da6-760d-4b2e-ac7e-e639bfbf5bc5",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "88a011fc-6c83-4a49-b750-5a61d06dc797",
-      "createdAt": "2025-12-10T12:17:02.070Z",
-      "updatedAt": "2025-12-10T12:17:02.070Z"
     },
     {
       "id": "f86fabc7-2f04-4be8-afb8-a5ff3efd6d5e",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "eca2a955-dbff-4cc6-876d-b60044be9f67",
-      "createdAt": "2025-12-10T08:15:13.074Z",
-      "updatedAt": "2025-12-10T08:15:13.074Z"
     },
     {
       "id": "f8c548bf-e8d9-4b6d-aa7e-1358ab519638",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "6b291339-4335-45fd-af55-0c7ecbd60474",
-      "createdAt": "2025-12-10T08:03:37.596Z",
-      "updatedAt": "2025-12-10T08:03:37.596Z"
     },
     {
       "id": "faabb24f-a52c-4931-b0f9-3dd3a9307fe8",
       "name": "Abbaa Dhimmaa",
       "description": null,
       "serviceId": "1de5f168-0255-4599-8c53-c101ad0cdc96",
-      "createdAt": "2026-02-09T07:57:26.908Z",
-      "updatedAt": "2026-02-09T07:57:26.908Z"
     },
     {
       "id": "fab75d5f-b165-4043-b0d1-4491dbaa547f",
       "name": "Nama Dhunfaa ,Dhaabbilee Mootumma fi Miti Mootummaa",
       "description": null,
       "serviceId": "4d5c048b-8d64-46e1-90a4-1bd904943795",
-      "createdAt": "2026-01-29T07:06:40.645Z",
-      "updatedAt": "2026-01-29T07:06:40.645Z"
     },
     {
       "id": "fde78712-9422-4254-acd8-eed17b2dab12",
       "name": "Magaaloota",
       "description": null,
       "serviceId": "0a8f009c-be2b-4176-b348-823d62060fc6",
-      "createdAt": "2025-12-09T09:37:55.654Z",
-      "updatedAt": "2025-12-09T09:37:55.654Z"
     },
     {
       "id": "fdf9761a-b37f-4aab-a1a7-db195caaf49a",
       "name": "Abbaa Dhimmaa Dhunfaa",
       "description": null,
       "serviceId": "94fe6660-e196-4d3f-a3b6-1c614d41f439",
-      "createdAt": "2026-02-03T08:47:02.361Z",
-      "updatedAt": "2026-02-03T08:47:02.361Z"
     }
   ],
   "serviceStaffAssignment": [
@@ -15302,36 +11638,26 @@
       "id": "182837a9-dcf8-4a8b-9f12-90578e1d8553",
       "serviceId": "86396516-cf9c-4876-9bd7-4af29ca82637",
       "staffId": "cmiwlcme80002jsp6pgv7h46q",
-      "createdAt": "2025-12-09T03:47:11.233Z",
-      "updatedAt": "2025-12-09T03:47:11.233Z"
     },
     {
       "id": "1c000db6-72e7-42c4-862e-6a30055a3353",
       "serviceId": "4f58f171-0956-48f5-a997-f1e50bf6a311",
       "staffId": "b01174d5-8c27-4ba1-942f-2c76506a4862",
-      "createdAt": "2025-12-14T21:56:41.117Z",
-      "updatedAt": "2025-12-14T21:56:41.117Z"
     },
     {
       "id": "80e7b317-1555-4c0d-bdef-d1a13e036960",
       "serviceId": "22adc289-c497-4075-a931-35be5bc9f931",
       "staffId": "cmiwlcme80002jsp6pgv7h46q",
-      "createdAt": "2025-12-09T03:47:17.891Z",
-      "updatedAt": "2025-12-09T03:47:17.891Z"
     },
     {
       "id": "85e64973-1587-4d2c-8e82-16615bb6551e",
       "serviceId": "13222ab3-b1e9-4c42-bc13-1ec42a00f89a",
       "staffId": "6b414f29-cc4e-420c-adb5-fb2887b37a6a",
-      "createdAt": "2026-01-04T07:04:52.083Z",
-      "updatedAt": "2026-01-04T07:04:52.083Z"
     },
     {
       "id": "b5af7edc-0e8f-4e94-9e1c-07abc032b2f4",
       "serviceId": "86f3511e-648a-4e91-a791-9401dc15eab1",
       "staffId": "6b414f29-cc4e-420c-adb5-fb2887b37a6a",
-      "createdAt": "2026-01-04T07:06:32.524Z",
-      "updatedAt": "2026-01-04T07:06:32.524Z"
     }
   ],
   "gallery": [
@@ -15339,92 +11665,66 @@
       "id": "10ad83ac-b82f-4325-9068-fbabc2826f1b",
       "name": "wajjirra mummee",
       "description": null,
-      "createdAt": "2025-12-11T06:10:27.293Z",
-      "updatedAt": "2025-12-11T06:10:27.293Z"
     },
     {
       "id": "1d0a8227-3d7d-457b-87ec-f1de193a91b6",
       "name": "Falasama Eda 'amuu",
       "description": null,
-      "createdAt": "2026-01-04T06:14:58.965Z",
-      "updatedAt": "2026-01-04T06:14:58.965Z"
     },
     {
       "id": "20381b1d-fb9f-4aa2-bc77-5173be4c9f6a",
       "name": "awash park ",
       "description": "",
-      "createdAt": "2025-12-08T17:21:17.370Z",
-      "updatedAt": "2025-12-11T06:05:57.040Z"
     },
     {
       "id": "510265aa-b528-4b80-9c43-fd76fa747f66",
       "name": "Horsiisaa Lukkuu fi han qaquuu",
       "description": "",
-      "createdAt": "2026-01-03T21:51:02.866Z",
-      "updatedAt": "2026-01-03T21:52:15.795Z"
     },
     {
       "id": "6f7823b9-687b-48ad-a485-e017131f485a",
       "name": "misoma Qamadii",
       "description": "",
-      "createdAt": "2025-12-11T06:57:28.771Z",
-      "updatedAt": "2025-12-11T07:15:59.081Z"
     },
     {
       "id": "886e4c94-1f89-4c9d-94c2-65437872f7ff",
       "name": "Aadaa Karrayyuu",
       "description": "",
-      "createdAt": "2025-12-11T06:07:51.479Z",
-      "updatedAt": "2025-12-11T07:15:06.411Z"
     },
     {
       "id": "b3731871-d615-4179-b9a5-c7dfb5f10b96",
       "name": "Arraddaa  Benunaa",
       "description": "",
-      "createdAt": "2025-12-11T06:06:20.765Z",
-      "updatedAt": "2025-12-11T07:14:47.105Z"
     },
     {
       "id": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "name": "Misomaa Kuduraa fi Fuduraa",
       "description": null,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "de4ce9ad-863d-4465-85eb-55496ed26fea",
       "name": "Qonna Ammayaaa",
       "description": null,
-      "createdAt": "2026-01-03T21:53:23.997Z",
-      "updatedAt": "2026-01-03T21:53:23.997Z"
     },
     {
       "id": "e3bc6014-ad39-46e9-8eb2-83f2c0ef59ac",
       "name": "asharaa magarisa",
       "description": "",
-      "createdAt": "2025-12-11T07:14:09.887Z",
-      "updatedAt": "2026-01-04T06:18:14.519Z"
     },
     {
       "id": "eca9a846-d8fe-4e05-8751-3af37886d323",
       "name": "godinaa shawa bahaa ti hojjiwwan gurguddo",
       "description": "",
-      "createdAt": "2026-01-04T06:16:46.285Z",
-      "updatedAt": "2026-01-04T06:17:34.453Z"
     },
     {
       "id": "f9a9ea29-d42d-4d2e-a901-494faf8d4129",
       "name": "East showa zone",
       "description": null,
-      "createdAt": "2026-01-04T06:19:53.643Z",
-      "updatedAt": "2026-01-04T06:19:53.643Z"
     },
     {
       "id": "fc9924be-fcd4-4962-b0b0-68b975d0b400",
       "name": "Busaa Gonofaaa",
       "description": null,
-      "createdAt": "2026-01-03T21:51:52.687Z",
-      "updatedAt": "2026-01-03T21:51:52.687Z"
     }
   ],
   "galleryImage": [
@@ -15433,384 +11733,288 @@
       "galleryId": "20381b1d-fb9f-4aa2-bc77-5173be4c9f6a",
       "filename": "1765433147651-67231.jpg",
       "order": 0,
-      "createdAt": "2025-12-11T06:05:57.040Z",
-      "updatedAt": "2025-12-11T06:05:57.040Z"
     },
     {
       "id": "05d199f2-26e4-4777-b112-9a3d505321aa",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476887396-69112.jpg",
       "order": 2,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "09188b43-9c7b-46f3-b670-d2f784df4a71",
       "galleryId": "de4ce9ad-863d-4465-85eb-55496ed26fea",
       "filename": "1767477185608-41157.jpg",
       "order": 2,
-      "createdAt": "2026-01-03T21:53:23.997Z",
-      "updatedAt": "2026-01-03T21:53:23.997Z"
     },
     {
       "id": "095943b8-eeb8-456b-be81-654f004f8970",
       "galleryId": "886e4c94-1f89-4c9d-94c2-65437872f7ff",
       "filename": "1765433251639-19384.jpg",
       "order": 0,
-      "createdAt": "2025-12-11T07:15:06.411Z",
-      "updatedAt": "2025-12-11T07:15:06.411Z"
     },
     {
       "id": "1552f650-b318-487c-a088-18a6f92100ad",
       "galleryId": "510265aa-b528-4b80-9c43-fd76fa747f66",
       "filename": "1767477129768-55430.jpg",
       "order": 1,
-      "createdAt": "2026-01-03T21:52:15.795Z",
-      "updatedAt": "2026-01-03T21:52:15.795Z"
     },
     {
       "id": "162dc432-a0ba-4c4c-91ce-6f269ff68f75",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476926693-53141.jpg",
       "order": 8,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "18d7d183-a42f-4d7d-a035-a6be4af07933",
       "galleryId": "e3bc6014-ad39-46e9-8eb2-83f2c0ef59ac",
       "filename": "1767507478031-60154.jpg",
       "order": 1,
-      "createdAt": "2026-01-04T06:18:14.519Z",
-      "updatedAt": "2026-01-04T06:18:14.519Z"
     },
     {
       "id": "1a35b818-fccd-4a32-9c49-af3e1a864815",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476887468-27002.jpg",
       "order": 4,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "1a90f392-412d-4f1f-940a-53232407a8fb",
       "galleryId": "1d0a8227-3d7d-457b-87ec-f1de193a91b6",
       "filename": "1767507273989-79417.jpg",
       "order": 0,
-      "createdAt": "2026-01-04T06:14:58.965Z",
-      "updatedAt": "2026-01-04T06:14:58.965Z"
     },
     {
       "id": "1d376f54-70b0-463f-82f7-055b7fda5934",
       "galleryId": "e3bc6014-ad39-46e9-8eb2-83f2c0ef59ac",
       "filename": "1767507478201-9387.jpg",
       "order": 4,
-      "createdAt": "2026-01-04T06:18:14.519Z",
-      "updatedAt": "2026-01-04T06:18:14.519Z"
     },
     {
       "id": "1e200ec4-6dd7-47af-903b-cd6ade25c77d",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476887440-30999.jpg",
       "order": 3,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "23661294-6c17-42d4-989b-aa346d89bfa4",
       "galleryId": "f9a9ea29-d42d-4d2e-a901-494faf8d4129",
       "filename": "1767507561871-72157.jpg",
       "order": 4,
-      "createdAt": "2026-01-04T06:19:53.643Z",
-      "updatedAt": "2026-01-04T06:19:53.643Z"
     },
     {
       "id": "2802150f-62d4-45b9-a6ff-77d9295523d7",
       "galleryId": "510265aa-b528-4b80-9c43-fd76fa747f66",
       "filename": "1767477129734-77338.jpg",
       "order": 0,
-      "createdAt": "2026-01-03T21:52:15.795Z",
-      "updatedAt": "2026-01-03T21:52:15.795Z"
     },
     {
       "id": "3083fab1-6579-4b04-99d6-478b1daa087e",
       "galleryId": "1d0a8227-3d7d-457b-87ec-f1de193a91b6",
       "filename": "1767507274044-65564.jpg",
       "order": 2,
-      "createdAt": "2026-01-04T06:14:58.965Z",
-      "updatedAt": "2026-01-04T06:14:58.965Z"
     },
     {
       "id": "32073b9a-c4a3-4368-a6bd-65c24e14ce29",
       "galleryId": "e3bc6014-ad39-46e9-8eb2-83f2c0ef59ac",
       "filename": "1767507478076-96255.jpg",
       "order": 2,
-      "createdAt": "2026-01-04T06:18:14.519Z",
-      "updatedAt": "2026-01-04T06:18:14.519Z"
     },
     {
       "id": "353ea998-a022-4d7e-9ae0-bfeaba993669",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476887496-1353.jpg",
       "order": 5,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "368250eb-0c6e-461d-b18a-5eaac4a32af9",
       "galleryId": "de4ce9ad-863d-4465-85eb-55496ed26fea",
       "filename": "1767477185566-14349.jpg",
       "order": 1,
-      "createdAt": "2026-01-03T21:53:23.997Z",
-      "updatedAt": "2026-01-03T21:53:23.997Z"
     },
     {
       "id": "3b81a4db-7328-4f3a-8788-bc449d13dd7c",
       "galleryId": "eca9a846-d8fe-4e05-8751-3af37886d323",
       "filename": "1767507330235-11500.jpg",
       "order": 1,
-      "createdAt": "2026-01-04T06:17:34.453Z",
-      "updatedAt": "2026-01-04T06:17:34.453Z"
     },
     {
       "id": "3bc36762-b2d6-4d99-87b3-e5c7bd5d1e9e",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476887349-41986.jpg",
       "order": 1,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "428ce9e1-0e3f-4d76-9304-4a19d50f9c2e",
       "galleryId": "f9a9ea29-d42d-4d2e-a901-494faf8d4129",
       "filename": "1767507561806-18078.jpg",
       "order": 2,
-      "createdAt": "2026-01-04T06:19:53.643Z",
-      "updatedAt": "2026-01-04T06:19:53.643Z"
     },
     {
       "id": "49fd2246-e801-4c11-9781-96ff6e4b0ecd",
       "galleryId": "f9a9ea29-d42d-4d2e-a901-494faf8d4129",
       "filename": "1767507561736-80639.jpg",
       "order": 0,
-      "createdAt": "2026-01-04T06:19:53.643Z",
-      "updatedAt": "2026-01-04T06:19:53.643Z"
     },
     {
       "id": "4d50b8cf-0774-4961-9c5d-e80e6cdfbc87",
       "galleryId": "eca9a846-d8fe-4e05-8751-3af37886d323",
       "filename": "1767507330261-32868.jpg",
       "order": 2,
-      "createdAt": "2026-01-04T06:17:34.453Z",
-      "updatedAt": "2026-01-04T06:17:34.453Z"
     },
     {
       "id": "5376fe49-6b46-4093-a58f-890e02b821e2",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476887524-25827.jpg",
       "order": 6,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "53d4feb7-c3da-4ae0-b459-8daf50fbeacd",
       "galleryId": "1d0a8227-3d7d-457b-87ec-f1de193a91b6",
       "filename": "1767507274071-65154.jpg",
       "order": 3,
-      "createdAt": "2026-01-04T06:14:58.965Z",
-      "updatedAt": "2026-01-04T06:14:58.965Z"
     },
     {
       "id": "571c9e21-3f02-429e-9015-9257a96e3bb6",
       "galleryId": "10ad83ac-b82f-4325-9068-fbabc2826f1b",
       "filename": "1765433416288-65257.jpg",
       "order": 1,
-      "createdAt": "2025-12-11T06:10:27.293Z",
-      "updatedAt": "2025-12-11T06:10:27.293Z"
     },
     {
       "id": "675f28ea-919a-4498-b28e-e7461885a456",
       "galleryId": "f9a9ea29-d42d-4d2e-a901-494faf8d4129",
       "filename": "1767507561905-57138.jpg",
       "order": 5,
-      "createdAt": "2026-01-04T06:19:53.643Z",
-      "updatedAt": "2026-01-04T06:19:53.643Z"
     },
     {
       "id": "69d17879-4676-401e-93e1-bf8610c090b5",
       "galleryId": "e3bc6014-ad39-46e9-8eb2-83f2c0ef59ac",
       "filename": "1767507478160-58703.jpg",
       "order": 3,
-      "createdAt": "2026-01-04T06:18:14.519Z",
-      "updatedAt": "2026-01-04T06:18:14.519Z"
     },
     {
       "id": "770a1bde-cf13-4569-83e2-39979e475e53",
       "galleryId": "b3731871-d615-4179-b9a5-c7dfb5f10b96",
       "filename": "1765437261136-55759.jpg",
       "order": 1,
-      "createdAt": "2025-12-11T07:14:47.105Z",
-      "updatedAt": "2025-12-11T07:14:47.105Z"
     },
     {
       "id": "77abd2bb-4bc9-4233-9cb9-fe435b9e3665",
       "galleryId": "10ad83ac-b82f-4325-9068-fbabc2826f1b",
       "filename": "1765433416286-58356.jpg",
       "order": 0,
-      "createdAt": "2025-12-11T06:10:27.293Z",
-      "updatedAt": "2025-12-11T06:10:27.293Z"
     },
     {
       "id": "793c3ea3-9589-4c3c-9f39-eae2668f5c4b",
       "galleryId": "e3bc6014-ad39-46e9-8eb2-83f2c0ef59ac",
       "filename": "1765437246179-47767.jpg",
       "order": 0,
-      "createdAt": "2026-01-04T06:18:14.519Z",
-      "updatedAt": "2026-01-04T06:18:14.519Z"
     },
     {
       "id": "86be64ab-2730-4a4e-b704-cb42d582a6f0",
       "galleryId": "fc9924be-fcd4-4962-b0b0-68b975d0b400",
       "filename": "1767477107237-26353.jpg",
       "order": 2,
-      "createdAt": "2026-01-03T21:51:52.687Z",
-      "updatedAt": "2026-01-03T21:51:52.687Z"
     },
     {
       "id": "89fb6d3a-224b-44cb-a5d3-c586272aa290",
       "galleryId": "6f7823b9-687b-48ad-a485-e017131f485a",
       "filename": "1765437355677-55310.jpg",
       "order": 0,
-      "createdAt": "2025-12-11T07:15:59.081Z",
-      "updatedAt": "2025-12-11T07:15:59.081Z"
     },
     {
       "id": "8e0ed570-26ef-4bff-b936-0a8e1261294b",
       "galleryId": "eca9a846-d8fe-4e05-8751-3af37886d323",
       "filename": "1767507330323-10043.jpg",
       "order": 4,
-      "createdAt": "2026-01-04T06:17:34.453Z",
-      "updatedAt": "2026-01-04T06:17:34.453Z"
     },
     {
       "id": "9268d8ec-3709-44b7-82a4-dfb74840ca73",
       "galleryId": "f9a9ea29-d42d-4d2e-a901-494faf8d4129",
       "filename": "1767507561839-2973.jpg",
       "order": 3,
-      "createdAt": "2026-01-04T06:19:53.643Z",
-      "updatedAt": "2026-01-04T06:19:53.643Z"
     },
     {
       "id": "9708c5e1-80f7-447c-b9ee-7aa27ede63f9",
       "galleryId": "fc9924be-fcd4-4962-b0b0-68b975d0b400",
       "filename": "1767477107215-61146.jpg",
       "order": 1,
-      "createdAt": "2026-01-03T21:51:52.687Z",
-      "updatedAt": "2026-01-03T21:51:52.687Z"
     },
     {
       "id": "9b58a67e-6526-4646-8245-8a64de841048",
       "galleryId": "1d0a8227-3d7d-457b-87ec-f1de193a91b6",
       "filename": "1767507274019-6578.jpg",
       "order": 1,
-      "createdAt": "2026-01-04T06:14:58.965Z",
-      "updatedAt": "2026-01-04T06:14:58.965Z"
     },
     {
       "id": "a9169233-41e3-4553-a39b-d42dfe25bde9",
       "galleryId": "eca9a846-d8fe-4e05-8751-3af37886d323",
       "filename": "1767507330292-27197.jpg",
       "order": 3,
-      "createdAt": "2026-01-04T06:17:34.453Z",
-      "updatedAt": "2026-01-04T06:17:34.453Z"
     },
     {
       "id": "be4c2d22-511c-4643-a0d6-edc0c5b3d380",
       "galleryId": "eca9a846-d8fe-4e05-8751-3af37886d323",
       "filename": "1767507330386-63250.jpg",
       "order": 6,
-      "createdAt": "2026-01-04T06:17:34.453Z",
-      "updatedAt": "2026-01-04T06:17:34.453Z"
     },
     {
       "id": "c16d748c-69d4-4037-957b-a37aa38e124f",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476926663-25485.jpg",
       "order": 7,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "d9e7378e-9ceb-4ac8-8b2e-04aa5e7e583d",
       "galleryId": "f9a9ea29-d42d-4d2e-a901-494faf8d4129",
       "filename": "1767507561772-49731.jpg",
       "order": 1,
-      "createdAt": "2026-01-04T06:19:53.643Z",
-      "updatedAt": "2026-01-04T06:19:53.643Z"
     },
     {
       "id": "db70228a-c987-41e5-ac47-6ed15dd94fad",
       "galleryId": "de4ce9ad-863d-4465-85eb-55496ed26fea",
       "filename": "1767477185534-88350.jpg",
       "order": 0,
-      "createdAt": "2026-01-03T21:53:23.997Z",
-      "updatedAt": "2026-01-03T21:53:23.997Z"
     },
     {
       "id": "ecb61518-0989-4c6d-b997-1721ce76d4d9",
       "galleryId": "b4ebf08c-f5bf-4fba-b2b3-74ec763741cc",
       "filename": "1767476887317-46028.jpg",
       "order": 0,
-      "createdAt": "2026-01-03T21:48:53.033Z",
-      "updatedAt": "2026-01-03T21:48:53.033Z"
     },
     {
       "id": "efefb7aa-7a85-4efa-9eba-559f6b7c86d0",
       "galleryId": "b3731871-d615-4179-b9a5-c7dfb5f10b96",
       "filename": "1765433173898-16903.jpg",
       "order": 0,
-      "createdAt": "2025-12-11T07:14:47.105Z",
-      "updatedAt": "2025-12-11T07:14:47.105Z"
     },
     {
       "id": "f0e4b418-5902-470a-ab45-396eb5da4119",
       "galleryId": "fc9924be-fcd4-4962-b0b0-68b975d0b400",
       "filename": "1767477107179-97846.jpg",
       "order": 0,
-      "createdAt": "2026-01-03T21:51:52.687Z",
-      "updatedAt": "2026-01-03T21:51:52.687Z"
     },
     {
       "id": "f61ce566-48e9-40ea-bdab-97900c6748ec",
       "galleryId": "eca9a846-d8fe-4e05-8751-3af37886d323",
       "filename": "1767507330205-50713.jpg",
       "order": 0,
-      "createdAt": "2026-01-04T06:17:34.453Z",
-      "updatedAt": "2026-01-04T06:17:34.453Z"
     },
     {
       "id": "f7807607-735b-42fa-a502-5106cc3da307",
       "galleryId": "eca9a846-d8fe-4e05-8751-3af37886d323",
       "filename": "1767507330357-39190.jpg",
       "order": 5,
-      "createdAt": "2026-01-04T06:17:34.453Z",
-      "updatedAt": "2026-01-04T06:17:34.453Z"
     },
     {
       "id": "f9719a3b-ef79-4cfa-aec1-b0805518c95b",
       "galleryId": "e3bc6014-ad39-46e9-8eb2-83f2c0ef59ac",
       "filename": "1767507478323-7779.jpg",
       "order": 5,
-      "createdAt": "2026-01-04T06:18:14.519Z",
-      "updatedAt": "2026-01-04T06:18:14.519Z"
     },
     {
       "id": "fe2aaa7e-b11b-4fda-bdba-a209a3973498",
       "galleryId": "510265aa-b528-4b80-9c43-fd76fa747f66",
       "filename": "1767477129794-57696.jpg",
       "order": 2,
-      "createdAt": "2026-01-03T21:52:15.795Z",
-      "updatedAt": "2026-01-03T21:52:15.795Z"
     }
   ],
   "administration": [
@@ -15819,8 +12023,6 @@
       "name": "Ababu Waqoo",
       "description": null,
       "image": "1767507891333-61510.jpg",
-      "createdAt": "2026-01-04T06:24:55.812Z",
-      "updatedAt": "2026-01-04T06:24:55.812Z"
     }
   ],
   "report": [
@@ -15831,8 +12033,6 @@
       "reportSentTo": "7c77f8b4-a145-48a9-99c2-1d3c9ca71f04",
       "receiverStatus": "pending",
       "reportSentBy": "ee9819f5-23a8-465b-8d99-13600a7a4b15",
-      "createdAt": "2025-12-09T04:47:36.970Z",
-      "updatedAt": "2025-12-09T04:47:36.970Z"
     },
     {
       "id": "cmj1uy22l0001jswsogswpt5i",
@@ -15841,8 +12041,6 @@
       "reportSentTo": "aacf0873-50a6-4204-b2a8-29621f8e68be",
       "receiverStatus": "pending",
       "reportSentBy": "8de91ac8-7ba0-4c33-b5c6-aab17504d91b",
-      "createdAt": "2025-12-11T19:55:18.137Z",
-      "updatedAt": "2025-12-11T19:55:18.137Z"
     },
     {
       "id": "cmj4n56uk0001jsy71iwdrqzg",
@@ -15851,8 +12049,6 @@
       "reportSentTo": "aacf0873-50a6-4204-b2a8-29621f8e68be",
       "receiverStatus": "pending",
       "reportSentBy": "8de91ac8-7ba0-4c33-b5c6-aab17504d91b",
-      "createdAt": "2025-12-13T18:40:12.523Z",
-      "updatedAt": "2025-12-13T18:40:12.523Z"
     },
     {
       "id": "cmj652s7r0001js060e9ul6kg",
@@ -15861,8 +12057,6 @@
       "reportSentTo": "8de91ac8-7ba0-4c33-b5c6-aab17504d91b",
       "receiverStatus": "pending",
       "reportSentBy": "bd2a28a1-bef5-46d1-96ab-7b35e1d6bce9",
-      "createdAt": "2025-12-14T19:49:59.510Z",
-      "updatedAt": "2025-12-14T19:49:59.510Z"
     },
     {
       "id": "cmj65arv60003js06uapq7qwu",
@@ -15871,8 +12065,297 @@
       "reportSentTo": "aacf0873-50a6-4204-b2a8-29621f8e68be",
       "receiverStatus": "read",
       "reportSentBy": "8de91ac8-7ba0-4c33-b5c6-aab17504d91b",
-      "createdAt": "2025-12-14T19:56:12.306Z",
-      "updatedAt": "2026-01-08T12:15:17.720Z"
     }
   ]
+};
+
+/** ISO string -> Date. Every timestamp in the dataset is already ISO/UTC. */
+const d = (v: unknown): Date => new Date(v as string);
+
+/**
+ * Upserts are issued in batches inside a transaction: one round trip per row
+ * would make a 2,000-row seed needlessly slow, and upsert keeps it re-runnable.
+ */
+const CHUNK = 100;
+
+async function seed<T>(
+  label: string,
+  rows: T[],
+  toOp: (row: T) => Prisma.PrismaPromise<unknown>,
+): Promise<void> {
+  if (rows.length === 0) {
+    console.log(`   ${label}: nothing to seed`);
+    return;
+  }
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    await prisma.$transaction(rows.slice(i, i + CHUNK).map(toOp));
+  }
+  console.log(`   ${label}: ${rows.length}`);
 }
+
+async function main() {
+  console.log("🌱 Seeding East Shoa E-Service data...\n");
+
+  // Order below follows foreign keys: a row is only written once everything it
+  // points at already exists.
+
+  await seed("permissions", data.permission, (r: any) =>
+    prisma.permission.upsert({
+      where: { id: r.id },
+      update: { code: r.code, name: r.name, description: r.description },
+      create: {
+        id: r.id,
+        code: r.code,
+        name: r.name,
+        description: r.description,
+      },
+    }),
+  );
+
+  await seed("offices", data.office, (r: any) =>
+    prisma.office.upsert({
+      where: { id: r.id },
+      update: {
+        name: r.name,
+        phoneNumber: r.phoneNumber,
+        roomNumber: r.roomNumber,
+        address: r.address,
+        subdomain: r.subdomain,
+        logo: r.logo,
+        slogan: r.slogan,
+        settings: r.settings,
+        status: r.status,
+      },
+      create: {
+        id: r.id,
+        name: r.name,
+        phoneNumber: r.phoneNumber,
+        roomNumber: r.roomNumber,
+        address: r.address,
+        subdomain: r.subdomain,
+        logo: r.logo,
+        slogan: r.slogan,
+        settings: r.settings,
+        status: r.status,
+        startedAt: d(r.startedAt),
+      },
+    }),
+  );
+
+  await seed("roles", data.role, (r: any) =>
+    prisma.role.upsert({
+      where: { id: r.id },
+      update: { name: r.name, officeId: r.officeId },
+      create: {
+        id: r.id,
+        name: r.name,
+        officeId: r.officeId,
+      },
+    }),
+  );
+
+  await seed("role permissions", data.rolePermission, (r: any) =>
+    prisma.rolePermission.upsert({
+      // Keyed on the pair, not the id: the unique constraint is what a re-run
+      // would otherwise collide with.
+      where: { roleId_permissionId: { roleId: r.roleId, permissionId: r.permissionId } },
+      update: {},
+      create: {
+        id: r.id,
+        roleId: r.roleId,
+        permissionId: r.permissionId,
+      },
+    }),
+  );
+
+  await seed("users", data.user, (r: any) =>
+    prisma.user.upsert({
+      where: { id: r.id },
+      update: {
+        username: r.username,
+        phoneNumber: r.phoneNumber,
+        password: hashedPassword,
+        roleId: r.roleId,
+        isActive: r.isActive,
+        phoneVerified: r.phoneVerified,
+      },
+      create: {
+        id: r.id,
+        username: r.username,
+        phoneNumber: r.phoneNumber,
+        password: hashedPassword,
+        roleId: r.roleId,
+        isActive: r.isActive,
+        phoneVerified: r.phoneVerified,
+      },
+    }),
+  );
+
+  await seed("staff", data.staff, (r: any) =>
+    prisma.staff.upsert({
+      where: { id: r.id },
+      update: { userId: r.userId, officeId: r.officeId },
+      create: {
+        id: r.id,
+        userId: r.userId,
+        officeId: r.officeId,
+      },
+    }),
+  );
+
+  await seed("office availability", data.officeAvailability, (r: any) =>
+    prisma.officeAvailability.upsert({
+      where: { id: r.id },
+      update: {
+        officeId: r.officeId,
+        defaultSchedule: r.defaultSchedule,
+        slotDuration: r.slotDuration,
+        unavailableDateRanges: r.unavailableDateRanges,
+        unavailableDates: r.unavailableDates,
+        dateOverrides: r.dateOverrides,
+      },
+      create: {
+        id: r.id,
+        officeId: r.officeId,
+        defaultSchedule: r.defaultSchedule,
+        slotDuration: r.slotDuration,
+        unavailableDateRanges: r.unavailableDateRanges,
+        unavailableDates: r.unavailableDates,
+        dateOverrides: r.dateOverrides,
+      },
+    }),
+  );
+
+  await seed("services", data.service, (r: any) =>
+    prisma.service.upsert({
+      where: { id: r.id },
+      update: {
+        name: r.name,
+        description: r.description,
+        timeToTake: r.timeToTake,
+        roomNumber: r.roomNumber,
+        officeId: r.officeId,
+      },
+      create: {
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        timeToTake: r.timeToTake,
+        roomNumber: r.roomNumber,
+        officeId: r.officeId,
+      },
+    }),
+  );
+
+  await seed("requirements", data.requirement, (r: any) =>
+    prisma.requirement.upsert({
+      where: { id: r.id },
+      update: { name: r.name, description: r.description, serviceId: r.serviceId },
+      create: {
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        serviceId: r.serviceId,
+      },
+    }),
+  );
+
+  await seed("service audiences", data.serviceFor, (r: any) =>
+    prisma.serviceFor.upsert({
+      where: { id: r.id },
+      update: { name: r.name, description: r.description, serviceId: r.serviceId },
+      create: {
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        serviceId: r.serviceId,
+      },
+    }),
+  );
+
+  await seed("service-staff assignments", data.serviceStaffAssignment, (r: any) =>
+    prisma.serviceStaffAssignment.upsert({
+      where: { serviceId_staffId: { serviceId: r.serviceId, staffId: r.staffId } },
+      update: {},
+      create: {
+        id: r.id,
+        serviceId: r.serviceId,
+        staffId: r.staffId,
+      },
+    }),
+  );
+
+  await seed("galleries", data.gallery, (r: any) =>
+    prisma.gallery.upsert({
+      where: { id: r.id },
+      update: { name: r.name, description: r.description },
+      create: {
+        id: r.id,
+        name: r.name,
+        description: r.description,
+      },
+    }),
+  );
+
+  await seed("gallery images", data.galleryImage, (r: any) =>
+    prisma.galleryImage.upsert({
+      where: { id: r.id },
+      update: { galleryId: r.galleryId, filename: r.filename, order: r.order },
+      create: {
+        id: r.id,
+        galleryId: r.galleryId,
+        filename: r.filename,
+        order: r.order,
+      },
+    }),
+  );
+
+  await seed("administration", data.administration, (r: any) =>
+    prisma.administration.upsert({
+      where: { id: r.id },
+      update: { name: r.name, description: r.description, image: r.image },
+      create: {
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        image: r.image,
+      },
+    }),
+  );
+
+  await seed("reports", data.report, (r: any) =>
+    prisma.report.upsert({
+      where: { id: r.id },
+      update: {
+        name: r.name,
+        description: r.description,
+        reportSentTo: r.reportSentTo,
+        reportSentBy: r.reportSentBy,
+        receiverStatus: r.receiverStatus,
+      },
+      create: {
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        reportSentTo: r.reportSentTo,
+        reportSentBy: r.reportSentBy,
+        receiverStatus: r.receiverStatus,
+      },
+    }),
+  );
+
+  const total = Object.values(data).reduce((n, rows) => n + rows.length, 0);
+  console.log(
+    `\n🎉 Seed complete — ${total} rows across ${Object.keys(data).length} tables.`,
+  );
+  console.log(`   Every user's password is "${SEED_PASSWORD}" (stored bcrypt-hashed).`);
+}
+
+main()
+  .catch((e) => {
+    console.error("❌ Seed failed:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

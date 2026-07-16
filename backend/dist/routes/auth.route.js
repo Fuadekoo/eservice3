@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { beginTwoFactorSetup, changePassword, disableTwoFactor, getTwoFactorStatus, login, getCurrentUser, requestRegistrationOtp, updateProfile, getUserSessions, logout, registerCustomer, requestPasswordReset, resetPassword, revokeOtherSessions, revokeSession, verifyRegistrationOtp, verifyLoginTwoFactor, verifyPasswordResetOtp, verifyTwoFactorSetup, } from "../controllers/auth.controller.js";
+import { beginTwoFactorSetup, changePassword, disableTwoFactor, getTwoFactorStatus, login, getCurrentUser, requestRegistrationOtp, updateProfile, requestPhoneChangeOtp, confirmPhoneChange, getUserSessions, logout, registerCustomer, requestPasswordReset, resetPassword, revokeOtherSessions, revokeSession, verifyRegistrationOtp, verifyLoginTwoFactor, verifyPasswordResetOtp, verifyTwoFactorSetup, } from "../controllers/auth.controller.js";
 import { requireAuth } from "../middleware/auth.js";
 import { changePasswordLimiter, forgotPasswordLimiter, loginLimiter, otpVerifyLimiter, passwordResetLimiter, registrationLimiter, } from "../middleware/rate-limit.js";
 const router = Router();
@@ -175,6 +175,8 @@ router.post("/forgot-password/reset", passwordResetLimiter, asyncHandler(resetPa
 // Get current user with permissions (requires auth)
 router.get("/me", asyncMiddleware(requireAuth), asyncHandler(getCurrentUser));
 router.put("/profile", asyncMiddleware(requireAuth), asyncHandler(updateProfile));
+router.post("/profile/phone/request-otp", forgotPasswordLimiter, asyncMiddleware(requireAuth), asyncHandler(requestPhoneChangeOtp));
+router.post("/profile/phone/verify", otpVerifyLimiter, asyncMiddleware(requireAuth), asyncHandler(confirmPhoneChange));
 router.get("/sessions", asyncMiddleware(requireAuth), asyncHandler(getUserSessions));
 router.delete("/sessions/:sessionId", asyncMiddleware(requireAuth), asyncHandler(revokeSession));
 router.post("/sessions/revoke-others", asyncMiddleware(requireAuth), asyncHandler(revokeOtherSessions));

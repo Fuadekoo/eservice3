@@ -51,20 +51,28 @@ const updateProfileSchema = z
     // Stored image is an uploaded filename (see /files/upload); empty string
     // clears the current photo.
     image: z.string().trim().max(255).optional(),
-    phone: z
-      .string()
-      .trim()
-      .min(1, "Phone number is required.")
-      .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
-        message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
-      })
-      .transform((value) => normalizeEthiopianMobilePhone(value) ?? value)
-      .optional(),
+    // NOTE: phone is intentionally NOT updatable here — a phone change must be
+    // verified by OTP via /auth/profile/phone/request-otp + /verify.
   })
   .refine((value) => Object.values(value).some((v) => v !== undefined), {
     message: "Provide at least one field to update.",
     path: [],
   });
+
+const phoneChangeRequestSchema = z.object({
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required.")
+    .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+      message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+    })
+    .transform((value) => normalizeEthiopianMobilePhone(value) ?? value),
+});
+
+const phoneChangeVerifySchema = z.object({
+  otp: z.string().trim().length(6, "OTP must be 6 digits."),
+});
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required."),
@@ -378,25 +386,8 @@ export async function updateProfile(
       return res.status(400).json(buildValidationError(validationResult.error));
     }
 
-    const { phone, username, firstName, fatherName, lastName, gender, image } =
+    const { username, firstName, fatherName, lastName, gender, image } =
       validationResult.data;
-
-    if (phone !== undefined) {
-      const existingByPhone = await prisma.user.findFirst({
-        where: {
-          id: { not: req.userId },
-          phoneNumber: { in: getEthiopianMobilePhoneCandidates(phone) },
-        },
-        select: { id: true },
-      });
-
-      if (existingByPhone) {
-        return res.status(409).json({
-          error: "ConflictError",
-          message: "Phone number is already in use.",
-        });
-      }
-    }
 
     // Keep the denormalized `name` in sync when any name part changes.
     const nameChanged =
@@ -423,7 +414,6 @@ export async function updateProfile(
       where: { id: req.userId },
       data: {
         ...(username !== undefined ? { username } : {}),
-        ...(phone !== undefined ? { phoneNumber: phone } : {}),
         ...(firstName !== undefined ? { firstName } : {}),
         ...(fatherName !== undefined ? { fatherName } : {}),
         ...(lastName !== undefined ? { lastName } : {}),
@@ -456,6 +446,186 @@ export async function updateProfile(
     }
 
     return handleControllerError(res, error, "Failed to update profile");
+  }
+}
+
+// ─── Phone change (OTP-verified) ─────────────────────────────────────────────
+
+type PhoneChangeEntry = {
+  otp: string;
+  phone: string;
+  expiresAt: number;
+  attempts: number;
+};
+
+// Keyed by userId: the pending new phone awaiting OTP confirmation.
+const phoneChangeStore = new Map<string, PhoneChangeEntry>();
+
+/**
+ * Step 1 of changing the signed-in user's phone number: validate the new
+ * number, then send a one-time code to it by SMS. The number is only persisted
+ * after the code is confirmed (see confirmPhoneChange).
+ */
+export async function requestPhoneChangeOtp(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "User not authenticated",
+      });
+    }
+
+    const validationResult = phoneChangeRequestSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json(buildValidationError(validationResult.error));
+    }
+
+    const { phone } = validationResult.data;
+    const phoneCandidates = getEthiopianMobilePhoneCandidates(phone);
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { phoneNumber: true },
+    });
+    if (currentUser && phoneCandidates.includes(currentUser.phoneNumber)) {
+      return res.status(400).json({
+        error: "ValidationError",
+        message: "This is already your current phone number.",
+      });
+    }
+
+    const existingByPhone = await prisma.user.findFirst({
+      where: {
+        id: { not: req.userId },
+        phoneNumber: { in: phoneCandidates },
+      },
+      select: { id: true },
+    });
+    if (existingByPhone) {
+      return res.status(409).json({
+        error: "ConflictError",
+        message: "Phone number is already in use.",
+      });
+    }
+
+    const otp = generateOtp();
+    phoneChangeStore.set(req.userId, {
+      otp,
+      phone,
+      expiresAt: Date.now() + OTP_TTL_MS,
+      attempts: 0,
+    });
+
+    const smsResult = await sendSMS(
+      phone,
+      `Your phone verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`,
+    );
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `[phone-change] OTP for ${phone}: ${otp} (SMS: ${smsResult.success ? "sent" : "failed"})`,
+      );
+    }
+
+    return res.json({
+      data: { success: true },
+      message: "Verification code sent to the new phone number.",
+      ...(process.env.NODE_ENV === "development" ? { _devOtp: otp } : {}),
+    });
+  } catch (error) {
+    return handleControllerError(
+      res,
+      error,
+      "Failed to send phone verification code",
+    );
+  }
+}
+
+/**
+ * Step 2 of changing the phone number: confirm the OTP and persist the pending
+ * new phone number.
+ */
+export async function confirmPhoneChange(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        error: "AuthenticationError",
+        message: "User not authenticated",
+      });
+    }
+
+    const validationResult = phoneChangeVerifySchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json(buildValidationError(validationResult.error));
+    }
+
+    const entry = phoneChangeStore.get(req.userId);
+    if (!entry || Date.now() > entry.expiresAt) {
+      phoneChangeStore.delete(req.userId);
+      return res.status(400).json({
+        error: "OtpExpired",
+        message: "Verification code has expired. Please request a new code.",
+      });
+    }
+
+    entry.attempts += 1;
+    if (entry.attempts > MAX_OTP_ATTEMPTS) {
+      phoneChangeStore.delete(req.userId);
+      return res.status(429).json({
+        error: "TooManyAttempts",
+        message: "Too many incorrect attempts. Please request a new code.",
+      });
+    }
+
+    if (entry.otp !== validationResult.data.otp) {
+      return res.status(400).json({
+        error: "InvalidOtp",
+        message: "Incorrect verification code. Please try again.",
+      });
+    }
+
+    // Re-check the number is still free (guards against a race since step 1).
+    const existingByPhone = await prisma.user.findFirst({
+      where: {
+        id: { not: req.userId },
+        phoneNumber: { in: getEthiopianMobilePhoneCandidates(entry.phone) },
+      },
+      select: { id: true },
+    });
+    if (existingByPhone) {
+      phoneChangeStore.delete(req.userId);
+      return res.status(409).json({
+        error: "ConflictError",
+        message: "Phone number is already in use.",
+      });
+    }
+
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { phoneNumber: entry.phone, phoneVerified: true },
+    });
+    phoneChangeStore.delete(req.userId);
+
+    const updatedUser = await findUserForAuthById(req.userId);
+    if (!updatedUser) {
+      return res.status(404).json({
+        error: "NotFoundError",
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      data: buildAuthResponse(updatedUser),
+      message: "Phone number updated successfully.",
+    });
+  } catch (error) {
+    return handleControllerError(res, error, "Failed to update phone number");
   }
 }
 

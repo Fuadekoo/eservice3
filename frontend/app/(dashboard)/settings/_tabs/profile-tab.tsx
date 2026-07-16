@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Save, User, Phone, Upload, Loader2 } from "lucide-react";
+import { Save, User, Phone, Upload, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,19 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import {
   Select,
   SelectContent,
@@ -77,6 +90,18 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
+function syncCachedUser(user: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  try {
+    const cachedRaw = localStorage.getItem("user");
+    const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
+    localStorage.setItem("user", JSON.stringify({ ...cached, ...user }));
+    window.dispatchEvent(new Event("profile-updated"));
+  } catch {
+    /* ignore cache write errors */
+  }
+}
+
 // ─── Field ────────────────────────────────────────────────────────────────────
 
 function Field({
@@ -103,9 +128,17 @@ function Field({
 
 export function ProfileTab() {
   const [profile, setProfile] = React.useState<ProfileForm>(defaultProfile);
-  const [phoneError, setPhoneError] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
+
+  // Phone-change (OTP) dialog state.
+  const [phoneDialogOpen, setPhoneDialogOpen] = React.useState(false);
+  const [phoneStep, setPhoneStep] = React.useState<"input" | "otp">("input");
+  const [newPhone, setNewPhone] = React.useState("");
+  const [otpCode, setOtpCode] = React.useState("");
+  const [phoneError, setPhoneError] = React.useState("");
+  const [isSendingOtp, setIsSendingOtp] = React.useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = React.useState(false);
 
   // Seed from the locally cached user for an instant paint, then refresh from
   // the server so the form reflects the persisted profile.
@@ -140,7 +173,6 @@ export function ProfileTab() {
 
   const set = (field: keyof ProfileForm, value: string) => {
     setProfile((p) => ({ ...p, [field]: value }));
-    if (field === "phoneNumber") setPhoneError("");
   };
 
   const initials =
@@ -179,18 +211,9 @@ export function ProfileTab() {
   };
 
   const handleSave = async () => {
-    const normalizedPhone = profile.phoneNumber.trim()
-      ? normalizeEthiopianMobilePhone(profile.phoneNumber)
-      : "";
-
-    if (profile.phoneNumber.trim() && !normalizedPhone) {
-      setPhoneError(PHONE_FORMAT_MESSAGE);
-      toast.error(PHONE_FORMAT_MESSAGE);
-      return;
-    }
-
     setIsSubmitting(true);
     try {
+      // Phone is intentionally excluded here — it can only change via OTP.
       const response = await axiosInstance.put("/auth/profile", {
         firstName: profile.firstName.trim(),
         fatherName: profile.fatherName.trim(),
@@ -198,43 +221,93 @@ export function ProfileTab() {
         username: profile.username.trim(),
         gender: profile.gender || undefined,
         image: profile.image,
-        ...(normalizedPhone ? { phone: normalizedPhone } : {}),
       });
 
       const payload = unwrap<{ user?: Record<string, unknown> }>(response);
       const updated = payload?.user ? toProfile(payload.user) : profile;
       setProfile(updated);
-
-      // Keep the cached user in sync so the header avatar/name update too.
-      if (typeof window !== "undefined") {
-        const cachedRaw = localStorage.getItem("user");
-        const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            ...cached,
-            ...(payload?.user ?? {}),
-            firstName: updated.firstName,
-            fatherName: updated.fatherName,
-            lastName: updated.lastName,
-            username: updated.username,
-            phoneNumber: normalizedPhone || cached.phoneNumber,
-            phone: normalizedPhone || cached.phone,
-            gender: updated.gender,
-            image: updated.image,
-            name: [updated.firstName, updated.fatherName, updated.lastName]
-              .filter(Boolean)
-              .join(" "),
-          }),
-        );
-        window.dispatchEvent(new Event("profile-updated"));
-      }
-
+      syncCachedUser(payload?.user ?? {});
       toast.success("Profile updated successfully");
     } catch (error) {
       toast.error(getErrorMessage(error, "Failed to update profile"));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // ─── Phone change (OTP) ─────────────────────────────────────────────────────
+
+  const openPhoneDialog = () => {
+    setNewPhone("");
+    setOtpCode("");
+    setPhoneError("");
+    setPhoneStep("input");
+    setPhoneDialogOpen(true);
+  };
+
+  const handleSendPhoneOtp = async () => {
+    const normalized = normalizeEthiopianMobilePhone(newPhone);
+    if (!normalized) {
+      setPhoneError(PHONE_FORMAT_MESSAGE);
+      return;
+    }
+    if (normalized === profile.phoneNumber) {
+      setPhoneError("This is already your current phone number.");
+      return;
+    }
+
+    setPhoneError("");
+    setIsSendingOtp(true);
+    try {
+      await axiosInstance.post("/auth/profile/phone/request-otp", {
+        phone: normalized,
+      });
+      setOtpCode("");
+      setPhoneStep("otp");
+      toast.success("Verification code sent to the new number.");
+    } catch (error) {
+      const message = getErrorMessage(error, "Failed to send verification code");
+      setPhoneError(message);
+      toast.error(message);
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (otpCode.length !== 6) {
+      setPhoneError("Enter the 6-digit code sent to your new number.");
+      return;
+    }
+
+    setPhoneError("");
+    setIsVerifyingOtp(true);
+    try {
+      const response = await axiosInstance.post("/auth/profile/phone/verify", {
+        otp: otpCode,
+      });
+      const payload = unwrap<{ user?: Record<string, unknown> }>(response);
+      const nextPhone =
+        (typeof payload?.user?.phoneNumber === "string"
+          ? payload.user.phoneNumber
+          : undefined) ??
+        normalizeEthiopianMobilePhone(newPhone) ??
+        newPhone;
+
+      setProfile((p) => ({ ...p, phoneNumber: nextPhone }));
+      syncCachedUser({
+        ...(payload?.user ?? {}),
+        phoneNumber: nextPhone,
+        phone: nextPhone,
+      });
+      setPhoneDialogOpen(false);
+      toast.success("Phone number updated successfully");
+    } catch (error) {
+      const message = getErrorMessage(error, "Failed to verify the code");
+      setPhoneError(message);
+      toast.error(message);
+    } finally {
+      setIsVerifyingOtp(false);
     }
   };
 
@@ -321,19 +394,27 @@ export function ProfileTab() {
           </Field>
 
           <Field icon={Phone} label="Phone Number">
-            <Input
-              type="tel"
-              value={profile.phoneNumber}
-              onChange={(e) => set("phoneNumber", e.target.value)}
-              placeholder="0912345678 or 251912345678"
-              disabled={busy}
-              aria-invalid={Boolean(phoneError)}
-            />
-            {phoneError ? (
-              <p className="text-xs font-medium text-destructive">
-                {phoneError}
-              </p>
-            ) : null}
+            <div className="flex gap-2">
+              <Input
+                type="tel"
+                value={profile.phoneNumber}
+                readOnly
+                placeholder="No phone number"
+                className="bg-muted/40"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={openPhoneDialog}
+                disabled={busy}
+                className="shrink-0"
+              >
+                Change
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Changing your phone number requires SMS verification.
+            </p>
           </Field>
 
           <Field label="Gender">
@@ -375,6 +456,140 @@ export function ProfileTab() {
           </Button>
         </div>
       </CardContent>
+
+      {/* Phone change dialog */}
+      <Dialog
+        open={phoneDialogOpen}
+        onOpenChange={(open) => {
+          if (isSendingOtp || isVerifyingOtp) return;
+          setPhoneDialogOpen(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="size-5" />
+              Change phone number
+            </DialogTitle>
+            <DialogDescription>
+              {phoneStep === "input"
+                ? "Enter your new phone number. We'll send a 6-digit code to confirm it's yours."
+                : `Enter the 6-digit code we sent to ${
+                    normalizeEthiopianMobilePhone(newPhone) || newPhone
+                  }.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {phoneStep === "input" ? (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <Input
+                  type="tel"
+                  autoFocus
+                  value={newPhone}
+                  onChange={(e) => {
+                    setNewPhone(e.target.value);
+                    setPhoneError("");
+                  }}
+                  placeholder="0912345678 or 251912345678"
+                  aria-invalid={Boolean(phoneError)}
+                  disabled={isSendingOtp}
+                />
+                {phoneError ? (
+                  <p className="text-xs font-medium text-destructive">
+                    {phoneError}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => setPhoneDialogOpen(false)}
+                  disabled={isSendingOtp}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => void handleSendPhoneOtp()}
+                  disabled={isSendingOtp || !newPhone.trim()}
+                >
+                  {isSendingOtp ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Code"
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-col items-center gap-2">
+                <InputOTP
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(v) => {
+                    setOtpCode(v);
+                    setPhoneError("");
+                  }}
+                  disabled={isVerifyingOtp}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                  </InputOTPGroup>
+                  <InputOTPSeparator />
+                  <InputOTPGroup>
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+                {phoneError ? (
+                  <p className="text-xs font-medium text-destructive">
+                    {phoneError}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="link"
+                  className="px-0"
+                  onClick={() => void handleSendPhoneOtp()}
+                  disabled={isSendingOtp || isVerifyingOtp}
+                >
+                  Resend code
+                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setPhoneStep("input")}
+                    disabled={isVerifyingOtp}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={() => void handleVerifyPhoneOtp()}
+                    disabled={isVerifyingOtp || otpCode.length !== 6}
+                  >
+                    {isVerifyingOtp ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      "Verify & Update"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

@@ -58,6 +58,7 @@ import {
 } from "../ui/collapsible";
 import { LanguageToggle } from "../language-toggle";
 import { logout, isAuthenticated } from "@/lib/auth-client";
+import { getUploadUrl } from "@/lib/axios";
 import { usePermissions } from "@/lib/hooks/use-permissions";
 import { useSessionHeartbeat } from "@/hooks/use-session-heartbeat";
 import { useTranslation } from "@/lib/i18n";
@@ -121,22 +122,33 @@ function UserAvatarDropdown() {
   } | null>(null);
 
   React.useEffect(() => {
-    // Get user from localStorage
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      try {
-        const parsedUser = JSON.parse(userStr);
-        setUser({
-          name: parsedUser.name || "User",
-          username: parsedUser.username || "",
-          phone: parsedUser.phone || "",
-        });
-      } catch {
-        setUser({ name: "Administrator", username: "admin", phone: "" });
+    const loadUser = () => {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          const parsedUser = JSON.parse(userStr);
+          setUser({
+            name: parsedUser.name || "User",
+            username: parsedUser.username || "",
+            phone: parsedUser.phone || parsedUser.phoneNumber || "",
+            image: parsedUser.image || undefined,
+          });
+          return;
+        } catch {
+          /* fall through to default */
+        }
       }
-    } else {
       setUser({ name: "Administrator", username: "admin", phone: "" });
-    }
+    };
+
+    loadUser();
+    // Refresh when the profile is saved (same tab) or changed in another tab.
+    window.addEventListener("profile-updated", loadUser);
+    window.addEventListener("storage", loadUser);
+    return () => {
+      window.removeEventListener("profile-updated", loadUser);
+      window.removeEventListener("storage", loadUser);
+    };
   }, []);
 
   const handleLogout = React.useCallback(async () => {
@@ -159,7 +171,10 @@ function UserAvatarDropdown() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.image} alt={user?.name || "User"} />
+            <AvatarImage
+              src={user?.image ? getUploadUrl(user.image) : undefined}
+              alt={user?.name || "User"}
+            />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </Button>

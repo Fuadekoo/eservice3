@@ -9,6 +9,8 @@ import {
   getCurrentUser,
   requestRegistrationOtp,
   updateProfile,
+  requestPhoneChangeOtp,
+  confirmPhoneChange,
   getUserSessions,
   logout,
   registerCustomer,
@@ -221,6 +223,18 @@ router.put(
   "/profile",
   asyncMiddleware(requireAuth),
   asyncHandler(updateProfile),
+);
+router.post(
+  "/profile/phone/request-otp",
+  forgotPasswordLimiter,
+  asyncMiddleware(requireAuth),
+  asyncHandler(requestPhoneChangeOtp),
+);
+router.post(
+  "/profile/phone/verify",
+  otpVerifyLimiter,
+  asyncMiddleware(requireAuth),
+  asyncHandler(confirmPhoneChange),
 );
 router.get(
   "/sessions",

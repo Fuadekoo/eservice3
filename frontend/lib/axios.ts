@@ -21,11 +21,18 @@ export const NEXT_PUBLIC_API_BASE_URL =
  */
 export const getUploadUrl = (filename?: string) => {
   if (!filename) return "";
-  // If it's already a full URL, return it
+  // If it's already a full URL (e.g. an external logo), return it as-is.
   if (filename.startsWith("http")) return filename;
 
-  // Use the local API proxy route to stream images
-  return `/api/uploads/${filename}`;
+  // Stored values vary: a bare filename ("abc.jpg") or a full path such as
+  // "/api/filedata/abc.jpg", "/filedata/abc.jpg" or "/uploads/abc.jpg". The
+  // proxy resolves files by name against the backend's /uploads and /filedata
+  // dirs, so reduce anything with slashes down to just the filename — otherwise
+  // a stored path becomes the broken "/api/uploads//api/filedata/abc.jpg".
+  const name = filename.split("/").pop() || filename;
+
+  // Stream through the local API proxy route.
+  return `/api/uploads/${name}`;
 };
 
 export class ApiError extends Error {

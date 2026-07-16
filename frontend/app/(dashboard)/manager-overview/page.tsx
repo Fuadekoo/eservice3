@@ -248,6 +248,30 @@ function ManagerOverviewContent() {
   );
 }
 
+// Renders the office logo, falling back to a placeholder icon when the image
+// is missing or fails to load (so a broken logo never shows a broken-image box).
+function OfficeLogo({ logo, name }: { logo?: string | null; name: string }) {
+  const [failed, setFailed] = React.useState(false);
+  const url = logo ? getUploadUrl(logo) : "";
+
+  if (!url || failed) {
+    return (
+      <div className="size-full flex items-center justify-center">
+        <Building2 className="size-9 text-primary/40" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={url}
+      alt={name}
+      className="size-full object-contain p-2"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 // ── Main Content ───────────────────────────────────────────────────────────────
 function OverviewContent({ data }: { data: OverviewData }) {
   const { office, staff, requests, appointments } = data;
@@ -296,17 +320,7 @@ function OverviewContent({ data }: { data: OverviewData }) {
             {/* Logo + name column */}
             <div className="lg:w-64 shrink-0 bg-muted/30 p-6 flex flex-col items-center text-center border-b lg:border-b-0 lg:border-r border-border/50">
               <div className="size-20 rounded-2xl bg-background border border-border shadow-sm overflow-hidden mb-4">
-                {office.logo ? (
-                  <img
-                    src={getUploadUrl(office.logo)}
-                    alt={office.name}
-                    className="size-full object-contain p-2"
-                  />
-                ) : (
-                  <div className="size-full flex items-center justify-center">
-                    <Building2 className="size-9 text-primary/40" />
-                  </div>
-                )}
+                <OfficeLogo logo={office.logo} name={office.name} />
               </div>
               <h2 className="text-lg font-black leading-tight">{office.name}</h2>
               {office.slogan && (

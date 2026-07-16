@@ -30,10 +30,13 @@ export function hasOfficeWideAccess(roleName, isAdmin = false, isManager = false
         OFFICE_WIDE_ACCESS_ROLES.has(normalizeRoleName(roleName)));
 }
 export function requestHasOfficeWideAccess(req) {
-    const authRequest = req;
-    const roleName = getRequestStaff(authRequest)?.role?.name ??
-        getRequestOfficer(authRequest)?.role?.name;
-    return hasOfficeWideAccess(roleName, req.isAdmin === true, req.isManager === true);
+    // Only ADMIN transcends office boundaries. A MANAGER or STAFF user is bound to
+    // their single assigned office, so every list/scope query must filter to it —
+    // otherwise they would see (and act on) data from every office. This governs
+    // the read-scope helpers below (getScopedOfficeId / applyOfficeScope /
+    // getMyOfficeIds / canAccessOffice); staff-creation assignment uses
+    // hasOfficeWideAccess() directly and is intentionally left unchanged.
+    return req.isAdmin === true;
 }
 const OFFICE_ASSIGNMENT_EXEMPT_ROLES = new Set(["ADMIN", "CUSTOMER"]);
 export function roleRequiresOfficeAssignment(roleName, isAdmin = false, isManager = false) {

@@ -59,6 +59,7 @@ import {
 import { LanguageToggle } from "../language-toggle";
 import { logout, isAuthenticated } from "@/lib/auth-client";
 import { usePermissions } from "@/lib/hooks/use-permissions";
+import { useSessionHeartbeat } from "@/hooks/use-session-heartbeat";
 import { useTranslation } from "@/lib/i18n";
 
 function getBreadcrumbs(pathname: string) {
@@ -204,6 +205,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     hasAnyPermission,
   } = usePermissions();
   const [openMenus, setOpenMenus] = React.useState<Record<string, boolean>>({});
+
+  // Auto-sign-out this device if its session is revoked from another device.
+  useSessionHeartbeat();
 
   const getNavTitle = (i: any) => i?.title ?? i?.label ?? i?.name ?? "";
 

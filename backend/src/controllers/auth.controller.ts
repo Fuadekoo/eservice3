@@ -834,7 +834,9 @@ export async function getUserSessions(
     const sessions = await listUserAuthSessions(req.userId);
 
     return res.json({
-      data: sessions.map((s) => serializeAuthSession(s, req.sessionId)),
+      data: {
+        sessions: sessions.map((s) => serializeAuthSession(s, req.sessionId)),
+      },
       message: "Sessions retrieved successfully",
     });
   } catch (error) {

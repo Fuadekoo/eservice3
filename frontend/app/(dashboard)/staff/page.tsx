@@ -6,7 +6,7 @@ import {
   Search,
   RotateCw,
   Users,
-  Filter,
+  Building2,
   SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -42,7 +42,13 @@ import {
 
 export default function StaffPage() {
   const { data: sessionData, isPending: isSessionPending } = useSession();
-  const sessionOfficeId = sessionData?.session?.officeId;
+  // /auth/me nests the office under `office` / `user.officeId`; keep the legacy
+  // top-level `officeId` as a first choice for forward-compatibility.
+  const sessionOfficeId =
+    sessionData?.session?.officeId ??
+    sessionData?.session?.user?.officeId ??
+    sessionData?.session?.office?.id;
+  const sessionOffice = sessionData?.session?.office ?? null;
   const roleNameUpper = sessionData?.session?.role?.name?.toUpperCase() || "";
   const isAdmin =
     roleNameUpper === "ADMIN" ||
@@ -237,30 +243,55 @@ export default function StaffPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
-              <Filter className="size-4 text-muted-foreground" />
-              <Select
-                value={selectedOfficeId}
-                onValueChange={(value) => {
-                  setSelectedOfficeId(value);
-                  setSelectedRoleId("all");
-                  setCurrentPage(1);
-                }}
-                disabled={!isAdmin}
+            {isAdmin ? (
+              /* Admin: choose any office */
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
+                <Building2 className="size-4 text-muted-foreground" />
+                <Select
+                  value={selectedOfficeId}
+                  onValueChange={(value) => {
+                    setSelectedOfficeId(value);
+                    setSelectedRoleId("all");
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[200px] border-none bg-transparent h-8 focus:ring-0">
+                    <SelectValue placeholder="All Offices" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Offices</SelectItem>
+                    {offices.map((office) => (
+                      <SelectItem key={office.id} value={office.id}>
+                        {office.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              /* Manager / staff: office is fixed to their own, shown read-only */
+              <div
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/5"
+                title="You can only manage staff in your assigned office"
               >
-                <SelectTrigger className="w-[160px] border-none bg-transparent h-8 focus:ring-0">
-                  <SelectValue placeholder="All Offices" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Offices</SelectItem>
-                  {offices.map((office) => (
-                    <SelectItem key={office.id} value={office.id}>
-                      {office.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                  <Building2 className="size-4" />
+                </div>
+                <div className="flex flex-col leading-tight min-w-0">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Your Office
+                  </span>
+                  <span className="max-w-[220px] truncate text-sm font-semibold text-foreground">
+                    {sessionOffice?.name ?? "—"}
+                    {sessionOffice?.subdomain ? (
+                      <span className="ml-1 font-mono text-[11px] font-normal text-muted-foreground">
+                        ({sessionOffice.subdomain})
+                      </span>
+                    ) : null}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-xl border border-border">
               <SlidersHorizontal className="size-4 text-muted-foreground" />

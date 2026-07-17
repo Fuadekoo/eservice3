@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { uploadFile, serveByFilepath } from "../controllers/upload.controller.js";
-import { upload } from "../middleware/upload.js";
+import { upload, validateUploadedFile } from "../middleware/upload.js";
 import { requireAuth } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadLimiter } from "../middleware/rate-limit.js";
@@ -14,6 +14,7 @@ router.post(
   uploadLimiter,
   requireAuth,
   upload.single("file"),
+  asyncHandler(validateUploadedFile),
   asyncHandler(uploadFile),
 );
 

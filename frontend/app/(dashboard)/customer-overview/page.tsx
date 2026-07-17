@@ -104,6 +104,7 @@ function StatCard({
   bg,
   sub,
   href,
+  className,
 }: {
   label: string;
   value: number | string;
@@ -112,30 +113,46 @@ function StatCard({
   bg: string;
   sub?: string;
   href?: string;
+  className?: string;
 }) {
   const inner = (
     <Card
       className={cn(
-        "border-none shadow-sm ring-1 ring-border/50 bg-card/60 backdrop-blur-sm transition-all duration-200",
+        "h-full border-none shadow-sm ring-1 ring-border/50 bg-card/60 backdrop-blur-sm transition-all duration-200",
         href && "hover:ring-primary/30 hover:shadow-md cursor-pointer"
       )}
     >
-      <CardContent className="p-5">
+      <CardContent className="p-4 sm:p-5">
         <div className="flex items-start justify-between">
-          <div className={cn("p-2.5 rounded-xl", bg)}>
-            <Icon className={cn("size-5", color)} />
+          <div className={cn("p-2 sm:p-2.5 rounded-xl", bg)}>
+            <Icon className={cn("size-4 sm:size-5", color)} />
           </div>
-          {href && <ArrowRight className="size-4 text-muted-foreground/40 mt-1" />}
+          {href && (
+            <ArrowRight className="size-4 text-muted-foreground/40 mt-1 shrink-0" />
+          )}
         </div>
-        <div className="mt-4">
-          <p className="text-3xl font-black">{value}</p>
-          <p className="text-sm font-semibold text-foreground mt-0.5">{label}</p>
-          {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+        <div className="mt-3 sm:mt-4 min-w-0">
+          <p className="text-2xl sm:text-3xl font-black">{value}</p>
+          <p className="text-xs sm:text-sm font-semibold text-foreground mt-0.5 text-pretty">
+            {label}
+          </p>
+          {/* The subtitle is a nicety, not information the card needs to convey. */}
+          {sub && (
+            <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">{sub}</p>
+          )}
         </div>
       </CardContent>
     </Card>
   );
-  return href ? <Link href={href}>{inner}</Link> : inner;
+  // The grid positions this element, so the span class has to ride on the
+  // outermost node — the Link when there is one.
+  return href ? (
+    <Link href={href} className={cn("block", className)}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={className}>{inner}</div>
+  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────
@@ -214,14 +231,20 @@ function CustomerOverviewContent() {
   const isLoading = isSessionPending || isLoadingRequests;
 
   return (
-    <div className="space-y-8 p-6 lg:p-8">
+    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8">
       {/* ── Welcome Header ── */}
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-black tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-balance">
           {isSessionPending ? "Loading…" : greet(user?.name || user?.username)}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          <span className="hidden sm:inline">
+            {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          </span>
+          {/* The full weekday/month date wraps to two lines on a narrow phone. */}
+          <span className="sm:hidden">
+            {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          </span>
           {stats.pending > 0 && (
             <span className="ml-2 text-amber-600 font-semibold">
               · {stats.pending} request{stats.pending > 1 ? "s" : ""} awaiting review
@@ -237,7 +260,7 @@ function CustomerOverviewContent() {
       ) : (
         <>
           {/* ── KPI Cards ── */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             <StatCard
               label="Total Applications"
               value={stats.total}
@@ -274,6 +297,8 @@ function CustomerOverviewContent() {
               sub="Fully completed"
               href="/requests"
             />
+            {/* Fifth of five: at 2 columns it would sit alone in a half-width
+                cell, so let it fill the row instead. */}
             <StatCard
               label="Appointments"
               value={stats.upcoming}
@@ -282,14 +307,15 @@ function CustomerOverviewContent() {
               bg="bg-violet-500/10"
               sub="Upcoming"
               href="/appointments"
+              className="col-span-2 md:col-span-1"
             />
           </div>
 
           {/* ── This Month Banner ── */}
           {stats.thisMonth > 0 && (
-            <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-primary/5 border border-primary/10">
-              <TrendingUp className="size-5 text-primary shrink-0" />
-              <p className="text-sm font-medium">
+            <div className="flex items-start sm:items-center gap-3 px-4 sm:px-5 py-3.5 rounded-2xl bg-primary/5 border border-primary/10">
+              <TrendingUp className="size-5 text-primary shrink-0 mt-0.5 sm:mt-0" />
+              <p className="text-xs sm:text-sm font-medium text-pretty">
                 You submitted{" "}
                 <span className="font-black text-primary">{stats.thisMonth}</span>{" "}
                 application{stats.thisMonth > 1 ? "s" : ""} this month.
@@ -305,7 +331,7 @@ function CustomerOverviewContent() {
             </div>
           )}
 
-          <div className="grid gap-6 lg:grid-cols-5">
+          <div className="grid gap-4 sm:gap-6 lg:grid-cols-5">
             {/* ── Recent Requests ── */}
             <Card className="border-none shadow-sm ring-1 ring-border/50 lg:col-span-3">
               <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -340,7 +366,7 @@ function CustomerOverviewContent() {
                       return (
                         <div
                           key={req.id}
-                          className="px-6 py-4 flex items-center gap-4 hover:bg-muted/10 transition-colors"
+                          className="px-4 sm:px-6 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-muted/10 transition-colors"
                         >
                           {/* Status dot */}
                           <div
@@ -355,7 +381,7 @@ function CustomerOverviewContent() {
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-sm truncate">{req.service?.name}</p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <Building2 className="size-3 text-muted-foreground" />
+                              <Building2 className="size-3 text-muted-foreground shrink-0" />
                               <p className="text-xs text-muted-foreground truncate">
                                 {req.service?.office?.name}
                               </p>
@@ -363,7 +389,9 @@ function CustomerOverviewContent() {
                           </div>
                           <div className="shrink-0 text-right space-y-1">
                             <StatusBadge status={status} />
-                            <p className="text-xs text-muted-foreground">{formatDate(req.createdAt)}</p>
+                            <p className="text-xs text-muted-foreground whitespace-nowrap">
+                              {formatDate(req.createdAt)}
+                            </p>
                           </div>
                         </div>
                       );
@@ -374,7 +402,7 @@ function CustomerOverviewContent() {
             </Card>
 
             {/* ── Right column: Upcoming Apts + Status Breakdown ── */}
-            <div className="lg:col-span-2 flex flex-col gap-6">
+            <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6">
               {/* Upcoming Appointments */}
               <Card className="border-none shadow-sm ring-1 ring-border/50">
                 <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -401,7 +429,7 @@ function CustomerOverviewContent() {
                   ) : (
                     <div className="divide-y divide-border/50">
                       {stats.upcomingApts.map((apt) => (
-                        <div key={apt.id} className="px-5 py-3.5 flex items-start gap-3">
+                        <div key={apt.id} className="px-4 sm:px-5 py-3.5 flex items-start gap-3">
                           <div className="size-9 rounded-xl bg-violet-500/10 flex flex-col items-center justify-center shrink-0">
                             <p className="text-xs font-black text-violet-600 leading-none">
                               {new Date(apt.date).toLocaleDateString("en-US", { month: "short" })}
@@ -414,9 +442,11 @@ function CustomerOverviewContent() {
                             <p className="font-semibold text-sm truncate">
                               {apt.request?.service?.name}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                              <Building2 className="size-3" />
-                              {apt.request?.service?.office?.name}
+                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1 min-w-0">
+                              <Building2 className="size-3 shrink-0" />
+                              <span className="truncate">
+                                {apt.request?.service?.office?.name}
+                              </span>
                             </p>
                             {apt.time && (
                               <p className="text-xs text-violet-600 font-semibold mt-0.5">
@@ -494,12 +524,12 @@ function CustomerOverviewContent() {
               { label: "Appointments", href: "/appointments", icon: Calendar, color: "text-violet-600", bg: "bg-violet-500/10" },
               { label: "Leave Feedback", href: "/feedback", icon: Star, color: "text-yellow-600", bg: "bg-yellow-500/10" },
             ].map(({ label, href, icon: Icon, color, bg }) => (
-              <Link key={href} href={href}>
-                <div className="flex items-center gap-3 p-4 rounded-2xl border border-border/50 bg-card/50 hover:bg-muted/30 hover:border-primary/20 transition-all cursor-pointer group">
+              <Link key={href} href={href} className="block h-full">
+                <div className="flex h-full items-center gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-2xl border border-border/50 bg-card/50 hover:bg-muted/30 hover:border-primary/20 transition-all cursor-pointer group">
                   <div className={cn("p-2 rounded-xl shrink-0", bg)}>
                     <Icon className={cn("size-4", color)} />
                   </div>
-                  <span className="text-sm font-semibold group-hover:text-primary transition-colors">
+                  <span className="text-xs sm:text-sm font-semibold leading-tight text-pretty min-w-0 group-hover:text-primary transition-colors">
                     {label}
                   </span>
                 </div>

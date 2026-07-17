@@ -3432,6 +3432,198 @@
         "am": "ሪፖርት",
         "om": "Gabaasa"
       }
+    },
+    {
+      "key": "How to Apply",
+      "translations": {
+        "en": "How to Apply",
+        "am": "እንዴት ማመልከት እንደሚቻል",
+        "om": "Akkaataa Iyyannoo Galchan"
+      }
+    },
+    {
+      "key": "A simple step-by-step guide to applying for government services through East Shoa E-Service.",
+      "translations": {
+        "en": "A simple step-by-step guide to applying for government services through East Shoa E-Service.",
+        "am": "በምስራቅ ሸዋ ኢ-አገልግሎት በኩል የመንግስት አገልግሎቶችን ለማመልከት ቀላል ደረጃ በደረጃ መመሪያ።",
+        "om": "Karaa E-Tajaajila Baha Shawaatiin tajaajiloota mootummaaf iyyachuuf qajeelfama salphaa tarkaanfii tarkaanfiin."
+      }
+    },
+    {
+      "key": "Step-by-Step Guide",
+      "translations": {
+        "en": "Step-by-Step Guide",
+        "am": "ደረጃ በደረጃ መመሪያ",
+        "om": "Qajeelfama Tarkaanfii Tarkaanfiin"
+      }
+    },
+    {
+      "key": "Follow these steps from account creation to submitting your service request.",
+      "translations": {
+        "en": "Follow these steps from account creation to submitting your service request.",
+        "am": "ከመለያ መፍጠር ጀምሮ የአገልግሎት ጥያቄዎን እስከማስገባት ድረስ እነዚህን ደረጃዎች ይከተሉ።",
+        "om": "Herrega uumuu irraa hanga gaaffii tajaajilaa galchuutti tarkaanfiiwwan kanneen hordofaa."
+      }
+    },
+    {
+      "key": "Create Your Account",
+      "translations": {
+        "en": "Create Your Account",
+        "am": "መለያዎን ይፍጠሩ",
+        "om": "Herrega Keessan Uumaa"
+      }
+    },
+    {
+      "key": "Sign up with your phone number and personal details to access government services online.",
+      "translations": {
+        "en": "Sign up with your phone number and personal details to access government services online.",
+        "am": "የመንግስት አገልግሎቶችን በመስመር ላይ ለማግኘት በስልክ ቁጥርዎ እና በግል መረጃዎ ይመዝገቡ።",
+        "om": "Tajaajiloota mootummaa toora interneetiin argachuuf lakkoofsa bilbila keessanii fi odeeffannoo dhuunfaa keessaniin galmaaʼaa."
+      }
+    },
+    {
+      "key": "Find a Service",
+      "translations": {
+        "en": "Find a Service",
+        "am": "አገልግሎት ያግኙ",
+        "om": "Tajaajila Barbaadaa"
+      }
+    },
+    {
+      "key": "Browse government offices on the homepage or search for the service you need.",
+      "translations": {
+        "en": "Browse government offices on the homepage or search for the service you need.",
+        "am": "በመነሻ ገጹ ላይ የመንግስት ቢሮዎችን ይመልከቱ ወይም የሚፈልጉትን አገልግሎት ይፈልጉ።",
+        "om": "Fuula jalqabaa irratti waajjiraalee mootummaa ilaalaa yookaan tajaajila barbaaddan barbaadaa."
+      }
+    },
+    {
+      "key": "Review Requirements",
+      "translations": {
+        "en": "Review Requirements",
+        "am": "መስፈርቶችን ይገምግሙ",
+        "om": "Ulaagaalee Ilaalaa"
+      }
+    },
+    {
+      "key": "Open the service details to read the description, processing time, and required documents.",
+      "translations": {
+        "en": "Open the service details to read the description, processing time, and required documents.",
+        "am": "መግለጫውን፣ የማስኬጃ ጊዜውን እና የሚያስፈልጉ ሰነዶችን ለማንበብ የአገልግሎቱን ዝርዝር ይክፈቱ።",
+        "om": "Ibsa, yeroo adeemsaa fi sanadoota barbaachisan dubbisuuf bal'ina tajaajilaa banaa."
+      }
+    },
+    {
+      "key": "Submit Your Application",
+      "translations": {
+        "en": "Submit Your Application",
+        "am": "ማመልከቻዎን ያስገቡ",
+        "om": "Iyyannoo Keessan Galchaa"
+      }
+    },
+    {
+      "key": "Click Apply Now, complete the application form, and upload any required documents.",
+      "translations": {
+        "en": "Click Apply Now, complete the application form, and upload any required documents.",
+        "am": "አሁን አመልክት የሚለውን ይጫኑ፣ የማመልከቻ ቅጹን ይሙሉ እና የሚያስፈልጉ ሰነዶችን ይጫኑ።",
+        "om": "Ammaan Iyyadhu jedhu tuqaa, unka iyyannoo guutaa, sanadoota barbaachisan ol kaaʼaa."
+      }
+    },
+    {
+      "key": "Track Your Request",
+      "translations": {
+        "en": "Track Your Request",
+        "am": "ጥያቄዎን ይከታተሉ",
+        "om": "Gaaffii Keessan Hordofaa"
+      }
+    },
+    {
+      "key": "Log in to your dashboard to follow your request status and receive updates.",
+      "translations": {
+        "en": "Log in to your dashboard to follow your request status and receive updates.",
+        "am": "የጥያቄዎን ሁኔታ ለመከታተል እና ዝማኔዎችን ለመቀበል ወደ ዳሽቦርድዎ ይግቡ።",
+        "om": "Haala gaaffii keessanii hordofuu fi haaromsa argachuuf gabatee too'annoo keessan seenaa."
+      }
+    },
+    {
+      "key": "Video Tutorial",
+      "translations": {
+        "en": "Video Tutorial",
+        "am": "የቪዲዮ አጋዥ ስልጠና",
+        "om": "Barnoota Viidiyoo"
+      }
+    },
+    {
+      "key": "Watch this short tutorial to see the full application process in action.",
+      "translations": {
+        "en": "Watch this short tutorial to see the full application process in action.",
+        "am": "ሙሉውን የማመልከቻ ሂደት በተግባር ለማየት ይህን አጭር አጋዥ ስልጠና ይመልከቱ።",
+        "om": "Adeemsa iyyannoo guutuu hojiirra oolu ilaaluuf barnoota gabaabaa kana daawwadhaa."
+      }
+    },
+    {
+      "key": "How to apply tutorial video",
+      "translations": {
+        "en": "How to apply tutorial video",
+        "am": "እንዴት ማመልከት እንደሚቻል የሚያሳይ ቪዲዮ",
+        "om": "Viidiyoo barnoota akkaataa iyyannoo galchan"
+      }
+    },
+    {
+      "key": "Open on YouTube",
+      "translations": {
+        "en": "Open on YouTube",
+        "am": "በዩቲዩብ ላይ ይክፈቱ",
+        "om": "YouTube irratti Banaa"
+      }
+    },
+    {
+      "key": "Video tutorial coming soon.",
+      "translations": {
+        "en": "Video tutorial coming soon.",
+        "am": "የቪዲዮ አጋዥ ስልጠና በቅርቡ ይመጣል።",
+        "om": "Barnoonni viidiyoo dhiyootti ni dhufa."
+      }
+    },
+    {
+      "key": "An administrator can add a YouTube link by setting NEXT_PUBLIC_TUTORIAL_VIDEO_URL in the environment.",
+      "translations": {
+        "en": "An administrator can add a YouTube link by setting NEXT_PUBLIC_TUTORIAL_VIDEO_URL in the environment.",
+        "am": "አስተዳዳሪ NEXT_PUBLIC_TUTORIAL_VIDEO_URL በአካባቢው በማዘጋጀት የዩቲዩብ አገናኝ ማከል ይችላል።",
+        "om": "Bulchaan naannoo keessatti NEXT_PUBLIC_TUTORIAL_VIDEO_URL qindeessuudhaan hidhaa YouTube dabaluu ni dandaʼa."
+      }
+    },
+    {
+      "key": "Start Your Application",
+      "translations": {
+        "en": "Start Your Application",
+        "am": "ማመልከቻዎን ይጀምሩ",
+        "om": "Iyyannoo Keessan Jalqabaa"
+      }
+    },
+    {
+      "key": "Create an account or sign in, then browse services and apply online in minutes.",
+      "translations": {
+        "en": "Create an account or sign in, then browse services and apply online in minutes.",
+        "am": "መለያ ይፍጠሩ ወይም ይግቡ፣ ከዚያም አገልግሎቶችን ይመልከቱ እና በደቂቃዎች ውስጥ በመስመር ላይ ያመልክቱ።",
+        "om": "Herrega uumaa yookaan seenaa, ergasii tajaajiloota ilaalaa daqiiqaa muraasa keessatti toora interneetiin iyyadhaa."
+      }
+    },
+    {
+      "key": "Create Account",
+      "translations": {
+        "en": "Create Account",
+        "am": "መለያ ይፍጠሩ",
+        "om": "Herrega Uumaa"
+      }
+    },
+    {
+      "key": "Browse Services",
+      "translations": {
+        "en": "Browse Services",
+        "am": "አገልግሎቶችን ይመልከቱ",
+        "om": "Tajaajiloota Ilaalaa"
+      }
     }
   ]
 }

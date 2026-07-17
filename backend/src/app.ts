@@ -10,6 +10,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import { auditLogger } from "./middleware/audit.js";
 import { globalLimiter } from "./middleware/rate-limit.js";
+import { xssGuard } from "./middleware/xss-guard.js";
 import routes from "./routes/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -136,6 +137,10 @@ app.use("/back-api", (req, res, next) => {
   console.log(`[App] Request query:`, req.query);
   next();
 });
+
+// Reject script/HTML payloads before any handler can persist them.
+// Must run after the body parsers and before the routes.
+app.use("/back-api", xssGuard);
 
 // Audit logger: capture activity for all API requests
 app.use("/back-api", auditLogger);

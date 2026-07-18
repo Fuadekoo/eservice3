@@ -44,40 +44,47 @@ export async function GET(
     apiBaseUrl = `http://localhost:4000${apiBaseUrl}`;
   }
 
-  const backendUrl = apiBaseUrl.replace("/back-api", "");
-  const imageUrl = `${backendUrl}/uploads/${filename}`;
+  // Strip a trailing slash so we don't build "//uploads".
+  apiBaseUrl = apiBaseUrl.replace(/\/+$/, "");
+  const backendRoot = apiBaseUrl.replace(/\/back-api$/, "");
 
-  try {
-    const response = await fetch(imageUrl);
+  // Build every plausible location the file could be served from. The backend
+  // mounts these dirs both at the root (direct-to-backend, dev) and under
+  // /back-api (through the production reverse proxy), so try all of them and
+  // use the first that responds. This keeps the proxy working regardless of
+  // how the backend is exposed in a given environment.
+  const encoded = encodeURIComponent(filename);
+  const candidates = [
+    `${apiBaseUrl}/uploads/${encoded}`,
+    `${apiBaseUrl}/filedata/${encoded}`,
+    `${backendRoot}/uploads/${encoded}`,
+    `${backendRoot}/filedata/${encoded}`,
+  ];
+  // De-duplicate (backendRoot === apiBaseUrl when there is no /back-api suffix).
+  const urls = [...new Set(candidates)];
 
-    if (!response.ok) {
-      // If not found in /uploads, try /filedata as per backend app.ts config
-      const filedataUrl = `${backendUrl}/filedata/${filename}`;
-      const filedataResponse = await fetch(filedataUrl);
+  let lastError: unknown = null;
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) continue;
 
-      if (!filedataResponse.ok) {
-        return new NextResponse("Image not found", { status: 404 });
-      }
-
-      const data = await filedataResponse.arrayBuffer();
+      const data = await response.arrayBuffer();
       const contentType =
-        filedataResponse.headers.get("content-type") ||
-        guessContentType(filename);
+        response.headers.get("content-type") || guessContentType(filename);
 
       return new NextResponse(data, {
         headers: buildFileHeaders(filename, contentType),
       });
+    } catch (error) {
+      // Network error against this candidate (e.g. wrong port) — keep trying.
+      lastError = error;
     }
-
-    const data = await response.arrayBuffer();
-    const contentType =
-      response.headers.get("content-type") || guessContentType(filename);
-
-    return new NextResponse(data, {
-      headers: buildFileHeaders(filename, contentType),
-    });
-  } catch (error) {
-    console.error("Error streaming image:", error);
-    return new NextResponse("Error fetching image", { status: 500 });
   }
+
+  if (lastError) {
+    console.error("Error streaming image:", lastError, "tried:", urls);
+    return new NextResponse("Error fetching image", { status: 502 });
+  }
+  return new NextResponse("Image not found", { status: 404 });
 }

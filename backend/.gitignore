@@ -11,4 +11,4 @@ backend/node_modules
 backend/dist/*
 
 #filedata
-backend/filedata/*
+# backend/filedata/*

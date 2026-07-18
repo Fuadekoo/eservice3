@@ -13,6 +13,7 @@ import {
   Download,
   User,
   Phone,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -129,6 +130,12 @@ export function ReviewRequestDialog({
         : false;
 
   const fileCount = request.fileData?.length || 0;
+
+  // The customer's note is stored as the `description` on the uploaded file
+  // records (see request creation). Surface the first non-empty one.
+  const customerNote = request.fileData
+    ?.map((file: any) => file.description)
+    .find((desc: string | null) => desc && desc.trim().length > 0);
 
   const tabs: { value: TabValue; label: string; badge?: number }[] = [
     { value: "details", label: "Details" },
@@ -285,6 +292,19 @@ export function ReviewRequestDialog({
                     </div>
                   </div>
                 </div>
+
+                {/* Customer note */}
+                {customerNote && (
+                  <div className="space-y-2 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <MessageSquare className="size-3.5" />
+                      Customer Note
+                    </p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                      {customerNote}
+                    </p>
+                  </div>
+                )}
 
                 {/* Notes / reject form */}
                 {canApprove && !showRejectForm && (

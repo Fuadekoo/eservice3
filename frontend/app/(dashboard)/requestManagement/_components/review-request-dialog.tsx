@@ -17,15 +17,19 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useRequestStore, type ServiceRequest } from "@/lib/stores/request-store";
+import {
+  useRequestStore,
+  type ServiceRequest,
+} from "@/lib/stores/request-store";
 import { PdfViewerModal } from "@/components/ui/pdf-viewer-modal";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { getUploadUrl } from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -147,327 +151,378 @@ export function ReviewRequestDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-xl p-0 gap-0 rounded-2xl overflow-hidden flex flex-col">
-          {/* ── Header ──────────────────────────────────── */}
-          <div className="border-b border-border/60 bg-background shrink-0">
-            <div className="px-6 pt-5 pb-0">
-              <DialogHeader className="mb-4 space-y-0.5">
-                <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <FileText className="size-4" />
-                  </div>
-                  Request Details
-                </DialogTitle>
-                <DialogDescription className="pl-10">
-                  View detailed information about this request
-                </DialogDescription>
-              </DialogHeader>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="right"
+          className="w-full! max-w-none! gap-0 overflow-hidden bg-background p-0 sm:w-[92vw]! sm:rounded-l-2xl lg:w-152!"
+        >
+          <div className="flex h-full min-h-0 flex-col">
+            {/* ── Header ──────────────────────────────────── */}
+            <div className="shrink-0 border-b border-border/60 bg-background">
+              <div className="px-5 pt-5 pb-0 sm:px-6">
+                <SheetHeader className="mb-4 gap-0.5 p-0 pr-12">
+                  <SheetTitle className="flex items-center gap-2 text-lg font-bold sm:text-xl">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <FileText className="size-4" />
+                    </div>
+                    Request Details
+                  </SheetTitle>
+                  <SheetDescription className="pl-10">
+                    View detailed information about this request
+                  </SheetDescription>
+                </SheetHeader>
 
-              {/* Underline tab bar */}
-              <div
-                className="flex -mb-px overflow-x-auto scrollbar-hide"
-                role="tablist"
-              >
-                {tabs.map((tab) => {
-                  const isActive = activeTab === tab.value;
-                  return (
-                    <button
-                      key={tab.value}
-                      role="tab"
-                      aria-selected={isActive}
-                      onClick={() => setActiveTab(tab.value)}
-                      className={cn(
-                        "flex items-center gap-2 shrink-0 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-all duration-150",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                        isActive
-                          ? "border-primary text-primary"
-                          : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
-                      )}
-                    >
-                      {tab.label}
-                      {tab.badge !== undefined && (
-                        <span
-                          className={cn(
-                            "inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-[10px] font-bold",
-                            isActive
-                              ? "bg-primary/15 text-primary"
-                              : "bg-muted text-muted-foreground",
-                          )}
-                        >
-                          {tab.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                {/* Underline tab bar */}
+                <div
+                  className="scrollbar-hide -mb-px flex overflow-x-auto"
+                  role="tablist"
+                >
+                  {tabs.map((tab) => {
+                    const isActive = activeTab === tab.value;
+                    return (
+                      <button
+                        key={tab.value}
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => setActiveTab(tab.value)}
+                        className={cn(
+                          "flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all duration-150",
+                          "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none",
+                          isActive
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                        )}
+                      >
+                        {tab.label}
+                        {tab.badge !== undefined && (
+                          <span
+                            className={cn(
+                              "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
+                              isActive
+                                ? "bg-primary/15 text-primary"
+                                : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {tab.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* ── Body ────────────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 max-h-[60vh]">
-            {/* Details tab */}
-            {activeTab === "details" && (
-              <div className="space-y-5">
-                {/* Applicant info */}
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/30 border border-border/50">
-                  <div className="size-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary font-bold text-lg">
-                    {(request.user?.username || "U").charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-base leading-tight">
-                      {request.service?.name || "Service"}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <User className="size-3.5" />
-                        {request.user?.username}
-                      </span>
-                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Phone className="size-3.5" />
-                        {request.user?.phoneNumber}
-                      </span>
-                    </div>
-                  </div>
-                  <Badge
-                    className={cn(
-                      "shrink-0 text-[10px] font-bold uppercase rounded-full border-none",
-                      request.statusbystaff === "approved"
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                        : request.statusbystaff === "rejected"
-                          ? "bg-destructive/15 text-destructive"
-                          : "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-                    )}
-                  >
-                    {request.statusbystaff || "pending"}
-                  </Badge>
-                </div>
-
-                {/* Request info grid */}
-                <div className="space-y-3 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
-                  <div className="flex items-start gap-3 py-2 border-b border-border/40 last:border-0">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-muted-foreground">
-                      <Calendar className="size-3.5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Preferred Date
-                      </p>
-                      <p className="text-sm font-semibold">
-                        {new Date(request.date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 py-2 border-b border-border/40 last:border-0">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-muted-foreground">
-                      <MapPin className="size-3.5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Current Address
-                      </p>
-                      <p className="text-sm font-semibold">
-                        {request.currentAddress}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 py-2">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-muted-foreground">
-                      <Building2 className="size-3.5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Office &amp; Room
-                      </p>
-                      <p className="text-sm font-semibold">
-                        {request.service?.office?.name}
-                        {request.service?.office?.roomNumber &&
-                          ` — ${request.service.office.roomNumber}`}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Customer note */}
-                {customerNote && (
-                  <div className="space-y-2 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      <MessageSquare className="size-3.5" />
-                      Customer Note
-                    </p>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                      {customerNote}
-                    </p>
-                  </div>
-                )}
-
-                {/* Notes / reject form */}
-                {canApprove && !showRejectForm && (
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Approval Notes
-                    </p>
-                    <Textarea
-                      placeholder="Add optional notes for the customer..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="resize-none rounded-xl"
-                      rows={2}
-                    />
-                  </div>
-                )}
-
-                {showRejectForm && (
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-destructive uppercase tracking-wider">
-                      Rejection Reason
-                    </p>
-                    <Textarea
-                      placeholder="Enter reason for rejection (required)..."
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      className="resize-none rounded-xl border-destructive/30 focus-visible:ring-destructive/30"
-                      rows={3}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Files tab */}
-            {activeTab === "files" && (
-              <div className="space-y-3">
-                {fileCount > 0 ? (
-                  request.fileData?.map((file: any, index: number) => (
-                    <div
-                      key={file.id}
-                      className="rounded-xl border border-border/50 bg-card p-4 space-y-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
-                          <FileText className="size-4 text-red-500" />
-                        </div>
-                        <p className="font-semibold text-sm truncate flex-1">
-                          {file.name}
+            {/* ── Body ────────────────────────────────────── */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+              {/* Details tab */}
+              {activeTab === "details" && (
+                <div className="space-y-4">
+                  {/* Applicant + status */}
+                  <div className="min-w-0 rounded-xl border border-border/50 bg-muted/30 p-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+                        {(request.user?.username || "U")
+                          .charAt(0)
+                          .toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="flex items-center gap-1.5 text-sm font-bold">
+                          <User className="size-3.5 shrink-0 text-muted-foreground" />
+                          <span className="truncate">
+                            {request.user?.username}
+                          </span>
                         </p>
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-bold shrink-0"
-                        >
-                          PDF
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span>File {index + 1}</span>
-                        <span className="mx-1">·</span>
-                        <span>
-                          {new Date(
-                            file.createdAt || request.createdAt,
-                          ).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-3 pt-1 border-t border-border/40">
-                        <button
-                          onClick={() => {
-                            setViewingFileId(file.id);
-                            setViewingFileName(file.name);
-                            setViewingFilepath(file.filepath);
-                          }}
-                          className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
-                        >
-                          <Eye className="size-4" />
-                          View
-                        </button>
                         <a
-                          href={`http://localhost:4000/files/${file.filepath}`}
-                          download
-                          className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                          href={`tel:${request.user?.phoneNumber ?? ""}`}
+                          className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
                         >
-                          <Download className="size-4" />
-                          Download
+                          <Phone className="size-3.5 shrink-0" />
+                          <span className="truncate">
+                            {request.user?.phoneNumber}
+                          </span>
                         </a>
                       </div>
+                      <Badge
+                        className={cn(
+                          "shrink-0 rounded-full border-none text-[10px] font-bold uppercase",
+                          request.statusbystaff === "approved"
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                            : request.statusbystaff === "rejected"
+                              ? "bg-destructive/15 text-destructive"
+                              : "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+                        )}
+                      >
+                        {request.statusbystaff || "pending"}
+                      </Badge>
                     </div>
-                  ))
-                ) : (
-                  <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20">
-                    <FileText className="size-8 text-muted-foreground/30 mb-2" />
-                    <p className="text-sm font-semibold text-muted-foreground">
-                      No files attached
-                    </p>
-                    <p className="text-xs text-muted-foreground/60 mt-0.5">
-                      The applicant did not upload any documents
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
-          {/* ── Footer (actions) ────────────────────────── */}
-          {showFooter && (
-            <div className="shrink-0 border-t border-border bg-muted/30 px-6 py-4">
-              {showRejectForm ? (
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1 rounded-xl"
-                    onClick={() => setShowRejectForm(false)}
-                    disabled={isRejecting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    className="flex-1 rounded-xl"
-                    onClick={handleReject}
-                    disabled={isRejecting || !rejectReason.trim()}
-                  >
-                    {isRejecting && (
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                    )}
-                    Confirm Reject
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  {canReject && (
-                    <Button
-                      variant="outline"
-                      className="flex-1 rounded-xl text-destructive border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
-                      onClick={() => setShowRejectForm(true)}
-                    >
-                      <XCircle className="size-4 mr-1.5" />
-                      Reject
-                    </Button>
+                    {/* Service name gets the full width — it is the longest field */}
+                    <div className="mt-3 border-t border-border/50 pt-3">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Service
+                      </p>
+                      <h3 className="mt-0.5 text-base leading-snug font-bold wrap-break-word">
+                        {request.service?.name || "Service"}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Request info grid */}
+                  <div className="space-y-3 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
+                    <div className="flex items-start gap-3 py-2 border-b border-border/40 last:border-0">
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-muted-foreground">
+                        <Calendar className="size-3.5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Preferred Date
+                        </p>
+                        <p className="text-sm font-semibold">
+                          {new Date(request.date).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 py-2 border-b border-border/40 last:border-0">
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-muted-foreground">
+                        <MapPin className="size-3.5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Current Address
+                        </p>
+                        <p className="text-sm font-semibold">
+                          {request.currentAddress}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 py-2">
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-muted-foreground">
+                        <Building2 className="size-3.5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Office &amp; Room
+                        </p>
+                        <p className="text-sm font-semibold">
+                          {request.service?.office?.name}
+                          {request.service?.office?.roomNumber &&
+                            ` — ${request.service.office.roomNumber}`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer note */}
+                  {customerNote && (
+                    <div className="space-y-2 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
+                      <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        <MessageSquare className="size-3.5" />
+                        Customer Note
+                      </p>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                        {customerNote}
+                      </p>
+                    </div>
                   )}
-                  {canApprove && (
-                    <Button
-                      className="flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={handleApprove}
-                      disabled={isApproving}
-                    >
-                      {isApproving ? (
-                        <Loader2 className="mr-2 size-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="size-4 mr-1.5" />
-                      )}
-                      Approve
-                    </Button>
+
+                  {/* Notes / reject form */}
+                  {canApprove && !showRejectForm && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Approval Notes
+                      </p>
+                      <Textarea
+                        placeholder="Add optional notes for the customer..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="resize-none rounded-xl"
+                        rows={2}
+                      />
+                    </div>
+                  )}
+
+                  {showRejectForm && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold text-destructive uppercase tracking-wider">
+                        Rejection Reason
+                      </p>
+                      <Textarea
+                        placeholder="Enter reason for rejection (required)..."
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        className="resize-none rounded-xl border-destructive/30 focus-visible:ring-destructive/30"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Files tab */}
+              {activeTab === "files" && (
+                <div className="space-y-3">
+                  {fileCount > 0 ? (
+                    request.fileData?.map((file: any, index: number) => {
+                      const ext = (
+                        String(file.name ?? "")
+                          .split(".")
+                          .pop() ?? ""
+                      ).toUpperCase();
+                      const isPdf = ext === "PDF";
+                      return (
+                        <div
+                          key={file.id}
+                          className="min-w-0 space-y-3 rounded-xl border border-border/50 bg-card p-4"
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div
+                              className={cn(
+                                "flex size-9 shrink-0 items-center justify-center rounded-lg",
+                                isPdf ? "bg-red-500/10" : "bg-primary/10",
+                              )}
+                            >
+                              <FileText
+                                className={cn(
+                                  "size-4",
+                                  isPdf ? "text-red-500" : "text-primary",
+                                )}
+                              />
+                            </div>
+                            <p className="min-w-0 flex-1 truncate text-sm font-semibold">
+                              {file.name}
+                            </p>
+                            {ext && (
+                              <Badge
+                                variant="outline"
+                                className="shrink-0 text-[10px] font-bold"
+                              >
+                                {ext}
+                              </Badge>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span>File {index + 1}</span>
+                            <span className="mx-1">·</span>
+                            <span>
+                              {new Date(
+                                file.createdAt || request.createdAt,
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 border-t border-border/40 pt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 flex-1 rounded-lg text-xs font-semibold"
+                              onClick={() => {
+                                setViewingFileId(file.id);
+                                setViewingFileName(file.name);
+                                setViewingFilepath(file.filepath);
+                              }}
+                            >
+                              <Eye className="mr-1.5 size-4" />
+                              View
+                            </Button>
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="h-9 flex-1 rounded-lg text-xs font-semibold"
+                            >
+                              {/* Proxied through /api/uploads so the link works
+                                  on any host, not just a local backend. */}
+                              <a
+                                href={getUploadUrl(file.filepath)}
+                                download={file.name}
+                              >
+                                <Download className="mr-1.5 size-4" />
+                                Download
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20">
+                      <FileText className="mb-2 size-8 text-muted-foreground/30" />
+                      <p className="text-sm font-semibold text-muted-foreground">
+                        No files attached
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground/60">
+                        The applicant did not upload any documents
+                      </p>
+                    </div>
                   )}
                 </div>
               )}
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+            {/* ── Footer (actions) ────────────────────────── */}
+            {showFooter && (
+              <div className="shrink-0 border-t border-border bg-muted/30 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+                {showRejectForm ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="h-11 flex-1 rounded-xl font-semibold"
+                      onClick={() => setShowRejectForm(false)}
+                      disabled={isRejecting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="h-11 flex-1 rounded-xl font-semibold"
+                      onClick={handleReject}
+                      disabled={isRejecting || !rejectReason.trim()}
+                    >
+                      {isRejecting && (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      )}
+                      Confirm Reject
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    {canReject && (
+                      <Button
+                        variant="outline"
+                        className="h-11 flex-1 rounded-xl border-destructive/30 font-semibold text-destructive hover:bg-destructive/5 hover:text-destructive"
+                        onClick={() => setShowRejectForm(true)}
+                      >
+                        <XCircle className="mr-1.5 size-4" />
+                        Reject
+                      </Button>
+                    )}
+                    {canApprove && (
+                      <Button
+                        className="h-11 flex-1 rounded-xl bg-emerald-600 font-semibold text-white hover:bg-emerald-700"
+                        onClick={handleApprove}
+                        disabled={isApproving}
+                      >
+                        {isApproving ? (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="mr-1.5 size-4" />
+                        )}
+                        Approve
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <PdfViewerModal
         open={!!viewingFileId}

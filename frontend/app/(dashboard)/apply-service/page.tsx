@@ -31,13 +31,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -133,6 +133,14 @@ function ApplyServiceContent() {
     void fetchOffices();
   }, [fetchOffices]);
 
+  // Open the apply panel, always starting on the first mobile step
+  const openApply = React.useCallback((service: ServiceDetail) => {
+    setApplyService(service);
+    setMobileApplyStep("details");
+    setForm({ address: "", date: "", notes: "" });
+    setUploadedFiles([]);
+  }, []);
+
   // ── Auto-select service from URL ──────────────────────────────────────────
   React.useEffect(() => {
     if (serviceIdParam && offices.length > 0) {
@@ -162,7 +170,7 @@ function ApplyServiceContent() {
               (s) => s.id === serviceIdParam,
             );
             if (service) {
-              setApplyService(service);
+              openApply(service);
             }
           }
         } catch (error) {
@@ -173,7 +181,7 @@ function ApplyServiceContent() {
       };
       void findAndLoad();
     }
-  }, [serviceIdParam, offices]);
+  }, [serviceIdParam, offices, openApply]);
 
   // ── Fetch full office ─────────────────────────────────────────────────────
   const handleSelectOffice = async (officeId: string) => {
@@ -321,24 +329,24 @@ function ApplyServiceContent() {
         ) : undefined
       }
     >
-      <div className="w-full space-y-6 overflow-x-hidden">
+      <div className="w-full min-w-0 space-y-5 overflow-x-hidden sm:space-y-6">
         {/* ── OFFICE GRID ── */}
         {!selectedOffice && (
           <>
-            <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-              <div>
+            <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/60 bg-card p-3.5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
+              <div className="min-w-0">
                 <p className="text-sm font-bold">Find the right office</p>
                 <p className="text-xs text-muted-foreground">
                   {filteredOffices.length} of {offices.length} offices available
                 </p>
               </div>
-              <div className="relative w-full sm:max-w-sm">
+              <div className="relative w-full min-w-0 sm:max-w-sm">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search offices..."
                   value={officeSearch}
                   onChange={(e) => setOfficeSearch(e.target.value)}
-                  className="h-10 rounded-xl pl-9"
+                  className="h-10 w-full rounded-xl pl-9"
                 />
               </div>
             </div>
@@ -368,12 +376,12 @@ function ApplyServiceContent() {
                     type="button"
                     onClick={() => handleSelectOffice(office.id)}
                     disabled={isFetchingOffice}
-                    className="group flex min-h-52 flex-col overflow-hidden rounded-xl border border-border/60 bg-card text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md disabled:pointer-events-none disabled:opacity-60"
+                    className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md disabled:pointer-events-none disabled:opacity-60 sm:min-h-52"
                   >
                     <div className="h-1 w-full bg-primary/30 transition-colors group-hover:bg-primary" />
-                    <div className="flex flex-1 flex-col p-5">
-                      <div className="flex items-start gap-3">
-                        <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/40 transition-colors group-hover:border-primary/30">
+                    <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/40 transition-colors group-hover:border-primary/30 sm:size-14">
                           {office.logo ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -382,25 +390,23 @@ function ApplyServiceContent() {
                               className="size-full object-contain p-1.5"
                             />
                           ) : (
-                            <Building2 className="size-7 text-primary/50" />
+                            <Building2 className="size-6 text-primary/50 sm:size-7" />
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="line-clamp-2 text-base font-bold leading-snug transition-colors group-hover:text-primary">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="line-clamp-2 text-sm font-bold leading-snug wrap-break-word transition-colors group-hover:text-primary sm:text-base">
                             {office.name}
                           </h3>
                           {office.address && (
-                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                            <p className="mt-1 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
                               <MapPin className="size-3 shrink-0" />
-                              <span className="line-clamp-1">
-                                {office.address}
-                              </span>
+                              <span className="truncate">{office.address}</span>
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap gap-1.5 sm:mt-4 sm:gap-2">
                         <Badge variant="secondary" className="font-semibold">
                           {office._count?.service ??
                             office.service?.length ??
@@ -414,16 +420,16 @@ function ApplyServiceContent() {
                         )}
                       </div>
 
-                      <div className="mt-4 flex-1 border-t border-border/50 pt-4">
+                      <div className="mt-3 min-w-0 flex-1 border-t border-border/50 pt-3 sm:mt-4 sm:pt-4">
                         {office.service && office.service.length > 0 ? (
                           <div className="space-y-1.5">
                             {office.service.slice(0, 3).map((s) => (
                               <div
                                 key={s.id}
-                                className="flex items-center gap-2 text-xs text-muted-foreground"
+                                className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground"
                               >
-                                <span className="size-1.5 rounded-full bg-primary/40 shrink-0" />
-                                <span className="line-clamp-1">{s.name}</span>
+                                <span className="size-1.5 shrink-0 rounded-full bg-primary/40" />
+                                <span className="truncate">{s.name}</span>
                               </div>
                             ))}
                             {(office._count?.service ?? 0) > 3 && (
@@ -439,7 +445,7 @@ function ApplyServiceContent() {
                         )}
                       </div>
 
-                      <div className="mt-4 flex items-center justify-between text-xs font-bold text-primary">
+                      <div className="mt-3 flex items-center justify-between text-xs font-bold text-primary sm:mt-4">
                         <span>Select office</span>
                         <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                       </div>
@@ -459,12 +465,12 @@ function ApplyServiceContent() {
                 <Loader2 className="size-7 animate-spin text-primary" />
               </div>
             ) : (
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-primary/15 bg-primary/5 p-4">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex min-w-0 items-center gap-4">
-                        <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-background">
+              <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
+                <div className="min-w-0 space-y-4">
+                  <div className="min-w-0 rounded-xl border border-primary/15 bg-primary/5 p-3 sm:p-4">
+                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                        <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-background sm:size-14">
                           {selectedOffice.logo ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -473,14 +479,14 @@ function ApplyServiceContent() {
                               className="size-full object-contain p-1.5"
                             />
                           ) : (
-                            <Building2 className="size-7 text-primary/60" />
+                            <Building2 className="size-6 text-primary/60 sm:size-7" />
                           )}
                         </div>
-                        <div className="min-w-0">
-                          <p className="truncate font-black">
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 text-sm font-black leading-snug wrap-break-word sm:truncate sm:text-base">
                             {selectedOffice.name}
                           </p>
-                          <div className="mt-1 flex flex-wrap gap-2">
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
                             <Badge
                               variant="secondary"
                               className="font-semibold"
@@ -493,13 +499,13 @@ function ApplyServiceContent() {
                           </div>
                         </div>
                       </div>
-                      <div className="relative w-full sm:max-w-xs">
+                      <div className="relative w-full min-w-0 sm:max-w-xs">
                         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                           placeholder="Search services..."
                           value={serviceSearch}
                           onChange={(e) => setServiceSearch(e.target.value)}
-                          className="h-10 rounded-xl pl-9"
+                          className="h-10 w-full rounded-xl pl-9"
                         />
                       </div>
                     </div>
@@ -522,19 +528,15 @@ function ApplyServiceContent() {
                           key={service.id}
                           service={service}
                           onDetail={() => setDetailService(service)}
-                          onApply={() => {
-                            setApplyService(service);
-                            setForm({ address: "", date: "", notes: "" });
-                            setUploadedFiles([]);
-                          }}
+                          onApply={() => openApply(service)}
                         />
                       ))}
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-                  <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                <div className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
+                  <div className="min-w-0 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
                     <SectionLabel title="Office Details" icon={Building2} />
                     <div className="mt-4 space-y-3">
                       {selectedOffice.address && (
@@ -573,106 +575,88 @@ function ApplyServiceContent() {
           </>
         )}
 
-        {/* ── SERVICE DETAIL DIALOG ── */}
-        <Dialog
+        {/* ── SERVICE DETAIL PANEL (right side sheet) ── */}
+        <Sheet
           open={!!detailService}
           onOpenChange={(o) => !o && setDetailService(null)}
         >
-          <DialogContent className="sm:max-w-xl rounded-2xl p-0 gap-0">
+          <SheetContent
+            side="right"
+            showCloseButton={false}
+            className="w-full! max-w-none! gap-0 overflow-hidden bg-background p-0 sm:w-[32rem]! sm:rounded-l-2xl"
+          >
             {detailService && (
-              <>
-                <div className="bg-primary px-6 py-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <DialogHeader>
-                      <DialogTitle className="text-white text-xl font-black leading-snug">
-                        {detailService.name}
-                      </DialogTitle>
-                      <DialogDescription className="text-primary-foreground/70 text-sm mt-0.5">
-                        {selectedOffice?.name}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogClose className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/40">
-                      <X className="size-4" />
-                    </DialogClose>
-                  </div>
+              <div className="flex h-full min-h-0 flex-col">
+                {/* ── Header ── */}
+                <div className="relative shrink-0 border-b border-border/60 bg-primary px-5 py-4 text-primary-foreground sm:px-6 sm:py-5">
+                  <SheetClose className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:size-10">
+                    <X className="size-4" />
+                    <span className="sr-only">Close</span>
+                  </SheetClose>
+
+                  <SheetHeader className="gap-0.5 p-0 pr-14">
+                    <SheetTitle className="text-lg font-black leading-snug text-primary-foreground sm:text-xl">
+                      {detailService.name}
+                    </SheetTitle>
+                    <SheetDescription className="flex items-center gap-1.5 text-sm text-primary-foreground/75">
+                      <Building2 className="size-3.5 shrink-0" />
+                      <span className="truncate">{selectedOffice?.name}</span>
+                    </SheetDescription>
+                  </SheetHeader>
                 </div>
-                <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
-                  <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                        <FileText className="size-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-black">{detailService.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {selectedOffice?.name}
-                        </p>
-                      </div>
-                    </div>
-                    <Separator />
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                        Description
-                      </p>
-                      <p className="text-sm text-foreground/80 leading-relaxed">
+
+                {/* ── Scrollable body ── */}
+                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 sm:p-6">
+                  {/* Meta tiles */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <InfoTile
+                      icon={Clock}
+                      label="Time to take"
+                      value={detailService.timeToTake}
+                    />
+                    {detailService.roomNumber ? (
+                      <InfoTile
+                        icon={MapPin}
+                        label="Room"
+                        value={detailService.roomNumber}
+                      />
+                    ) : (
+                      selectedOffice?.address && (
+                        <InfoTile
+                          icon={MapPin}
+                          label="Address"
+                          value={selectedOffice.address}
+                        />
+                      )
+                    )}
+                  </div>
+
+                  {detailService.description && (
+                    <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+                      <SectionLabel title="Description" icon={FileText} />
+                      <p className="mt-2.5 text-sm leading-relaxed text-foreground/80">
                         {detailService.description}
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-5 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Clock className="size-4 text-primary" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Time to take
-                          </p>
-                          <p className="font-bold">
-                            {detailService.timeToTake}
-                          </p>
-                        </div>
-                      </div>
-                      {detailService.roomNumber && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="size-4 text-primary" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              Room
-                            </p>
-                            <p className="font-bold">
-                              {detailService.roomNumber}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      className="w-full rounded-xl font-bold h-11"
-                      onClick={() => {
-                        setDetailService(null);
-                        setApplyService(detailService);
-                        setForm({ address: "", date: "", notes: "" });
-                        setUploadedFiles([]);
-                      }}
-                    >
-                      <Send className="size-4 mr-2" /> Apply Now
-                    </Button>
-                  </div>
+                  )}
+
                   {detailService.requirements &&
                     detailService.requirements.length > 0 && (
-                      <div className="rounded-xl border border-border bg-card p-5">
-                        <p className="font-bold mb-3 flex items-center gap-2">
-                          <CheckCircle2 className="size-4 text-primary" />{" "}
-                          Requirements
-                        </p>
-                        <ul className="space-y-2.5">
+                      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 sm:p-5">
+                        <SectionLabel
+                          title="Required Documents"
+                          icon={CheckCircle2}
+                        />
+                        <ul className="mt-3 space-y-2.5">
                           {detailService.requirements.map((r) => (
                             <li key={r.id} className="flex items-start gap-2.5">
-                              <span className="size-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                              <div>
+                              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                              <div className="min-w-0">
                                 <p className="text-sm font-semibold">
                                   {r.name}
                                 </p>
                                 {r.description && (
-                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                  <p className="mt-0.5 text-xs text-muted-foreground">
                                     {r.description}
                                   </p>
                                 )}
@@ -682,26 +666,24 @@ function ApplyServiceContent() {
                         </ul>
                       </div>
                     )}
+
                   {detailService.serviceFors &&
                     detailService.serviceFors.length > 0 && (
-                      <div className="rounded-xl border border-border bg-card p-5">
-                        <p className="font-bold mb-3 flex items-center gap-2">
-                          <Users className="size-4 text-primary" /> This Service
-                          Is For
-                        </p>
-                        <ul className="space-y-2.5">
+                      <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+                        <SectionLabel title="This Service Is For" icon={Users} />
+                        <ul className="mt-3 space-y-2.5">
                           {detailService.serviceFors.map((item) => (
                             <li
                               key={item.id}
                               className="flex items-start gap-2.5"
                             >
-                              <span className="size-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                              <div>
+                              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/60" />
+                              <div className="min-w-0">
                                 <p className="text-sm font-semibold">
                                   {item.name}
                                 </p>
                                 {item.description && (
-                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                  <p className="mt-0.5 text-xs text-muted-foreground">
                                     {item.description}
                                   </p>
                                 )}
@@ -712,13 +694,36 @@ function ApplyServiceContent() {
                       </div>
                     )}
                 </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
 
-        {/* ── APPLY FORM DIALOG ── */}
-        <Dialog
+                {/* ── Sticky action bar ── */}
+                <div className="shrink-0 border-t border-border/60 bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      className="h-12 shrink-0 rounded-xl px-5 font-bold sm:h-11"
+                      onClick={() => setDetailService(null)}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      className="h-12 min-w-0 flex-1 rounded-xl text-sm font-black sm:h-11"
+                      onClick={() => {
+                        setDetailService(null);
+                        openApply(detailService);
+                      }}
+                    >
+                      <Send className="mr-2 size-4" />
+                      <span className="truncate">Apply Now</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+
+        {/* ── APPLY FORM PANEL (right side sheet) ── */}
+        <Sheet
           open={!!applyService}
           onOpenChange={(o) => {
             if (!o && !isSubmitting) {
@@ -726,75 +731,103 @@ function ApplyServiceContent() {
             }
           }}
         >
-          <DialogContent className="w-[95vw] max-w-none gap-0 rounded-xl p-0 sm:max-w-6xl">
+          <SheetContent
+            side="right"
+            showCloseButton={false}
+            className="w-full! max-w-none! gap-0 overflow-hidden bg-background p-0 sm:w-[94vw]! sm:rounded-l-2xl lg:w-[64rem]!"
+          >
             {applyService && (
-              <div className="flex max-h-[92vh] flex-col">
-                <div className="shrink-0 border-b border-border/60 bg-primary px-6 py-5 text-primary-foreground sm:px-8">
-                  <div className="flex flex-col gap-4 pr-10 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0">
-                      <DialogHeader>
-                        <DialogTitle className="text-xl font-black leading-tight text-primary-foreground sm:text-2xl">
-                          Apply for Service
-                        </DialogTitle>
-                        <DialogDescription className="sr-only">
-                          Submit an application for {applyService.name} at{" "}
-                          {selectedOffice?.name ?? "the selected office"}.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <span className="inline-flex max-w-full items-center gap-2 rounded-lg bg-white/15 px-3 py-2 text-sm font-semibold text-white/90">
-                          <FileText className="size-3.5 shrink-0" />
-                          <span className="truncate">{applyService.name}</span>
-                        </span>
-                        <span className="inline-flex max-w-full items-center gap-2 rounded-lg bg-white/15 px-3 py-2 text-sm font-semibold text-white/90">
-                          <Building2 className="size-3.5 shrink-0" />
-                          <span className="truncate">
-                            {selectedOffice?.name ?? "Office"}
-                          </span>
-                        </span>
-                      </div>
-                    </div>
+              <div className="flex h-full min-h-0 flex-col">
+                {/* ── Header ── */}
+                <div className="relative shrink-0 border-b border-border/60 bg-primary px-5 py-4 text-primary-foreground sm:px-7 sm:py-5">
+                  <SheetClose className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:size-10">
+                    <X className="size-4" />
+                    <span className="sr-only">Close</span>
+                  </SheetClose>
 
-                    <div className="flex items-center justify-end gap-3">
-                      <Badge className="border-white/20 bg-white/15 px-3 py-2 font-semibold text-white">
-                        {uploadedFiles.length} file
-                        {uploadedFiles.length !== 1 ? "s" : ""}
-                      </Badge>
-                    </div>
+                  <SheetHeader className="gap-0 p-0 pr-14">
+                    <SheetTitle className="text-lg font-black leading-tight text-primary-foreground sm:text-2xl">
+                      Apply for Service
+                    </SheetTitle>
+                    <SheetDescription className="sr-only">
+                      Submit an application for {applyService.name} at{" "}
+                      {selectedOffice?.name ?? "the selected office"}.
+                    </SheetDescription>
+                  </SheetHeader>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex min-w-0 max-w-full items-center gap-2 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-semibold text-white/90 sm:px-3 sm:py-2 sm:text-sm">
+                      <FileText className="size-3.5 shrink-0" />
+                      <span className="truncate">{applyService.name}</span>
+                    </span>
+                    <span className="inline-flex min-w-0 max-w-full items-center gap-2 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-semibold text-white/90 sm:px-3 sm:py-2 sm:text-sm">
+                      <Building2 className="size-3.5 shrink-0" />
+                      <span className="truncate">
+                        {selectedOffice?.name ?? "Office"}
+                      </span>
+                    </span>
+                    <Badge className="border-white/20 bg-white/15 px-2.5 py-1.5 text-xs font-semibold text-white sm:px-3 sm:py-2">
+                      {uploadedFiles.length} file
+                      {uploadedFiles.length !== 1 ? "s" : ""}
+                    </Badge>
                   </div>
+                </div>
+
+                {/* ── Mobile step indicator ── */}
+                <div className="flex shrink-0 items-center gap-2 border-b border-border/50 bg-muted/30 px-4 py-2.5 lg:hidden">
+                  {(
+                    [
+                      { key: "details", label: "Service info" },
+                      { key: "form", label: "Your details" },
+                    ] as const
+                  ).map((s, i) => {
+                    const active = mobileApplyStep === s.key;
+                    const done = mobileApplyStep === "form" && i === 0;
+                    return (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => setMobileApplyStep(s.key)}
+                        className={cn(
+                          "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors",
+                          active && "bg-primary/10",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black transition-colors",
+                            active || done
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted-foreground/20 text-muted-foreground",
+                          )}
+                        >
+                          {i + 1}
+                        </span>
+                        <span
+                          className={cn(
+                            "truncate text-xs font-bold",
+                            active ? "text-primary" : "text-muted-foreground",
+                          )}
+                        >
+                          {s.label}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* ── Two-column body ── */}
                 <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-                  <div className="lg:hidden border-b border-border/50 bg-muted/20 px-5 py-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-semibold text-foreground">
-                        {mobileApplyStep === "details"
-                          ? "Service information"
-                          : "Application details"}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setMobileApplyStep((prev) =>
-                            prev === "details" ? "form" : "details",
-                          )
-                        }
-                      >
-                        {mobileApplyStep === "details" ? "Next" : "Back"}
-                      </Button>
-                    </div>
-                  </div>
-
                   {/* LEFT — Service info, availability, requirements */}
                   <div
                     className={cn(
-                      "border-b border-border/50 bg-muted/25 lg:w-2/5 lg:border-b-0 lg:border-r",
-                      mobileApplyStep === "form" ? "hidden lg:block" : "block",
+                      "min-h-0 flex-1 overflow-y-auto border-border/50 bg-muted/25 lg:w-2/5 lg:flex-none lg:border-r",
+                      mobileApplyStep === "form"
+                        ? "hidden lg:block"
+                        : "block lg:block",
                     )}
                   >
-                    <div className="p-6 space-y-5">
+                    <div className="space-y-5 p-5 sm:p-6">
                       {/* Service info tiles */}
                       <div>
                         <SectionLabel
@@ -949,13 +982,13 @@ function ApplyServiceContent() {
                   {/* RIGHT — Form fields */}
                   <div
                     className={cn(
-                      "overflow-y-auto bg-background lg:w-3/5",
+                      "min-h-0 flex-1 overflow-y-auto bg-background lg:w-3/5 lg:flex-none",
                       mobileApplyStep === "details"
                         ? "hidden lg:block"
-                        : "block",
+                        : "block lg:block",
                     )}
                   >
-                    <div className="p-6 space-y-5">
+                    <div className="space-y-5 p-5 sm:p-6">
                       {/* Application details */}
                       <div>
                         <SectionLabel
@@ -1107,38 +1140,79 @@ function ApplyServiceContent() {
                         )}
                       </div>
 
-                      <Separator />
+                    </div>
+                  </div>
+                </div>
 
-                      {/* Submit actions */}
-                      <div className="flex flex-col-reverse gap-3 pb-1 sm:flex-row">
+                {/* ── Sticky action bar ── */}
+                <div className="shrink-0 border-t border-border/60 bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
+                  {/* Mobile — step aware */}
+                  <div className="flex items-center gap-3 lg:hidden">
+                    {mobileApplyStep === "details" ? (
+                      <Button
+                        className="h-12 w-full rounded-xl text-sm font-black"
+                        onClick={() => setMobileApplyStep("form")}
+                      >
+                        Continue to application
+                        <ChevronRight className="ml-1.5 size-4" />
+                      </Button>
+                    ) : (
+                      <>
                         <Button
                           variant="outline"
-                          className="h-11 flex-1 rounded-xl font-bold"
-                          onClick={() => setApplyService(null)}
-                          disabled={isSubmitting || isUploading}
+                          className="h-12 shrink-0 rounded-xl px-4 font-bold"
+                          onClick={() => setMobileApplyStep("details")}
+                          disabled={isSubmitting}
                         >
-                          Cancel
+                          <ArrowLeft className="size-4" />
+                          <span className="sr-only sm:not-sr-only sm:ml-1.5">
+                            Back
+                          </span>
                         </Button>
                         <Button
-                          className="h-11 flex-2 rounded-xl text-sm font-black"
+                          className="h-12 min-w-0 flex-1 rounded-xl text-sm font-black"
                           onClick={handleApply}
                           disabled={isSubmitting || isUploading}
                         >
                           {isSubmitting ? (
-                            <Loader2 className="size-4 animate-spin mr-2" />
+                            <Loader2 className="mr-2 size-4 animate-spin" />
                           ) : (
-                            <Send className="size-4 mr-2" />
+                            <Send className="mr-2 size-4" />
                           )}
-                          Submit Application
+                          <span className="truncate">Submit Application</span>
                         </Button>
-                      </div>
-                    </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Desktop */}
+                  <div className="hidden items-center gap-3 lg:flex">
+                    <Button
+                      variant="outline"
+                      className="h-11 flex-1 rounded-xl font-bold"
+                      onClick={() => setApplyService(null)}
+                      disabled={isSubmitting || isUploading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="h-11 flex-[2] rounded-xl text-sm font-black"
+                      onClick={handleApply}
+                      disabled={isSubmitting || isUploading}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <Send className="mr-2 size-4" />
+                      )}
+                      Submit Application
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
-          </DialogContent>
-        </Dialog>
+          </SheetContent>
+        </Sheet>
       </div>
     </PageLayout>
   );
@@ -1155,34 +1229,37 @@ function ServiceRow({
   onApply: () => void;
 }) {
   return (
-    <div className="group rounded-xl border border-border/70 bg-card p-4 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+    <div className="group min-w-0 rounded-xl border border-border/70 bg-card p-3.5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md sm:p-4">
+      <div className="flex min-w-0 gap-3 sm:items-center sm:gap-4">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 sm:size-11">
           <FileText className="size-5 text-primary" />
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-base font-bold leading-snug transition-colors group-hover:text-primary">
+
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold leading-snug wrap-break-word transition-colors group-hover:text-primary sm:text-base">
             {service.name}
           </p>
           {service.description && (
-            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground wrap-break-word sm:text-sm">
               {service.description}
             </p>
           )}
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
-              <Clock className="size-3" />
+              <Clock className="size-3 shrink-0" />
               {service.timeToTake}
             </span>
             {service.requirements && service.requirements.length > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-700">
-                <CheckCircle2 className="size-3" />
+                <CheckCircle2 className="size-3 shrink-0" />
                 {service.requirements.length} requirements
               </span>
             )}
           </div>
         </div>
-        <div className="flex flex-wrap shrink-0 items-center gap-2 sm:flex-col md:flex-row">
+
+        {/* Actions — inline from sm up */}
+        <div className="hidden shrink-0 items-center gap-2 sm:flex">
           <Button
             size="sm"
             variant="outline"
@@ -1193,12 +1270,31 @@ function ServiceRow({
           </Button>
           <Button
             size="sm"
-            className="h-9 rounded-xl font-semibold px-4 text-xs"
+            className="h-9 rounded-xl px-4 text-xs font-semibold"
             onClick={onApply}
           >
-            <Send className="size-3 mr-1.5" /> Apply
+            <Send className="mr-1.5 size-3" /> Apply
           </Button>
         </div>
+      </div>
+
+      {/* Actions — full-width row on mobile */}
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-10 w-full rounded-xl text-xs font-semibold"
+          onClick={onDetail}
+        >
+          Details
+        </Button>
+        <Button
+          size="sm"
+          className="h-10 w-full rounded-xl text-xs font-semibold"
+          onClick={onApply}
+        >
+          <Send className="mr-1.5 size-3" /> Apply
+        </Button>
       </div>
     </div>
   );
@@ -1292,11 +1388,11 @@ function InfoTile({
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/30 border border-border/40">
-      <Icon className="size-4 text-primary mt-0.5 shrink-0" />
-      <div>
+    <div className="flex min-w-0 items-start gap-2.5 rounded-xl border border-border/40 bg-muted/30 p-3">
+      <Icon className="mt-0.5 size-4 shrink-0 text-primary" />
+      <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-bold">{value}</p>
+        <p className="text-sm font-bold wrap-break-word">{value}</p>
       </div>
     </div>
   );

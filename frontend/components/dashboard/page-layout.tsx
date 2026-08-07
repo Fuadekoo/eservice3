@@ -50,31 +50,31 @@ export function PageLayout({
   const hasTabs = tabs && tabs.length > 0;
 
   return (
-    <div className={cn("flex flex-col min-h-full", className)}>
+    <div className={cn("flex min-h-full min-w-0 flex-col", className)}>
       {/* ── Header ─────────────────────────────────────── */}
       <div className="border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="px-6 lg:px-8 pt-6 pb-0">
+        <div className="min-w-0 px-4 pt-5 pb-0 sm:px-6 sm:pt-6 lg:px-8">
           {/* Title row */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex min-w-0 items-center gap-3">
               {Icon && (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:size-10">
+                  <Icon className="size-4.5 sm:size-5" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl truncate">
+                <h1 className="truncate text-lg font-bold tracking-tight text-foreground sm:text-2xl">
                   {title}
                 </h1>
                 {description && (
-                  <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">
+                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground sm:line-clamp-1 sm:text-sm">
                     {description}
                   </p>
                 )}
               </div>
             </div>
             {actions && (
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 shrink-0">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 sm:shrink-0">
                 {actions}
               </div>
             )}
@@ -125,7 +125,9 @@ export function PageLayout({
       </div>
 
       {/* ── Body ───────────────────────────────────────── */}
-      <div className="flex-1 px-6 lg:px-8 py-6">{children}</div>
+      <div className="min-w-0 flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+        {children}
+      </div>
     </div>
   );
 }

@@ -8,12 +8,12 @@ import { toast } from "sonner";
 import { Loader2, User, Shield, Phone, Key, Mail, Info } from "lucide-react";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -193,27 +193,39 @@ export function StaffCreateDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-0 border-none shadow-2xl rounded-2xl">
-        <DialogHeader className="p-6 pb-4 bg-primary/5 border-b border-primary/10">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="p-2 bg-primary/10 text-primary rounded-xl">
-              <User className="size-5" />
-            </div>
-            <DialogTitle className="text-xl font-black">
-              {member ? t("Edit Staff Member") : t("Add New Staff")}
-            </DialogTitle>
-          </div>
-          <DialogDescription className="font-medium text-muted-foreground ml-11">
-            {member
-              ? t("Update the details and permissions for this staff member.")
-              : t("Create a new staff account and assign them to this office.")}
-          </DialogDescription>
-        </DialogHeader>
-
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full! max-w-none! gap-0 overflow-hidden border-none bg-background p-0 shadow-2xl sm:w-[94vw]! sm:rounded-l-2xl lg:w-184!"
+      >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
-            <div className="p-6 space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex h-full min-h-0 flex-col"
+          >
+            {/* ── Header ── */}
+            <div className="shrink-0 border-b border-primary/10 bg-primary/5 px-5 py-4 pr-14 sm:px-6 sm:py-5">
+              <SheetHeader className="gap-1 p-0">
+                <SheetTitle className="flex items-center gap-3 text-lg font-black sm:text-xl">
+                  <span className="rounded-xl bg-primary/10 p-2 text-primary">
+                    <User className="size-5" />
+                  </span>
+                  {member ? t("Edit Staff Member") : t("Add New Staff")}
+                </SheetTitle>
+                <SheetDescription className="font-medium text-muted-foreground sm:ml-14">
+                  {member
+                    ? t(
+                        "Update the details and permissions for this staff member.",
+                      )
+                    : t(
+                        "Create a new staff account and assign them to this office.",
+                      )}
+                </SheetDescription>
+              </SheetHeader>
+            </div>
+
+            {/* ── Scrollable body ── */}
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
               {/* Personal Information */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-muted-foreground/70">
@@ -490,35 +502,39 @@ export function StaffCreateDialog({
               />
             </div>
 
-            <div className="p-6 bg-muted/20 border-t border-border/50 flex flex-col sm:flex-row gap-3 sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="h-11 px-8 rounded-xl font-bold border-border/50 hover:bg-muted/50 uppercase text-[10px] tracking-widest transition-all"
-              >
-                {t("Cancel")}
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="h-11 px-10 rounded-xl font-black uppercase text-xs tracking-wider shadow-lg shadow-primary/20"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                    {t("Saving...")}
-                  </>
-                ) : member ? (
-                  t("Update Staff")
-                ) : (
-                  t("Create Staff")
-                )}
-              </Button>
+            {/* ── Sticky footer ── */}
+            <div className="shrink-0 border-t border-border/50 bg-muted/20 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isSubmitting}
+                  className="h-11 flex-1 rounded-xl border-border/50 text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-muted/50"
+                >
+                  {t("Cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="h-11 flex-[2] rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/20"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      {t("Saving...")}
+                    </>
+                  ) : member ? (
+                    t("Update Staff")
+                  ) : (
+                    t("Create Staff")
+                  )}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -16,7 +16,13 @@ import {
   FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useOfficeStore, type Office } from "@/lib/stores/office-store";
 import {
   useHomepageStore,
@@ -202,55 +208,57 @@ function OfficeDialog({
   }, [open, setSelectedService]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
         showCloseButton={false}
-        className="w-[calc(100vw-2rem)] max-w-4xl sm:max-w-4xl p-0 gap-0 border-none bg-background text-foreground overflow-hidden rounded-[1.5rem] shadow-2xl"
+        className="w-full! max-w-none! gap-0 overflow-hidden border-none bg-background p-0 text-foreground shadow-2xl sm:w-[92vw]! sm:rounded-l-[1.5rem] lg:w-184!"
       >
-        <DialogDescription className="sr-only">
+        <SheetDescription className="sr-only">
           {selectedService
             ? t("Service details and requirements")
             : t("Browse services offered by this office")}
-        </DialogDescription>
+        </SheetDescription>
+
         {!selectedService ? (
           // ── Service List View ──
-          <>
+          <div className="flex h-full min-h-0 flex-col">
             {/* Blue header */}
-            <div className="relative bg-[#0047FF] px-6 py-8 sm:px-10 sm:py-10 flex items-start sm:items-center gap-5 pr-14">
-              {/* Logo */}
-              <div className="size-16 sm:size-20 rounded-2xl bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-xl border border-white/10">
-                {office.logo ? (
-                  <img
-                    src={getUploadUrl(office.logo)}
-                    alt={office.name}
-                    className="size-full object-contain p-2"
-                  />
-                ) : (
-                  <Building2 className="size-10 text-[#0047FF]" />
-                )}
-              </div>
+            <div className="relative shrink-0 bg-[#0047FF] px-5 py-6 pr-14 sm:px-8 sm:py-8">
+              <div className="flex min-w-0 items-start gap-4 sm:items-center sm:gap-5">
+                {/* Logo */}
+                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white shadow-xl sm:size-20">
+                  {office.logo ? (
+                    <img
+                      src={getUploadUrl(office.logo)}
+                      alt={office.name}
+                      className="size-full object-contain p-2"
+                    />
+                  ) : (
+                    <Building2 className="size-8 text-[#0047FF] sm:size-10" />
+                  )}
+                </div>
 
-              {/* Name */}
-              <div className="flex-1 min-w-0">
-                <DialogTitle className="text-xl sm:text-2xl font-bold text-white leading-snug break-words">
-                  {office.name}
-                </DialogTitle>
-                <p className="text-white/70 text-sm sm:text-base font-medium mt-2 italic opacity-80 leading-relaxed break-words">
-                  {office.slogan || "Excellence in Public Service"}
-                </p>
+                {/* Name */}
+                <div className="min-w-0 flex-1">
+                  <SheetTitle className="text-lg leading-snug font-bold wrap-break-word text-white sm:text-2xl">
+                    {office.name}
+                  </SheetTitle>
+                  <p className="mt-1.5 text-sm leading-relaxed font-medium wrap-break-word text-white/70 italic opacity-80 sm:mt-2 sm:text-base">
+                    {office.slogan || "Excellence in Public Service"}
+                  </p>
+                </div>
               </div>
 
               {/* Close */}
-              <button
-                onClick={() => onOpenChange(false)}
-                className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full text-white/60 hover:text-white transition-all"
-              >
+              <SheetClose className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-full text-white/70 transition-all hover:bg-white/15 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
                 <X className="size-5" />
-              </button>
+                <span className="sr-only">{t("Close")}</span>
+              </SheetClose>
             </div>
 
-            {/* Services Grid/List */}
-            <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#F8FAFC]">
+            {/* Services list */}
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#F8FAFC] p-4 sm:space-y-4 sm:p-6">
               {office.service && office.service.length > 0 ? (
                 office.service.map((service) => (
                   <ServiceRow
@@ -262,15 +270,15 @@ function OfficeDialog({
                   />
                 ))
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-                  <Info className="size-16 text-muted-foreground/20 mb-4" />
-                  <p className="text-muted-foreground font-bold text-lg">
+                <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+                  <Info className="mb-4 size-16 text-slate-300" />
+                  <p className="text-lg font-bold text-slate-500">
                     {t("No services available for this office.")}
                   </p>
                 </div>
               )}
             </div>
-          </>
+          </div>
         ) : (
           // ── Service Detail View ──
           <ServiceDetailView
@@ -278,12 +286,11 @@ function OfficeDialog({
             officeName={office.name}
             isLoggedIn={isLoggedIn}
             onBack={() => setSelectedService(null)}
-            onClose={() => onOpenChange(false)}
             t={t}
           />
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -341,14 +348,12 @@ function ServiceDetailView({
   officeName,
   isLoggedIn,
   onBack,
-  onClose,
   t,
 }: {
   service: HomepageServiceItem;
   officeName: string;
   isLoggedIn: boolean;
   onBack: () => void;
-  onClose: () => void;
   t: (k: string) => string;
 }) {
   const applyUrl = isLoggedIn
@@ -356,33 +361,32 @@ function ServiceDetailView({
     : `/signin?callbackUrl=${encodeURIComponent(`/apply-service?serviceId=${service.id}`)}`;
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFC]">
+    <div className="flex h-full min-h-0 flex-col bg-[#F8FAFC]">
       {/* Blue header */}
-      <div className="relative bg-[#0047FF] px-8 py-8">
-        <div className="flex items-start gap-4 pr-8">
+      <div className="relative shrink-0 bg-[#0047FF] px-5 py-6 sm:px-8 sm:py-8">
+        <div className="flex min-w-0 items-start gap-3 pr-12 sm:gap-4">
           <button
             onClick={onBack}
-            className="size-8 flex items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all shrink-0 mt-0.5"
+            className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white transition-all hover:bg-white/20"
           >
             <ArrowLeft className="size-4" />
+            <span className="sr-only">{t("Back")}</span>
           </button>
-          <div className="flex-1 min-w-0">
-            <DialogTitle className="text-lg sm:text-xl font-bold text-white leading-snug break-words">
+          <div className="min-w-0 flex-1">
+            <SheetTitle className="text-base leading-snug font-bold wrap-break-word text-white sm:text-xl">
               {service.name}
-            </DialogTitle>
+            </SheetTitle>
           </div>
         </div>
 
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-full text-white/60 hover:text-white transition-all"
-        >
+        <SheetClose className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-full text-white/70 transition-all hover:bg-white/15 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
           <X className="size-5" />
-        </button>
+          <span className="sr-only">{t("Close")}</span>
+        </SheetClose>
       </div>
 
       {/* Content */}
-      <div className="max-h-[75vh] overflow-y-auto p-4 sm:p-6 space-y-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
         {/* Main info card */}
         <div className="rounded-2xl bg-white border border-slate-200/60 p-5 sm:p-6 shadow-sm space-y-6">
           <div className="space-y-4">

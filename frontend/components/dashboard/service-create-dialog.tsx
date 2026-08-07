@@ -5,15 +5,23 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  FileText,
+  Loader2,
+  Plus,
+  Trash2,
+  Users,
+} from "lucide-react";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -22,6 +30,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,14 +42,22 @@ const serviceSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   timeToTake: z.string().min(1, "Estimated time is required"),
   officeId: z.string().optional(),
-  requirements: z.array(z.object({
-    name: z.string().min(1, "Requirement name is required"),
-    description: z.string().optional(),
-  })).optional(),
-  serviceFors: z.array(z.object({
-    name: z.string().min(1, "Target group name is required"),
-    description: z.string().optional(),
-  })).optional(),
+  requirements: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Requirement name is required"),
+        description: z.string().optional(),
+      }),
+    )
+    .optional(),
+  serviceFors: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Target group name is required"),
+        description: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;
@@ -76,12 +93,20 @@ export function ServiceCreateDialog({
     },
   });
 
-  const { fields: requirementFields, append: appendRequirement, remove: removeRequirement } = useFieldArray({
+  const {
+    fields: requirementFields,
+    append: appendRequirement,
+    remove: removeRequirement,
+  } = useFieldArray({
     control: form.control,
     name: "requirements",
   });
 
-  const { fields: serviceForFields, append: appendServiceFor, remove: removeServiceFor } = useFieldArray({
+  const {
+    fields: serviceForFields,
+    append: appendServiceFor,
+    remove: removeServiceFor,
+  } = useFieldArray({
     control: form.control,
     name: "serviceFors",
   });
@@ -93,8 +118,14 @@ export function ServiceCreateDialog({
         description: service.description,
         timeToTake: service.timeToTake,
         officeId: service.officeId,
-        requirements: service.requirements.map(r => ({ name: r.name, description: r.description || "" })),
-        serviceFors: service.serviceFors.map(sf => ({ name: sf.name, description: sf.description || "" })),
+        requirements: service.requirements.map((r) => ({
+          name: r.name,
+          description: r.description || "",
+        })),
+        serviceFors: service.serviceFors.map((sf) => ({
+          name: sf.name,
+          description: sf.description || "",
+        })),
       });
     } else {
       form.reset({
@@ -127,156 +158,250 @@ export function ServiceCreateDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-[#121212] text-white border-gray-800">
-        <DialogHeader>
-          <DialogTitle>{service ? "Edit Service" : "Create New Service"}</DialogTitle>
-          <DialogDescription className="text-gray-400">
-            {service ? "Update the service details below." : "Fill in the details to add a new service to this office."}
-          </DialogDescription>
-        </DialogHeader>
-
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full! max-w-none! gap-0 overflow-hidden bg-background p-0 text-foreground sm:w-[92vw]! sm:rounded-l-2xl lg:w-152!"
+      >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Service Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} className="bg-[#1e1e1e] border-gray-800 text-white" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} className="bg-[#1e1e1e] border-gray-800 text-white min-h-[100px]" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="timeToTake"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estimated Time to Complete</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="e.g. 2 hours, 1 day" className="bg-[#1e1e1e] border-gray-800 text-white" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Requirements Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <FormLabel>Requirements</FormLabel>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => appendRequirement({ name: "", description: "" })}
-                  className="bg-transparent border-gray-700 text-xs"
-                >
-                  <Plus className="size-3 mr-1" /> Add
-                </Button>
-              </div>
-              {requirementFields.map((field, index) => (
-                <div key={field.id} className="flex gap-2 items-start">
-                  <div className="flex-1 space-y-2">
-                    <FormField
-                      control={form.control}
-                      name={`requirements.${index}.name`}
-                      render={({ field }) => (
-                        <Input {...field} placeholder="Requirement name" className="bg-[#1e1e1e] border-gray-800 text-white h-8 text-sm" />
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex h-full min-h-0 flex-col"
+          >
+            {/* ── Header ── */}
+            <div className="shrink-0 border-b border-border/60 bg-muted/30 px-5 py-4 pr-14 sm:px-6 sm:py-5">
+              <SheetHeader className="gap-1 p-0">
+                <SheetTitle className="flex items-center gap-2.5 text-lg font-bold sm:text-xl">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="size-4" />
+                  </span>
+                  {service ? t("Edit Service") : t("Create New Service")}
+                </SheetTitle>
+                <SheetDescription className="pl-10.5">
+                  {service
+                    ? t("Update the service details below.")
+                    : t(
+                        "Fill in the details to add a new service to this office.",
                       )}
-                    />
-                  </div>
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
-                    size="icon-sm" 
-                    onClick={() => removeRequirement(index)}
-                    className="size-8"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              ))}
+                </SheetDescription>
+              </SheetHeader>
             </div>
 
-            {/* Target Groups Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <FormLabel>Service For (Target Groups)</FormLabel>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => appendServiceFor({ name: "", description: "" })}
-                  className="bg-transparent border-gray-700 text-xs"
-                >
-                  <Plus className="size-3 mr-1" /> Add
-                </Button>
-              </div>
-              {serviceForFields.map((field, index) => (
-                <div key={field.id} className="flex gap-2 items-start">
-                  <div className="flex-1 space-y-2">
-                    <FormField
-                      control={form.control}
-                      name={`serviceFors.${index}.name`}
-                      render={({ field }) => (
-                        <Input {...field} placeholder="Target group" className="bg-[#1e1e1e] border-gray-800 text-white h-8 text-sm" />
-                      )}
-                    />
-                  </div>
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
-                    size="icon-sm" 
-                    onClick={() => removeServiceFor(index)}
-                    className="size-8"
+            {/* ── Scrollable body ── */}
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Service Name")}</FormLabel>
+                    <FormControl>
+                      <Input {...field} className="h-11 rounded-xl" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Description")}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        className="min-h-24 resize-none rounded-xl"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="timeToTake"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5">
+                      <Clock className="size-3.5 text-primary" />
+                      {t("Estimated Time to Complete")}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g. 2 hours, 1 day"
+                        className="h-11 rounded-xl"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Separator />
+
+              {/* ── Requirements ── */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <FormLabel className="flex items-center gap-1.5">
+                    <CheckCircle2 className="size-3.5 text-primary" />
+                    {t("Requirements")}
+                    {requirementFields.length > 0 && (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({requirementFields.length})
+                      </span>
+                    )}
+                  </FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      appendRequirement({ name: "", description: "" })
+                    }
+                    className="h-8 shrink-0 rounded-lg text-xs font-semibold"
                   >
-                    <Trash2 className="size-4" />
+                    <Plus className="mr-1 size-3" /> {t("Add")}
                   </Button>
                 </div>
-              ))}
+
+                {requirementFields.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border px-3 py-3 text-xs text-muted-foreground">
+                    {t(
+                      "No requirements yet. Add the documents applicants must bring.",
+                    )}
+                  </p>
+                ) : (
+                  requirementFields.map((field, index) => (
+                    <div key={field.id} className="flex items-start gap-2">
+                      {/* FormItem + FormMessage so per-row validation is visible */}
+                      <FormField
+                        control={form.control}
+                        name={`requirements.${index}.name`}
+                        render={({ field: rowField }) => (
+                          <FormItem className="min-w-0 flex-1">
+                            <FormControl>
+                              <Input
+                                {...rowField}
+                                placeholder={t("Requirement name")}
+                                className="h-10 rounded-xl text-sm"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeRequirement(index)}
+                        className="size-10 shrink-0 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" />
+                        <span className="sr-only">{t("Remove")}</span>
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <Separator />
+
+              {/* ── Target groups ── */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <FormLabel className="flex items-center gap-1.5">
+                    <Users className="size-3.5 text-primary" />
+                    {t("Service For (Target Groups)")}
+                    {serviceForFields.length > 0 && (
+                      <span className="text-xs font-normal text-muted-foreground">
+                        ({serviceForFields.length})
+                      </span>
+                    )}
+                  </FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      appendServiceFor({ name: "", description: "" })
+                    }
+                    className="h-8 shrink-0 rounded-lg text-xs font-semibold"
+                  >
+                    <Plus className="mr-1 size-3" /> {t("Add")}
+                  </Button>
+                </div>
+
+                {serviceForFields.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border px-3 py-3 text-xs text-muted-foreground">
+                    {t("No target groups yet. Add who this service is for.")}
+                  </p>
+                ) : (
+                  serviceForFields.map((field, index) => (
+                    <div key={field.id} className="flex items-start gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`serviceFors.${index}.name`}
+                        render={({ field: rowField }) => (
+                          <FormItem className="min-w-0 flex-1">
+                            <FormControl>
+                              <Input
+                                {...rowField}
+                                placeholder={t("Target group")}
+                                className="h-10 rounded-xl text-sm"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeServiceFor(index)}
+                        className="size-10 shrink-0 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" />
+                        <span className="sr-only">{t("Remove")}</span>
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="bg-transparent border-gray-800 text-white hover:bg-gray-800"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-primary hover:bg-primary/90"
-              >
-                {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {service ? "Update Service" : "Create Service"}
-              </Button>
+            {/* ── Sticky footer ── */}
+            <div className="shrink-0 border-t border-border/60 bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isSubmitting}
+                  className="h-11 flex-1 rounded-xl font-semibold"
+                >
+                  {t("Cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="h-11 flex-[2] rounded-xl font-bold"
+                >
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  )}
+                  {service ? t("Update Service") : t("Create Service")}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

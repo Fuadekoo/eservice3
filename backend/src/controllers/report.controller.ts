@@ -1,6 +1,8 @@
 import type { Response } from "express";
 import { prisma } from "../lib/db.js";
 import type { AuthRequest } from "../middleware/auth.js";
+import { dispatch } from "../services/notification.service.js";
+import { notifyReportSent } from "../services/notification-events.js";
 
 function qs(value: unknown): string | undefined {
   const str = typeof value === "string" ? value.trim() : undefined;
@@ -348,6 +350,16 @@ export async function createReport(req: AuthRequest, res: Response) {
       },
       include: reportInclude,
     });
+
+    // A report sits unread until someone is told it arrived.
+    dispatch(
+      notifyReportSent({
+        reportId: report.id,
+        recipientUserId: reportSentTo,
+        senderName: report.reportSentByUser.username,
+        reportName: report.name,
+      }),
+    );
 
     return res.status(201).json({
       success: true,

@@ -297,6 +297,13 @@ export const NAVIGATION_LOOKUP: Record<string, NavigationEntry> =
 
 NAVIGATION_LOOKUP["/"] = { titleKey: "Overview", href: "/" };
 NAVIGATION_LOOKUP["/dashboard"] = { titleKey: "Overview", href: "/dashboard" };
+
+// Reached from the header bell rather than the sidebar — every role has it, so
+// it would only add noise to each section — but it still needs a breadcrumb.
+NAVIGATION_LOOKUP["/notifications"] = {
+  titleKey: "Notifications",
+  href: "/notifications",
+};
 NAVIGATION_LOOKUP["/admin-overview"] = {
   titleKey: "Overview",
   href: "/admin-overview",

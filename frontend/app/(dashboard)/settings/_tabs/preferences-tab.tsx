@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PushSettingsCard } from "@/components/notifications/push-settings-card";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { useTheme } from "@/components/providers/theme-provider";
 
@@ -36,8 +37,6 @@ export function PreferencesTab() {
     theme: theme || "system",
     dateFormat: "MM/DD/YYYY",
     timeFormat: "12h",
-    notifications: true,
-    emailNotifications: true,
   });
 
   React.useEffect(() => {
@@ -199,66 +198,10 @@ export function PreferencesTab() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-          <CardDescription>
-            Manage your notification preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="notifications">Enable Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive in-app notifications
-              </p>
-            </div>
-            <Select
-              value={preferences.notifications ? "enabled" : "disabled"}
-              onValueChange={(value) =>
-                handlePreferenceChange("notifications", value === "enabled")
-              }
-              disabled={isSubmitting}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="enabled">Enabled</SelectItem>
-                <SelectItem value="disabled">Disabled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="emailNotifications">Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive notifications via email
-              </p>
-            </div>
-            <Select
-              value={preferences.emailNotifications ? "enabled" : "disabled"}
-              onValueChange={(value) =>
-                handlePreferenceChange(
-                  "emailNotifications",
-                  value === "enabled",
-                )
-              }
-              disabled={isSubmitting}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="enabled">Enabled</SelectItem>
-                <SelectItem value="disabled">Disabled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Browser notifications are real state — permission granted, subscription
+          stored server-side — so they get their own component rather than a
+          switch saved to localStorage alongside the display preferences. */}
+      <PushSettingsCard />
 
       <div className="flex justify-end">
         <Button onClick={handleSubmit} disabled={isSubmitting}>

@@ -7,6 +7,55 @@ import {
   approveAppointmentSchema,
   buildValidationError,
 } from "../validators/appointment.validator.js";
+import { dispatch } from "../services/notification.service.js";
+import {
+  notifyAppointmentApproved,
+  notifyAppointmentBooked,
+  notifyAppointmentCancelled,
+  notifyAppointmentRescheduled,
+} from "../services/notification-events.js";
+
+/**
+ * Everything a notification needs to describe an appointment: who it belongs
+ * to, which service and office it sits under. Loaded in one query per action
+ * rather than assembled from the response shape, so the notification layer
+ * never depends on which `include` a particular endpoint happened to use.
+ */
+async function loadAppointmentContext(appointmentId: string) {
+  const appointment = await prisma.appointment.findUnique({
+    where: { id: appointmentId },
+    select: {
+      id: true,
+      date: true,
+      time: true,
+      notes: true,
+      userId: true,
+      user: { select: { username: true } },
+      request: {
+        select: {
+          serviceId: true,
+          service: {
+            select: { name: true, officeId: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!appointment) return null;
+
+  return {
+    appointmentId: appointment.id,
+    customerUserId: appointment.userId,
+    customerName: appointment.user?.username ?? "A customer",
+    serviceName: appointment.request?.service?.name ?? "your service",
+    serviceId: appointment.request?.serviceId ?? null,
+    officeId: appointment.request?.service?.officeId ?? null,
+    date: appointment.date,
+    time: appointment.time,
+    notes: appointment.notes,
+  };
+}
 
 /**
  * Appointment response include configuration
@@ -238,6 +287,15 @@ export async function createAppointment(req: AuthRequest, res: Response) {
       include: appointmentInclude,
     });
 
+    // Confirms receipt to the customer and puts the slot in front of the staff
+    // who can confirm it. Non-blocking — the booking is already saved.
+    dispatch(
+      (async () => {
+        const context = await loadAppointmentContext(appointment.id);
+        if (context) await notifyAppointmentBooked(context);
+      })(),
+    );
+
     return res.status(201).json({
       success: true,
       data: formatAppointment(appointment),
@@ -335,6 +393,34 @@ export async function updateAppointment(req: AuthRequest, res: Response) {
       include: appointmentInclude,
     });
 
+    // Only a moved slot or a cancellation is worth interrupting someone for.
+    // A note or an internal status touch is not.
+    const slotMoved =
+      (date !== undefined &&
+        new Date(date).getTime() !== appointment.date.getTime()) ||
+      (time !== undefined && time !== appointment.time);
+    const wasCancelled =
+      status === "rejected" && appointment.status !== "rejected";
+
+    if (slotMoved || wasCancelled) {
+      dispatch(
+        (async () => {
+          const context = await loadAppointmentContext(appointmentId);
+          if (!context) return;
+
+          if (wasCancelled) {
+            await notifyAppointmentCancelled({
+              ...context,
+              cancelledByStaff: !isCustomer,
+            });
+            return;
+          }
+
+          await notifyAppointmentRescheduled(context);
+        })(),
+      );
+    }
+
     return res.status(200).json({
       success: true,
       data: formatAppointment(updatedAppointment),
@@ -411,6 +497,20 @@ export async function approveAppointment(req: AuthRequest, res: Response) {
       include: appointmentInclude,
     });
 
+    // The one message the customer has actually been waiting for.
+    dispatch(
+      (async () => {
+        const context = await loadAppointmentContext(appointmentId);
+        if (context) {
+          await notifyAppointmentApproved({
+            ...context,
+            notes: notes ?? context.notes,
+            approverStaffId: staffId,
+          });
+        }
+      })(),
+    );
+
     return res.status(200).json({
       success: true,
       data: formatAppointment(updatedAppointment),
@@ -482,10 +582,23 @@ export async function deleteAppointment(req: AuthRequest, res: Response) {
       });
     }
 
+    // Read the context before the row disappears — afterwards there is nothing
+    // left to describe who the cancellation belonged to.
+    const context = await loadAppointmentContext(appointmentId);
+
     // Delete the appointment
     await prisma.appointment.delete({
       where: { id: appointmentId },
     });
+
+    if (context) {
+      dispatch(
+        notifyAppointmentCancelled({
+          ...context,
+          cancelledByStaff: !isCustomer,
+        }),
+      );
+    }
 
     return res.status(200).json({
       success: true,

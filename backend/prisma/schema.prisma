@@ -49,14 +49,16 @@ model User {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
-  staffs           staff[]
-  requests         request[]
-  requestForOthers requestForOther[]
-  appointments     appointment[]
-  reportsSent      report[]          @relation("ReportSender")
-  reportsReceived  report[]          @relation("ReportReceiver")
-  sessions         session[]
-  auditLogs        AuditLog[]
+  staffs               staff[]
+  requests             request[]
+  requestForOthers     requestForOther[]
+  appointments         appointment[]
+  reportsSent          report[]              @relation("ReportSender")
+  reportsReceived      report[]              @relation("ReportReceiver")
+  sessions             session[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  webPushSubscriptions WebPushSubscription[]
 }
 
 model session {
@@ -76,6 +78,77 @@ model session {
   @@index([userId])
   @@index([lastSeenAt])
   @@map("session")
+}
+
+model WebPushSubscription {
+  id String @id @default(cuid())
+
+  /// Where the browser's push service takes delivery. Unique because the same
+  /// browser re-subscribing must update its row rather than grow a second one —
+  /// otherwise every re-registration doubles the notifications it receives.
+  ///
+  /// Sized rather than left to the default 191 characters: FCM and Mozilla
+  /// endpoints run past that, and a truncated one is undeliverable.
+  endpoint String @unique @db.VarChar(512)
+
+  /// The subscription's public key and auth secret, base64url as the browser
+  /// hands them over. Both are needed to encrypt a payload for this endpoint.
+  p256dh String @db.VarChar(255)
+  auth   String @db.VarChar(255)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// What the device calls itself, so the settings screen can list "Chrome on
+  /// Windows" rather than an opaque URL nobody can tell apart.
+  userAgent String? @db.VarChar(512)
+
+  createdAt DateTime @default(now())
+
+  /// The last time this endpoint accepted a push. A subscription the push
+  /// service has quietly retired is deleted on the 404 or 410 it answers with,
+  /// so a stale row here means a device that has simply been idle.
+  lastSeenAt DateTime @default(now())
+
+  // Sending to a person means reading every row they own.
+  @@index([userId])
+  @@map("web_push_subscription")
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  /// What was pushed, and where clicking it goes. Held here rather than rebuilt
+  /// from the contact, because a notification should read as it did when it was
+  /// sent even after the conversation it referred to has moved on.
+  title String
+  body  String  @db.Text
+  url   String  @default("/")
+  icon  String?
+
+  /// Which kind of event this was — `message`, `assignment`, `signin`. Decides
+  /// the icon the inbox draws and the sound the desk plays.
+  kind String @default("message")
+
+  /// Stable id of the source event, e.g. `message:412`. Unique per user, so a
+  /// webhook Meta delivered twice can never insert the notification twice.
+  dedupeKey String?
+
+  createdAt DateTime @default(now())
+
+  /// A push service accepted this — which is not proof any device showed it.
+  pushedAt DateTime?
+
+  /// When the person opened it, by clicking the push or from the inbox. Null is
+  /// what the unread badge counts.
+  readAt DateTime?
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notification")
 }
 
 model staff {

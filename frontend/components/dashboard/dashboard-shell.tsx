@@ -61,6 +61,8 @@ import { logout, isAuthenticated } from "@/lib/auth-client";
 import { getUploadUrl } from "@/lib/axios";
 import { usePermissions } from "@/lib/hooks/use-permissions";
 import { useSessionHeartbeat } from "@/hooks/use-session-heartbeat";
+import { useNotifications } from "@/hooks/use-notifications";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTranslation } from "@/lib/i18n";
 
 function getBreadcrumbs(pathname: string) {
@@ -223,6 +225,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   // Auto-sign-out this device if its session is revoked from another device.
   useSessionHeartbeat();
+
+  // Badge polling, push-event handling and the `?notification=` deep link.
+  useNotifications();
 
   const getNavTitle = (i: any) => i?.title ?? i?.label ?? i?.name ?? "";
 
@@ -545,6 +550,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
+          <NotificationBell />
+          <Separator orientation="vertical" className="max-h-6" />
           <ThemeToggle />
           <Separator orientation="vertical" className="max-h-6" />
           <LanguageToggle />

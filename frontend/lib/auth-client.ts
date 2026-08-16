@@ -294,6 +294,41 @@ export async function verifyTwoFactor(
 }
 
 /**
+ * Detach this browser's push subscription on the way out.
+ *
+ * Signing out has to stop the notifications too, or the next person to use a
+ * shared machine keeps receiving the previous user's approvals on the lock
+ * screen. Written against the raw APIs rather than importing `lib/push` so
+ * this module stays free of dependencies that import it back.
+ */
+async function detachPushSubscription(token: string): Promise<void> {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    if (!subscription) return;
+
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "/back-api";
+    await fetch(`${apiBase}/notifications/push/subscribe`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ endpoint: subscription.endpoint }),
+      keepalive: true,
+    }).catch(() => {
+      /* The row is pruned anyway on its first failed delivery. */
+    });
+
+    await subscription.unsubscribe();
+  } catch {
+    // Never block sign-out on notification housekeeping.
+  }
+}
+
+/**
  * Logout user.
  *
  * Revokes the current session on the server (POST /auth/logout deletes this
@@ -307,6 +342,9 @@ export async function logout(): Promise<void> {
   if (typeof window !== "undefined") {
     const token = getToken();
     if (token) {
+      // Must run while the token is still valid.
+      await detachPushSubscription(token);
+
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "/back-api";
       try {
         await fetch(`${apiBase}/auth/logout`, {

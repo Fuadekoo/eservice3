@@ -12,6 +12,13 @@ import {
 } from "../validators/request.validator.js";
 import { generateRequestNumber } from "../utils/notification.js";
 import { sendSMS } from "../services/sms.service.js";
+import { dispatch } from "../services/notification.service.js";
+import {
+  notifyRequestApprovedByManager,
+  notifyRequestApprovedByStaff,
+  notifyRequestRejected,
+  notifyRequestSubmitted,
+} from "../services/notification-events.js";
 
 /**
  * Request response include configuration
@@ -461,6 +468,23 @@ export async function createRequest(req: AuthRequest, res: Response) {
 
     console.log(`✅ Created request: ${newRequest.id} (${requestNumber})`);
 
+    // In-app + web push, to the customer, the assigned staff and the managers.
+    // Fire-and-forget: the request is already saved, and a push service being
+    // slow or down must never turn a successful application into an error.
+    dispatch(
+      notifyRequestSubmitted({
+        requestId: newRequest.id,
+        requestNumber,
+        customerUserId: userId,
+        customerName: newRequest.user.username,
+        serviceId,
+        serviceName: service.name,
+        officeId: service.officeId,
+        officeName: service.office.name,
+        appointmentDate: date,
+      }),
+    );
+
     // Send notifications (fire-and-forget — never block the response)
     (async () => {
       try {
@@ -676,8 +700,8 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
     const existingRequest = await prisma.request.findUnique({
       where: { id: requestId },
       include: {
-        user: { select: { username: true, phoneNumber: true } },
-        service: { select: { name: true } },
+        user: { select: { id: true, username: true, phoneNumber: true } },
+        service: { select: { name: true, officeId: true } },
       },
     });
 
@@ -710,6 +734,20 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
       },
       include: requestInclude,
     });
+
+    // Customer hears it moved forward; the office managers hear it now needs
+    // their decision.
+    dispatch(
+      notifyRequestApprovedByStaff({
+        requestId,
+        customerUserId: existingRequest.user.id,
+        customerName: existingRequest.user.username,
+        serviceName: existingRequest.service.name,
+        officeId: existingRequest.service.officeId,
+        actorStaffId: staffId,
+        note: notes ?? null,
+      }),
+    );
 
     // Notify customer — staff-level approval (non-blocking)
     if (existingRequest.user?.phoneNumber) {
@@ -768,7 +806,7 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
     const existingRequest = await prisma.request.findUnique({
       where: { id: requestId },
       include: {
-        user: { select: { username: true, phoneNumber: true } },
+        user: { select: { id: true, username: true, phoneNumber: true } },
         service: {
           include: {
             office: { select: { name: true, roomNumber: true, address: true } },
@@ -806,6 +844,22 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
       },
       include: requestInclude,
     });
+
+    // Final approval — the customer's notification carries the address,
+    // because "where do I go now?" is the only thing left to answer.
+    dispatch(
+      notifyRequestApprovedByManager({
+        requestId,
+        customerUserId: existingRequest.user.id,
+        customerName: existingRequest.user.username,
+        serviceName: existingRequest.service.name,
+        officeName: existingRequest.service.office.name,
+        roomNumber: existingRequest.service.office.roomNumber,
+        address: existingRequest.service.office.address,
+        actorStaffId: approverId,
+        note: notes ?? null,
+      }),
+    );
 
     // Notify customer — final approval (non-blocking)
     if (existingRequest.user?.phoneNumber) {
@@ -865,8 +919,8 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
     const existingRequest = await prisma.request.findUnique({
       where: { id: requestId },
       include: {
-        user: { select: { username: true, phoneNumber: true } },
-        service: { select: { name: true } },
+        user: { select: { id: true, username: true, phoneNumber: true } },
+        service: { select: { id: true, name: true } },
       },
     });
 
@@ -886,6 +940,19 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
       },
       include: requestInclude,
     });
+
+    // The reason travels with the notification — a rejection the customer
+    // cannot act on is worse than no notification at all.
+    dispatch(
+      notifyRequestRejected({
+        requestId,
+        customerUserId: existingRequest.user.id,
+        customerName: existingRequest.user.username,
+        serviceName: existingRequest.service.name,
+        serviceId: existingRequest.service.id,
+        reason: rejectionReason,
+      }),
+    );
 
     // Notify customer — rejection (non-blocking)
     if (existingRequest.user?.phoneNumber) {

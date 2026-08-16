@@ -13,6 +13,7 @@ import administrationRoutes from "./administration.route.js";
 import galleryRoutes from "./gallery.route.js";
 import uploadRoutes from "./upload.route.js";
 import reportRoutes from "./report.route.js";
+import notificationRoutes from "./notification.route.js";
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use("/administration", administrationRoutes);
 router.use("/gallery", galleryRoutes);
 router.use("/files", uploadRoutes);
 router.use("/reports", reportRoutes);
+router.use("/notifications", notificationRoutes);
 
 export default router;

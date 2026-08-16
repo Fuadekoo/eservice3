@@ -9,12 +9,19 @@ import React from "react";
  * The dev-mode cleanup matters: a worker registered by an earlier build keeps
  * controlling localhost across restarts, re-fetching /sw.js on its own and
  * serving cached Next.js chunks that no longer match the running dev server.
+ *
+ * Web Push needs that worker, though, and there is no way to try a push
+ * notification without one. `NEXT_PUBLIC_ENABLE_SW_IN_DEV=true` opts a dev
+ * machine into registering it — accepting the stale-chunk hazard above in
+ * exchange for being able to test notifications locally.
  */
 export function PwaProvider() {
   React.useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    if (process.env.NODE_ENV !== "production") {
+    const enabledInDev = process.env.NEXT_PUBLIC_ENABLE_SW_IN_DEV === "true";
+
+    if (process.env.NODE_ENV !== "production" && !enabledInDev) {
       void (async () => {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(registrations.map((r) => r.unregister()));

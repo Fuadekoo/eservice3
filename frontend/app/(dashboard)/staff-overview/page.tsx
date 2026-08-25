@@ -29,6 +29,7 @@ import {
 import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import { RequestNumber } from "@/components/dashboard/request-number";
 
 type RequestStatus = "pending" | "processing" | "approved" | "rejected";
 
@@ -320,6 +321,10 @@ function StaffOverviewContent() {
                               {t(displayName(request.user))} -{" "}
                               {formatDate(request.createdAt)}
                             </p>
+                            <RequestNumber
+                              value={request.requestNumber}
+                              className="mt-1 text-muted-foreground"
+                            />
                           </div>
                           <Badge
                             variant="outline"

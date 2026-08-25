@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import { RequestNumber } from "@/components/dashboard/request-number";
 
 // ── Types ────────────────────────────────────────────────────────
 type Appointment = {
@@ -391,6 +392,10 @@ function CustomerOverviewContent() {
                                 {req.service?.office?.name}
                               </p>
                             </div>
+                            <RequestNumber
+                              value={req.requestNumber}
+                              className="mt-1 text-muted-foreground"
+                            />
                           </div>
                           <div className="shrink-0 text-right space-y-1">
                             <StatusBadge status={status} />

@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import { RequestNumber } from "@/components/dashboard/request-number";
 
 type TabValue = "details" | "files";
 
@@ -173,6 +174,12 @@ export function ReviewRequestDialog({
                   <SheetDescription className="pl-10">
                     {t("View detailed information about this request")}
                   </SheetDescription>
+                  <RequestNumber
+                    value={request.requestNumber}
+                    variant="badge"
+                    copyable
+                    className="ml-10 mt-2 w-fit"
+                  />
                 </SheetHeader>
 
                 {/* Underline tab bar */}

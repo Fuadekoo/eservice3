@@ -1,6 +1,7 @@
 import type { Response } from "express";
 import { randomUUID } from "crypto";
 import { prisma } from "../lib/db.js";
+import type { Prisma } from "../lib/prisma-client.js";
 import type { AuthRequest } from "../middleware/auth.js";
 import {
   createRequestSchema,
@@ -10,7 +11,11 @@ import {
   rejectRequestSchema,
   buildValidationError,
 } from "../validators/request.validator.js";
-import { generateRequestNumber } from "../utils/notification.js";
+import {
+  generateRequestNumber,
+  isRequestNumber,
+  normalizeRequestNumber,
+} from "../utils/notification.js";
 import { sendSMS } from "../services/sms.service.js";
 import { dispatch } from "../services/notification.service.js";
 import {
@@ -122,6 +127,67 @@ function formatRequest(req: any) {
         updatedAt: apt.updatedAt.toISOString(),
       })) || [],
   };
+}
+
+/**
+ * Create a request, claiming the next free request number.
+ *
+ * `generateRequestNumber` allocates from an atomic per-day counter, so under
+ * normal operation the number is already unique and this succeeds first time.
+ * The retry exists for the one case the counter cannot cover: a number written
+ * outside this path (a restored backup, a manual insert) occupying a slot the
+ * counter has not passed yet. Retrying re-allocates rather than reusing, and is
+ * bounded so an unrelated unique conflict cannot spin forever.
+ */
+const REQUEST_NUMBER_MAX_ATTEMPTS = 5;
+
+function isRequestNumberConflict(error: unknown): boolean {
+  if ((error as { code?: string } | null)?.code !== "P2002") return false;
+
+  // Where the offending column is reported depends on the driver: the classic
+  // engine fills `meta.target`, while the MariaDB adapter nests it under
+  // `meta.driverAdapterError.cause` (constraint index / MySQL error 1062 text).
+  // Scanning the whole `meta` payload keeps this working across both.
+  const meta = (error as { meta?: unknown }).meta;
+  if (!meta) return false;
+
+  try {
+    const seen = new WeakSet<object>();
+    const described = JSON.stringify(meta, (_key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) return undefined;
+        seen.add(value);
+      }
+      return value instanceof Error ? value.message : value;
+    });
+    return described?.includes("requestNumber") ?? false;
+  } catch {
+    return false;
+  }
+}
+
+async function createRequestWithNumber(
+  data: Omit<Prisma.requestUncheckedCreateInput, "requestNumber">,
+) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < REQUEST_NUMBER_MAX_ATTEMPTS; attempt++) {
+    const requestNumber = await generateRequestNumber();
+    try {
+      return await prisma.request.create({
+        data: { ...data, requestNumber },
+        include: requestInclude,
+      });
+    } catch (error) {
+      if (!isRequestNumberConflict(error)) throw error;
+      lastError = error;
+      console.warn(
+        `Request number ${requestNumber} was taken concurrently; retrying (${attempt + 1}/${REQUEST_NUMBER_MAX_ATTEMPTS})`,
+      );
+    }
+  }
+
+  throw lastError;
 }
 
 /**
@@ -256,25 +322,30 @@ export async function listRequests(req: AuthRequest, res: Response) {
     if (search) {
       const searchConditions = {
         OR: [
+          // Listed first so quoting a reference number is the fastest path —
+          // `contains` also matches a partial number like "00042".
+          {
+            requestNumber: { contains: search },
+          },
           {
             service: {
-              name: { contains: search, mode: "insensitive" as const },
+              name: { contains: search },
             },
           },
           {
             service: {
               office: {
-                name: { contains: search, mode: "insensitive" as const },
+                name: { contains: search },
               },
             },
           },
           {
             user: {
-              username: { contains: search, mode: "insensitive" as const },
+              username: { contains: search },
             },
           },
           {
-            currentAddress: { contains: search, mode: "insensitive" as const },
+            currentAddress: { contains: search },
           },
         ],
       };
@@ -330,10 +401,14 @@ export async function getRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id as string;
+    // Accept either the internal id or the reference number the customer was
+    // given, so a support agent can paste "REQ-20260825-00001" straight in.
+    const identifier = (req.params.id as string) ?? "";
 
     const request = await prisma.request.findUnique({
-      where: { id: requestId },
+      where: isRequestNumber(identifier)
+        ? { requestNumber: normalizeRequestNumber(identifier) }
+        : { id: identifier },
       include: requestInclude,
     });
 
@@ -437,34 +512,31 @@ export async function createRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    // Generate request number
-    const requestNumber = await generateRequestNumber();
-
-    // Create request
-    const newRequest = await prisma.request.create({
-      data: {
-        id: randomUUID(),
-        userId,
-        serviceId,
-        currentAddress,
-        date: new Date(date),
-        statusbystaff: "pending",
-        statusbyadmin: "pending",
-        ...(files.length > 0
-          ? {
-              fileData: {
-                create: files.map((file) => ({
-                  id: randomUUID(),
-                  name: file.name,
-                  filepath: file.filepath,
-                  description: file.description || notes || null,
-                })),
-              },
-            }
-          : {}),
-      },
-      include: requestInclude,
+    // Create the request together with its reference number, so the number the
+    // customer is told is the one stored on the row and can be searched for.
+    const newRequest = await createRequestWithNumber({
+      id: randomUUID(),
+      userId,
+      serviceId,
+      currentAddress,
+      date: new Date(date),
+      statusbystaff: "pending",
+      statusbyadmin: "pending",
+      ...(files.length > 0
+        ? {
+            fileData: {
+              create: files.map((file) => ({
+                id: randomUUID(),
+                name: file.name,
+                filepath: file.filepath,
+                description: file.description || notes || null,
+              })),
+            },
+          }
+        : {}),
     });
+
+    const requestNumber = newRequest.requestNumber;
 
     console.log(`✅ Created request: ${newRequest.id} (${requestNumber})`);
 
@@ -741,6 +813,7 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
       notifyRequestApprovedByStaff({
         requestId,
         customerUserId: existingRequest.user.id,
+        requestNumber: existingRequest.requestNumber,
         customerName: existingRequest.user.username,
         serviceName: existingRequest.service.name,
         officeId: existingRequest.service.officeId,
@@ -755,7 +828,8 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
         `Dear ${existingRequest.user.username},\n\n` +
         `Your request for "${existingRequest.service.name}" has been reviewed and approved by staff.\n\n` +
         `It is now pending manager approval. You will be notified once fully approved.` +
-        (notes ? `\n\nNote: ${notes}` : "");
+        (notes ? `\n\nNote: ${notes}` : "") +
+        `\n\nRequest No: ${existingRequest.requestNumber}`;
 
       sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
         console.error("Customer SMS (staff approval) failed:", e),
@@ -851,6 +925,7 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
       notifyRequestApprovedByManager({
         requestId,
         customerUserId: existingRequest.user.id,
+        requestNumber: existingRequest.requestNumber,
         customerName: existingRequest.user.username,
         serviceName: existingRequest.service.name,
         officeName: existingRequest.service.office.name,
@@ -868,7 +943,8 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
         `Dear ${existingRequest.user.username},\n\n` +
         `Your request for "${existingRequest.service.name}" has been approved.\n\n` +
         `Please visit ${office.name} (Room ${office.roomNumber}, ${office.address}) for further assistance.` +
-        (notes ? `\n\nNote: ${notes}` : "");
+        (notes ? `\n\nNote: ${notes}` : "") +
+        `\n\nRequest No: ${existingRequest.requestNumber}`;
 
       sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
         console.error("Customer SMS (manager approval) failed:", e),
@@ -947,6 +1023,7 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
       notifyRequestRejected({
         requestId,
         customerUserId: existingRequest.user.id,
+        requestNumber: existingRequest.requestNumber,
         customerName: existingRequest.user.username,
         serviceName: existingRequest.service.name,
         serviceId: existingRequest.service.id,
@@ -960,7 +1037,8 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
         `Dear ${existingRequest.user.username},\n\n` +
         `Your request for "${existingRequest.service.name}" has been rejected.\n\n` +
         `Reason: ${rejectionReason}\n\n` +
-        `For more information, please contact us.`;
+        `For more information, please contact us.\n\n` +
+        `Request No: ${existingRequest.requestNumber}`;
 
       sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
         console.error("Customer SMS (rejection) failed:", e),

@@ -47,6 +47,7 @@ import { cn } from "@/lib/utils";
 import { ReviewRequestDialog } from "./_components/review-request-dialog";
 import { ScheduleAppointmentDialog } from "./_components/schedule-appointment-dialog";
 import { useTranslation } from "@/lib/i18n";
+import { RequestNumber } from "@/components/dashboard/request-number";
 
 function getOverallStatus(req: ServiceRequest) {
   const { statusbystaff, statusbyadmin } = req;
@@ -286,7 +287,7 @@ export default function RequestManagementPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder={t("Search by customer or service...")}
+              placeholder={t("Search by request number, customer or service...")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -348,9 +349,10 @@ export default function RequestManagementPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
+              <table className="w-full min-w-[900px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border/50 bg-muted/30">
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Request No.")}</th>
                     <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Customer")}</th>
                     <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Service")}</th>
                     <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Date")}</th>
@@ -374,6 +376,9 @@ export default function RequestManagementPage() {
                         key={req.id}
                         className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors"
                       >
+                        <td className="p-4">
+                          <RequestNumber value={req.requestNumber} copyable />
+                        </td>
                         <td className="p-4">
                           <p className="font-semibold">{req.user?.username}</p>
                           <p className="text-xs text-muted-foreground">{req.user?.phoneNumber}</p>

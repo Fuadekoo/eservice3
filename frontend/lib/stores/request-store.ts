@@ -3,6 +3,8 @@ import { axiosInstance } from "@/lib/axios";
 
 export type ServiceRequest = {
   id: string;
+  /** Human-readable reference (REQ-YYYYMMDD-NNNNN) shown to the customer. */
+  requestNumber: string;
   user: { id: string; username: string; phoneNumber: string };
   service: {
     id: string;

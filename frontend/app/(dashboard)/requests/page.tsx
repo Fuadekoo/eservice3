@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import { RequestNumber } from "@/components/dashboard/request-number";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 type OverallStatus = "pending" | "processing" | "approved" | "rejected";
@@ -221,7 +222,7 @@ export default function MyRequestsPage() {
             <div className="relative flex-1 sm:w-60">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder={t("Search requests...")}
+                placeholder={t("Search by request number, service or office...")}
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 className="pl-9 h-10 rounded-xl"
@@ -358,6 +359,7 @@ function TableView({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50 bg-muted/30">
+              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Request No.")}</th>
               <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Service")}</th>
               <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Office")}</th>
               <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground hidden md:table-cell">{t("Date")}</th>
@@ -375,6 +377,11 @@ function TableView({
                   key={req.id}
                   className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors"
                 >
+                  {/* Request number */}
+                  <td className="px-5 py-4">
+                    <RequestNumber value={req.requestNumber} copyable />
+                  </td>
+
                   {/* Service */}
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
@@ -481,6 +488,7 @@ function CardView({
                     <Building2 className="size-3 text-muted-foreground shrink-0" />
                     <p className="text-xs text-muted-foreground line-clamp-1">{req.service?.office?.name}</p>
                   </div>
+                  <RequestNumber value={req.requestNumber} className="mt-1.5 text-muted-foreground" copyable />
                 </div>
                 <StatusBadge status={status} />
               </div>
@@ -600,6 +608,12 @@ function RequestDetailDialog({
               <Building2 className="size-3.5" />
               {request.service?.office?.name}
             </p>
+            <RequestNumber
+              value={request.requestNumber}
+              variant="badge"
+              copyable
+              className="mt-2 w-fit border-white/25 bg-white/10 text-white"
+            />
           </DialogHeader>
         </div>
 

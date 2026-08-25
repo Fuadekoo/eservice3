@@ -786,9 +786,9 @@ export async function listAuditLogs(
   const { actor, resource, userId, status } = req.query;
 
   const where: any = {
-    actor: actor ? { contains: String(actor), mode: "insensitive" } : undefined,
+    actor: actor ? { contains: String(actor) } : undefined,
     resource: resource
-      ? { contains: String(resource), mode: "insensitive" }
+      ? { contains: String(resource) }
       : undefined,
     userId: userId ? String(userId) : undefined,
     status: status ? String(status) : undefined,

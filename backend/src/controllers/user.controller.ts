@@ -97,17 +97,17 @@ export async function listUsers(req: AuthRequest, res: Response) {
     if (search) {
       filters.push({
         OR: [
-        { username: { contains: search, mode: "insensitive" as const } },
-        { phoneNumber: { contains: search, mode: "insensitive" as const } },
-        { firstName: { contains: search, mode: "insensitive" as const } },
-        { fatherName: { contains: search, mode: "insensitive" as const } },
-        { lastName: { contains: search, mode: "insensitive" as const } },
-        { role: { is: { name: { contains: search, mode: "insensitive" as const } } } },
+        { username: { contains: search } },
+        { phoneNumber: { contains: search } },
+        { firstName: { contains: search } },
+        { fatherName: { contains: search } },
+        { lastName: { contains: search } },
+        { role: { is: { name: { contains: search } } } },
         {
           staffs: {
             some: {
               office: {
-                is: { name: { contains: search, mode: "insensitive" as const } },
+                is: { name: { contains: search } },
               },
             },
           },

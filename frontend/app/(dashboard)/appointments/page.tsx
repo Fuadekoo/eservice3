@@ -44,6 +44,7 @@ import {
 import { cn } from "@/lib/utils";
 import { PdfViewerModal } from "@/components/ui/pdf-viewer-modal";
 import { useTranslation } from "@/lib/i18n";
+import { RequestNumber } from "@/components/dashboard/request-number";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type FileData = { id: string; name: string; filepath: string; description?: string | null };
@@ -58,6 +59,7 @@ type Appointment = {
   approveStaff?: { id: string; user: { id: string; username: string; phoneNumber: string } } | null;
   request?: {
     id: string;
+    requestNumber?: string;
     statusbystaff: string;
     statusbyadmin: string;
     fileData?: FileData[];
@@ -337,6 +339,10 @@ export default function AppointmentsPage() {
                 <DialogHeader>
                   <DialogTitle className="text-white font-black text-lg">{t("Reschedule Appointment")}</DialogTitle>
                   <p className="text-primary-foreground/70 text-sm mt-0.5">{editApt.request?.service?.name}</p>
+                  <RequestNumber
+                    value={editApt.request?.requestNumber}
+                    className="mt-1.5 text-primary-foreground/80"
+                  />
                 </DialogHeader>
               </div>
               <div className="p-6 space-y-4">
@@ -451,6 +457,10 @@ function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: A
                       {apt.request?.service?.office?.name ?? "—"}
                     </p>
                   </div>
+                  <RequestNumber
+                    value={apt.request?.requestNumber}
+                    className="mt-1 text-muted-foreground"
+                  />
                 </div>
               </div>
             </CardHeader>

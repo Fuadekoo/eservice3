@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   Building2,
@@ -20,6 +21,7 @@ import {
   CalendarDays,
   Info,
   Upload,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,6 +41,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 
@@ -127,6 +136,13 @@ function ApplyServiceContent() {
   const [uploadedFiles, setUploadedFiles] = React.useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  // Kept after the apply sheet closes: the reference number is the one thing
+  // the customer must walk away with, so it gets its own confirmation.
+  const [submitted, setSubmitted] = React.useState<{
+    requestNumber: string;
+    serviceName: string;
+    officeName: string;
+  } | null>(null);
 
   // Service detail dialog
   const [detailService, setDetailService] =
@@ -213,7 +229,7 @@ function ApplyServiceContent() {
 
     for (const file of files) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} exceeds 10 MB limit.`);
+        toast.error(t("{name} exceeds the 10 MB limit.", { name: file.name }));
         continue;
       }
       try {
@@ -258,17 +274,27 @@ function ApplyServiceContent() {
 
     setIsSubmitting(true);
     try {
-      await axiosInstance.post("/requests", {
+      const response = (await axiosInstance.post("/requests", {
         serviceId: applyService.id,
         currentAddress: form.address.trim(),
         date: new Date(form.date).toISOString(),
         notes: form.notes.trim() || undefined,
         files: uploadedFiles.map(({ name, filepath }) => ({ name, filepath })),
-      });
+      })) as unknown as { data?: { requestNumber?: string } };
+
+      const requestNumber = response?.data?.requestNumber;
       toast.success(t("Application submitted successfully!"));
       setApplyService(null);
       setForm({ address: "", date: "", notes: "" });
       setUploadedFiles([]);
+
+      if (requestNumber) {
+        setSubmitted({
+          requestNumber,
+          serviceName: applyService.name,
+          officeName: selectedOffice?.name ?? "",
+        });
+      }
     } catch (error) {
       const message =
         error instanceof Error
@@ -725,6 +751,11 @@ function ApplyServiceContent() {
             )}
           </SheetContent>
         </Sheet>
+
+        <SubmittedDialog
+          submitted={submitted}
+          onClose={() => setSubmitted(null)}
+        />
 
         {/* ── APPLY FORM PANEL (right side sheet) ── */}
         <Sheet
@@ -1405,5 +1436,96 @@ function InfoTile({
         <p className="text-sm font-bold wrap-break-word">{value}</p>
       </div>
     </div>
+  );
+}
+
+// ── Submitted Confirmation ────────────────────────────────────────────────────
+/**
+ * Shown once an application is accepted. A toast would vanish, and the request
+ * number is the one thing the customer needs to keep — it is what they quote at
+ * the office and what they search by later — so it gets a dismissible dialog.
+ */
+function SubmittedDialog({
+  submitted,
+  onClose,
+}: {
+  submitted: {
+    requestNumber: string;
+    serviceName: string;
+    officeName: string;
+  } | null;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <Dialog open={!!submitted} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md rounded-2xl text-center">
+        <DialogHeader className="items-center gap-2">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+            <CheckCircle2 className="size-7" />
+          </div>
+          <DialogTitle className="text-xl font-black">
+            {t("Application submitted successfully!")}
+          </DialogTitle>
+          <DialogDescription>
+            {submitted?.officeName
+              ? t("Your application for {service} at {office} has been received.", {
+                  service: submitted.serviceName,
+                  office: submitted.officeName,
+                })
+              : t("Your application for {service} has been received.", {
+                  service: submitted?.serviceName ?? "",
+                })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {t("Your request number")}
+          </p>
+          <p className="mt-1.5 font-mono text-xl font-black tracking-tight tabular-nums text-primary wrap-break-word">
+            {submitted?.requestNumber}
+          </p>
+          <div className="mt-2 flex justify-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 rounded-lg text-xs font-semibold"
+              onClick={async () => {
+                if (!submitted) return;
+                try {
+                  await navigator.clipboard.writeText(submitted.requestNumber);
+                  toast.success(t("Request number copied"));
+                } catch {
+                  toast.error(t("Could not copy the request number"));
+                }
+              }}
+            >
+              <Copy className="size-3.5" />
+              {t("Copy")}
+            </Button>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          {t("Keep this number — you can use it to track or search for your request.")}
+        </p>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild className="flex-1 rounded-xl font-bold">
+            <Link href="/requests">{t("View My Requests")}</Link>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="flex-1 rounded-xl font-bold"
+          >
+            {t("Close")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

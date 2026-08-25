@@ -143,6 +143,8 @@ export async function notifyRequestSubmitted(input: RequestSubmittedInput) {
 
 export interface RequestReviewedInput {
   requestId: string;
+  /** Customer-facing reference (REQ-…), quoted so the alert is actionable. */
+  requestNumber?: string | null;
   customerUserId: string;
   customerName: string;
   serviceName: string;
@@ -161,12 +163,15 @@ export async function notifyRequestApprovedByStaff(
 ) {
   const {
     requestId,
+    requestNumber,
     customerUserId,
     customerName,
     serviceName,
     officeId,
     note,
   } = input;
+
+  const ref = requestNumber ? ` Ref: ${requestNumber}` : "";
 
   const managerUserIds = await getOfficeManagerUserIds(officeId);
 
@@ -177,7 +182,8 @@ export async function notifyRequestApprovedByStaff(
       title: "Request approved by staff",
       body:
         `Your request for "${serviceName}" passed staff review and is now awaiting manager approval.` +
-        (note ? ` Note: ${note}` : ""),
+        (note ? ` Note: ${note}` : "") +
+        ref,
       url: ROUTES.customerRequests,
       dedupeKey: `request:${requestId}:staff-approved`,
     }),
@@ -185,7 +191,7 @@ export async function notifyRequestApprovedByStaff(
     notifyMany(managerUserIds, {
       kind: "request",
       title: "Request awaiting your approval",
-      body: `${customerName}'s request for "${serviceName}" was approved by staff and needs your decision.`,
+      body: `${customerName}'s request for "${serviceName}" was approved by staff and needs your decision.${ref}`,
       url: ROUTES.staffRequests,
       dedupeKey: `request:${requestId}:awaiting-manager`,
     }),
@@ -205,6 +211,7 @@ export async function notifyRequestApprovedByManager(
 ) {
   const {
     requestId,
+    requestNumber,
     customerUserId,
     serviceName,
     officeName,
@@ -213,6 +220,8 @@ export async function notifyRequestApprovedByManager(
     actorStaffId,
     note,
   } = input;
+
+  const ref = requestNumber ? ` Ref: ${requestNumber}` : "";
 
   const approverUserId = await getStaffUserId(actorStaffId);
 
@@ -223,7 +232,8 @@ export async function notifyRequestApprovedByManager(
       title: "Request approved 🎉",
       body:
         `Your request for "${serviceName}" is fully approved. Visit ${officeName}, Room ${roomNumber} (${address}).` +
-        (note ? ` Note: ${note}` : ""),
+        (note ? ` Note: ${note}` : "") +
+        ref,
       url: ROUTES.customerRequests,
       dedupeKey: `request:${requestId}:manager-approved`,
     }),
@@ -233,7 +243,7 @@ export async function notifyRequestApprovedByManager(
           userId: approverUserId,
           kind: "request_approved",
           title: "Approval recorded",
-          body: `You approved the request for "${serviceName}".`,
+          body: `You approved the request for "${serviceName}".${ref}`,
           url: ROUTES.staffRequests,
           dedupeKey: `request:${requestId}:approval-receipt`,
         })
@@ -250,12 +260,15 @@ export interface RequestRejectedInput extends RequestReviewedInput {
 export async function notifyRequestRejected(input: RequestRejectedInput) {
   const {
     requestId,
+    requestNumber,
     customerUserId,
     customerName,
     serviceName,
     serviceId,
     reason,
   } = input;
+
+  const ref = requestNumber ? ` Ref: ${requestNumber}` : "";
 
   const staffUserIds = serviceId ? await getAssignedStaffUserIds(serviceId) : [];
 
@@ -264,7 +277,7 @@ export async function notifyRequestRejected(input: RequestRejectedInput) {
       userId: customerUserId,
       kind: "request_rejected",
       title: "Request rejected",
-      body: `Your request for "${serviceName}" was rejected. Reason: ${reason}`,
+      body: `Your request for "${serviceName}" was rejected. Reason: ${reason}${ref}`,
       url: ROUTES.customerRequests,
       dedupeKey: `request:${requestId}:rejected`,
     }),
@@ -272,7 +285,7 @@ export async function notifyRequestRejected(input: RequestRejectedInput) {
     notifyMany(staffUserIds, {
       kind: "request_rejected",
       title: "Request rejected",
-      body: `${customerName}'s request for "${serviceName}" was rejected.`,
+      body: `${customerName}'s request for "${serviceName}" was rejected.${ref}`,
       url: ROUTES.staffRequests,
       dedupeKey: `request:${requestId}:rejected-for-staff`,
     }),

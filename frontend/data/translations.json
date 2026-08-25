@@ -130,6 +130,14 @@
       }
     },
     {
+      "key": "{name} exceeds the 10 MB limit.",
+      "translations": {
+        "en": "{name} exceeds the 10 MB limit.",
+        "am": "{name} ከ10 ሜባ ገደብ አልፏል።",
+        "om": "{name} daangaa 10 MB darbeera."
+      }
+    },
+    {
       "key": "• Unsaved changes",
       "translations": {
         "en": "• Unsaved changes",
@@ -2162,11 +2170,27 @@
       }
     },
     {
+      "key": "Copy request number",
+      "translations": {
+        "en": "Copy request number",
+        "am": "የጥያቄ ቁጥር ቅዳ",
+        "om": "Lakkoofsa gaaffii garagalchi"
+      }
+    },
+    {
       "key": "Core Operations",
       "translations": {
         "en": "Core Operations",
         "am": "ዋና ስራዎች",
         "om": "Hojiilee Ijoo"
+      }
+    },
+    {
+      "key": "Could not copy the request number",
+      "translations": {
+        "en": "Could not copy the request number",
+        "am": "የጥያቄ ቁጥሩን መቅዳት አልተቻለም",
+        "om": "Lakkoofsa gaaffii garagalchuun hin danda'amne"
       }
     },
     {
@@ -5263,6 +5287,14 @@
         "en": "Keep public contact information accurate for citizens.",
         "am": "ለዜጎች የሕዝብ አድራሻ መረጃው ትክክለኛ እንዲሆን ያድርጉ።",
         "om": "Odeeffannoon quunnamtii uummataa lammiilee biratti sirrii akka ta'u eegi."
+      }
+    },
+    {
+      "key": "Keep this number — you can use it to track or search for your request.",
+      "translations": {
+        "en": "Keep this number — you can use it to track or search for your request.",
+        "am": "ይህን ቁጥር ይያዙ — ጥያቄዎን ለመከታተል ወይም ለመፈለግ ሊጠቀሙበት ይችላሉ።",
+        "om": "Lakkoofsa kana qabadhu — gaaffii kee hordofuuf yookaan barbaaduuf itti fayyadamuu dandeessa."
       }
     },
     {
@@ -8786,6 +8818,30 @@
       }
     },
     {
+      "key": "Request No.",
+      "translations": {
+        "en": "Request No.",
+        "am": "የጥያቄ ቁጥር",
+        "om": "Lakk. Gaaffii"
+      }
+    },
+    {
+      "key": "Request number",
+      "translations": {
+        "en": "Request number",
+        "am": "የጥያቄ ቁጥር",
+        "om": "Lakkoofsa gaaffii"
+      }
+    },
+    {
+      "key": "Request number copied",
+      "translations": {
+        "en": "Request number copied",
+        "am": "የጥያቄ ቁጥር ተቀድቷል",
+        "om": "Lakkoofsi gaaffii garagalfameera"
+      }
+    },
+    {
       "key": "Request Queue",
       "translations": {
         "en": "Request Queue",
@@ -9527,6 +9583,22 @@
         "en": "Search by name, file number…",
         "am": "በስም፣ በፋይል ቁጥር ፈልግ…",
         "om": "Maqaa, lakkoofsa faayiliitiin barbaadi…"
+      }
+    },
+    {
+      "key": "Search by request number, customer or service...",
+      "translations": {
+        "en": "Search by request number, customer or service...",
+        "am": "በጥያቄ ቁጥር፣ በደንበኛ ወይም በአገልግሎት ፈልግ...",
+        "om": "Lakkoofsa gaaffii, maamila yookaan tajaajilaan barbaadi..."
+      }
+    },
+    {
+      "key": "Search by request number, service or office...",
+      "translations": {
+        "en": "Search by request number, service or office...",
+        "am": "በጥያቄ ቁጥር፣ በአገልግሎት ወይም በጽሕፈት ቤት ፈልግ...",
+        "om": "Lakkoofsa gaaffii, tajaajila yookaan waajjiraan barbaadi..."
       }
     },
     {
@@ -12802,6 +12874,14 @@
       }
     },
     {
+      "key": "View My Requests",
+      "translations": {
+        "en": "View My Requests",
+        "am": "ጥያቄዎቼን ተመልከት",
+        "om": "Gaaffii Koo Ilaali"
+      }
+    },
+    {
       "key": "View Only Mode",
       "translations": {
         "en": "View Only Mode",
@@ -13282,6 +13362,22 @@
       }
     },
     {
+      "key": "Your application for {service} at {office} has been received.",
+      "translations": {
+        "en": "Your application for {service} at {office} has been received.",
+        "am": "በ{office} ለ{service} ያቀረቡት ማመልከቻ ደርሶናል።",
+        "om": "Iyyannoon kee {office} keessatti {service}f dhiyeessite nu gaheera."
+      }
+    },
+    {
+      "key": "Your application for {service} has been received.",
+      "translations": {
+        "en": "Your application for {service} has been received.",
+        "am": "ለ{service} ያቀረቡት ማመልከቻ ደርሶናል።",
+        "om": "Iyyannoon kee {service}f dhiyeessite nu gaheera."
+      }
+    },
+    {
       "key": "Your assigned service requests and upcoming work",
       "translations": {
         "en": "Your assigned service requests and upcoming work",
@@ -13383,6 +13479,14 @@
         "en": "Your Rating",
         "am": "ደረጃዎ",
         "om": "Sadarkaa Kee"
+      }
+    },
+    {
+      "key": "Your request number",
+      "translations": {
+        "en": "Your request number",
+        "am": "የጥያቄ ቁጥርዎ",
+        "om": "Lakkoofsa gaaffii keetii"
       }
     },
     {

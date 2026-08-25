@@ -396,6 +396,9 @@ enum reportStatus {
 
 model request {
   id                   String                @id @default(cuid())
+  /// Human-readable reference the customer is given (REQ-YYYYMMDD-NNNNN).
+  /// Unique so it can be quoted over the phone and looked up directly.
+  requestNumber        String                @unique
   userId               String
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   serviceId            String
@@ -419,6 +422,17 @@ model request {
   fileData             fileData[]
 
   @@map("request")
+}
+
+/// One row per calendar day holding the last sequence number handed out that
+/// day. Incremented atomically so concurrent applications can never be offered
+/// the same request number — see `generateRequestNumber`.
+model requestSequence {
+  /// The day the counter belongs to, as `YYYYMMDD`.
+  id  String @id
+  seq Int    @default(0)
+
+  @@map("request_sequence")
 }
 
 model requestForOther {

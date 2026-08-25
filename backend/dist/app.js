@@ -31,10 +31,20 @@ app.use(express.json({ limit: "1000mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1000mb" }));
 app.use(cookieParser());
 app.use(morgan("dev"));
-// Serve static files from uploads and filedata directories
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-app.use("/uploads", express.static(path.join(__dirname, "../filedata")));
-app.use("/filedata", express.static(path.join(__dirname, "../filedata")));
+// Serve static files from uploads and filedata directories.
+// Mounted at the root (direct-to-backend, e.g. local dev on :4000) AND under
+// /back-api, because in production the backend is only reachable through the
+// /back-api namespace (reverse proxy). Without the /back-api mounts, proxied
+// image requests 404 on the server even though the file exists on disk.
+const uploadsDir = path.join(__dirname, "../uploads");
+const filedataDir = path.join(__dirname, "../filedata");
+for (const prefix of ["/uploads", "/back-api/uploads"]) {
+    app.use(prefix, express.static(uploadsDir));
+    app.use(prefix, express.static(filedataDir));
+}
+for (const prefix of ["/filedata", "/back-api/filedata"]) {
+    app.use(prefix, express.static(filedataDir));
+}
 // Swagger API Documentation
 // Register at root level for local development
 try {

@@ -82,6 +82,9 @@ const appointmentInclude = {
   request: {
     select: {
       id: true,
+      // The customer's reference number, so an appointment can be traced back
+      // to the request it came from without a second lookup.
+      requestNumber: true,
       statusbystaff: true,
       statusbyadmin: true,
       fileData: {

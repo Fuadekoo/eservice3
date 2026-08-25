@@ -29,7 +29,6 @@ import {
   type HomepageOfficeDetail,
   type HomepageServiceItem,
 } from "@/lib/stores/homepage-store";
-import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { getUploadUrl } from "@/lib/axios";
 import { isAuthenticated } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -48,7 +47,7 @@ export function GovernmentOffices() {
     openOfficeDialog,
     closeOfficeDialog,
   } = useHomepageStore();
-  const { getTranslationForKey: t } = useLanguagesStore();
+  const { t } = useTranslation();
 
   const activeOffices = React.useMemo(
     () => getFilteredOffices(),
@@ -122,7 +121,7 @@ function OfficeCard({
   office: Office;
   onClick: () => void;
   isLoading: boolean;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
 }) {
   return (
     <button
@@ -159,7 +158,7 @@ function OfficeCard({
       {/* Service list preview */}
       <div className="px-6 pb-8 space-y-4 flex-1">
         <p className="text-sm font-bold text-muted-foreground">
-          {office._count?.service ?? 0} {t("tajajila")}
+          {t("{count} services", { count: office._count?.service ?? 0 })}
         </p>
 
         <div className="space-y-2">
@@ -174,7 +173,7 @@ function OfficeCard({
           ))}
           {(office._count?.service ?? 0) > 3 && (
             <p className="text-xs text-primary font-bold pl-3 mt-2">
-              +{(office._count?.service ?? 0) - 3} {t("kan biraa")}
+              +{t("{count} more", { count: (office._count?.service ?? 0) - 3 })}
             </p>
           )}
           {(!office.service || office.service.length === 0) && (
@@ -198,7 +197,7 @@ function OfficeDialog({
   office: HomepageOfficeDetail;
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
 }) {
 
   const selectedService = useHomepageStore((state) => state.selectedService);
@@ -306,7 +305,7 @@ function ServiceRow({
   service: HomepageServiceItem;
   isLoggedIn: boolean;
   onDetail: () => void;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
 }) {
   const applyUrl = isLoggedIn
     ? `/apply-service?serviceId=${service.id}`
@@ -356,7 +355,7 @@ function ServiceDetailView({
   officeName: string;
   isLoggedIn: boolean;
   onBack: () => void;
-  t: (k: string) => string;
+  t: (k: string, vars?: Record<string, string | number>) => string;
 }) {
   const applyUrl = isLoggedIn
     ? `/apply-service?serviceId=${service.id}`

@@ -309,7 +309,7 @@ export function AssignServicesDialog({
                   <div className="flex flex-col items-center justify-center gap-2 py-10">
                     <Search className="size-5 text-muted-foreground/50" />
                     <p className="text-sm text-muted-foreground">
-                      {t("No services match \"")}{searchQuery}&quot;
+                      {t("No services match “{query}”", { query: searchQuery })}
                     </p>
                   </div>
                 ) : (

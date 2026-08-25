@@ -15,6 +15,7 @@ import {
   FieldDescription,
   FieldError,
 } from "@/components/ui/field";
+import { useTranslation } from "@/lib/i18n";
 
 interface FormInputProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -49,6 +50,8 @@ export function FormInput<
   disabled = false,
   required = false,
 }: FormInputProps<TFieldValues, TName>) {
+  const { t } = useTranslation();
+
   // Try to use form context if available, otherwise use external control
   let control: Control<TFieldValues> | undefined;
   try {
@@ -89,7 +92,7 @@ export function FormInput<
           />
           {description && <FieldDescription>{description}</FieldDescription>}
           {fieldState.error && (
-            <FieldError>{fieldState.error.message}</FieldError>
+            <FieldError>{t(fieldState.error.message ?? "")}</FieldError>
           )}
         </Field>
       )}

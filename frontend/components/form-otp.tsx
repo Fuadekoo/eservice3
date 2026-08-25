@@ -46,7 +46,9 @@ export function FormOTPInput<T extends FieldValues>({
             }}
           />
           {fieldState.error && (
-            <p className="text-xs text-red-500">{fieldState.error.message}</p>
+            <p className="text-xs text-red-500">
+              {t(fieldState.error.message ?? "")}
+            </p>
           )}
         </div>
       )}

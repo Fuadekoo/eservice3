@@ -471,7 +471,14 @@ export const useLanguagesStore = create<LanguagesStore>()(
     }),
     {
       name: "language-storage",
-      partialize: (state) => ({ selectedLanguage: state.selectedLanguage }),
+      // `translationData` rides along so a reload paints in the chosen
+      // language immediately instead of flashing English while the catalogue
+      // downloads — and so the offline page still reads correctly. The store
+      // refetches on mount, so a stale copy only lasts until that resolves.
+      partialize: (state) => ({
+        selectedLanguage: state.selectedLanguage,
+        translationData: state.translationData,
+      }),
     }
   )
 )

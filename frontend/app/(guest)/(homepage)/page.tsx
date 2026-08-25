@@ -229,10 +229,7 @@ function HeroSection({
         <div className="max-w-xl mx-auto w-full animate-in slide-in-from-bottom-8 duration-700 delay-300">
           <div className="relative group">
             <Input
-              placeholder={
-                getTranslationForKey("guest.searchOffices") ||
-                t("Search for offices or services...")
-              }
+              placeholder={t("Search for offices or services...")}
               className="h-14 pl-6 pr-12 rounded-xl bg-white/5 border-white/10 focus:bg-white/10 focus:border-blue-500/50 text-white placeholder:text-gray-500 text-lg transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

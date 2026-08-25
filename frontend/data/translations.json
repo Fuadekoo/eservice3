@@ -1994,6 +1994,14 @@
       }
     },
     {
+      "key": "Code is not allowed here. Remove the tags or script before saving — use the toolbar above for formatting.",
+      "translations": {
+        "en": "Code is not allowed here. Remove the tags or script before saving — use the toolbar above for formatting.",
+        "am": "እዚህ ኮድ አይፈቀድም። ከማስቀመጥዎ በፊት መለያዎቹን ወይም ስክሪፕቱን ያስወግዱ — ለቅርጸት ከላይ ያለውን የመሣሪያ አሞሌ ይጠቀሙ።",
+        "om": "Asitti koodiin hin hayyamamu. Utuu hin olkaa'in dura taagii yookaan skiriiptii haqi — bocquudhaaf sarara meeshaalee armaan olii fayyadami."
+      }
+    },
+    {
       "key": "Code resent",
       "translations": {
         "en": "Code resent",
@@ -8807,6 +8815,14 @@
         "en": "Remove Session",
         "am": "ክፍለ ጊዜ አስወግድ",
         "om": "Sessii Haqi"
+      }
+    },
+    {
+      "key": "Remove the code from the content before saving.",
+      "translations": {
+        "en": "Remove the code from the content before saving.",
+        "am": "ከማስቀመጥዎ በፊት ኮዱን ከይዘቱ ያስወግዱ።",
+        "om": "Utuu hin olkaa'in dura koodii qabiyyee irraa haqi."
       }
     },
     {

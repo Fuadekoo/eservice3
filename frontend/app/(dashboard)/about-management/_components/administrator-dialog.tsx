@@ -34,12 +34,20 @@ import {
 import { uploadFileOnly } from "@/lib/file-upload";
 import { getUploadUrl } from "@/lib/axios";
 import { useTranslation } from "@/lib/i18n";
-import { toEditorHtml } from "@/lib/rich-text";
+import { looksLikeTypedCode, toEditorHtml } from "@/lib/rich-text";
 
 const administratorSchema = z.object({
   name: z.string().min(2, "Name is required"),
   image: z.string().min(1, "Image is required"),
-  description: z.string().optional(),
+  description: z
+    .string()
+    .optional()
+    // Typed-out tags are stored as text and cannot run, but this content is
+    // published on a public page — a profile reading "<script>alert(1)</script>"
+    // is never what was intended, so it is refused rather than displayed.
+    .refine((value) => !looksLikeTypedCode(value), {
+      message: "Remove the code from the content before saving.",
+    }),
 });
 
 type AdministratorFormValues = z.infer<typeof administratorSchema>;
@@ -108,6 +116,9 @@ export function AdministratorDialog({
 
   const image = form.watch("image");
   const isBusy = isSubmitting || isUploading;
+  // Grey the button out as soon as the content is refused, rather than letting
+  // the author click and only then find out.
+  const hasTypedCode = looksLikeTypedCode(form.watch("description"));
 
   const onSubmit = async (values: AdministratorFormValues) => {
     setIsSubmitting(true);
@@ -295,7 +306,7 @@ export function AdministratorDialog({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isBusy}
+                  disabled={isBusy || hasTypedCode}
                   className="h-11 flex-[2] rounded-xl font-bold"
                 >
                   {isSubmitting && (

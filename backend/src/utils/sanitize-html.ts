@@ -173,3 +173,51 @@ export function sanitizeOptionalRichText(
   const text = clean.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trim();
   return text.length === 0 && !/<hr\b/i.test(clean) ? null : clean;
 }
+
+/**
+ * A tag written out as text, e.g. `<script>`, `</svg>`, `<img src=x …>`.
+ *
+ * A name must follow the `<` directly and the tag must close, so prose such as
+ * "a < b and c > d" or "I <3 this" is not mistaken for markup.
+ */
+const TYPED_TAG = /<\/?[a-z][a-z0-9]*[^<>]{0,200}>/i;
+
+/** A script-bearing URL written out as text. */
+const TYPED_SCRIPT_URL = /javascript\s*:/i;
+
+/** An inline event handler written out as text, e.g. ` onerror=`. */
+const TYPED_HANDLER = /\son[a-z]+\s*=/i;
+
+function decodeBasicEntities(value: string): string {
+  return value
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&nbsp;/gi, " ")
+    // `&amp;` last, so "&amp;lt;" does not become "<".
+    .replace(/&amp;/gi, "&");
+}
+
+/**
+ * True when a rich-text value contains code the author typed out as text.
+ *
+ * The XSS guard in front of every route already refuses *real* markup. This
+ * catches the other shape: characters typed into the editor, which arrive
+ * escaped (`&lt;script&gt;`) and are therefore inert — but would be published
+ * on a public page as the literal text "<script>alert(1)</script>", which is
+ * never what an author meant. The editor refuses it too; this is the copy of
+ * the rule that cannot be bypassed by calling the API directly.
+ *
+ * Real markup is stripped before the check, so formatting the editor produced —
+ * a `<strong>`, a list, a link — never trips it.
+ */
+export function containsTypedCode(value: string | null | undefined): boolean {
+  if (!value) return false;
+
+  const text = decodeBasicEntities(value.replace(/<[^>]*>/g, " "));
+
+  if (TYPED_TAG.test(text)) return true;
+  if (TYPED_SCRIPT_URL.test(text)) return true;
+  return TYPED_HANDLER.test(text);
+}

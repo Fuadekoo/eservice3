@@ -18,7 +18,7 @@ import {
   Quote,
   Redo2,
   RemoveFormatting,
-  ShieldCheck,
+  ShieldAlert,
   Strikethrough,
   Underline as UnderlineIcon,
   Undo2,
@@ -319,24 +319,25 @@ export function RichTextEditor({
         "overflow-hidden rounded-md border border-input bg-transparent transition-colors",
         "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
         "dark:bg-input/30",
+        // Code in the content blocks the save, so the box says so before the
+        // author reaches the button.
+        showsTypedCode &&
+          "border-destructive focus-within:border-destructive focus-within:ring-destructive/30",
         disabled && "pointer-events-none opacity-60",
         className,
       )}
     >
       <Toolbar editor={editor} disabled={disabled} />
 
-      {/* Typing a tag is legitimate — it is stored as text and displayed
-          verbatim. Say so, because from the author's side "it let me type
-          <script>" looks indistinguishable from a hole in the site. */}
       {showsTypedCode && (
         <p
-          role="status"
-          className="flex items-start gap-2 border-b border-input bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400"
+          role="alert"
+          className="flex items-start gap-2 border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive"
         >
-          <ShieldCheck className="mt-px size-3.5 shrink-0" />
+          <ShieldAlert className="mt-px size-3.5 shrink-0" />
           <span>
             {t(
-              "This looks like code. It will be shown on the page as plain text and cannot run — use the toolbar above for formatting.",
+              "Code is not allowed here. Remove the tags or script before saving — use the toolbar above for formatting.",
             )}
           </span>
         </p>

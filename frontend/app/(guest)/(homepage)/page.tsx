@@ -21,6 +21,7 @@ import { useAdministrationStore } from "@/lib/stores/administration-store";
 import { useGalleryStore, type Gallery } from "@/lib/stores/gallery-store";
 import { useHomepageStore } from "@/lib/stores/homepage-store";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
+import { richTextToPlain } from "@/components/ui/rich-text";
 import { GovernmentOffices } from "@/components/guest/government-offices";
 import { GuestGalleryCard } from "@/components/guest/guest-gallery-card";
 import { GalleryLightbox } from "@/components/guest/gallery-lightbox";
@@ -85,7 +86,7 @@ export default function Page() {
                     {getTranslationForKey("Administration Message:")}
                   </div>
                   <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed italic font-medium pl-2">
-                    "{adminSections[0].description}"
+                    &ldquo;{richTextToPlain(adminSections[0].description)}&rdquo;
                   </p>
                 </div>
 

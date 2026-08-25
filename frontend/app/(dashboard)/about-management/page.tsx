@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Users, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
 import { AdministratorsTab } from "./_components/administrators-tab";
 import { AboutContentTab } from "./_components/about-content-tab";

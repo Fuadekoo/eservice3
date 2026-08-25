@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { Edit, Trash2, FileText } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import type { AboutSection } from "@/lib/stores/about-store";
 import { getUploadUrl } from "@/lib/axios";
 import { useTranslation } from "@/lib/i18n";
+import { richTextToPlain } from "@/components/ui/rich-text";
 
 interface AboutSectionCardProps {
   section: AboutSection;
@@ -40,7 +40,8 @@ export function AboutSectionCard({
             {section.name}
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-            {section.description || t("No description provided for this section.")}
+            {richTextToPlain(section.description) ||
+              t("No description provided for this section.")}
           </p>
         </div>
 

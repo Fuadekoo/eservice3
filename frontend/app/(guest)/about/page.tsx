@@ -9,6 +9,7 @@ import { useAboutStore } from "@/lib/stores/about-store";
 import { useAdministrationStore } from "@/lib/stores/administration-store";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { getUploadUrl } from "@/lib/axios";
+import { RichText } from "@/components/ui/rich-text";
 
 export default function AboutPage() {
   const { sections, fetchAbout, isLoading: loadingAbout } = useAboutStore();
@@ -77,11 +78,10 @@ export default function AboutPage() {
                         <h3 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">
                           {admin.name}
                         </h3>
-                        {admin.description && (
-                          <p className="text-lg text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                            {admin.description}
-                          </p>
-                        )}
+                        <RichText
+                          value={admin.description}
+                          className="text-lg leading-relaxed text-muted-foreground"
+                        />
                       </div>
                     </article>
                   ))}
@@ -117,15 +117,15 @@ export default function AboutPage() {
                         <h3 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">
                           {section.name}
                         </h3>
-                        {section.description ? (
-                          <p className="text-base md:text-lg text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                            {section.description}
-                          </p>
-                        ) : (
-                          <p className="text-muted-foreground italic">
-                            {t("No description provided.")}
-                          </p>
-                        )}
+                        <RichText
+                          value={section.description}
+                          className="text-base md:text-lg text-muted-foreground leading-relaxed"
+                          fallback={
+                            <p className="text-muted-foreground italic">
+                              {t("No description provided.")}
+                            </p>
+                          }
+                        />
                       </div>
                     </article>
                   ))}

@@ -7,6 +7,7 @@ import {
   updateAboutSchema,
   buildValidationError,
 } from "../validators/about.validator.js";
+import { sanitizeOptionalRichText } from "../utils/sanitize-html.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -90,11 +91,15 @@ export async function createAbout(
 
     const { name, image, description } = validation.data;
 
+    // The description is rich text served on a public page, so it is cleaned
+    // here — the API is the boundary, not any particular client.
+    const safeDescription = sanitizeOptionalRichText(description);
+
     const section = await prisma.about.create({
       data: {
         name,
         image,
-        ...(description !== undefined ? { description } : {}),
+        ...(safeDescription !== undefined ? { description: safeDescription } : {}),
       },
     });
 
@@ -134,13 +139,14 @@ export async function updateAbout(
     }
 
     const { name, image, description } = validation.data;
+    const safeDescription = sanitizeOptionalRichText(description);
 
     const section = await prisma.about.update({
       where: { id },
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(image !== undefined ? { image } : {}),
-        ...(description !== undefined ? { description } : {}),
+        ...(safeDescription !== undefined ? { description: safeDescription } : {}),
       },
     });
 

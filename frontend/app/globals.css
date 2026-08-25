@@ -206,3 +206,110 @@
     }
   }
 }
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Rich-text content (TipTap)
+
+   Shared by the editor and the read-only view so what an author sees while
+   writing matches what visitors get. The project does not use the typography
+   plugin, so the element styles live here.
+   ────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .tiptap-content :where(p) {
+    margin-block: 0.75em;
+    line-height: 1.7;
+  }
+
+  .tiptap-content :where(p):first-child { margin-block-start: 0; }
+  .tiptap-content :where(p):last-child { margin-block-end: 0; }
+
+  .tiptap-content :where(h1, h2, h3, h4, h5, h6) {
+    margin-block: 1.25em 0.5em;
+    font-weight: 800;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+
+  .tiptap-content :where(h1):first-child,
+  .tiptap-content :where(h2):first-child,
+  .tiptap-content :where(h3):first-child { margin-block-start: 0; }
+
+  .tiptap-content :where(h1) { font-size: 1.5em; }
+  .tiptap-content :where(h2) { font-size: 1.3em; }
+  .tiptap-content :where(h3) { font-size: 1.125em; }
+
+  .tiptap-content :where(strong, b) { font-weight: 700; color: var(--foreground); }
+  .tiptap-content :where(em, i) { font-style: italic; }
+  .tiptap-content :where(u) { text-decoration: underline; text-underline-offset: 2px; }
+  .tiptap-content :where(s, strike, del) { text-decoration: line-through; }
+
+  .tiptap-content :where(ul, ol) {
+    margin-block: 0.75em;
+    padding-inline-start: 1.5em;
+  }
+
+  .tiptap-content :where(ul) { list-style: disc; }
+  .tiptap-content :where(ol) { list-style: decimal; }
+  .tiptap-content :where(li) { margin-block: 0.25em; line-height: 1.7; }
+  .tiptap-content :where(li > p) { margin-block: 0; }
+  .tiptap-content :where(li)::marker { color: var(--muted-foreground); }
+
+  .tiptap-content :where(blockquote) {
+    margin-block: 1em;
+    padding-inline-start: 1em;
+    border-inline-start: 3px solid var(--primary);
+    color: var(--muted-foreground);
+    font-style: italic;
+  }
+
+  .tiptap-content :where(a) {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 500;
+  }
+
+  .tiptap-content :where(a):hover { opacity: 0.8; }
+
+  .tiptap-content :where(code) {
+    padding: 0.15em 0.35em;
+    border-radius: 0.3rem;
+    background: var(--muted);
+    font-family: var(--font-geist-mono), ui-monospace, monospace;
+    font-size: 0.875em;
+  }
+
+  .tiptap-content :where(pre) {
+    margin-block: 1em;
+    padding: 0.85em 1em;
+    border-radius: 0.6rem;
+    background: var(--muted);
+    overflow-x: auto;
+  }
+
+  .tiptap-content :where(pre code) {
+    padding: 0;
+    background: transparent;
+    font-size: 0.875em;
+  }
+
+  .tiptap-content :where(hr) {
+    margin-block: 1.5em;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* TipTap renders the placeholder as a data attribute on the empty first node. */
+  .tiptap-content :where(p.is-editor-empty:first-child)::before {
+    content: attr(data-placeholder);
+    float: inline-start;
+    height: 0;
+    color: var(--muted-foreground);
+    pointer-events: none;
+  }
+
+  /* The editor fills its scroll container so clicking anywhere focuses it. */
+  .tiptap-content :where(.tiptap.ProseMirror) { min-height: inherit; outline: none; }
+}

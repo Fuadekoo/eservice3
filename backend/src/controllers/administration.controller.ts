@@ -7,6 +7,7 @@ import {
   updateAdministrationSchema,
   buildValidationError,
 } from "../validators/administration.validator.js";
+import { sanitizeOptionalRichText } from "../utils/sanitize-html.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -90,11 +91,15 @@ export async function createAdministration(
 
     const { name, image, description } = validation.data;
 
+    // Rich text shown on the public about page, so it is cleaned at the API
+    // boundary rather than trusting the client that posted it.
+    const safeDescription = sanitizeOptionalRichText(description);
+
     const section = await prisma.administration.create({
       data: {
         name,
         image,
-        ...(description !== undefined ? { description } : {}),
+        ...(safeDescription !== undefined ? { description: safeDescription } : {}),
       },
     });
 
@@ -121,13 +126,14 @@ export async function updateAdministration(
     }
 
     const { name, image, description } = validation.data;
+    const safeDescription = sanitizeOptionalRichText(description);
 
     const section = await prisma.administration.update({
       where: { id },
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(image !== undefined ? { image } : {}),
-        ...(description !== undefined ? { description } : {}),
+        ...(safeDescription !== undefined ? { description: safeDescription } : {}),
       },
     });
 

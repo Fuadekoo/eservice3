@@ -4,10 +4,10 @@ import Image from "next/image";
 import { Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import type { Administration } from "@/lib/stores/administration-store";
 import { getUploadUrl } from "@/lib/axios";
 import { useTranslation } from "@/lib/i18n";
+import { richTextToPlain } from "@/components/ui/rich-text";
 
 interface AdministratorCardProps {
   administrator: Administration;
@@ -40,7 +40,8 @@ export function AdministratorCard({
             {administrator.name}
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-            {administrator.description || t("No description provided.")}
+            {richTextToPlain(administrator.description) ||
+              t("No description provided.")}
           </p>
         </div>
 

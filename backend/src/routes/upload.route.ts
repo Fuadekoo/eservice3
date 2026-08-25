@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { uploadFile, serveByFilepath } from "../controllers/upload.controller.js";
 import { upload, validateUploadedFile } from "../middleware/upload.js";
+import { xssGuardMultipart } from "../middleware/xss-guard.js";
 import { requireAuth } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadLimiter } from "../middleware/rate-limit.js";
@@ -14,6 +15,9 @@ router.post(
   uploadLimiter,
   requireAuth,
   upload.single("file"),
+  // The global guard already ran, but a multipart body is only parsed here —
+  // so any text field sent alongside the file is checked now.
+  xssGuardMultipart,
   asyncHandler(validateUploadedFile),
   asyncHandler(uploadFile),
 );

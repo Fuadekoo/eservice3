@@ -11634,6 +11634,14 @@
       }
     },
     {
+      "key": "This looks like code. It will be shown on the page as plain text and cannot run — use the toolbar above for formatting.",
+      "translations": {
+        "en": "This looks like code. It will be shown on the page as plain text and cannot run — use the toolbar above for formatting.",
+        "am": "ይህ እንደ ኮድ ይመስላል። በገጹ ላይ እንደ ተራ ጽሑፍ ይታያል እንጂ ሊሠራ አይችልም — ለቅርጸት ከላይ ያለውን የመሣሪያ አሞሌ ይጠቀሙ።",
+        "om": "Kun koodii fakkaata. Fuula irratti akka barreeffama salphaatti mul'ata malee hojjechuu hin danda'u — bocquudhaaf sarara meeshaalee armaan olii fayyadami."
+      }
+    },
+    {
       "key": "this month.",
       "translations": {
         "en": "this month.",

@@ -80,12 +80,48 @@ function findScript(value: unknown, path: string): string | null {
   return null;
 }
 
+/**
+ * The URL as the application will read it. Route params are filled in by the
+ * router, which runs after this middleware, so the path is scanned instead —
+ * a payload in `/requests/<script>…` is in the path either way. Percent-
+ * encoding is undone first so `%3Cscript%3E` cannot slip past.
+ */
+function decodedPath(req: Request): string {
+  const raw = req.originalUrl || req.url || "";
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    // Malformed encoding: fall back to the raw form rather than throwing, so a
+    // broken URL is still scanned instead of skipping the check entirely.
+    return raw;
+  }
+}
+
+/**
+ * Second pass for `multipart/form-data` routes.
+ *
+ * `xssGuard` runs once, after the JSON body parsers — but a multipart body is
+ * only parsed by multer inside the route, so at that point `req.body` is still
+ * empty and any text field travelling alongside the file goes unchecked. Mount
+ * this straight after the multer middleware on any route that accepts one.
+ */
+export function xssGuardMultipart(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  xssGuard(req, res, next);
+}
+
 export function xssGuard(
   req: Request,
   res: Response,
   next: NextFunction,
 ): void {
-  const offending = findScript(req.body, "") ?? findScript(req.query, "");
+  const offending =
+    findScript(req.body, "") ??
+    findScript(req.query, "") ??
+    (containsScript(decodedPath(req)) ? "url" : null);
 
   if (offending) {
     res.status(400).json({

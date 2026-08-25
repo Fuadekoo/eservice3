@@ -76,6 +76,55 @@ export function isEmptyHtml(value: string | null | undefined): boolean {
 }
 
 /**
+ * A tag the author typed out, e.g. `<script>`, `</svg>`, `<img src=x …>`.
+ *
+ * Requires a name straight after the `<` and a closing `>`, so prose like
+ * "a < b and c > d" or "I <3 this" is not mistaken for markup.
+ */
+const TYPED_TAG = /<\/?[a-z][a-z0-9]*[^<>]{0,200}>/i;
+
+/** A script-bearing URL typed into the text. */
+const TYPED_SCRIPT_URL = /javascript\s*:/i;
+
+/** An inline event handler typed into the text, e.g. ` onerror=`. */
+const TYPED_HANDLER = /\son[a-z]+\s*=/i;
+
+/**
+ * True when the *text* of a document looks like code the author expected to
+ * run — a tag, an inline handler or a script URL that was typed out.
+ *
+ * Typed characters are stored as text and displayed verbatim; they never
+ * execute. That is the safe behaviour, but it is not obvious from the outside:
+ * someone who types `<script>…` sees it accepted and cannot tell whether the
+ * page is now compromised or merely ugly. This drives a notice that says which.
+ *
+ * Real markup is stripped before the check, so formatting produced by the
+ * toolbar — a `<strong>`, a list, a link — never triggers it.
+ */
+export function looksLikeTypedCode(html: string | null | undefined): boolean {
+  if (!html) return false;
+
+  // Drop the real markup, then decode entities so `&lt;script&gt;` is compared
+  // as the "<script>" the author actually typed.
+  const text = decodeBasicEntities(html.replace(/<[^>]*>/g, " "));
+
+  if (TYPED_TAG.test(text)) return true;
+  if (TYPED_SCRIPT_URL.test(text)) return true;
+  return TYPED_HANDLER.test(text);
+}
+
+function decodeBasicEntities(value: string): string {
+  return value
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&nbsp;/gi, " ")
+    // `&amp;` last, so "&amp;lt;" does not become "<".
+    .replace(/&amp;/gi, "&");
+}
+
+/**
  * Strip anything the editor could not have produced.
  *
  * The server sanitises on write, which is the real trust boundary; this is a

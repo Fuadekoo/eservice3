@@ -18,6 +18,7 @@ import {
   Quote,
   Redo2,
   RemoveFormatting,
+  ShieldCheck,
   Strikethrough,
   Underline as UnderlineIcon,
   Undo2,
@@ -25,7 +26,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
-import { isEmptyHtml, toEditorHtml } from "@/lib/rich-text";
+import { isEmptyHtml, looksLikeTypedCode, toEditorHtml } from "@/lib/rich-text";
 
 type RichTextEditorProps = {
   value?: string | null;
@@ -294,6 +295,8 @@ export function RichTextEditor({
     editor?.setEditable(!disabled);
   }, [editor, disabled]);
 
+  const showsTypedCode = looksLikeTypedCode(value);
+
   if (!editor) {
     // Reserve the same box so the dialog does not jump when the editor mounts.
     return (
@@ -321,6 +324,24 @@ export function RichTextEditor({
       )}
     >
       <Toolbar editor={editor} disabled={disabled} />
+
+      {/* Typing a tag is legitimate — it is stored as text and displayed
+          verbatim. Say so, because from the author's side "it let me type
+          <script>" looks indistinguishable from a hole in the site. */}
+      {showsTypedCode && (
+        <p
+          role="status"
+          className="flex items-start gap-2 border-b border-input bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400"
+        >
+          <ShieldCheck className="mt-px size-3.5 shrink-0" />
+          <span>
+            {t(
+              "This looks like code. It will be shown on the page as plain text and cannot run — use the toolbar above for formatting.",
+            )}
+          </span>
+        </p>
+      )}
+
       <EditorContent
         editor={editor}
         onClick={() => editor.chain().focus().run()}

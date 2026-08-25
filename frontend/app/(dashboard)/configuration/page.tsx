@@ -489,7 +489,7 @@ export default function ConfigurationPage() {
                     onChange={(event) =>
                       handleChange("subdomain", normalizeSubdomain(event.target.value))
                     }
-                    placeholder="finance"
+                    placeholder={t("finance")}
                     className="h-11 rounded-xl"
                     aria-invalid={Boolean(errors.subdomain)}
                   />

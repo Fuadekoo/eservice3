@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -13,6 +14,8 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function InstallPrompt() {
+  const { t } = useTranslation();
+
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -44,9 +47,9 @@ export default function InstallPrompt() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] rounded-lg border border-border bg-card p-4 text-card-foreground shadow-lg">
-      <p className="text-sm">Install this application?</p>
+      <p className="text-sm">{t("Install this application?")}</p>
       <Button size="sm" className="mt-3" onClick={onInstallClick}>
-        Install
+        {t("Install")}
       </Button>
     </div>
   );

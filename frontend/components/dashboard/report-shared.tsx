@@ -35,6 +35,7 @@ import {
   type ReportStatusKey,
 } from "@/lib/report-utils";
 import type { Report } from "@/lib/stores/report-store";
+import { useTranslation } from "@/lib/i18n";
 
 export function ReportStatusBadge({ status }: { status: ReportStatusKey }) {
   const cfg = REPORT_STATUS_CONFIG[status] ?? REPORT_STATUS_CONFIG.pending;
@@ -68,6 +69,8 @@ export function ReportViewDialog({
   initialTab?: ReportViewTab;
   footer?: React.ReactNode;
 }) {
+  const { t } = useTranslation();
+
   const [activeTab, setActiveTab] = React.useState<ReportViewTab>(initialTab);
   const [viewingFile, setViewingFile] = React.useState<{
     id: string;
@@ -86,8 +89,8 @@ export function ReportViewDialog({
 
   const fileCount = report?.files.length ?? 0;
   const tabs: { value: ReportViewTab; label: string; badge?: number }[] = [
-    { value: "details", label: "Details" },
-    { value: "files", label: "Files", badge: fileCount },
+    { value: "details", label: t("Details") },
+    { value: "files", label: t("Files"), badge: fileCount },
   ];
 
   return (
@@ -101,10 +104,10 @@ export function ReportViewDialog({
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <FileText className="size-4" />
                   </div>
-                  Report Details
+                  {t("Report Details")}
                 </DialogTitle>
                 <DialogDescription className="pl-10">
-                  View detailed information about this report
+                  {t("View detailed information about this report")}
                 </DialogDescription>
               </DialogHeader>
 
@@ -187,7 +190,7 @@ export function ReportViewDialog({
                           </div>
                           <div>
                             <p className="text-xs font-medium text-muted-foreground">
-                              Office
+                              {t("Office")}
                             </p>
                             <p className="text-sm font-semibold">
                               {report.office.name}
@@ -201,7 +204,7 @@ export function ReportViewDialog({
                         </div>
                         <div>
                           <p className="text-xs font-medium text-muted-foreground">
-                            Submitted
+                            {t("Submitted")}
                           </p>
                           <p className="text-sm font-semibold">
                             {format(new Date(report.createdAt), "MMMM dd, yyyy")}
@@ -215,7 +218,7 @@ export function ReportViewDialog({
                           </div>
                           <div>
                             <p className="text-xs font-medium text-muted-foreground">
-                              Sent To
+                              {t("Sent To")}
                             </p>
                             <p className="text-sm font-semibold">
                               {report.receiver.username}
@@ -229,7 +232,7 @@ export function ReportViewDialog({
                         </div>
                         <div>
                           <p className="text-xs font-medium text-muted-foreground">
-                            Description
+                            {t("Description")}
                           </p>
                           <p className="text-sm font-semibold whitespace-pre-wrap leading-relaxed">
                             {report.description}
@@ -259,12 +262,12 @@ export function ReportViewDialog({
                               variant="outline"
                               className="text-[10px] font-bold shrink-0"
                             >
-                              PDF
+                              {t("PDF")}
                             </Badge>
                           </div>
 
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span>File {index + 1}</span>
+                            <span>{t("File")} {index + 1}</span>
                             <span className="mx-1">·</span>
                             <span>
                               {format(new Date(report.createdAt), "M/d/yyyy")}
@@ -284,7 +287,7 @@ export function ReportViewDialog({
                               className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
                             >
                               <Eye className="size-4" />
-                              View
+                              {t("View")}
                             </button>
                             <a
                               href={getReportFileUrl(file.filepath)}
@@ -292,7 +295,7 @@ export function ReportViewDialog({
                               className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                             >
                               <Download className="size-4" />
-                              Download
+                              {t("Download")}
                             </a>
                           </div>
                         </div>
@@ -301,10 +304,10 @@ export function ReportViewDialog({
                       <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20">
                         <FileText className="size-8 text-muted-foreground/30 mb-2" />
                         <p className="text-sm font-semibold text-muted-foreground">
-                          No files attached
+                          {t("No files attached")}
                         </p>
                         <p className="text-xs text-muted-foreground/60 mt-0.5">
-                          This report does not include a PDF document
+                          {t("This report does not include a PDF document")}
                         </p>
                       </div>
                     )}
@@ -346,6 +349,8 @@ export function ReportHistoryList({
   onDelete?: (id: string) => void;
   showRecipient?: boolean;
 }) {
+  const { t } = useTranslation();
+
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
   const [viewingFile, setViewingFile] = React.useState<{
     id: string;
@@ -395,17 +400,17 @@ export function ReportHistoryList({
                     {report.description}
                   </p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Submitted {format(new Date(report.createdAt), "MMM dd, yyyy")}
+                    {t("Submitted")} {format(new Date(report.createdAt), "MMM dd, yyyy")}
                     {showRecipient && report.receiver && (
                       <>
                         {" "}
-                        · To: <strong>{report.receiver.username}</strong>
+                        · {t("To:")} <strong>{report.receiver.username}</strong>
                       </>
                     )}
                     {primaryFile && (
                       <>
                         {" "}
-                        · <Paperclip className="inline size-3" /> PDF
+                        · <Paperclip className="inline size-3" /> {t("PDF")}
                       </>
                     )}
                   </p>
@@ -455,7 +460,7 @@ export function ReportHistoryList({
                           variant="outline"
                           className="text-[10px] font-bold shrink-0"
                         >
-                          PDF
+                          {t("PDF")}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-3 pt-1 border-t border-border/40">
@@ -471,7 +476,7 @@ export function ReportHistoryList({
                           className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
                         >
                           <Eye className="size-4" />
-                          View
+                          {t("View")}
                         </button>
                         <a
                           href={getReportFileUrl(primaryFile.filepath)}
@@ -479,7 +484,7 @@ export function ReportHistoryList({
                           className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                         >
                           <Download className="size-4" />
-                          Download
+                          {t("Download")}
                         </a>
                       </div>
                     </div>

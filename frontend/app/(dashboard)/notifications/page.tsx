@@ -23,12 +23,15 @@ import {
   useNotificationStore,
   type AppNotification,
 } from "@/lib/stores/notification-store";
+import { useTranslation } from "@/lib/i18n";
 
 const PAGE_SIZE = 20;
 
 type Filter = "all" | "unread";
 
 export default function NotificationsPage() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const [filter, setFilter] = React.useState<Filter>("all");
 
@@ -77,12 +80,12 @@ export default function NotificationsPage() {
 
   return (
     <PageLayout
-      title="Notifications"
-      description="Everything that happened on your requests, appointments and reports."
+      title={t("Notifications")}
+      description={t("Everything that happened on your requests, appointments and reports.")}
       icon={Bell}
       tabs={[
-        { label: "All", value: "all" },
-        { label: "Unread", value: "unread", badge: unreadCount || undefined },
+        { label: t("All"), value: "all" },
+        { label: t("Unread"), value: "unread", badge: unreadCount || undefined },
       ]}
       activeTab={filter}
       onTabChange={(value) => setFilter(value as Filter)}
@@ -95,7 +98,7 @@ export default function NotificationsPage() {
             onClick={() => void markAllAsRead()}
           >
             <CheckCheck className="mr-2 size-4" />
-            Mark all read
+            {t("Mark all read")}
           </Button>
 
           <AlertDialog>
@@ -106,21 +109,20 @@ export default function NotificationsPage() {
                 disabled={notifications.length === 0}
               >
                 <Trash2 className="mr-2 size-4" />
-                Clear all
+                {t("Clear all")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Clear all notifications?</AlertDialogTitle>
+                <AlertDialogTitle>{t("Clear all notifications?")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This permanently deletes your notification history. The
-                  requests and appointments they refer to are not affected.
+                  {t("This permanently deletes your notification history. The requests and appointments they refer to are not affected.")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
                 <AlertDialogAction onClick={() => void clearAll()}>
-                  Clear all
+                  {t("Clear all")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -132,7 +134,7 @@ export default function NotificationsPage() {
         {isLoading && notifications.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Loading notifications…
+            {t("Loading notifications…")}
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
@@ -148,7 +150,7 @@ export default function NotificationsPage() {
                 })
               }
             >
-              Try again
+              {t("Try again")}
             </Button>
           </div>
         ) : notifications.length === 0 ? (
@@ -158,13 +160,13 @@ export default function NotificationsPage() {
             </div>
             <p className="text-sm font-medium">
               {filter === "unread"
-                ? "No unread notifications"
-                : "Nothing here yet"}
+                ? t("No unread notifications")
+                : t("Nothing here yet")}
             </p>
             <p className="max-w-sm text-xs text-muted-foreground">
               {filter === "unread"
-                ? "You've read everything. Switch to All to see your history."
-                : "When a request is reviewed or an appointment is confirmed, you'll see it here."}
+                ? t("You've read everything. Switch to All to see your history.")
+                : t("When a request is reviewed or an appointment is confirmed, you'll see it here.")}
             </p>
           </div>
         ) : (
@@ -189,7 +191,7 @@ export default function NotificationsPage() {
                   {isLoadingMore && (
                     <Loader2 className="mr-2 size-4 animate-spin" />
                   )}
-                  Load more
+                  {t("Load more")}
                 </Button>
               </div>
             )}

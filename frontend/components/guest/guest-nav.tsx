@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
+import { useTranslation } from "@/lib/i18n";
 
 const NAV_LINKS = [
   { href: "/", labelKey: "Home" },
@@ -12,6 +13,8 @@ const NAV_LINKS = [
 ] as const;
 
 export function GuestNav({ className }: { className?: string }) {
+  const { t } = useTranslation();
+
   const pathname = usePathname();
   const { getTranslationForKey } = useLanguagesStore();
 
@@ -21,7 +24,7 @@ export function GuestNav({ className }: { className?: string }) {
         "hidden md:flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1",
         className,
       )}
-      aria-label="Main navigation"
+      aria-label={t("Main navigation")}
     >
       {NAV_LINKS.map((link) => {
         const isActive =
@@ -49,6 +52,8 @@ export function GuestNav({ className }: { className?: string }) {
 }
 
 export function GuestMobileNav({ className }: { className?: string }) {
+  const { t } = useTranslation();
+
   const pathname = usePathname();
   const { getTranslationForKey } = useLanguagesStore();
 
@@ -58,7 +63,7 @@ export function GuestMobileNav({ className }: { className?: string }) {
         "flex md:hidden items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1",
         className,
       )}
-      aria-label="Main navigation"
+      aria-label={t("Main navigation")}
     >
       {NAV_LINKS.map((link) => {
         const isActive =

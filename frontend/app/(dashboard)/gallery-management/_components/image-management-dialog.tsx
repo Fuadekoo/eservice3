@@ -17,6 +17,7 @@ import { useGalleryStore, type Gallery } from "@/lib/stores/gallery-store";
 import { uploadFileOnly } from "@/lib/file-upload";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { getUploadUrl } from "@/lib/axios";
+import { useTranslation } from "@/lib/i18n";
 
 interface ImageManagementDialogProps {
   open: boolean;
@@ -29,6 +30,8 @@ export function ImageManagementDialog({
   onOpenChange,
   gallery,
 }: ImageManagementDialogProps) {
+  const { t } = useTranslation();
+
   const { addImage, deleteImage, fetchGalleries } = useGalleryStore();
   const [isUploading, setIsUploading] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
@@ -46,11 +49,11 @@ export function ImageManagementDialog({
         filename: result.filename,
         order: gallery.images?.length || 0,
       });
-      toast.success("Image added to gallery");
+      toast.success(t("Image added to gallery"));
       // Refresh galleries to update UI
       await fetchGalleries();
     } catch (error) {
-      toast.error("Failed to upload image");
+      toast.error(t("Failed to upload image"));
     } finally {
       setIsUploading(false);
       // Reset input
@@ -62,10 +65,10 @@ export function ImageManagementDialog({
     setIsDeleting(imageId);
     try {
       await deleteImage(imageId);
-      toast.success("Image deleted");
+      toast.success(t("Image deleted"));
       await fetchGalleries();
     } catch (error) {
-      toast.error("Failed to delete image");
+      toast.error(t("Failed to delete image"));
     } finally {
       setIsDeleting(null);
     }
@@ -75,9 +78,9 @@ export function ImageManagementDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col bg-card text-foreground border-border">
         <DialogHeader>
-          <DialogTitle>{gallery.name} - Images</DialogTitle>
+          <DialogTitle>{t("{name} – Images", { name: gallery.name })}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Manage images in this collection.
+            {t("Manage images in this collection.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -85,7 +88,7 @@ export function ImageManagementDialog({
           {!gallery.images || gallery.images.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed border-border rounded-2xl">
               <ImageIcon className="size-12 mb-2 opacity-20" />
-              <p>No images in this gallery</p>
+              <p>{t("No images in this gallery")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
@@ -97,7 +100,7 @@ export function ImageManagementDialog({
                   <AspectRatio ratio={1 / 1}>
                     <Image
                       src={getUploadUrl(img.filename)}
-                      alt="Gallery image"
+                      alt={t("Gallery image")}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
                       sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
@@ -126,7 +129,7 @@ export function ImageManagementDialog({
 
         <div className="pt-6 flex justify-between items-center border-t border-border">
           <p className="text-sm font-medium text-muted-foreground">
-            {gallery.images?.length || 0} images total
+            {gallery.images?.length || 0} {t("images total")}
           </p>
           <div className="relative">
             <Button
@@ -138,7 +141,7 @@ export function ImageManagementDialog({
               ) : (
                 <Plus className="mr-2 size-4" />
               )}
-              Add Image
+              {t("Add Image")}
             </Button>
             <input
               type="file"

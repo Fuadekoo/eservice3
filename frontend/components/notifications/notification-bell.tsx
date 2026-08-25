@@ -20,6 +20,7 @@ import {
   type AppNotification,
 } from "@/lib/stores/notification-store";
 import { NotificationItem } from "./notification-item";
+import { useTranslation } from "@/lib/i18n";
 
 /** Past this the badge stops being a count and becomes "a lot". */
 const BADGE_CAP = 99;
@@ -33,6 +34,8 @@ const BADGE_CAP = 99;
  * fastest way to get permanently blocked.
  */
 export function NotificationBell() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
 
@@ -94,7 +97,7 @@ export function NotificationBell() {
           aria-label={
             unreadCount > 0
               ? `Notifications (${unreadCount} unread)`
-              : "Notifications"
+              : t("Notifications")
           }
         >
           <Bell className="size-4.5" />
@@ -120,7 +123,7 @@ export function NotificationBell() {
         {/* ── Header ─────────────────────────────────────── */}
         <div className="flex items-center justify-between gap-2 px-3 py-2.5">
           <div className="flex min-w-0 items-center gap-2">
-            <h2 className="text-sm font-semibold">Notifications</h2>
+            <h2 className="text-sm font-semibold">{t("Notifications")}</h2>
             {unreadCount > 0 && (
               <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary tabular-nums">
                 {unreadCount} new
@@ -136,7 +139,7 @@ export function NotificationBell() {
               onClick={() => void markAllAsRead()}
             >
               <CheckCheck className="mr-1 size-3.5" />
-              Mark all read
+              {t("Mark all read")}
             </Button>
           )}
         </div>
@@ -148,10 +151,9 @@ export function NotificationBell() {
           <div className="flex items-start gap-3 bg-primary/[0.06] px-3 py-3">
             <Bell className="mt-0.5 size-4 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium">Get notified instantly</p>
+              <p className="text-xs font-medium">{t("Get notified instantly")}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Receive alerts for approvals and appointments even when this tab
-                is closed.
+                {t("Receive alerts for approvals and appointments even when this tab is closed.")}
               </p>
               <Button
                 size="sm"
@@ -160,7 +162,7 @@ export function NotificationBell() {
                 onClick={() => void enablePush()}
               >
                 {pushBusy && <Loader2 className="mr-1 size-3.5 animate-spin" />}
-                Enable notifications
+                {t("Enable notifications")}
               </Button>
             </div>
           </div>
@@ -170,8 +172,7 @@ export function NotificationBell() {
           <div className="flex items-start gap-2 bg-muted/50 px-3 py-2.5">
             <BellOff className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
             <p className="text-[11px] text-muted-foreground">
-              Browser notifications are blocked for this site. Re-enable them in
-              your browser&apos;s site settings to get instant alerts.
+              {t("Browser notifications are blocked for this site. Re-enable them in your browser's site settings to get instant alerts.")}
             </p>
           </div>
         )}
@@ -180,16 +181,16 @@ export function NotificationBell() {
         {isLoading && recent.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Loading…
+            {t("Loading…")}
           </div>
         ) : recent.length === 0 ? (
           <div className="flex flex-col items-center gap-1.5 px-6 py-10 text-center">
             <div className="flex size-10 items-center justify-center rounded-full bg-muted">
               <Bell className="size-4.5 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">You&apos;re all caught up</p>
+            <p className="text-sm font-medium">{t("You're all caught up")}</p>
             <p className="text-xs text-muted-foreground">
-              Updates about your requests and appointments show up here.
+              {t("Updates about your requests and appointments show up here.")}
             </p>
           </div>
         ) : (
@@ -213,13 +214,13 @@ export function NotificationBell() {
         <div className="flex items-center justify-between gap-2 px-2 py-1.5">
           <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
             <Link href="/notifications" onClick={() => setOpen(false)}>
-              View all
+              {t("View all")}
             </Link>
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Notification settings"
+            aria-label={t("Notification settings")}
             className="size-7 text-muted-foreground"
             asChild
           >

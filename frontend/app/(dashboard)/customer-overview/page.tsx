@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // ── Types ────────────────────────────────────────────────────────
 type Appointment = {
@@ -62,12 +63,13 @@ const STATUS_BADGE: Record<string, { label: string; className: string; icon: typ
 };
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const cfg = STATUS_BADGE[status] ?? STATUS_BADGE.pending;
   const Icon = cfg.icon;
   return (
     <Badge variant="outline" className={cn("font-semibold text-xs gap-1", cfg.className)}>
       <Icon className="size-3" />
-      {cfg.label}
+      {t(cfg.label)}
     </Badge>
   );
 }
@@ -89,9 +91,10 @@ function formatDatetime(iso: string) {
   });
 }
 
-function greet(name?: string) {
+function greet(t: (key: string, vars?: Record<string, string | number>) => string, name?: string) {
   const hour = new Date().getHours();
-  const salutation = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const salutation =
+    hour < 12 ? t("Good morning") : hour < 18 ? t("Good afternoon") : t("Good evening");
   return name ? `${salutation}, ${name}` : salutation;
 }
 
@@ -169,6 +172,8 @@ export default function CustomerOverviewPage() {
 }
 
 function CustomerOverviewContent() {
+  const { t } = useTranslation();
+
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const session = sessionData?.session;
   const user = session?.user;
@@ -235,7 +240,7 @@ function CustomerOverviewContent() {
       {/* ── Welcome Header ── */}
       <div className="flex flex-col gap-1">
         <h1 className="text-xl sm:text-2xl font-black tracking-tight text-balance">
-          {isSessionPending ? "Loading…" : greet(user?.name || user?.username)}
+          {isSessionPending ? t("Loading…") : greet(t, user?.name || user?.username)}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground">
           <span className="hidden sm:inline">
@@ -247,7 +252,7 @@ function CustomerOverviewContent() {
           </span>
           {stats.pending > 0 && (
             <span className="ml-2 text-amber-600 font-semibold">
-              · {stats.pending} request{stats.pending > 1 ? "s" : ""} awaiting review
+              · {stats.pending} {t("request")}{stats.pending > 1 ? "s" : ""} {t("awaiting review")}
             </span>
           )}
         </p>
@@ -262,50 +267,50 @@ function CustomerOverviewContent() {
           {/* ── KPI Cards ── */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             <StatCard
-              label="Total Applications"
+              label={t("Total Applications")}
               value={stats.total}
               icon={FileText}
               color="text-primary"
               bg="bg-primary/10"
-              sub="All time"
+              sub={t("All time")}
               href="/requests"
             />
             <StatCard
-              label="Pending"
+              label={t("Pending")}
               value={stats.pending}
               icon={Clock}
               color="text-amber-600"
               bg="bg-amber-500/10"
-              sub="Awaiting action"
+              sub={t("Awaiting action")}
               href="/requests"
             />
             <StatCard
-              label="Processing"
+              label={t("Processing")}
               value={stats.processing}
               icon={Activity}
               color="text-blue-600"
               bg="bg-blue-500/10"
-              sub="Staff approved"
+              sub={t("Staff approved")}
               href="/requests"
             />
             <StatCard
-              label="Approved"
+              label={t("Approved")}
               value={stats.approved}
               icon={CheckCircle}
               color="text-emerald-600"
               bg="bg-emerald-500/10"
-              sub="Fully completed"
+              sub={t("Fully completed")}
               href="/requests"
             />
             {/* Fifth of five: at 2 columns it would sit alone in a half-width
                 cell, so let it fill the row instead. */}
             <StatCard
-              label="Appointments"
+              label={t("Appointments")}
               value={stats.upcoming}
               icon={Calendar}
               color="text-violet-600"
               bg="bg-violet-500/10"
-              sub="Upcoming"
+              sub={t("Upcoming")}
               href="/appointments"
               className="col-span-2 md:col-span-1"
             />
@@ -316,12 +321,12 @@ function CustomerOverviewContent() {
             <div className="flex items-start sm:items-center gap-3 px-4 sm:px-5 py-3.5 rounded-2xl bg-primary/5 border border-primary/10">
               <TrendingUp className="size-5 text-primary shrink-0 mt-0.5 sm:mt-0" />
               <p className="text-xs sm:text-sm font-medium text-pretty">
-                You submitted{" "}
+                {t("You submitted")}{" "}
                 <span className="font-black text-primary">{stats.thisMonth}</span>{" "}
-                application{stats.thisMonth > 1 ? "s" : ""} this month.
+                {t("application")}{stats.thisMonth > 1 ? "s" : ""} {t("this month.")}
                 {stats.avgRating && (
                   <span className="ml-2 text-muted-foreground">
-                    Average satisfaction rating:{" "}
+                    {t("Average satisfaction rating:")}{" "}
                     <span className="font-bold text-amber-500">
                       <Star className="inline size-3.5 mb-0.5" /> {stats.avgRating}/5
                     </span>
@@ -337,11 +342,11 @@ function CustomerOverviewContent() {
               <CardHeader className="pb-3 flex flex-row items-center justify-between">
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <FileText className="size-4 text-primary" />
-                  Recent Applications
+                  {t("Recent Applications")}
                 </CardTitle>
                 <Button asChild variant="ghost" size="sm" className="h-8 rounded-xl text-xs font-bold">
                   <Link href="/requests">
-                    View all <ArrowRight className="ml-1 size-3" />
+                    {t("View all")} <ArrowRight className="ml-1 size-3" />
                   </Link>
                 </Button>
               </CardHeader>
@@ -351,12 +356,12 @@ function CustomerOverviewContent() {
                     <div className="p-3 rounded-full bg-muted/30 mb-3">
                       <FileText className="size-8 text-muted-foreground/30" />
                     </div>
-                    <p className="font-semibold">No applications yet</p>
+                    <p className="font-semibold">{t("No applications yet")}</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Start by applying for a service.
+                      {t("Start by applying for a service.")}
                     </p>
                     <Button asChild className="mt-4 rounded-xl h-9 text-sm font-bold">
-                      <Link href="/apply-service">Apply for Service</Link>
+                      <Link href="/apply-service">{t("Apply for Service")}</Link>
                     </Button>
                   </div>
                 ) : (
@@ -408,11 +413,11 @@ function CustomerOverviewContent() {
                 <CardHeader className="pb-3 flex flex-row items-center justify-between">
                   <CardTitle className="text-base font-bold flex items-center gap-2">
                     <Calendar className="size-4 text-primary" />
-                    Upcoming Appointments
+                    {t("Upcoming Appointments")}
                   </CardTitle>
                   <Button asChild variant="ghost" size="sm" className="h-8 rounded-xl text-xs font-bold">
                     <Link href="/appointments">
-                      All <ArrowRight className="ml-1 size-3" />
+                      {t("All")} <ArrowRight className="ml-1 size-3" />
                     </Link>
                   </Button>
                 </CardHeader>
@@ -424,7 +429,7 @@ function CustomerOverviewContent() {
                   ) : stats.upcomingApts.length === 0 ? (
                     <div className="flex flex-col items-center py-8 text-center px-4">
                       <Calendar className="size-8 text-muted-foreground/30 mb-2" />
-                      <p className="text-sm text-muted-foreground">No upcoming appointments</p>
+                      <p className="text-sm text-muted-foreground">{t("No upcoming appointments")}</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-border/50">
@@ -477,15 +482,15 @@ function CustomerOverviewContent() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-bold flex items-center gap-2">
                     <Activity className="size-4 text-primary" />
-                    Status Breakdown
+                    {t("Status Breakdown")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {[
-                    { label: "Approved", count: stats.approved, color: "bg-emerald-500", text: "text-emerald-600" },
-                    { label: "Processing", count: stats.processing, color: "bg-blue-500", text: "text-blue-600" },
-                    { label: "Pending", count: stats.pending, color: "bg-amber-500", text: "text-amber-600" },
-                    { label: "Rejected", count: stats.rejected, color: "bg-red-500", text: "text-red-600" },
+                    { label: t("Approved"), count: stats.approved, color: "bg-emerald-500", text: "text-emerald-600" },
+                    { label: t("Processing"), count: stats.processing, color: "bg-blue-500", text: "text-blue-600" },
+                    { label: t("Pending"), count: stats.pending, color: "bg-amber-500", text: "text-amber-600" },
+                    { label: t("Rejected"), count: stats.rejected, color: "bg-red-500", text: "text-red-600" },
                   ].map(({ label, count, color, text }) => {
                     const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
                     return (
@@ -508,7 +513,7 @@ function CustomerOverviewContent() {
 
                   {stats.total === 0 && (
                     <p className="text-xs text-muted-foreground italic text-center py-2">
-                      No data yet
+                      {t("No data yet")}
                     </p>
                   )}
                 </CardContent>
@@ -519,10 +524,10 @@ function CustomerOverviewContent() {
           {/* ── Quick Actions ── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: "Apply for Service", href: "/apply-service", icon: FileText, color: "text-primary", bg: "bg-primary/10" },
-              { label: "My Requests", href: "/requests", icon: Clock, color: "text-amber-600", bg: "bg-amber-500/10" },
-              { label: "Appointments", href: "/appointments", icon: Calendar, color: "text-violet-600", bg: "bg-violet-500/10" },
-              { label: "Leave Feedback", href: "/feedback", icon: Star, color: "text-yellow-600", bg: "bg-yellow-500/10" },
+              { label: t("Apply for Service"), href: "/apply-service", icon: FileText, color: "text-primary", bg: "bg-primary/10" },
+              { label: t("My Requests"), href: "/requests", icon: Clock, color: "text-amber-600", bg: "bg-amber-500/10" },
+              { label: t("Appointments"), href: "/appointments", icon: Calendar, color: "text-violet-600", bg: "bg-violet-500/10" },
+              { label: t("Leave Feedback"), href: "/feedback", icon: Star, color: "text-yellow-600", bg: "bg-yellow-500/10" },
             ].map(({ label, href, icon: Icon, color, bg }) => (
               <Link key={href} href={href} className="block h-full">
                 <div className="flex h-full items-center gap-2.5 sm:gap-3 p-3 sm:p-4 rounded-2xl border border-border/50 bg-card/50 hover:bg-muted/30 hover:border-primary/20 transition-all cursor-pointer group">

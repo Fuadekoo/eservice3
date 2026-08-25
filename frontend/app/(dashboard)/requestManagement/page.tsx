@@ -46,6 +46,7 @@ import { cn } from "@/lib/utils";
 
 import { ReviewRequestDialog } from "./_components/review-request-dialog";
 import { ScheduleAppointmentDialog } from "./_components/schedule-appointment-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 function getOverallStatus(req: ServiceRequest) {
   const { statusbystaff, statusbyadmin } = req;
@@ -56,11 +57,13 @@ function getOverallStatus(req: ServiceRequest) {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
+
   const map: Record<string, { label: string; className: string }> = {
-    pending: { label: "Pending", className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-    partial: { label: "Staff Approved", className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-    approved: { label: "Approved", className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-    rejected: { label: "Rejected", className: "bg-red-500/10 text-red-600 border-red-500/20" },
+    pending: { label: t("Pending"), className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
+    partial: { label: t("Staff Approved"), className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+    approved: { label: t("Approved"), className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
+    rejected: { label: t("Rejected"), className: "bg-red-500/10 text-red-600 border-red-500/20" },
   };
   const cfg = map[status] ?? map.pending;
   return (
@@ -78,6 +81,8 @@ const STATUS_TABS: PageTab[] = [
 ];
 
 export default function RequestManagementPage() {
+  const { t } = useTranslation();
+
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const session = sessionData?.session;
   const managerStaffId = session?.user?.staffId ?? null;
@@ -172,25 +177,25 @@ export default function RequestManagementPage() {
     try {
       if (activeRole === "staff") {
         if (!managerStaffId) {
-          toast.error("Your staff record was not found. Please re-login.");
+          toast.error(t("Your staff record was not found. Please re-login."));
           return;
         }
         await useRequestStore.getState().approveRequestStaff(id, managerStaffId, "");
-        toast.success("Request approved by staff");
+        toast.success(t("Request approved by staff"));
         refresh();
         const req = requests.find((r) => r.id === id);
         if (req) setSchedulingRequest(req);
       } else if (activeRole === "manager") {
         if (!managerStaffId) {
-          toast.error("Your manager record was not found. Please re-login.");
+          toast.error(t("Your manager record was not found. Please re-login."));
           return;
         }
         await useRequestStore.getState().approveRequestManager(id, managerStaffId, "");
-        toast.success("Request approved by manager");
+        toast.success(t("Request approved by manager"));
         refresh();
       }
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to approve request");
+      toast.error(err?.message ?? t("Failed to approve request"));
     } finally {
       setApprovingId(null);
     }
@@ -198,18 +203,18 @@ export default function RequestManagementPage() {
 
   const handleReject = async () => {
     if (!rejectingId || !rejectReason.trim()) {
-      toast.error("Please enter a rejection reason");
+      toast.error(t("Please enter a rejection reason"));
       return;
     }
     setIsRejecting(true);
     try {
       await useRequestStore.getState().rejectRequest(rejectingId, rejectReason.trim());
-      toast.success("Request rejected");
+      toast.success(t("Request rejected"));
       setRejectingId(null);
       setRejectReason("");
       refresh();
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to reject request");
+      toast.error(err?.message ?? t("Failed to reject request"));
     } finally {
       setIsRejecting(false);
     }
@@ -232,16 +237,16 @@ export default function RequestManagementPage() {
   );
 
   const tabsWithBadges: PageTab[] = [
-    { label: "All", value: "", badge: stats.total },
-    { label: "Pending", value: "pending", badge: stats.pending || undefined },
-    { label: "Approved", value: "approved", badge: stats.approved || undefined },
-    { label: "Rejected", value: "rejected", badge: stats.rejected || undefined },
+    { label: t("All"), value: "", badge: stats.total },
+    { label: t("Pending"), value: "pending", badge: stats.pending || undefined },
+    { label: t("Approved"), value: "approved", badge: stats.approved || undefined },
+    { label: t("Rejected"), value: "rejected", badge: stats.rejected || undefined },
   ];
 
   return (
     <PageLayout
-      title="Request Management"
-      description="Review and process service requests for your office"
+      title={t("Request Management")}
+      description={t("Review and process service requests for your office")}
       icon={ClipboardList}
       tabs={tabsWithBadges}
       activeTab={statusFilter}
@@ -249,7 +254,7 @@ export default function RequestManagementPage() {
       actions={
         <Button variant="outline" onClick={refresh} className="h-10 rounded-xl">
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
-          Refresh
+          {t("Refresh")}
         </Button>
       }
     >
@@ -257,10 +262,10 @@ export default function RequestManagementPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: "Total Requests", value: stats.total, icon: ClipboardList, color: "text-primary", bg: "bg-primary/10" },
-            { label: "Pending Review", value: stats.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-500/10" },
-            { label: "Approved", value: stats.approved, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-500/10" },
-            { label: "Rejected", value: stats.rejected, icon: XCircle, color: "text-red-600", bg: "bg-red-500/10" },
+            { label: t("Total Requests"), value: stats.total, icon: ClipboardList, color: "text-primary", bg: "bg-primary/10" },
+            { label: t("Pending Review"), value: stats.pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-500/10" },
+            { label: t("Approved"), value: stats.approved, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-500/10" },
+            { label: t("Rejected"), value: stats.rejected, icon: XCircle, color: "text-red-600", bg: "bg-red-500/10" },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50 backdrop-blur-sm">
               <CardContent className="p-5 flex items-center gap-4">
@@ -281,7 +286,7 @@ export default function RequestManagementPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search by customer or service..."
+              placeholder={t("Search by customer or service...")}
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -304,11 +309,11 @@ export default function RequestManagementPage() {
             >
               <SelectTrigger className="w-[200px] border-none bg-transparent h-9 focus:ring-0">
                 <SelectValue
-                  placeholder={isAdmin ? "All Offices" : "Your Office"}
+                  placeholder={isAdmin ? t("All Offices") : t("Your Office")}
                 />
               </SelectTrigger>
               <SelectContent>
-                {isAdmin && <SelectItem value="all">All Offices</SelectItem>}
+                {isAdmin && <SelectItem value="all">{t("All Offices")}</SelectItem>}
                 {officeOptions.map((office) => (
                   <SelectItem key={office.id} value={office.id}>
                     {office.name}
@@ -320,7 +325,7 @@ export default function RequestManagementPage() {
 
           {!isAdmin && sessionOfficeName && (
             <p className="text-xs text-muted-foreground">
-              Showing requests for <strong>{sessionOfficeName}</strong>
+              {t("Showing requests for")} <strong>{sessionOfficeName}</strong>
             </p>
           )}
         </div>
@@ -336,9 +341,9 @@ export default function RequestManagementPage() {
               <div className="p-4 rounded-full bg-muted/30 mb-4">
                 <ClipboardList className="size-10 text-muted-foreground/30" />
               </div>
-              <p className="font-semibold text-lg">No requests found</p>
+              <p className="font-semibold text-lg">{t("No requests found")}</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {search || statusFilter ? "Try adjusting your filters" : "No requests have been submitted yet"}
+                {search || statusFilter ? t("Try adjusting your filters") : t("No requests have been submitted yet")}
               </p>
             </div>
           ) : (
@@ -346,12 +351,12 @@ export default function RequestManagementPage() {
               <table className="w-full min-w-[760px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border/50 bg-muted/30">
-                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Customer</th>
-                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Service</th>
-                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Date</th>
-                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Staff</th>
-                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">Manager</th>
-                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground text-right">Actions</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Customer")}</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Service")}</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Date")}</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Staff")}</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Manager")}</th>
+                    <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground text-right">{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -406,7 +411,7 @@ export default function RequestManagementPage() {
                                 ) : (
                                   <>
                                     <CheckCircle className="size-3 mr-1" />
-                                    Approve
+                                    {t("Approve")}
                                   </>
                                 )}
                               </Button>
@@ -419,7 +424,7 @@ export default function RequestManagementPage() {
                                 className="h-8 rounded-lg text-destructive border-destructive/30 hover:bg-destructive/5 text-xs font-bold px-3"
                               >
                                 <XCircle className="size-3 mr-1" />
-                                Reject
+                                {t("Reject")}
                               </Button>
                             )}
                             <Button
@@ -457,7 +462,7 @@ export default function RequestManagementPage() {
               }}
               canGoNext={currentPage < pagination.totalPages}
               canGoPrevious={currentPage > 1}
-              itemLabel="requests"
+              itemLabel={t("requests")}
             />
           </div>
         )}
@@ -495,26 +500,26 @@ export default function RequestManagementPage() {
       >
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Reject This Request</AlertDialogTitle>
+            <AlertDialogTitle>{t("Reject This Request")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Please provide a reason. The customer will be notified.
+              {t("Please provide a reason. The customer will be notified.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea
-            placeholder="Enter rejection reason..."
+            placeholder={t("Enter rejection reason...")}
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             className="rounded-xl resize-none min-h-20"
           />
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleReject}
               disabled={isRejecting || !rejectReason.trim()}
               className="rounded-xl bg-destructive hover:bg-destructive/90"
             >
               {isRejecting && <Loader2 className="size-4 animate-spin mr-2" />}
-              Reject Request
+              {t("Reject Request")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -6,6 +6,7 @@ import { usePermissions } from "@/lib/hooks/use-permissions";
 import { PAGE_PERMISSIONS } from "@/config/navigation";
 import { ShieldAlert, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 interface ProtectedPageProps {
   /**
@@ -42,6 +43,8 @@ export function ProtectedPage({
   requireAll = false,
   children,
 }: ProtectedPageProps) {
+  const { t } = useTranslation();
+
   const pathname = usePathname();
   const router = useRouter();
   const {
@@ -65,7 +68,7 @@ export function ProtectedPage({
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="text-sm text-muted-foreground">
-            Checking permissions...
+            {t("Checking permissions...")}
           </p>
         </div>
       </div>
@@ -99,25 +102,25 @@ export function ProtectedPage({
           {/* Title */}
           <div className="space-y-2">
             <h2 className="text-2xl font-bold tracking-tight text-foreground">
-              Access Denied
+              {t("Access Denied")}
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              You don&apos;t have the required permissions to access this page.
+              {t("You don't have the required permissions to access this page.")}
               <br />
-              Contact your administrator to request access.
+              {t("Contact your administrator to request access.")}
             </p>
           </div>
 
           {/* Role Info */}
           <div className="rounded-lg border bg-muted/50 p-4 text-left space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Your Role</span>
+              <span className="text-muted-foreground">{t("Your Role")}</span>
               <span className="font-medium capitalize">
-                {role?.name || "Unknown"}
+                {role?.name || t("Unknown")}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Required Permission</span>
+              <span className="text-muted-foreground">{t("Required Permission")}</span>
               <span className="font-mono text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded">
                 {requiredPermissions.join(" | ")}
               </span>
@@ -132,11 +135,11 @@ export function ProtectedPage({
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Go Back
+              {t("Go Back")}
             </Button>
             <Button onClick={() => router.push("/overview")} className="gap-2">
               <Home className="h-4 w-4" />
-              Home
+              {t("Home")}
             </Button>
           </div>
         </div>

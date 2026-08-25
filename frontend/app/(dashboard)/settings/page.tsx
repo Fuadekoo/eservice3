@@ -9,13 +9,16 @@ import { PreferencesTab } from "./_tabs/preferences-tab";
 import { SecurityTab } from "./_tabs/security-tab";
 import { useSession } from "@/hooks/use-session";
 import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
+import { useTranslation } from "@/lib/i18n";
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
+
   return (
     <React.Suspense
       fallback={
         <div className="py-10 text-center text-sm text-muted-foreground">
-          Loading settings...
+          {t("Loading settings...")}
         </div>
       }
     >
@@ -25,6 +28,8 @@ export default function SettingsPage() {
 }
 
 function SettingsContent() {
+  const { t } = useTranslation();
+
   const searchParams = useSearchParams();
   const { data: sessionData } = useSession();
   const session = sessionData?.session;
@@ -39,16 +44,16 @@ function SettingsContent() {
   );
 
   const tabs: PageTab[] = [
-    { label: "Profile", value: "profile" },
-    { label: "Preferences", value: "preferences" },
-    { label: "Security", value: "security" },
-    ...(isOfficeAdmin ? [{ label: "Company Info", value: "office-info" }] : []),
+    { label: t("Profile"), value: "profile" },
+    { label: t("Preferences"), value: "preferences" },
+    { label: t("Security"), value: "security" },
+    ...(isOfficeAdmin ? [{ label: t("Company Info"), value: "office-info" }] : []),
   ];
 
   return (
     <PageLayout
-      title="Settings"
-      description="Manage your application settings and preferences"
+      title={t("Settings")}
+      description={t("Manage your application settings and preferences")}
       icon={Settings}
       tabs={tabs}
       activeTab={activeTab}

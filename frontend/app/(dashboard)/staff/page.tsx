@@ -40,8 +40,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function StaffPage() {
+  const { t } = useTranslation();
+
   const { data: sessionData, isPending: isSessionPending } = useSession();
   // /auth/me nests the office under `office` / `user.officeId`; keep the legacy
   // top-level `officeId` as a first choice for forward-compatibility.
@@ -167,9 +170,9 @@ export default function StaffPage() {
     if (!deletingId) return;
     try {
       await deleteStaff(deletingId);
-      toast.success("Staff member deleted successfully");
+      toast.success(t("Staff member deleted successfully"));
     } catch (error) {
-      toast.error("Failed to delete staff member");
+      toast.error(t("Failed to delete staff member"));
     } finally {
       setDeletingId(null);
     }
@@ -179,9 +182,9 @@ export default function StaffPage() {
     const newStatus = member.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     try {
       await updateStaff(member.id, { status: newStatus });
-      toast.success(newStatus === "ACTIVE" ? "Staff member activated" : "Staff member deactivated");
+      toast.success(newStatus === "ACTIVE" ? t("Staff member activated") : t("Staff member deactivated"));
     } catch {
-      toast.error("Failed to update staff status");
+      toast.error(t("Failed to update staff status"));
     }
   };
 
@@ -201,13 +204,13 @@ export default function StaffPage() {
       officeId: effectiveOfficeId,
       status: selectedStatus !== "all" ? selectedStatus.toLowerCase() : undefined,
     });
-    toast.success("Staff list refreshed");
+    toast.success(t("Staff list refreshed"));
   };
 
   return (
     <PageLayout
-      title="Staff Management"
-      description="Manage your office staff members and roles"
+      title={t("Staff Management")}
+      description={t("Manage your office staff members and roles")}
       icon={Users}
       actions={
         <>
@@ -219,14 +222,14 @@ export default function StaffPage() {
             <RotateCw
               className={`mr-2 size-4 ${isLoading ? "animate-spin" : ""}`}
             />
-            Refresh
+            {t("Refresh")}
           </Button>
           <Button
             onClick={handleCreate}
             className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-10 px-6 font-semibold shadow-sm transition-all active:scale-95"
           >
             <Plus className="mr-2 size-4" />
-            Add Staff
+            {t("Add Staff")}
           </Button>
         </>
       }
@@ -237,7 +240,7 @@ export default function StaffPage() {
           <div className="relative flex-1 max-w-2xl">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search staff by office, role, phone, or username..."
+              placeholder={t("Search staff by office, role, phone, or username...")}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -261,10 +264,10 @@ export default function StaffPage() {
                   }}
                 >
                   <SelectTrigger className="w-[200px] border-none bg-transparent h-8 focus:ring-0">
-                    <SelectValue placeholder="All Offices" />
+                    <SelectValue placeholder={t("All Offices")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Offices</SelectItem>
+                    <SelectItem value="all">{t("All Offices")}</SelectItem>
                     {offices.map((office) => (
                       <SelectItem key={office.id} value={office.id}>
                         {office.name}
@@ -277,14 +280,14 @@ export default function StaffPage() {
               /* Manager / staff: office is fixed to their own, shown read-only */
               <div
                 className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/5"
-                title="You can only manage staff in your assigned office"
+                title={t("You can only manage staff in your assigned office")}
               >
                 <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
                   <Building2 className="size-4" />
                 </div>
                 <div className="flex flex-col leading-tight min-w-0">
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Your Office
+                    {t("Your Office")}
                   </span>
                   <span className="max-w-[220px] truncate text-sm font-semibold text-foreground">
                     {sessionOffice?.name ?? "—"}
@@ -308,10 +311,10 @@ export default function StaffPage() {
                 }}
               >
                 <SelectTrigger className="w-35 border-none bg-transparent h-8 focus:ring-0">
-                  <SelectValue placeholder="All Roles" />
+                  <SelectValue placeholder={t("All Roles")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="all">{t("All Roles")}</SelectItem>
                   {distinctRoles.map((role) => (
                     <SelectItem key={role.key} value={role.key}>
                       {role.label}
@@ -332,14 +335,14 @@ export default function StaffPage() {
                       : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  {s === "all" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
+                  {s === "all" ? t("All") : s.charAt(0) + s.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
 
             <div className="flex items-center gap-2 ml-auto lg:ml-0">
               <span className="text-xs font-medium text-muted-foreground">
-                Show:
+                {t("Show:")}
               </span>
               <Select
                 value={pageSize.toString()}
@@ -386,7 +389,7 @@ export default function StaffPage() {
               }}
               canGoNext={pagination.hasNextPage}
               canGoPrevious={pagination.hasPreviousPage}
-              itemLabel="staff"
+              itemLabel={t("staff")}
             />
           </div>
         )}
@@ -430,22 +433,21 @@ export default function StaffPage() {
         <AlertDialogContent className="rounded-2xl border-border bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-bold">
-              Are you absolutely sure?
+              {t("Are you absolutely sure?")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              This action cannot be undone. This will permanently remove this
-              staff member from your office records.
+              {t("This action cannot be undone. This will permanently remove this staff member from your office records.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 mt-4">
             <AlertDialogCancel className="rounded-xl border-border hover:bg-muted">
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl"
             >
-              Delete Member
+              {t("Delete Member")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -70,9 +70,9 @@ export default function GalleryPage() {
     if (!deletingId) return;
     try {
       await deleteGallery(deletingId);
-      toast.success("Gallery deleted successfully");
+      toast.success(t("Gallery deleted successfully"));
     } catch (error) {
-      toast.error("Failed to delete gallery");
+      toast.error(t("Failed to delete gallery"));
     } finally {
       setDeletingId(null);
     }
@@ -82,22 +82,22 @@ export default function GalleryPage() {
     <div className="flex flex-col gap-8 p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
-          title="Gallery Management"
-          description="Manage your gallery collections and images"
+          title={t("Gallery Management")}
+          description={t("Manage your gallery collections and images")}
         />
         <Button
           onClick={handleCreate}
           className="bg-primary hover:bg-primary/90 rounded-xl"
         >
           <Plus className="mr-2 size-4" />
-          Create Gallery
+          {t("Create Gallery")}
         </Button>
       </div>
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
-          placeholder="Search galleries..."
+          placeholder={t("Search galleries...")}
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -110,7 +110,7 @@ export default function GalleryPage() {
       {isLoading && galleries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <Loader2 className="size-10 animate-spin mb-4 text-primary" />
-          <p>Loading galleries...</p>
+          <p>{t("Loading galleries...")}</p>
         </div>
       ) : galleries.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-3xl bg-card">
@@ -119,13 +119,13 @@ export default function GalleryPage() {
           </div>
           <h3 className="text-lg font-medium text-foreground mb-1">
             {searchQuery
-              ? "No galleries match your search"
-              : "No galleries found"}
+              ? t("No galleries match your search")
+              : t("No galleries found")}
           </h3>
           <p className="text-muted-foreground mb-6">
             {searchQuery
-              ? "Try a different search term."
-              : "Start by creating your first gallery collection."}
+              ? t("Try a different search term.")
+              : t("Start by creating your first gallery collection.")}
           </p>
           {!searchQuery && (
             <Button
@@ -134,7 +134,7 @@ export default function GalleryPage() {
               className="border-border text-foreground"
             >
               <Plus className="mr-2 size-4" />
-              Create Gallery
+              {t("Create Gallery")}
             </Button>
           )}
         </div>
@@ -190,21 +190,20 @@ export default function GalleryPage() {
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
         <AlertDialogContent className="bg-card border-border text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Are you absolutely sure?")}</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              This action cannot be undone. This will permanently delete the
-              gallery and all its associated images.
+              {t("This action cannot be undone. This will permanently delete the gallery and all its associated images.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border-border text-foreground hover:bg-muted">
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

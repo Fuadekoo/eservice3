@@ -27,8 +27,11 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useTranslation } from "@/lib/i18n";
 
 export default function NewRolePage() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const securityStore = useSecurityStore();
   const [selectedPermissionCodes, setSelectedPermissionCodes] = React.useState<string[]>([]);
@@ -44,7 +47,7 @@ export default function NewRolePage() {
       setLoading(true);
       await securityStore.fetchPermissions();
     } catch (error) {
-      toast.error("Failed to load permissions");
+      toast.error(t("Failed to load permissions"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -151,10 +154,10 @@ export default function NewRolePage() {
         description: description || undefined,
         permissions: selectedPermissionCodes.length > 0 ? selectedPermissionCodes : undefined,
       });
-      toast.success("Role created successfully");
+      toast.success(t("Role created successfully"));
       router.push("/security/roles");
     } catch (error) {
-      toast.error("Failed to create role");
+      toast.error(t("Failed to create role"));
       console.error(error);
       setIsSubmitting(false);
     }
@@ -163,54 +166,53 @@ export default function NewRolePage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Add role"
-        description="Define a new access role and align the permissions required to support it."
+        title={t("Add role")}
+        description={t("Define a new access role and align the permissions required to support it.")}
         actions={
           <Button variant="outline" size="sm" asChild>
-            <Link href="/security/roles">Cancel</Link>
+            <Link href="/security/roles">{t("Cancel")}</Link>
           </Button>
         }
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Role information</CardTitle>
-          <CardDescription>Set the role profile and choose the capabilities it should grant.</CardDescription>
+          <CardTitle>{t("Role information")}</CardTitle>
+          <CardDescription>{t("Set the role profile and choose the capabilities it should grant.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="role-name">Role name</Label>
+              <Label htmlFor="role-name">{t("Role name")}</Label>
               <Input
                 id="role-name"
                 name="role-name"
-                placeholder="e.g. Compliance Officer"
+                placeholder={t("e.g. Compliance Officer")}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role-description">Description</Label>
+              <Label htmlFor="role-description">{t("Description")}</Label>
               <Textarea
                 id="role-description"
                 name="role-description"
                 rows={3}
-                placeholder="Briefly describe what this role is responsible for."
+                placeholder={t("Briefly describe what this role is responsible for.")}
               />
             </div>
 
             <div className="space-y-4 border-t pt-6">
               <div className="space-y-1">
-                <h2 className="text-lg font-semibold">Permissions</h2>
+                <h2 className="text-lg font-semibold">{t("Permissions")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  Select every permission that should be bundled with this role. ({selectedPermissionCodes.length}{" "}
-                  selected)
+                  {t("Select every permission that should be bundled with this role. ({count} selected)", { count: selectedPermissionCodes.length })}
                 </p>
               </div>
               {loading ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">Loading permissions...</div>
+                <div className="py-8 text-center text-sm text-muted-foreground">{t("Loading permissions...")}</div>
               ) : securityStore.permissions.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">No permissions available</div>
+                <div className="py-8 text-center text-sm text-muted-foreground">{t("No permissions available")}</div>
               ) : (
                 <div className="rounded-lg border bg-muted/30 p-4">
                   <div className="mb-4 flex items-center justify-between border-b pb-3 px-2">
@@ -219,17 +221,17 @@ export default function NewRolePage() {
                         id="select-all"
                         checked={someSelected ? "indeterminate" : allSelected}
                         onCheckedChange={handleSelectAll}
-                        aria-label="Select all permissions"
+                        aria-label={t("Select all permissions")}
                       />
                       <Label
                         htmlFor="select-all"
                         className="cursor-pointer text-sm font-semibold"
                       >
-                        Select All Permissions
+                        {t("Select All Permissions")}
                       </Label>
                     </div>
                     <Badge variant="outline" className="font-normal">
-                      {selectedPermissionCodes.length} / {securityStore.permissions.length} selected
+                      {selectedPermissionCodes.length} / {securityStore.permissions.length} {t("selected")}
                     </Badge>
                   </div>
 
@@ -247,12 +249,12 @@ export default function NewRolePage() {
                               id={`group-${groupName}`}
                               checked={someGroupSelected ? "indeterminate" : allGroupSelected}
                               onCheckedChange={(checked) => handleToggleGroup(groupPermissions, checked === true)}
-                              aria-label={`Select ${groupName} permissions`}
+                              aria-label={t("Select {group} permissions", { group: groupName })}
                               className={someGroupSelected ? "data-[state=unchecked]:bg-primary data-[state=unchecked]:text-primary-foreground" : ""}
                             />
                             <AccordionTrigger className="flex-1 py-2 hover:no-underline">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">{groupName}</span>
+                                <span className="text-sm font-medium">{t(groupName)}</span>
                                 <Badge variant="secondary" className="h-4 px-1.5 py-0 text-[10px] font-normal">
                                   {selectedInGroup.length}/{groupPermissions.length}
                                 </Badge>
@@ -297,10 +299,10 @@ export default function NewRolePage() {
 
             <div className="flex items-center justify-end gap-2">
               <Button type="button" variant="outline" asChild>
-                <Link href="/security/roles">Cancel</Link>
+                <Link href="/security/roles">{t("Cancel")}</Link>
               </Button>
               <Button type="submit" disabled={isSubmitting || loading}>
-                {isSubmitting ? "Saving..." : "Save role"}
+                {isSubmitting ? t("Saving...") : t("Save role")}
               </Button>
             </div>
           </form>

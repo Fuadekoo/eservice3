@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { uploadFileOnly, formatFileSize } from "@/lib/file-upload";
 import { REPORT_PDF_MAX_BYTES } from "@/lib/report-utils";
+import { useTranslation } from "@/lib/i18n";
 
 export type ReportPdfFile = {
   name: string;
@@ -27,17 +28,19 @@ export function ReportPdfUpload({
   disabled,
   className,
 }: ReportPdfUploadProps) {
+  const { t } = useTranslation();
+
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [dragOver, setDragOver] = React.useState(false);
 
   const handleFile = async (file: File) => {
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      toast.error("Only PDF files are allowed");
+      toast.error(t("Only PDF files are allowed"));
       return;
     }
     if (file.size > REPORT_PDF_MAX_BYTES) {
-      toast.error("PDF must be 10 MB or smaller");
+      toast.error(t("PDF must be 10 MB or smaller"));
       return;
     }
 
@@ -49,9 +52,9 @@ export function ReportPdfUpload({
         filepath: result.filename,
         size: result.size ?? file.size,
       });
-      toast.success("PDF uploaded");
+      toast.success(t("PDF uploaded"));
     } catch {
-      toast.error("Failed to upload PDF");
+      toast.error(t("Failed to upload PDF"));
     } finally {
       setIsUploading(false);
     }
@@ -94,7 +97,7 @@ export function ReportPdfUpload({
               {value.name}
             </p>
             <p className="text-xs text-muted-foreground">
-              PDF · {formatFileSize(value.size)}
+              {t("PDF ·")} {formatFileSize(value.size)}
             </p>
           </div>
           <Button
@@ -136,10 +139,10 @@ export function ReportPdfUpload({
           )}
           <div>
             <p className="text-sm font-semibold text-foreground">
-              {isUploading ? "Uploading PDF..." : "Upload report PDF"}
+              {isUploading ? t("Uploading PDF...") : t("Upload report PDF")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Drag and drop or click to browse · PDF only · Max 10 MB
+              {t("Drag and drop or click to browse · PDF only · Max 10 MB")}
             </p>
           </div>
         </button>
@@ -148,7 +151,7 @@ export function ReportPdfUpload({
       {value && (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ExternalLink className="size-3.5" />
-          The PDF will be attached to your report submission.
+          {t("The PDF will be attached to your report submission.")}
         </p>
       )}
     </div>

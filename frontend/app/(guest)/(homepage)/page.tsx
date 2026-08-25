@@ -25,6 +25,7 @@ import { GovernmentOffices } from "@/components/guest/government-offices";
 import { GuestGalleryCard } from "@/components/guest/guest-gallery-card";
 import { GalleryLightbox } from "@/components/guest/gallery-lightbox";
 import { getUploadUrl } from "@/lib/axios";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Page() {
   const { sections: adminSections, isLoading: loadingAdmin } =
@@ -185,6 +186,8 @@ function HeroSection({
 }: {
   getTranslationForKey: (key: string) => string;
 }) {
+  const { t } = useTranslation();
+
   const { searchQuery, setSearchQuery } = useHomepageStore();
 
   return (
@@ -203,7 +206,7 @@ function HeroSection({
             <div className="relative size-full flex items-center justify-center">
               <img
                 src="/logo.png"
-                alt="Government Emblem"
+                alt={t("Government Emblem")}
                 className="size-full object-contain drop-shadow-2xl"
               />
             </div>
@@ -228,7 +231,7 @@ function HeroSection({
             <Input
               placeholder={
                 getTranslationForKey("guest.searchOffices") ||
-                "Search for offices or services..."
+                t("Search for offices or services...")
               }
               className="h-14 pl-6 pr-12 rounded-xl bg-white/5 border-white/10 focus:bg-white/10 focus:border-blue-500/50 text-white placeholder:text-gray-500 text-lg transition-all"
               value={searchQuery}

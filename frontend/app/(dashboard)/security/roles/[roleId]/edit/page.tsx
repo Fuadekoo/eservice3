@@ -32,8 +32,11 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useTranslation } from "@/lib/i18n";
 
 export default function EditRolePage() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const params = useParams();
   const roleId = params.roleId as string;
@@ -75,7 +78,7 @@ export default function EditRolePage() {
         role.permissions.map((p) => p.code).filter((c): c is string => typeof c === "string" && c.length > 0),
       );
     } else if (roles.length > 0 && !isLoading) {
-      toast.error("Role not found");
+      toast.error(t("Role not found"));
       router.push("/security/roles");
     }
   }, [role, roles, isLoading, router]);
@@ -204,10 +207,10 @@ export default function EditRolePage() {
         description: description || undefined,
         permissions: selectedPermissionCodes.filter((c): c is string => typeof c === "string" && c.length > 0),
       });
-      toast.success("Role updated successfully");
+      toast.success(t("Role updated successfully"));
       router.push("/security/roles");
     } catch (error) {
-      toast.error("Failed to update role");
+      toast.error(t("Failed to update role"));
       console.error(error);
       setIsSubmitting(false);
     }
@@ -216,9 +219,9 @@ export default function EditRolePage() {
   if (isLoading || !role) {
     return (
       <div className="space-y-8">
-        <PageHeader title="Edit role" description="Loading..." />
+        <PageHeader title={t("Edit role")} description={t("Loading...")} />
         <div className="py-8 text-center text-sm text-muted-foreground">
-          Loading role data...
+          {t("Loading role data...")}
         </div>
       </div>
     );
@@ -227,57 +230,56 @@ export default function EditRolePage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title={`Edit role – ${role.name}`}
-        description="Adjust role details and permission bundles."
+        title={t("Edit role – {name}", { name: role.name })}
+        description={t("Adjust role details and permission bundles.")}
         actions={
           <Button variant="outline" size="sm" asChild>
-            <Link href="/security/roles">Back to roles</Link>
+            <Link href="/security/roles">{t("Back to roles")}</Link>
           </Button>
         }
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Role details</CardTitle>
+          <CardTitle>{t("Role details")}</CardTitle>
           <CardDescription>
-            Update the metadata and permissions associated with this role.
+            {t("Update the metadata and permissions associated with this role.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="role-name">Role name</Label>
+              <Label htmlFor="role-name">{t("Role name")}</Label>
               <Input
                 id="role-name"
                 name="role-name"
-                placeholder="Role title"
+                placeholder={t("Role title")}
                 defaultValue={role.name}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role-description">Description</Label>
+              <Label htmlFor="role-description">{t("Description")}</Label>
               <Textarea
                 id="role-description"
                 name="role-description"
                 rows={3}
-                placeholder="Brief summary of responsibilities"
+                placeholder={t("Brief summary of responsibilities")}
                 defaultValue={role.description || ""}
               />
             </div>
 
             <div className="space-y-4 border-t pt-6">
               <div className="space-y-1">
-                <h2 className="text-lg font-semibold">Permissions</h2>
+                <h2 className="text-lg font-semibold">{t("Permissions")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  Toggle the permissions associated with this role. (
-                  {selectedPermissionCodes.length} selected)
+                  {t("Toggle the permissions associated with this role. ({count} selected)", { count: selectedPermissionCodes.length })}
                 </p>
               </div>
               {permissions.length === 0 ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">
-                  No permissions available
+                  {t("No permissions available")}
                 </div>
               ) : (
                 <div className="rounded-lg border bg-muted/30 p-4">
@@ -287,18 +289,18 @@ export default function EditRolePage() {
                         id="select-all"
                         checked={someSelected ? "indeterminate" : allSelected}
                         onCheckedChange={handleSelectAll}
-                        aria-label="Select all permissions"
+                        aria-label={t("Select all permissions")}
                       />
                       <Label
                         htmlFor="select-all"
                         className="cursor-pointer text-sm font-semibold"
                       >
-                        Select All Permissions
+                        {t("Select All Permissions")}
                       </Label>
                     </div>
                     <Badge variant="outline" className="font-normal">
                       {selectedPermissionCodes.length} / {permissions.length}{" "}
-                      selected
+                      {t("selected")}
                     </Badge>
                   </div>
 
@@ -339,7 +341,7 @@ export default function EditRolePage() {
                                     checked === true,
                                   )
                                 }
-                                aria-label={`Select ${groupName} permissions`}
+                                aria-label={t("Select {group} permissions", { group: groupName })}
                                 className={
                                   someGroupSelected
                                     ? "data-[state=unchecked]:bg-primary data-[state=unchecked]:text-primary-foreground"
@@ -349,7 +351,7 @@ export default function EditRolePage() {
                               <AccordionTrigger className="flex-1 py-2 hover:no-underline">
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium">
-                                    {groupName}
+                                    {t(groupName)}
                                   </span>
                                   <Badge
                                     variant="secondary"
@@ -410,10 +412,10 @@ export default function EditRolePage() {
 
             <div className="flex items-center justify-end gap-2">
               <Button type="button" variant="outline" asChild>
-                <Link href="/security/roles">Cancel</Link>
+                <Link href="/security/roles">{t("Cancel")}</Link>
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save changes"}
+                {isSubmitting ? t("Saving...") : t("Save changes")}
               </Button>
             </div>
           </form>

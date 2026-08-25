@@ -1,5 +1,8 @@
+"use client";
+
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 interface PageErrorProps {
   message?: string;
@@ -12,11 +15,13 @@ interface PageErrorProps {
 export const PageError: React.FC<PageErrorProps> = ({
   message,
   error,
-  title = "Error Occurred",
+  title,
   statusCode,
   onRetry,
 }) => {
-  const errorMessage = error || message || "An unexpected error occurred.";
+  const { t } = useTranslation();
+
+  const errorMessage = error || message || t("An unexpected error occurred.");
 
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center animate-in fade-in duration-500">
@@ -24,7 +29,9 @@ export const PageError: React.FC<PageErrorProps> = ({
         <AlertCircle className="h-10 w-10 text-destructive" />
       </div>
       <h2 className="mt-6 text-2xl font-semibold tracking-tight">
-        {statusCode ? `${title} (${statusCode})` : title}
+        {statusCode
+          ? `${title || t("Error Occurred")} (${statusCode})`
+          : title || t("Error Occurred")}
       </h2>
       <p className="mt-2 mb-6 max-w-md text-muted-foreground">
         {errorMessage}
@@ -32,7 +39,7 @@ export const PageError: React.FC<PageErrorProps> = ({
       {onRetry && (
         <Button onClick={() => onRetry()} variant="outline" size="sm">
           <RefreshCcw className="mr-2 h-4 w-4" />
-          Try Again
+          {t("Try Again")}
         </Button>
       )}
     </div>

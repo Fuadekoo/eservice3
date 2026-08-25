@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Home, ArrowLeft, RefreshCw, AlertTriangle, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useTranslation } from "@/lib/i18n";
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -13,6 +14,8 @@ interface ErrorProps {
 }
 
 export default function Error({ error, reset }: ErrorProps) {
+  const { t } = useTranslation();
+
   const router = useRouter();
 
   useEffect(() => {
@@ -26,7 +29,7 @@ export default function Error({ error, reset }: ErrorProps) {
       <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
         <Image
           src="/logo.png"
-          alt="Logo"
+          alt={t("Logo")}
           width={800}
           height={800}
           className="w-full max-w-4xl h-auto object-contain"
@@ -47,13 +50,13 @@ export default function Error({ error, reset }: ErrorProps) {
         {/* Title and Description */}
         <div className="mb-10">
           <h1 className="text-5xl sm:text-6xl font-bold mb-4 bg-gradient-to-r from-destructive via-destructive to-orange-500 bg-clip-text text-transparent">
-            Something Went Wrong
+            {t("Something Went Wrong")}
           </h1>
           <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-foreground">
-            An unexpected error occurred
+            {t("An unexpected error occurred")}
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground mb-4">
-            We're sorry, but something went wrong while processing your request.
+            {t("We're sorry, but something went wrong while processing your request.")}
           </p>
           {error.message && (
             <div className="mt-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -72,7 +75,7 @@ export default function Error({ error, reset }: ErrorProps) {
             className="w-full sm:w-auto min-w-[160px]"
           >
             <RefreshCw className="mr-2 h-5 w-5" />
-            Try Again
+            {t("Try Again")}
           </Button>
           <Button
             onClick={() => router.back()}
@@ -81,7 +84,7 @@ export default function Error({ error, reset }: ErrorProps) {
             className="w-full sm:w-auto min-w-[160px]"
           >
             <ArrowLeft className="mr-2 h-5 w-5" />
-            Go Back
+            {t("Go Back")}
           </Button>
           <Button
             asChild
@@ -91,14 +94,14 @@ export default function Error({ error, reset }: ErrorProps) {
           >
             <Link href="/">
               <Home className="mr-2 h-5 w-5" />
-              Go Home
+              {t("Go Home")}
             </Link>
           </Button>
         </div>
 
         {/* Additional Help */}
         <div className="mt-12 pt-8 border-t border-border">
-          <p className="text-sm text-muted-foreground mb-4">What can you do?</p>
+          <p className="text-sm text-muted-foreground mb-4">{t("What can you do?")}</p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button
               variant="ghost"
@@ -107,7 +110,7 @@ export default function Error({ error, reset }: ErrorProps) {
               className="text-muted-foreground hover:text-foreground"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Retry
+              {t("Retry")}
             </Button>
             <Button
               variant="ghost"
@@ -116,7 +119,7 @@ export default function Error({ error, reset }: ErrorProps) {
               className="text-muted-foreground hover:text-foreground"
             >
               <Home className="mr-2 h-4 w-4" />
-              Homepage
+              {t("Homepage")}
             </Button>
             <Button
               variant="ghost"
@@ -125,12 +128,12 @@ export default function Error({ error, reset }: ErrorProps) {
               className="text-muted-foreground hover:text-foreground"
             >
               <Bug className="mr-2 h-4 w-4" />
-              Reload Page
+              {t("Reload Page")}
             </Button>
           </div>
           {error.digest && (
             <p className="mt-6 text-xs text-muted-foreground font-mono">
-              Error ID: {error.digest}
+              {t("Error ID:")} {error.digest}
             </p>
           )}
         </div>

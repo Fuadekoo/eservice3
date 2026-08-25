@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { usePushStore } from "@/lib/stores/push-store";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Turns a user-agent string into something a person can recognise.
@@ -76,6 +77,8 @@ function describeDevice(userAgent: string | null): {
  * is why "I turned notifications off but still get them on my phone" happens.
  */
 export function PushSettingsCard() {
+  const { t } = useTranslation();
+
   const isChecking = usePushStore((state) => state.isChecking);
   const isSupported = usePushStore((state) => state.isSupported);
   const isServerEnabled = usePushStore((state) => state.isServerEnabled);
@@ -104,10 +107,9 @@ export function PushSettingsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notifications</CardTitle>
+        <CardTitle>{t("Notifications")}</CardTitle>
         <CardDescription>
-          Get alerted when a request is reviewed or an appointment is confirmed
-          — even when e-Service is closed.
+          {t("Get alerted when a request is reviewed or an appointment is confirmed — even when e-Service is closed.")}
         </CardDescription>
       </CardHeader>
 
@@ -116,19 +118,19 @@ export function PushSettingsCard() {
         {isChecking ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            Checking this browser…
+            {t("Checking this browser…")}
           </div>
         ) : !isSupported ? (
           <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/40 p-3">
             <ShieldAlert className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0 text-sm">
               <p className="font-medium">
-                This browser can&apos;t show notifications
+                {t("This browser can't show notifications")}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {needsHomeScreenInstall
-                  ? "On iPhone and iPad, add e-Service to your Home Screen first — Safari only allows notifications for installed apps."
-                  : "Try Chrome, Edge, Firefox, or Safari 16.4 and later."}
+                  ? t("On iPhone and iPad, add e-Service to your Home Screen first — Safari only allows notifications for installed apps.")
+                  : t("Try Chrome, Edge, Firefox, or Safari 16.4 and later.")}
               </p>
             </div>
           </div>
@@ -136,10 +138,9 @@ export function PushSettingsCard() {
           <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/40 p-3">
             <ShieldAlert className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0 text-sm">
-              <p className="font-medium">Notifications aren&apos;t set up yet</p>
+              <p className="font-medium">{t("Notifications aren't set up yet")}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                The server has no push keys configured. Ask an administrator to
-                add them.
+                {t("The server has no push keys configured. Ask an administrator to add them.")}
               </p>
             </div>
           </div>
@@ -148,12 +149,12 @@ export function PushSettingsCard() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <Label htmlFor="push-toggle" className="text-sm font-medium">
-                  Notifications on this device
+                  {t("Notifications on this device")}
                 </Label>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {isSubscribed
-                    ? "This browser will receive alerts."
-                    : "Turn on to receive alerts in this browser."}
+                    ? t("This browser will receive alerts.")
+                    : t("Turn on to receive alerts in this browser.")}
                 </p>
               </div>
 
@@ -175,11 +176,10 @@ export function PushSettingsCard() {
                 <BellOff className="mt-0.5 size-4 shrink-0 text-destructive" />
                 <div className="min-w-0 text-sm">
                   <p className="font-medium text-destructive">
-                    Blocked in browser settings
+                    {t("Blocked in browser settings")}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Open the padlock icon in the address bar, allow
-                    notifications for this site, then reload the page.
+                    {t("Open the padlock icon in the address bar, allow notifications for this site, then reload the page.")}
                   </p>
                 </div>
               </div>
@@ -193,7 +193,7 @@ export function PushSettingsCard() {
                 onClick={() => void test()}
               >
                 <Send className="mr-2 size-4" />
-                Send a test notification
+                {t("Send a test notification")}
               </Button>
             )}
           </>
@@ -208,14 +208,14 @@ export function PushSettingsCard() {
               <div className="mb-2 flex items-center gap-2">
                 <Bell className="size-4 text-muted-foreground" />
                 <h3 className="text-sm font-medium">
-                  Devices receiving alerts
+                  {t("Devices receiving alerts")}
                 </h3>
               </div>
 
               {isLoadingDevices ? (
                 <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
                   <Loader2 className="size-3.5 animate-spin" />
-                  Loading devices…
+                  {t("Loading devices…")}
                 </div>
               ) : (
                 <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
@@ -241,12 +241,12 @@ export function PushSettingsCard() {
                             {label}
                             {isThisDevice && (
                               <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                                This device
+                                {t("This device")}
                               </span>
                             )}
                           </p>
                           <p className="truncate text-[11px] text-muted-foreground">
-                            Added{" "}
+                            {t("Added")}{" "}
                             {new Date(device.createdAt).toLocaleDateString()}
                           </p>
                         </div>

@@ -21,6 +21,7 @@ import type {
   AppNotification,
   NotificationKind,
 } from "@/lib/stores/notification-store";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Icon and colour per event kind.
@@ -79,16 +80,19 @@ const KIND_PRESENTATION: Record<
  * "3m ago" up to a day, then a plain date. Relative time past a day stops
  * being informative — "13 days ago" makes you do arithmetic anyway.
  */
-export function formatRelativeTime(iso: string): string {
+export function formatRelativeTime(
+  iso: string,
+  t: (key: string, vars?: Record<string, string | number>) => string = (k) => k
+): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return "";
 
   const seconds = Math.round((Date.now() - then) / 1000);
 
-  if (seconds < 60) return "just now";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86_400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 172_800) return "yesterday";
+  if (seconds < 60) return t("just now");
+  if (seconds < 3600) return t("{count}m ago", { count: Math.floor(seconds / 60) });
+  if (seconds < 86_400) return t("{count}h ago", { count: Math.floor(seconds / 3600) });
+  if (seconds < 172_800) return t("yesterday");
 
   return new Date(iso).toLocaleDateString(undefined, {
     day: "numeric",
@@ -113,6 +117,8 @@ export function NotificationItem({
   onDelete,
   dense = false,
 }: NotificationItemProps) {
+  const { t } = useTranslation();
+
   const presentation =
     KIND_PRESENTATION[notification.kind] ?? KIND_PRESENTATION.system;
   const Icon = presentation.icon;
@@ -166,7 +172,7 @@ export function NotificationItem({
               dateTime={notification.createdAt}
               className="shrink-0 text-[11px] tabular-nums text-muted-foreground"
             >
-              {formatRelativeTime(notification.createdAt)}
+              {formatRelativeTime(notification.createdAt, t)}
             </time>
           </span>
 
@@ -185,7 +191,7 @@ export function NotificationItem({
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Delete notification"
+          aria-label={t("Delete notification")}
           onClick={() => onDelete(notification.id)}
           className="size-7 shrink-0 self-center text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
         >

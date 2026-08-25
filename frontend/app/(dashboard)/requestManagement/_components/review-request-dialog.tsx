@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 type TabValue = "details" | "files";
 
@@ -56,6 +57,8 @@ export function ReviewRequestDialog({
   onSuccess,
   onApproveSuccess,
 }: ReviewRequestDialogProps) {
+  const { t } = useTranslation();
+
   const { approveRequestStaff, approveRequestManager, rejectRequest } =
     useRequestStore();
 
@@ -89,14 +92,14 @@ export function ReviewRequestDialog({
       } else if (role === "manager") {
         await approveRequestManager(request.id, staffId, notes);
       }
-      toast.success("Request approved successfully");
+      toast.success(t("Request approved successfully"));
       onSuccess();
       onOpenChange(false);
       if (role === "staff") {
         onApproveSuccess(request);
       }
     } catch (err: any) {
-      toast.error(err?.message || "Failed to approve request");
+      toast.error(err?.message || t("Failed to approve request"));
     } finally {
       setIsApproving(false);
     }
@@ -104,17 +107,17 @@ export function ReviewRequestDialog({
 
   const handleReject = async () => {
     if (!rejectReason.trim()) {
-      toast.error("Please enter a rejection reason");
+      toast.error(t("Please enter a rejection reason"));
       return;
     }
     setIsRejecting(true);
     try {
       await rejectRequest(request.id, rejectReason.trim());
-      toast.success("Request rejected");
+      toast.success(t("Request rejected"));
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to reject request");
+      toast.error(err?.message || t("Failed to reject request"));
     } finally {
       setIsRejecting(false);
     }
@@ -142,8 +145,8 @@ export function ReviewRequestDialog({
     .find((desc: string | null) => desc && desc.trim().length > 0);
 
   const tabs: { value: TabValue; label: string; badge?: number }[] = [
-    { value: "details", label: "Details" },
-    { value: "files", label: "Files", badge: fileCount },
+    { value: "details", label: t("Details") },
+    { value: "files", label: t("Files"), badge: fileCount },
   ];
 
   const showFooter =
@@ -165,10 +168,10 @@ export function ReviewRequestDialog({
                     <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <FileText className="size-4" />
                     </div>
-                    Request Details
+                    {t("Request Details")}
                   </SheetTitle>
                   <SheetDescription className="pl-10">
-                    View detailed information about this request
+                    {t("View detailed information about this request")}
                   </SheetDescription>
                 </SheetHeader>
 
@@ -253,17 +256,17 @@ export function ReviewRequestDialog({
                               : "bg-amber-500/15 text-amber-700 dark:text-amber-400",
                         )}
                       >
-                        {request.statusbystaff || "pending"}
+                        {request.statusbystaff || t("pending")}
                       </Badge>
                     </div>
 
                     {/* Service name gets the full width — it is the longest field */}
                     <div className="mt-3 border-t border-border/50 pt-3">
                       <p className="text-xs font-medium text-muted-foreground">
-                        Service
+                        {t("Service")}
                       </p>
                       <h3 className="mt-0.5 text-base leading-snug font-bold wrap-break-word">
-                        {request.service?.name || "Service"}
+                        {request.service?.name || t("Service")}
                       </h3>
                     </div>
                   </div>
@@ -276,7 +279,7 @@ export function ReviewRequestDialog({
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground">
-                          Preferred Date
+                          {t("Preferred Date")}
                         </p>
                         <p className="text-sm font-semibold">
                           {new Date(request.date).toLocaleDateString("en-US", {
@@ -293,7 +296,7 @@ export function ReviewRequestDialog({
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground">
-                          Current Address
+                          {t("Current Address")}
                         </p>
                         <p className="text-sm font-semibold">
                           {request.currentAddress}
@@ -306,7 +309,7 @@ export function ReviewRequestDialog({
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground">
-                          Office &amp; Room
+                          {t("Office & Room")}
                         </p>
                         <p className="text-sm font-semibold">
                           {request.service?.office?.name}
@@ -322,7 +325,7 @@ export function ReviewRequestDialog({
                     <div className="space-y-2 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
                       <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         <MessageSquare className="size-3.5" />
-                        Customer Note
+                        {t("Customer Note")}
                       </p>
                       <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                         {customerNote}
@@ -334,10 +337,10 @@ export function ReviewRequestDialog({
                   {canApprove && !showRejectForm && (
                     <div className="space-y-1.5">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Approval Notes
+                        {t("Approval Notes")}
                       </p>
                       <Textarea
-                        placeholder="Add optional notes for the customer..."
+                        placeholder={t("Add optional notes for the customer...")}
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         className="resize-none rounded-xl"
@@ -349,10 +352,10 @@ export function ReviewRequestDialog({
                   {showRejectForm && (
                     <div className="space-y-1.5">
                       <p className="text-xs font-semibold text-destructive uppercase tracking-wider">
-                        Rejection Reason
+                        {t("Rejection Reason")}
                       </p>
                       <Textarea
-                        placeholder="Enter reason for rejection (required)..."
+                        placeholder={t("Enter reason for rejection (required)...")}
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
                         className="resize-none rounded-xl border-destructive/30 focus-visible:ring-destructive/30"
@@ -407,7 +410,7 @@ export function ReviewRequestDialog({
                           </div>
 
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span>File {index + 1}</span>
+                            <span>{t("File")} {index + 1}</span>
                             <span className="mx-1">·</span>
                             <span>
                               {new Date(
@@ -428,7 +431,7 @@ export function ReviewRequestDialog({
                               }}
                             >
                               <Eye className="mr-1.5 size-4" />
-                              View
+                              {t("View")}
                             </Button>
                             <Button
                               asChild
@@ -443,7 +446,7 @@ export function ReviewRequestDialog({
                                 download={file.name}
                               >
                                 <Download className="mr-1.5 size-4" />
-                                Download
+                                {t("Download")}
                               </a>
                             </Button>
                           </div>
@@ -454,10 +457,10 @@ export function ReviewRequestDialog({
                     <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20">
                       <FileText className="mb-2 size-8 text-muted-foreground/30" />
                       <p className="text-sm font-semibold text-muted-foreground">
-                        No files attached
+                        {t("No files attached")}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground/60">
-                        The applicant did not upload any documents
+                        {t("The applicant did not upload any documents")}
                       </p>
                     </div>
                   )}
@@ -476,7 +479,7 @@ export function ReviewRequestDialog({
                       onClick={() => setShowRejectForm(false)}
                       disabled={isRejecting}
                     >
-                      Cancel
+                      {t("Cancel")}
                     </Button>
                     <Button
                       variant="destructive"
@@ -487,7 +490,7 @@ export function ReviewRequestDialog({
                       {isRejecting && (
                         <Loader2 className="mr-2 size-4 animate-spin" />
                       )}
-                      Confirm Reject
+                      {t("Confirm Reject")}
                     </Button>
                   </div>
                 ) : (
@@ -499,7 +502,7 @@ export function ReviewRequestDialog({
                         onClick={() => setShowRejectForm(true)}
                       >
                         <XCircle className="mr-1.5 size-4" />
-                        Reject
+                        {t("Reject")}
                       </Button>
                     )}
                     {canApprove && (
@@ -513,7 +516,7 @@ export function ReviewRequestDialog({
                         ) : (
                           <CheckCircle className="mr-1.5 size-4" />
                         )}
-                        Approve
+                        {t("Approve")}
                       </Button>
                     )}
                   </div>

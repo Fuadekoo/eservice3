@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { usePermissions } from "@/lib/hooks/use-permissions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface RoleGuardProps {
   children: ReactNode;
@@ -21,10 +22,12 @@ export function RoleGuard({
   fallback = null,
   showError = false,
 }: RoleGuardProps) {
+  const { t } = useTranslation();
+
   const { role, isLoading } = usePermissions();
 
   if (isLoading) {
-    return <div className="animate-pulse">Loading...</div>;
+    return <div className="animate-pulse">{t("Loading...")}</div>;
   }
 
   const hasAccess = role && allowedRoles.includes(role.name);
@@ -34,10 +37,9 @@ export function RoleGuard({
       return (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Access Denied</AlertTitle>
+          <AlertTitle>{t("Access Denied")}</AlertTitle>
           <AlertDescription>
-            You do not have the required role to access this content.
-            Required roles: {allowedRoles.join(", ")}
+            {t("You do not have the required role to access this content. Required roles:")} {allowedRoles.join(", ")}
           </AlertDescription>
         </Alert>
       );

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Gallery } from "@/lib/stores/gallery-store";
 
 import { getUploadUrl } from "@/lib/axios";
+import { useTranslation } from "@/lib/i18n";
 
 interface GalleryCardProps {
   gallery: Gallery;
@@ -23,6 +24,8 @@ export function GalleryCard({
   onEdit,
   onDelete,
 }: GalleryCardProps) {
+  const { t } = useTranslation();
+
   const imageCount = gallery.images?.length || 0;
   const mainImage = gallery.images?.[0]?.filename;
 
@@ -41,7 +44,7 @@ export function GalleryCard({
           ) : (
             <div className="size-full flex flex-col items-center justify-center text-muted-foreground">
               <ImageIcon className="size-12 mb-2 opacity-20" />
-              <span className="text-sm font-medium">No images</span>
+              <span className="text-sm font-medium">{t("No images")}</span>
             </div>
           )}
           {imageCount > 1 && (
@@ -49,7 +52,7 @@ export function GalleryCard({
               variant="secondary"
               className="absolute top-3 right-3 bg-black/60 text-white border-none backdrop-blur-md hover:bg-black/70"
             >
-              +{imageCount - 1} more
+              +{imageCount - 1} {t("more")}
             </Badge>
           )}
         </div>
@@ -60,14 +63,14 @@ export function GalleryCard({
           {gallery.name}
         </h3>
         <p className="text-sm text-muted-foreground line-clamp-2 h-10 leading-relaxed">
-          {gallery.description || "No description provided for this collection."}
+          {gallery.description || t("No description provided for this collection.")}
         </p>
       </CardContent>
 
       <CardFooter className="px-5 pb-5 pt-0 flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground/60 flex items-center gap-1.5">
           <ImageIcon className="size-3" />
-          {imageCount} {imageCount === 1 ? "image" : "images"}
+          {imageCount} {imageCount === 1 ? t("image") : t("images")}
         </span>
         <div className="flex gap-2">
           <Button
@@ -75,7 +78,7 @@ export function GalleryCard({
             size="icon"
             onClick={() => onView(gallery)}
             className="size-9 rounded-xl hover:scale-105 transition-transform"
-            title="View Images"
+            title={t("View Images")}
           >
             <Eye className="size-4" />
           </Button>
@@ -84,7 +87,7 @@ export function GalleryCard({
             size="icon"
             onClick={() => onEdit(gallery)}
             className="size-9 rounded-xl hover:scale-105 transition-transform"
-            title="Edit Gallery"
+            title={t("Edit Gallery")}
           >
             <Pencil className="size-4" />
           </Button>
@@ -93,7 +96,7 @@ export function GalleryCard({
             size="icon"
             onClick={() => onDelete(gallery.id)}
             className="size-9 rounded-xl hover:scale-105 transition-transform shadow-sm"
-            title="Delete Gallery"
+            title={t("Delete Gallery")}
           >
             <Trash2 className="size-4" />
           </Button>

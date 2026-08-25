@@ -193,7 +193,7 @@ export function OfficeCreateDialog({
                   <FormItem>
                     <FormLabel>{t("Subdomain")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="finance" {...field} />
+                      <Input placeholder={t("finance")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

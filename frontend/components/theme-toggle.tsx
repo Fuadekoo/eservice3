@@ -11,8 +11,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTranslation } from "@/lib/i18n";
 
 export function ThemeToggle() {
+  const { t } = useTranslation();
+
   const { setTheme, theme } = useTheme();
   const [isMounted, setIsMounted] = React.useState(false);
 
@@ -21,9 +24,9 @@ export function ThemeToggle() {
   }, []);
 
   const items: Array<{ label: string; value: "light" | "dark" | "system" }> = [
-    { label: "Light", value: "light" },
-    { label: "Dark", value: "dark" },
-    { label: "System", value: "system" },
+    { label: t("Light"), value: "light" },
+    { label: t("Dark"), value: "dark" },
+    { label: t("System"), value: "system" },
   ];
 
   const renderIcon = () => {
@@ -45,7 +48,7 @@ export function ThemeToggle() {
           variant="outline"
           size="icon"
           className="rounded-full"
-          aria-label="Toggle theme"
+          aria-label={t("Toggle theme")}
         >
           {renderIcon()}
         </Button>

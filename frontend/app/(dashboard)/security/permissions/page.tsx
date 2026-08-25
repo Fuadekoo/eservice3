@@ -46,6 +46,7 @@ import {
   Search,
   ShieldCheck,
 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 /** Codes are namespaced with ":" (e.g. "page:admin:roles"); group by the head. */
 function groupOf(code: string | null | undefined): string {
@@ -53,6 +54,8 @@ function groupOf(code: string | null | undefined): string {
 }
 
 export default function PermissionsPage() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const securityStore = useSecurityStore();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -76,7 +79,7 @@ export default function PermissionsPage() {
     try {
       await securityStore.fetchPermissions();
     } catch (error) {
-      toast.error("Failed to load permissions");
+      toast.error(t("Failed to load permissions"));
       console.error(error);
     }
   }
@@ -94,12 +97,12 @@ export default function PermissionsPage() {
     if (!permissionToDelete) return;
     try {
       await securityStore.deletePermission(permissionToDelete.id);
-      toast.success("Permission deleted successfully");
+      toast.success(t("Permission deleted successfully"));
       await loadPermissions();
       setDeleteDialogOpen(false);
       setPermissionToDelete(null);
     } catch (error) {
-      toast.error("Failed to delete permission");
+      toast.error(t("Failed to delete permission"));
       console.error(error);
     }
   }
@@ -139,9 +142,9 @@ export default function PermissionsPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Permissions</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t("Permissions")}</h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Granular access permissions provisioned across all system modules.
+              {t("Granular access permissions provisioned across all system modules.")}
             </p>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -151,7 +154,7 @@ export default function PermissionsPage() {
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => setViewMode("card")}
-                title="Card view"
+                title={t("Card view")}
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
@@ -160,7 +163,7 @@ export default function PermissionsPage() {
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => setViewMode("table")}
-                title="Table view"
+                title={t("Table view")}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -168,7 +171,7 @@ export default function PermissionsPage() {
             <Button size="sm" className="h-9 px-4 flex-1 sm:flex-none" asChild>
               <Link href="/security/permissions/new">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Permission
+                {t("Add Permission")}
               </Link>
             </Button>
           </div>
@@ -178,7 +181,7 @@ export default function PermissionsPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, code or description…"
+            placeholder={t("Search by name, code or description…")}
             className="pl-9 h-10"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -190,23 +193,23 @@ export default function PermissionsPage() {
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg font-bold">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                Permission Catalogue
+                {t("Permission Catalogue")}
               </CardTitle>
               <CardDescription>
-                {totalItems} permission{totalItems !== 1 ? "s" : ""} defined
+                {totalItems} {t("permission")}{totalItems !== 1 ? "s" : ""} {t("defined")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {securityStore.isLoading ? (
                 <div className="py-12 flex flex-col items-center justify-center text-muted-foreground">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4" />
-                  <p className="text-sm">Loading permissions…</p>
+                  <p className="text-sm">{t("Loading permissions…")}</p>
                 </div>
               ) : totalItems === 0 ? (
                 <div className="py-12 text-center text-muted-foreground flex flex-col items-center">
                   <Key className="h-12 w-12 opacity-20 mb-4" />
                   <p className="text-sm">
-                    {search ? "No permissions match your search." : "No permissions defined yet."}
+                    {search ? t("No permissions match your search.") : t("No permissions defined yet.")}
                   </p>
                 </div>
               ) : (
@@ -244,7 +247,7 @@ export default function PermissionsPage() {
                                 </CardHeader>
                                 <CardContent className="px-4 pb-0">
                                   <p className="text-xs text-muted-foreground line-clamp-2 min-h-[32px]">
-                                    {permission.description || "No description provided."}
+                                    {permission.description || t("No description provided.")}
                                   </p>
                                 </CardContent>
                                 <div className="flex border-t mt-3 divide-x">
@@ -254,7 +257,7 @@ export default function PermissionsPage() {
                                     onClick={() => handleEdit(permission)}
                                   >
                                     <Edit2 className="h-3.5 w-3.5 mr-2" />
-                                    Edit
+                                    {t("Edit")}
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -262,7 +265,7 @@ export default function PermissionsPage() {
                                     onClick={() => handleDeleteClick(permission)}
                                   >
                                     <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                    Delete
+                                    {t("Delete")}
                                   </Button>
                                 </div>
                               </Card>
@@ -277,10 +280,10 @@ export default function PermissionsPage() {
                       <Table>
                         <TableHeader className="bg-muted/50">
                           <TableRow>
-                            <TableHead className="font-bold">Code</TableHead>
-                            <TableHead className="font-bold">Name</TableHead>
-                            <TableHead className="font-bold hidden sm:table-cell">Description</TableHead>
-                            <TableHead className="w-[90px] text-right font-bold">Actions</TableHead>
+                            <TableHead className="font-bold">{t("Code")}</TableHead>
+                            <TableHead className="font-bold">{t("Name")}</TableHead>
+                            <TableHead className="font-bold hidden sm:table-cell">{t("Description")}</TableHead>
+                            <TableHead className="w-[90px] text-right font-bold">{t("Actions")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -303,7 +306,7 @@ export default function PermissionsPage() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => handleEdit(permission)}
-                                    title="Edit"
+                                    title={t("Edit")}
                                   >
                                     <Edit2 className="h-4 w-4" />
                                   </Button>
@@ -312,7 +315,7 @@ export default function PermissionsPage() {
                                     size="icon"
                                     onClick={() => handleDeleteClick(permission)}
                                     className="text-rose-600 hover:text-rose-700"
-                                    title="Delete"
+                                    title={t("Delete")}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -337,7 +340,7 @@ export default function PermissionsPage() {
                       onPageSizeChange={setPageSize}
                       canGoNext={currentPage < totalPages}
                       canGoPrevious={currentPage > 1}
-                      itemLabel="permissions"
+                      itemLabel={t("permissions")}
                     />
                   </div>
                 </>
@@ -349,19 +352,21 @@ export default function PermissionsPage() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Permission</AlertDialogTitle>
+              <AlertDialogTitle>{t("Delete Permission")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete &quot;{permissionToDelete?.name}&quot;? This action
-                cannot be undone and may break roles that use this permission.
+                {t(
+                  "Are you sure you want to delete \u201c{name}\u201d? This action cannot be undone and may break roles that use this permission.",
+                  { name: permissionToDelete?.name ?? "" },
+                )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteConfirm}
                 className="bg-rose-600 text-white hover:bg-rose-700"
               >
-                Delete
+                {t("Delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

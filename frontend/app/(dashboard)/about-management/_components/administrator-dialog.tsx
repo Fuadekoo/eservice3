@@ -32,6 +32,7 @@ import {
 } from "@/lib/stores/administration-store";
 import { uploadFileOnly } from "@/lib/file-upload";
 import { getUploadUrl } from "@/lib/axios";
+import { useTranslation } from "@/lib/i18n";
 
 const administratorSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -52,6 +53,8 @@ export function AdministratorDialog({
   onOpenChange,
   administrator,
 }: AdministratorDialogProps) {
+  const { t } = useTranslation();
+
   const { createAdministration, updateAdministration } =
     useAdministrationStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -92,9 +95,9 @@ export function AdministratorDialog({
       // The API might return just the filename or a path.
       // administration-store expects a string for image.
       form.setValue("image", result.filename);
-      toast.success("Image uploaded successfully");
+      toast.success(t("Image uploaded successfully"));
     } catch (error) {
-      toast.error("Failed to upload image");
+      toast.error(t("Failed to upload image"));
     } finally {
       setIsUploading(false);
     }
@@ -105,17 +108,17 @@ export function AdministratorDialog({
     try {
       if (administrator) {
         await updateAdministration(administrator.id, values);
-        toast.success("Administrator updated successfully");
+        toast.success(t("Administrator updated successfully"));
       } else {
         await createAdministration(values);
-        toast.success("Administrator created successfully");
+        toast.success(t("Administrator created successfully"));
       }
       onOpenChange(false);
     } catch (error) {
       toast.error(
         administrator
-          ? "Failed to update administrator"
-          : "Failed to create administrator",
+          ? t("Failed to update administrator")
+          : t("Failed to create administrator"),
       );
     } finally {
       setIsSubmitting(false);
@@ -127,12 +130,12 @@ export function AdministratorDialog({
       <DialogContent className="sm:max-w-[500px] bg-card text-foreground border-border">
         <DialogHeader>
           <DialogTitle>
-            {administrator ? "Edit Administrator" : "Add Administrator"}
+            {administrator ? t("Edit Administrator") : t("Add Administrator")}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {administrator
-              ? "Update administrator details."
-              : "Add a new administrator to the about page."}
+              ? t("Update administrator details.")
+              : t("Add a new administrator to the about page.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -144,7 +147,7 @@ export function AdministratorDialog({
                   <>
                     <Image
                       src={getUploadUrl(form.watch("image"))}
-                      alt="Preview"
+                      alt={t("Preview")}
                       fill
                       className="object-cover"
                     />
@@ -161,7 +164,7 @@ export function AdministratorDialog({
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Upload className="size-8" />
-                    <span className="text-xs">Upload Photo</span>
+                    <span className="text-xs">{t("Upload Photo")}</span>
                   </div>
                 )}
                 <input
@@ -180,11 +183,11 @@ export function AdministratorDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>{t("Full Name")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Enter full name"
+                      placeholder={t("Enter full name")}
                       className="bg-muted border-border focus:ring-primary text-foreground"
                     />
                   </FormControl>
@@ -198,11 +201,11 @@ export function AdministratorDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t("Description")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="Enter description (optional)"
+                      placeholder={t("Enter description (optional)")}
                       className="bg-muted border-border focus:ring-primary text-foreground min-h-[100px]"
                     />
                   </FormControl>
@@ -218,7 +221,7 @@ export function AdministratorDialog({
                 onClick={() => onOpenChange(false)}
                 className="bg-transparent border-border text-foreground hover:bg-muted"
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
@@ -228,7 +231,7 @@ export function AdministratorDialog({
                 {isSubmitting && (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 )}
-                {administrator ? "Update" : "Create"}
+                {administrator ? t("Update") : t("Create")}
               </Button>
             </div>
           </form>

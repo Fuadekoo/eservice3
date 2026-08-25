@@ -86,7 +86,10 @@ export function Pagination({
 
   if (hideWhenEmpty && totalPages === 0) return null;
 
-  const defaultPageInfo = `${t("Page")} ${currentPage} ${t("of")} ${totalPages}`;
+  const defaultPageInfo = t("Page {current} of {total}", {
+    current: currentPage,
+    total: totalPages,
+  });
   const pageInfo = pageInfoFormat
     ? pageInfoFormat(currentPage, totalPages)
     : defaultPageInfo;

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/lib/hooks/use-permissions";
+import { useTranslation } from "@/lib/i18n";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProtectedButtonProps extends React.ComponentProps<typeof Button> {
@@ -21,9 +22,12 @@ export function ProtectedButton({
   requireAll = false,
   children,
   disabled,
-  tooltipMessage = "You do not have permission to perform this action",
+  tooltipMessage,
   ...props
 }: ProtectedButtonProps) {
+  const { t } = useTranslation();
+  const message =
+    tooltipMessage ?? t("You do not have permission to perform this action");
   const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading } = usePermissions();
 
   if (isLoading) {
@@ -54,7 +58,7 @@ export function ProtectedButton({
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{tooltipMessage}</p>
+            <p>{message}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

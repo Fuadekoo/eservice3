@@ -6,11 +6,11 @@ import { GuestPageHero } from "@/components/guest/guest-page-hero";
 import { GuestGalleryCard } from "@/components/guest/guest-gallery-card";
 import { GalleryLightbox } from "@/components/guest/gallery-lightbox";
 import { useGalleryStore, type Gallery } from "@/lib/stores/gallery-store";
-import { useLanguagesStore } from "@/lib/stores/languages-store";
+import { useTranslation } from "@/lib/i18n";
 
 export default function GalleryPage() {
   const { galleries, fetchGalleries, isLoading, pagination } = useGalleryStore();
-  const { getTranslationForKey: t } = useLanguagesStore();
+  const { t } = useTranslation();
   const [selectedGallery, setSelectedGallery] = React.useState<Gallery | null>(
     null,
   );
@@ -62,8 +62,10 @@ export default function GalleryPage() {
 
             {pagination && pagination.total > galleries.length && (
               <p className="text-center text-sm text-muted-foreground mt-10">
-                {t("Showing")} {galleries.length} {t("of")} {pagination.total}{" "}
-                {t("galleries")}
+                {t("Showing {shown} of {total} galleries", {
+                  shown: galleries.length,
+                  total: pagination.total,
+                })}
               </p>
             )}
           </>
@@ -75,7 +77,7 @@ export default function GalleryPage() {
         open={isLightboxOpen}
         onOpenChange={setIsLightboxOpen}
         imageCounterLabel={(current, total) =>
-          `${t("Image")} ${current} ${t("of")} ${total}`
+          t("Image {current} of {total}", { current, total })
         }
       />
     </div>

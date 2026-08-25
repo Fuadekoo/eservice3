@@ -326,7 +326,7 @@ export default function ReportManagementPage() {
                         </p>
                         {report.filesCount > 0 && (
                           <p className="text-[10px] text-primary mt-0.5">
-                            PDF attached
+                            {t("PDF attached")}
                           </p>
                         )}
                       </div>

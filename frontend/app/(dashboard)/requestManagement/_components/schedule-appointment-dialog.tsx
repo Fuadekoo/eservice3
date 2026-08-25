@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/lib/i18n";
 
 interface ScheduleAppointmentDialogProps {
   request: ServiceRequest | null;
@@ -38,6 +39,8 @@ export function ScheduleAppointmentDialog({
   onOpenChange,
   onSuccess,
 }: ScheduleAppointmentDialogProps) {
+  const { t } = useTranslation();
+
   const { createAppointment } = useRequestStore();
   
   const [date, setDate] = React.useState("");
@@ -65,11 +68,11 @@ export function ScheduleAppointmentDialog({
     setIsSubmitting(true);
     try {
       await createAppointment(request.id, date, time || undefined, notes || undefined);
-      toast.success("Appointment scheduled successfully");
+      toast.success(t("Appointment scheduled successfully"));
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to schedule appointment");
+      toast.error(err?.message || t("Failed to schedule appointment"));
     } finally {
       setIsSubmitting(false);
     }
@@ -86,9 +89,12 @@ export function ScheduleAppointmentDialog({
               <CalendarCheck className="size-5" />
             </div>
             <div>
-              <DialogTitle>Schedule Appointment</DialogTitle>
+              <DialogTitle>{t("Schedule Appointment")}</DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
-                For {request.user?.username} ({request.service?.name})
+                {t("For {customer} ({service})", {
+                  customer: request.user?.username ?? "",
+                  service: request.service?.name ?? "",
+                })}
               </DialogDescription>
             </div>
           </div>
@@ -97,7 +103,7 @@ export function ScheduleAppointmentDialog({
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="date" className="text-xs font-semibold uppercase text-muted-foreground">Date</Label>
+              <Label htmlFor="date" className="text-xs font-semibold uppercase text-muted-foreground">{t("Date")}</Label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
@@ -112,7 +118,7 @@ export function ScheduleAppointmentDialog({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="time" className="text-xs font-semibold uppercase text-muted-foreground">Time</Label>
+              <Label htmlFor="time" className="text-xs font-semibold uppercase text-muted-foreground">{t("Time")}</Label>
               <div className="relative">
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
@@ -127,10 +133,10 @@ export function ScheduleAppointmentDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-xs font-semibold uppercase text-muted-foreground">Notes for customer (Optional)</Label>
+            <Label htmlFor="notes" className="text-xs font-semibold uppercase text-muted-foreground">{t("Notes for customer (Optional)")}</Label>
             <Textarea
               id="notes"
-              placeholder="e.g. Please bring original ID documents..."
+              placeholder={t("e.g. Please bring original ID documents...")}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="resize-none rounded-xl"
@@ -140,11 +146,11 @@ export function ScheduleAppointmentDialog({
 
           <DialogFooter className="pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">
-              Skip
+              {t("Skip")}
             </Button>
             <Button type="submit" disabled={isSubmitting || !date} className="rounded-xl bg-violet-600 hover:bg-violet-700 text-white">
               {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Schedule
+              {t("Schedule")}
             </Button>
           </DialogFooter>
         </form>

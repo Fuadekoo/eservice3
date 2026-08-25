@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { StaffMember } from "@/lib/stores/staff-store";
+import { useTranslation } from "@/lib/i18n";
 
 interface StaffTableProps {
   staff: StaffMember[];
@@ -34,6 +35,8 @@ interface StaffTableProps {
 }
 
 export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggleStatus }: StaffTableProps) {
+  const { t } = useTranslation();
+
   const getInitials = (username?: string, fallbackName?: string) => {
     const source = (username || fallbackName || "?").trim();
     return source.substring(0, 1).toUpperCase();
@@ -45,28 +48,28 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
         return (
           <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none flex items-center gap-1 mx-auto w-fit px-3 py-1 text-[10px] font-bold uppercase rounded-full">
             <CheckCircle2 className="size-3" />
-            Active
+            {t("Active")}
           </Badge>
         );
       case "INACTIVE":
         return (
           <Badge className="bg-gray-500/10 text-gray-500 border-none flex items-center gap-1 mx-auto w-fit px-3 py-1 text-[10px] font-bold uppercase rounded-full">
             <XCircle className="size-3" />
-            Inactive
+            {t("Inactive")}
           </Badge>
         );
       case "PENDING":
         return (
           <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-none flex items-center gap-1 mx-auto w-fit px-3 py-1 text-[10px] font-bold uppercase rounded-full">
             <RotateCw className="size-3 animate-spin" />
-            Pending
+            {t("Pending")}
           </Badge>
         );
       case "BLOCKED":
         return (
           <Badge className="bg-red-500/10 text-red-600 dark:text-red-400 border-none flex items-center gap-1 mx-auto w-fit px-3 py-1 text-[10px] font-bold uppercase rounded-full">
             <XCircle className="size-3" />
-            Blocked
+            {t("Blocked")}
           </Badge>
         );
       default:
@@ -81,22 +84,22 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
           <TableHeader className="bg-muted/30">
             <TableRow className="hover:bg-transparent border-none">
               <TableHead className="w-[300px] py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider pl-6">
-                Staff Member
+                {t("Staff Member")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider">
-                Contact
+                {t("Contact")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider">
-                Role
+                {t("Role")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-center">
-                Services
+                {t("Services")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-center">
-                Status
+                {t("Status")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-right pr-6">
-                Actions
+                {t("Actions")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -107,7 +110,7 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
                   colSpan={6}
                   className="h-32 text-center text-muted-foreground"
                 >
-                  No staff members found.
+                  {t("No staff members found.")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -157,13 +160,13 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
                       variant="secondary"
                       className="rounded-full px-3 py-0.5 font-bold border-none text-[10px] uppercase tracking-wider bg-violet-500/10 text-violet-600 dark:text-violet-400"
                     >
-                      {member.assignedServicesCount ?? 0} Assigned
+                      {member.assignedServicesCount ?? 0} {t("Assigned")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center py-5">
                     <button
                       onClick={() => onToggleStatus?.(member)}
-                      title={member.status === "ACTIVE" ? "Click to deactivate" : "Click to activate"}
+                      title={member.status === "ACTIVE" ? t("Click to deactivate") : t("Click to activate")}
                       className="group/toggle inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       {member.status === "ACTIVE"
@@ -181,7 +184,7 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
                         variant="ghost"
                         size="icon"
                         className="size-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="View"
+                        title={t("View")}
                       >
                         <Eye className="size-4" />
                       </Button>
@@ -190,7 +193,7 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
                         size="icon"
                         className="size-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                         onClick={() => onEdit(member)}
-                        title="Edit"
+                        title={t("Edit")}
                       >
                         <Edit className="size-4" />
                       </Button>
@@ -199,7 +202,7 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
                         size="icon"
                         className="size-8 rounded-full text-muted-foreground hover:text-violet-600 hover:bg-violet-500/10 transition-colors"
                         onClick={() => onAssignServices(member)}
-                        title="Assign Services"
+                        title={t("Assign Services")}
                       >
                         <GraduationCap className="size-4" />
                       </Button>
@@ -208,7 +211,7 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
                         size="icon"
                         className="size-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                         onClick={() => onDelete(member.id)}
-                        title="Delete"
+                        title={t("Delete")}
                       >
                         <Trash2 className="size-4" />
                       </Button>

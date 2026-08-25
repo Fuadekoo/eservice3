@@ -46,6 +46,7 @@ import {
   ethiopianMobilePhoneSchema,
   normalizeEthiopianMobilePhone,
 } from "@/lib/phone";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ const STEPS = [
 ];
 
 function StepIndicator({ current }: { current: number }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center gap-0 mb-8">
       {STEPS.map((s, i) => {
@@ -115,7 +117,7 @@ function StepIndicator({ current }: { current: number }) {
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                {s.label}
+                {t(s.label)}
               </span>
             </div>
             {i < STEPS.length - 1 && (
@@ -136,6 +138,8 @@ function StepIndicator({ current }: { current: number }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 function ForgotPasswordContent() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
@@ -190,8 +194,8 @@ function ForgotPasswordContent() {
       setResendCooldown(60);
       setStep(2);
 
-      toast.success("Verification code sent", {
-        description: "Check your phone for the 6-digit code.",
+      toast.success(t("Verification code sent"), {
+        description: t("Check your phone for the 6-digit code."),
       });
 
       // Show dev OTP if backend returns it
@@ -199,11 +203,11 @@ function ForgotPasswordContent() {
         toast.info(`Dev mode — OTP: ${res._devOtp}`, { duration: 30000 });
       }
     } catch (error) {
-      toast.error("Failed to send code", {
+      toast.error(t("Failed to send code"), {
         description:
           error instanceof Error
             ? error.message
-            : "Please check your number and try again.",
+            : t("Please check your number and try again."),
       });
     } finally {
       setIsSendingOtp(false);
@@ -221,14 +225,14 @@ function ForgotPasswordContent() {
       setOtpError("");
       setResendCooldown(60);
 
-      toast.success("Code resent");
+      toast.success(t("Code resent"));
 
       if (res._devOtp) {
         toast.info(`Dev mode — OTP: ${res._devOtp}`, { duration: 30000 });
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to resend code.",
+        error instanceof Error ? error.message : t("Failed to resend code."),
       );
     } finally {
       setIsResending(false);
@@ -250,14 +254,14 @@ function ForgotPasswordContent() {
 
         setResetToken(res?.data?.resetToken ?? "");
         setStep(3);
-        toast.success("Phone verified!", {
-          description: "Now set your new password.",
+        toast.success(t("Phone verified!"), {
+          description: t("Now set your new password."),
         });
       } catch (error) {
         setOtpError(
           error instanceof Error
             ? error.message
-            : "Invalid code. Please try again.",
+            : t("Invalid code. Please try again."),
         );
         setOtp("");
       } finally {
@@ -287,13 +291,13 @@ function ForgotPasswordContent() {
       });
 
       setStep(4);
-      toast.success("Password reset successfully!", {
-        description: "You can now sign in with your new password.",
+      toast.success(t("Password reset successfully!"), {
+        description: t("You can now sign in with your new password."),
       });
     } catch (error) {
-      toast.error("Reset failed", {
+      toast.error(t("Reset failed"), {
         description:
-          error instanceof Error ? error.message : "Please start over.",
+          error instanceof Error ? error.message : t("Please start over."),
       });
     } finally {
       setIsResetting(false);
@@ -311,7 +315,7 @@ function ForgotPasswordContent() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronLeft className="size-4" />
-          Back to Sign In
+          {t("Back to Sign In")}
         </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -346,11 +350,10 @@ function ForgotPasswordContent() {
                     <Phone className="size-6 text-primary" />
                   </div>
                   <h2 className="text-2xl font-black tracking-tight">
-                    Forgot your password?
+                    {t("Forgot your password?")}
                   </h2>
                   <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
-                    Enter the phone number linked to your account. We&apos;ll send
-                    a verification code to reset your password.
+                    {t("Enter the phone number linked to your account. We'll send a verification code to reset your password.")}
                   </p>
                 </div>
 
@@ -366,7 +369,7 @@ function ForgotPasswordContent() {
                         <FormItem>
                           <FormLabel className="text-sm font-bold flex items-center gap-2 mb-1.5">
                             <Phone className="size-3.5 text-primary" />
-                            Phone Number
+                            {t("Phone Number")}
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -395,11 +398,11 @@ function ForgotPasswordContent() {
                       {isSendingOtp ? (
                         <>
                           <Loader2 className="size-5 animate-spin" />
-                          Sending code...
+                          {t("Sending code...")}
                         </>
                       ) : (
                         <>
-                          Send Verification Code
+                          {t("Send Verification Code")}
                           <ArrowRight className="size-5" />
                         </>
                       )}
@@ -408,12 +411,12 @@ function ForgotPasswordContent() {
                 </Form>
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Remember your password?{" "}
+                  {t("Remember your password?")}{" "}
                   <Link
                     href={signinHref}
                     className="text-primary hover:underline underline-offset-4 font-semibold"
                   >
-                    Sign In
+                    {t("Sign In")}
                   </Link>
                 </p>
               </div>
@@ -427,13 +430,13 @@ function ForgotPasswordContent() {
                     <ShieldCheck className="size-6 text-primary" />
                   </div>
                   <h2 className="text-2xl font-black tracking-tight">
-                    Enter verification code
+                    {t("Enter verification code")}
                   </h2>
                   <p className="text-muted-foreground text-sm">
-                    We sent a 6-digit code to{" "}
+                    {t("We sent a 6-digit code to")}{" "}
                     <span className="font-semibold text-foreground">{phone}</span>.
                     <br />
-                    It expires in <span className="font-semibold text-primary">10 minutes</span>.
+                    {t("It expires in {duration}.", { duration: t("10 minutes") })}
                   </p>
                 </div>
 
@@ -461,7 +464,7 @@ function ForgotPasswordContent() {
                   {isVerifyingOtp && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="size-4 animate-spin" />
-                      Verifying...
+                      {t("Verifying...")}
                     </div>
                   )}
 
@@ -480,12 +483,12 @@ function ForgotPasswordContent() {
                   {isVerifyingOtp ? (
                     <>
                       <Loader2 className="size-5 animate-spin" />
-                      Verifying...
+                      {t("Verifying...")}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="size-5" />
-                      Verify Code
+                      {t("Verify Code")}
                     </>
                   )}
                 </Button>
@@ -501,7 +504,7 @@ function ForgotPasswordContent() {
                     className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <ArrowLeft className="size-4" />
-                    Change number
+                    {t("Change number")}
                   </button>
 
                   <button
@@ -517,7 +520,7 @@ function ForgotPasswordContent() {
                     )}
                     {resendCooldown > 0
                       ? `Resend (${resendCooldown}s)`
-                      : "Resend code"}
+                      : t("Resend code")}
                   </button>
                 </div>
               </div>
@@ -531,10 +534,10 @@ function ForgotPasswordContent() {
                     <KeyRound className="size-6 text-primary" />
                   </div>
                   <h2 className="text-2xl font-black tracking-tight">
-                    Set new password
+                    {t("Set new password")}
                   </h2>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Create a strong password for your account.
+                    {t("Create a strong password for your account.")}
                   </p>
                 </div>
 
@@ -549,7 +552,7 @@ function ForgotPasswordContent() {
                       render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-bold mb-1.5">
-                            New Password
+                            {t("New Password")}
                           </FormLabel>
                           <FormControl>
                             <PasswordInput
@@ -577,7 +580,7 @@ function ForgotPasswordContent() {
                       render={({ field, fieldState }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-bold mb-1.5">
-                            Confirm New Password
+                            {t("Confirm New Password")}
                           </FormLabel>
                           <FormControl>
                             <PasswordInput
@@ -605,12 +608,12 @@ function ForgotPasswordContent() {
                       {isResetting ? (
                         <>
                           <Loader2 className="size-5 animate-spin" />
-                          Resetting password...
+                          {t("Resetting password...")}
                         </>
                       ) : (
                         <>
                           <KeyRound className="size-5" />
-                          Reset Password
+                          {t("Reset Password")}
                         </>
                       )}
                     </Button>
@@ -634,11 +637,10 @@ function ForgotPasswordContent() {
 
                 <div className="space-y-2">
                   <h2 className="text-2xl font-black tracking-tight text-green-600 dark:text-green-400">
-                    Password Reset!
+                    {t("Password Reset!")}
                   </h2>
                   <p className="text-muted-foreground text-sm leading-relaxed max-w-xs mx-auto">
-                    Your password has been updated successfully. You can now sign
-                    in with your new password.
+                    {t("Your password has been updated successfully. You can now sign in with your new password.")}
                   </p>
                 </div>
 
@@ -648,10 +650,10 @@ function ForgotPasswordContent() {
                     onClick={() => router.push(signinHref)}
                   >
                     <ArrowRight className="size-5" />
-                    Sign In Now
+                    {t("Sign In Now")}
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    You will be redirected to the sign-in page.
+                    {t("You will be redirected to the sign-in page.")}
                   </p>
                 </div>
               </div>
@@ -661,12 +663,12 @@ function ForgotPasswordContent() {
           {/* Footer */}
           {step <= 3 && (
             <div className="px-6 sm:px-8 py-4 bg-muted/30 border-t text-center text-xs text-muted-foreground">
-              Need help?{" "}
+              {t("Need help?")}{" "}
               <Link
                 href="/signin"
                 className="text-primary hover:underline underline-offset-4"
               >
-                Contact support
+                {t("Contact support")}
               </Link>
             </div>
           )}

@@ -20,6 +20,7 @@ import {
 } from "@/lib/stores/security-store";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n";
 
 interface RolePermissionDialogProps {
   open: boolean;
@@ -34,6 +35,8 @@ export function RolePermissionDialog({
   roleId,
   onSuccess,
 }: RolePermissionDialogProps) {
+  const { t } = useTranslation();
+
   const [loading, setLoading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [role, setRole] = React.useState<Role | null>(null);
@@ -62,7 +65,7 @@ export function RolePermissionDialog({
       );
     } catch (error) {
       console.error("Error loading permissions:", error);
-      toast.error("Failed to load permissions");
+      toast.error(t("Failed to load permissions"));
     } finally {
       setLoading(false);
     }
@@ -78,12 +81,12 @@ export function RolePermissionDialog({
         permissions: selectedPermissions,
       });
 
-      toast.success("Role permissions updated successfully");
+      toast.success(t("Role permissions updated successfully"));
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error("Error updating role:", error);
-      toast.error("Failed to update role");
+      toast.error(t("Failed to update role"));
     } finally {
       setSaving(false);
     }
@@ -132,10 +135,10 @@ export function RolePermissionDialog({
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="size-5 text-primary" />
-            Edit Role Permissions: {role?.name || "..."}
+            {t("Edit Role Permissions:")} {role?.name || "..."}
           </DialogTitle>
           <DialogDescription>
-            Select the modules and actions this role should have access to.
+            {t("Select the modules and actions this role should have access to.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -143,7 +146,7 @@ export function RolePermissionDialog({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search permissions..."
+              placeholder={t("Search permissions...")}
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -156,7 +159,7 @@ export function RolePermissionDialog({
             <div className="py-20 flex flex-col items-center justify-center gap-3">
               <Loader2 className="size-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">
-                Loading permissions...
+                {t("Loading permissions...")}
               </p>
             </div>
           ) : (
@@ -165,7 +168,7 @@ export function RolePermissionDialog({
                 <div key={group} className="space-y-3">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-foreground">
-                      {group}
+                      {t(group)}
                     </h3>
                     <Badge
                       variant="outline"
@@ -209,7 +212,7 @@ export function RolePermissionDialog({
               ))}
               {Object.keys(filteredGroups).length === 0 && (
                 <div className="py-10 text-center text-muted-foreground">
-                  No permissions found matching your search.
+                  {t("No permissions found matching your search.")}
                 </div>
               )}
             </div>
@@ -222,7 +225,7 @@ export function RolePermissionDialog({
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button
             className="gap-2 min-w-[120px]"
@@ -232,10 +235,10 @@ export function RolePermissionDialog({
             {saving ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Saving...
+                {t("Saving...")}
               </>
             ) : (
-              "Save Changes"
+              t("Save Changes")
             )}
           </Button>
         </DialogFooter>

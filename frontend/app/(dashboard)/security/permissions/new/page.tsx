@@ -19,8 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSecurityStore } from "@/lib/stores/security-store";
+import { useTranslation } from "@/lib/i18n";
 
 export default function NewPermissionPage() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const securityStore = useSecurityStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -40,10 +43,10 @@ export default function NewPermissionPage() {
         name,
         description: description || undefined,
       });
-      toast.success("Permission created successfully");
+      toast.success(t("Permission created successfully"));
       router.push("/security/permissions");
     } catch (error) {
-      toast.error("Failed to create permission");
+      toast.error(t("Failed to create permission"));
       console.error(error);
       setIsSubmitting(false);
     }
@@ -53,66 +56,65 @@ export default function NewPermissionPage() {
     <ProtectedRoute requiredPermission="permissions.create">
       <div className="space-y-8">
         <PageHeader
-          title="Add permission"
-          description="Define a new access permission for Bekolas systems."
+          title={t("Add permission")}
+          description={t("Define a new access permission for Bekolas systems.")}
           actions={
             <Button variant="outline" size="sm" asChild>
-              <Link href="/security/permissions">Cancel</Link>
+              <Link href="/security/permissions">{t("Cancel")}</Link>
             </Button>
           }
         />
 
         <Card>
           <CardHeader>
-            <CardTitle>Permission information</CardTitle>
+            <CardTitle>{t("Permission information")}</CardTitle>
             <CardDescription>
-              Set the permission code, name, and description.
+              {t("Set the permission code, name, and description.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="grid gap-6" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="permission-code">Permission code</Label>
+                <Label htmlFor="permission-code">{t("Permission code")}</Label>
                 <Input
                   id="permission-code"
                   name="permission-code"
-                  placeholder="e.g. students.create"
+                  placeholder={t("e.g. students.create")}
                   required
                   pattern="[a-z0-9._-]+"
-                  title="Use lowercase letters, numbers, dots, underscores, or hyphens"
+                  title={t("Use lowercase letters, numbers, dots, underscores, or hyphens")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Unique identifier for this permission (lowercase, use dots or
-                  underscores)
+                  {t("Unique identifier for this permission (lowercase, use dots or underscores)")}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="permission-name">Permission name</Label>
+                <Label htmlFor="permission-name">{t("Permission name")}</Label>
                 <Input
                   id="permission-name"
                   name="permission-name"
-                  placeholder="e.g. Create Students"
+                  placeholder={t("e.g. Create Students")}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="permission-description">Description</Label>
+                <Label htmlFor="permission-description">{t("Description")}</Label>
                 <Textarea
                   id="permission-description"
                   name="permission-description"
                   rows={3}
-                  placeholder="Briefly describe what this permission allows."
+                  placeholder={t("Briefly describe what this permission allows.")}
                 />
               </div>
 
               <div className="flex items-center justify-end gap-2">
                 <Button type="button" variant="outline" asChild>
-                  <Link href="/security/permissions">Cancel</Link>
+                  <Link href="/security/permissions">{t("Cancel")}</Link>
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save permission"}
+                  {isSubmitting ? t("Saving...") : t("Save permission")}
                 </Button>
               </div>
             </form>

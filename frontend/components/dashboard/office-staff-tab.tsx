@@ -314,7 +314,7 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
               canGoPrevious={pagination.hasPreviousPage}
               onPageChange={setCurrentPage}
               onPageSizeChange={setPageSize}
-              itemLabel="members"
+              itemLabel={t("members")}
             />
           </div>
         )}

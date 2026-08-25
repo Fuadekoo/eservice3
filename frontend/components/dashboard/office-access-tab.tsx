@@ -42,12 +42,15 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { RolePermissionDialog } from "./role-permission-dialog";
 import { RoleCreateDialog } from "./role-create-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 interface OfficeAccessTabProps {
   officeId: string;
 }
 
 export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
+  const { t } = useTranslation();
+
   // Implementation of OfficeAccessTab
   const { roles, isLoading, fetchRoles, deleteRole } = useSecurityStore();
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -63,9 +66,9 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
     if (!confirm("Are you sure you want to delete this role?")) return;
     try {
       await deleteRole(id);
-      toast.success("Role deleted successfully");
+      toast.success(t("Role deleted successfully"));
     } catch (error) {
-      toast.error("Failed to delete role");
+      toast.error(t("Failed to delete role"));
     }
   };
 
@@ -84,17 +87,17 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg font-bold sm:text-xl">
-                Access Control
+                {t("Access Control")}
               </CardTitle>
               <Badge
                 variant="secondary"
                 className="bg-secondary text-secondary-foreground border-transparent font-medium"
               >
-                {roles.length} Roles
+                {roles.length} {t("Roles")}
               </Badge>
             </div>
             <CardDescription>
-              Manage user roles and their associated permissions
+              {t("Manage user roles and their associated permissions")}
             </CardDescription>
           </div>
         </div>
@@ -103,7 +106,7 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
           onClick={() => setCreateDialogOpen(true)}
         >
           <Plus className="size-4" />
-          Create Role
+          {t("Create Role")}
         </Button>
       </CardHeader>
 
@@ -112,7 +115,7 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search roles..."
+              placeholder={t("Search roles...")}
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -125,19 +128,19 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
             <TableHeader className="bg-muted/50">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[300px] font-semibold text-foreground">
-                  Role Name
+                  {t("Role Name")}
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">
-                  Permissions
+                  {t("Permissions")}
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">
-                  Assigned Users
+                  {t("Assigned Users")}
                 </TableHead>
                 <TableHead className="font-semibold text-foreground">
-                  Status
+                  {t("Status")}
                 </TableHead>
                 <TableHead className="text-right font-semibold text-foreground">
-                  Actions
+                  {t("Actions")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -168,7 +171,7 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
                     colSpan={5}
                     className="h-24 text-center text-muted-foreground"
                   >
-                    No roles found.
+                    {t("No roles found.")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -187,7 +190,7 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
                             {role.name}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            ID: {role.id.substring(0, 8)}...
+                            {t("ID:")} {role.id.substring(0, 8)}...
                           </span>
                         </div>
                       </div>
@@ -196,18 +199,18 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
                       <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="size-4 text-primary" />
                         <span className="text-sm font-medium text-muted-foreground">
-                          {role.permissions?.length || 0} Modules
+                          {role.permissions?.length || 0} {t("Modules")}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {role.memberCount || 0} Users
+                        {role.memberCount || 0} {t("Users")}
                       </span>
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-transparent rounded-md px-2 py-0.5 text-[10px] font-bold">
-                        ACTIVE
+                        {t("ACTIVE")}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -222,16 +225,16 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Role Management</DropdownMenuLabel>
+                          <DropdownMenuLabel>{t("Role Management")}</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="gap-2"
                             onClick={() => handleEditPermissions(role.id)}
                           >
-                            <Settings2 className="size-4" /> Edit Permissions
+                            <Settings2 className="size-4" /> {t("Edit Permissions")}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="gap-2">
-                            <Plus className="size-4" /> Duplicate Role
+                            <Plus className="size-4" /> {t("Duplicate Role")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -243,7 +246,7 @@ export function OfficeAccessTab({ officeId }: OfficeAccessTabProps) {
                               role.name.toUpperCase() === "SUPERADMIN"
                             }
                           >
-                            <Trash2 className="size-4" /> Delete Role
+                            <Trash2 className="size-4" /> {t("Delete Role")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

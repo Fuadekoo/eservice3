@@ -28,6 +28,7 @@ import {
 } from "@/lib/stores/request-store";
 import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 type RequestStatus = "pending" | "processing" | "approved" | "rejected";
 
@@ -108,6 +109,8 @@ export default function StaffOverviewPage() {
 }
 
 function StaffOverviewContent() {
+  const { t } = useTranslation();
+
   const { data: sessionData, isPending: isSessionPending } = useSession();
   const user = sessionData?.session?.user;
   const { requests, isLoading, fetchRequests } = useRequestStore();
@@ -178,14 +181,14 @@ function StaffOverviewContent() {
 
   return (
     <PageLayout
-      title="Staff Overview"
-      description="Your assigned service requests and upcoming work"
+      title={t("Staff Overview")}
+      description={t("Your assigned service requests and upcoming work")}
       icon={LayoutDashboard}
       actions={
         <div className="flex items-center gap-3">
           {updatedAt && (
             <span className="hidden text-xs text-muted-foreground sm:block">
-              Updated {updatedAt.toLocaleTimeString()}
+              {t("Updated")} {updatedAt.toLocaleTimeString()}
             </span>
           )}
           <Button
@@ -195,7 +198,7 @@ function StaffOverviewContent() {
             className="h-10 rounded-xl gap-2"
           >
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
-            Refresh
+            {t("Refresh")}
           </Button>
         </div>
       }
@@ -203,64 +206,64 @@ function StaffOverviewContent() {
       {isSessionPending || isLoading ? (
         <div className="flex flex-col items-center justify-center gap-3 py-32">
           <Loader2 className="size-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading your work...</p>
+          <p className="text-sm text-muted-foreground">{t("Loading your work...")}</p>
         </div>
       ) : (
         <div className="space-y-6">
           <div className="rounded-2xl border border-border/50 bg-card/60 p-5 shadow-sm">
             <div className="flex flex-col gap-1">
               <p className="text-sm font-semibold text-muted-foreground">
-                Welcome back
+                {t("Welcome back")}
               </p>
               <h2 className="text-2xl font-black tracking-tight">
-                {user?.name || user?.username || "Staff Member"}
+                {user?.name || user?.username || t("Staff Member")}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {stats.pending > 0
-                  ? `${stats.pending} request${stats.pending > 1 ? "s" : ""} need your review.`
-                  : "No pending staff reviews right now."}
+                  ? t("{count} request(s) need your review.", { count: stats.pending })
+                  : t("No pending staff reviews right now.")}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             <StatCard
-              label="Assigned"
+              label={t("Assigned")}
               value={stats.total}
               icon={FileText}
               color="text-primary"
               bg="bg-primary/10"
             />
             <StatCard
-              label="Pending"
+              label={t("Pending")}
               value={stats.pending}
               icon={Clock}
               color="text-amber-600"
               bg="bg-amber-500/10"
             />
             <StatCard
-              label="Manager Review"
+              label={t("Manager Review")}
               value={stats.staffApproved}
               icon={Activity}
               color="text-blue-600"
               bg="bg-blue-500/10"
             />
             <StatCard
-              label="Completed"
+              label={t("Completed")}
               value={stats.completed}
               icon={CheckCircle2}
               color="text-emerald-600"
               bg="bg-emerald-500/10"
             />
             <StatCard
-              label="Rejected"
+              label={t("Rejected")}
               value={stats.rejected}
               icon={XCircle}
               color="text-red-600"
               bg="bg-red-500/10"
             />
             <StatCard
-              label="Appointments"
+              label={t("Appointments")}
               value={stats.appointments}
               icon={Calendar}
               color="text-violet-600"
@@ -278,7 +281,7 @@ function StaffOverviewContent() {
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="flex items-center gap-2 text-base font-bold">
                   <FileText className="size-4 text-primary" />
-                  Recent Assigned Requests
+                  {t("Recent Assigned Requests")}
                 </CardTitle>
                 <Button
                   asChild
@@ -287,13 +290,13 @@ function StaffOverviewContent() {
                   className="h-8 rounded-xl text-xs font-bold"
                 >
                   <Link href="/requestManagement">
-                    View all <ArrowRight className="ml-1 size-3" />
+                    {t("View all")} <ArrowRight className="ml-1 size-3" />
                   </Link>
                 </Button>
               </CardHeader>
               <CardContent className="p-0">
                 {stats.recentRequests.length === 0 ? (
-                  <EmptyState message="No assigned requests found." />
+                  <EmptyState message={t("No assigned requests found.")} />
                 ) : (
                   <div className="divide-y divide-border/50">
                     {stats.recentRequests.map((request) => {
@@ -311,10 +314,10 @@ function StaffOverviewContent() {
                           />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold">
-                              {request.service?.name ?? "Service request"}
+                              {request.service?.name ?? t("Service request")}
                             </p>
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                              {displayName(request.user)} -{" "}
+                              {t(displayName(request.user))} -{" "}
                               {formatDate(request.createdAt)}
                             </p>
                           </div>
@@ -326,7 +329,7 @@ function StaffOverviewContent() {
                             )}
                           >
                             <StatusIcon className="size-3" />
-                            {cfg.label}
+                            {t(cfg.label)}
                           </Badge>
                         </div>
                       );
@@ -341,7 +344,7 @@ function StaffOverviewContent() {
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                   <CardTitle className="flex items-center gap-2 text-base font-bold">
                     <Calendar className="size-4 text-violet-600" />
-                    Upcoming Appointments
+                    {t("Upcoming Appointments")}
                   </CardTitle>
                   <Button
                     asChild
@@ -350,13 +353,13 @@ function StaffOverviewContent() {
                     className="h-8 rounded-xl text-xs font-bold"
                   >
                     <Link href="/appointments">
-                      All <ArrowRight className="ml-1 size-3" />
+                      {t("All")} <ArrowRight className="ml-1 size-3" />
                     </Link>
                   </Button>
                 </CardHeader>
                 <CardContent className="p-0">
                   {stats.upcomingAppointments.length === 0 ? (
-                    <EmptyState message="No upcoming appointments." compact />
+                    <EmptyState message={t("No upcoming appointments.")} compact />
                   ) : (
                     <div className="divide-y divide-border/50">
                       {stats.upcomingAppointments.map((appointment) => {
@@ -389,17 +392,17 @@ function StaffOverviewContent() {
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-semibold">
                                 {appointment.request.service?.name ??
-                                  "Appointment"}
+                                  t("Appointment")}
                               </p>
                               <p className="truncate text-xs text-muted-foreground">
-                                {displayName(appointment.request.user)}
+                                {t(displayName(appointment.request.user))}
                                 {appointment.time
                                   ? ` - ${appointment.time}`
                                   : ""}
                               </p>
                               {isToday && (
                                 <span className="text-[10px] font-bold uppercase tracking-wide text-violet-600">
-                                  Today
+                                  {t("Today")}
                                 </span>
                               )}
                             </div>
@@ -420,28 +423,28 @@ function StaffOverviewContent() {
               <Card className="border-none bg-primary/5 shadow-sm ring-1 ring-primary/10">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-bold">
-                    Quick Actions
+                    {t("Quick Actions")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   <QuickAction
                     href="/requestManagement"
                     icon={FileText}
-                    label="Review Requests"
+                    label={t("Review Requests")}
                     color="text-primary"
                     bg="bg-primary/10"
                   />
                   <QuickAction
                     href="/appointments"
                     icon={Calendar}
-                    label="Appointments"
+                    label={t("Appointments")}
                     color="text-violet-600"
                     bg="bg-violet-500/10"
                   />
                   <QuickAction
                     href="/requests"
                     icon={Clock}
-                    label="Request Queue"
+                    label={t("Request Queue")}
                     color="text-amber-600"
                     bg="bg-amber-500/10"
                   />

@@ -6,6 +6,7 @@ import { usePermissions } from "@/lib/hooks/use-permissions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -30,6 +31,8 @@ export function ProtectedRoute({
   redirectTo = "/overview",
   showError = true,
 }: ProtectedRouteProps) {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const {
     permissions,
@@ -130,7 +133,7 @@ export function ProtectedRoute({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">{t("Loading...")}</div>
       </div>
     );
   }
@@ -178,20 +181,20 @@ export function ProtectedRoute({
         <div className="flex items-center justify-center min-h-screen p-4">
           <Alert variant="destructive" className="max-w-md">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Access Denied</AlertTitle>
+            <AlertTitle>{t("Access Denied")}</AlertTitle>
             <AlertDescription className="mt-2">
-              You do not have permission to access this page.
+              {t("You do not have permission to access this page.")}
               {requiredPermission && (
-                <p className="mt-1 text-sm">Required: {requiredPermission}</p>
+                <p className="mt-1 text-sm">{t("Required:")} {requiredPermission}</p>
               )}
               {requiredPermissions && (
                 <p className="mt-1 text-sm">
-                  Required: {requiredPermissions.join(", ")}
+                  {t("Required:")} {requiredPermissions.join(", ")}
                 </p>
               )}
               {allowedRoles && (
                 <p className="mt-1 text-sm">
-                  Required roles: {allowedRoles.join(", ")}
+                  {t("Required roles:")} {allowedRoles.join(", ")}
                 </p>
               )}
             </AlertDescription>
@@ -200,7 +203,7 @@ export function ProtectedRoute({
               className="mt-4"
               onClick={() => router.push(redirectTo)}
             >
-              Go Back
+              {t("Go Back")}
             </Button>
           </Alert>
         </div>

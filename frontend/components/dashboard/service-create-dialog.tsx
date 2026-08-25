@@ -144,14 +144,14 @@ export function ServiceCreateDialog({
     try {
       if (service) {
         await updateService(service.id, values);
-        toast.success("Service updated successfully");
+        toast.success(t("Service updated successfully"));
       } else {
         await createService(values);
-        toast.success("Service created successfully");
+        toast.success(t("Service created successfully"));
       }
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error?.message || "Something went wrong");
+      toast.error(error?.message || t("Something went wrong"));
     } finally {
       setIsSubmitting(false);
     }
@@ -232,7 +232,7 @@ export function ServiceCreateDialog({
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="e.g. 2 hours, 1 day"
+                        placeholder={t("e.g. 2 hours, 1 day")}
                         className="h-11 rounded-xl"
                       />
                     </FormControl>

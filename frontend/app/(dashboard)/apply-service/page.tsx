@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Requirement = { id: string; name: string; description?: string | null };
@@ -102,6 +103,8 @@ export default function ApplyServicePage() {
 }
 
 function ApplyServiceContent() {
+  const { t } = useTranslation();
+
   const searchParams = useSearchParams();
   const serviceIdParam = searchParams.get("serviceId");
 
@@ -193,7 +196,7 @@ function ApplyServiceContent() {
       )) as unknown as { data: OfficeDetail };
       setSelectedOffice(res.data);
     } catch {
-      toast.error("Failed to load office services.");
+      toast.error(t("Failed to load office services."));
     } finally {
       setIsFetchingOffice(false);
     }
@@ -228,13 +231,14 @@ function ApplyServiceContent() {
           size: res.data.size,
         });
       } catch {
-        toast.error(`Failed to upload ${file.name}.`);
+        toast.error(t("Failed to upload {name}.", { name: file.name }));
       }
     }
 
     setUploadedFiles((prev) => [...prev, ...results]);
     setIsUploading(false);
-    if (results.length) toast.success(`${results.length} file(s) attached.`);
+    if (results.length)
+      toast.success(t("{count} file(s) attached.", { count: results.length }));
   };
 
   const removeFile = (idx: number) =>
@@ -244,11 +248,11 @@ function ApplyServiceContent() {
   const handleApply = async () => {
     if (!applyService) return;
     if (!form.address.trim()) {
-      toast.error("Please enter your current address.");
+      toast.error(t("Please enter your current address."));
       return;
     }
     if (!form.date) {
-      toast.error("Please select a preferred date.");
+      toast.error(t("Please select a preferred date."));
       return;
     }
 
@@ -261,7 +265,7 @@ function ApplyServiceContent() {
         notes: form.notes.trim() || undefined,
         files: uploadedFiles.map(({ name, filepath }) => ({ name, filepath })),
       });
-      toast.success("Application submitted successfully!");
+      toast.success(t("Application submitted successfully!"));
       setApplyService(null);
       setForm({ address: "", date: "", notes: "" });
       setUploadedFiles([]);
@@ -269,7 +273,7 @@ function ApplyServiceContent() {
       const message =
         error instanceof Error
           ? error.message
-          : "Failed to submit application.";
+          : t("Failed to submit application.");
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -309,11 +313,11 @@ function ApplyServiceContent() {
 
   return (
     <PageLayout
-      title={selectedOffice ? selectedOffice.name : "Apply for Service"}
+      title={selectedOffice ? selectedOffice.name : t("Apply for Service")}
       description={
         selectedOffice
-          ? "Choose a service and submit your application"
-          : "Choose an office, review available services, and submit a request"
+          ? t("Choose a service and submit your application")
+          : t("Choose an office, review available services, and submit a request")
       }
       icon={selectedOffice ? Building2 : FileText}
       actions={
@@ -324,7 +328,7 @@ function ApplyServiceContent() {
             className="h-10 rounded-xl font-semibold"
           >
             <ArrowLeft className="mr-2 size-4" />
-            Back to offices
+            {t("Back to offices")}
           </Button>
         ) : undefined
       }
@@ -335,15 +339,15 @@ function ApplyServiceContent() {
           <>
             <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/60 bg-card p-3.5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-4">
               <div className="min-w-0">
-                <p className="text-sm font-bold">Find the right office</p>
+                <p className="text-sm font-bold">{t("Find the right office")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {filteredOffices.length} of {offices.length} offices available
+                  {filteredOffices.length} of {offices.length} {t("offices available")}
                 </p>
               </div>
               <div className="relative w-full min-w-0 sm:max-w-sm">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search offices..."
+                  placeholder={t("Search offices...")}
                   value={officeSearch}
                   onChange={(e) => setOfficeSearch(e.target.value)}
                   className="h-10 w-full rounded-xl pl-9"
@@ -363,9 +367,9 @@ function ApplyServiceContent() {
             ) : filteredOffices.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-24 text-center">
                 <Building2 className="mb-3 size-12 text-muted-foreground/30" />
-                <p className="font-bold">No offices found</p>
+                <p className="font-bold">{t("No offices found")}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Try a different office name.
+                  {t("Try a different office name.")}
                 </p>
               </div>
             ) : (
@@ -411,11 +415,11 @@ function ApplyServiceContent() {
                           {office._count?.service ??
                             office.service?.length ??
                             0}{" "}
-                          services
+                          {t("services")}
                         </Badge>
                         {office._count?.staffs !== undefined && (
                           <Badge variant="outline" className="font-semibold">
-                            {office._count.staffs} staff
+                            {office._count.staffs} {t("staff")}
                           </Badge>
                         )}
                       </div>
@@ -434,19 +438,19 @@ function ApplyServiceContent() {
                             ))}
                             {(office._count?.service ?? 0) > 3 && (
                               <p className="text-xs text-primary/60 font-semibold pl-3.5">
-                                +{(office._count?.service ?? 0) - 3} more
+                                +{(office._count?.service ?? 0) - 3} {t("more")}
                               </p>
                             )}
                           </div>
                         ) : (
                           <p className="text-xs text-muted-foreground">
-                            Open this office to view available services.
+                            {t("Open this office to view available services.")}
                           </p>
                         )}
                       </div>
 
                       <div className="mt-3 flex items-center justify-between text-xs font-bold text-primary sm:mt-4">
-                        <span>Select office</span>
+                        <span>{t("Select office")}</span>
                         <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                       </div>
                     </div>
@@ -491,10 +495,10 @@ function ApplyServiceContent() {
                               variant="secondary"
                               className="font-semibold"
                             >
-                              {selectedServiceCount} services
+                              {selectedServiceCount} {t("services")}
                             </Badge>
                             <Badge variant="outline" className="font-semibold">
-                              {selectedStaffCount} staff
+                              {selectedStaffCount} {t("staff")}
                             </Badge>
                           </div>
                         </div>
@@ -502,7 +506,7 @@ function ApplyServiceContent() {
                       <div className="relative w-full min-w-0 sm:max-w-xs">
                         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                          placeholder="Search services..."
+                          placeholder={t("Search services...")}
                           value={serviceSearch}
                           onChange={(e) => setServiceSearch(e.target.value)}
                           className="h-10 w-full rounded-xl pl-9"
@@ -514,11 +518,11 @@ function ApplyServiceContent() {
                   {filteredServices.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-20 text-center">
                       <FileText className="mb-3 size-10 text-muted-foreground/30" />
-                      <p className="font-bold">No services found</p>
+                      <p className="font-bold">{t("No services found")}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {serviceSearch
-                          ? "Try a different search term."
-                          : "This office has no services yet."}
+                          ? t("Try a different search term.")
+                          : t("This office has no services yet.")}
                       </p>
                     </div>
                   ) : (
@@ -537,26 +541,26 @@ function ApplyServiceContent() {
 
                 <div className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
                   <div className="min-w-0 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-                    <SectionLabel title="Office Details" icon={Building2} />
+                    <SectionLabel title={t("Office Details")} icon={Building2} />
                     <div className="mt-4 space-y-3">
                       {selectedOffice.address && (
                         <InfoTile
                           icon={MapPin}
-                          label="Address"
+                          label={t("Address")}
                           value={selectedOffice.address}
                         />
                       )}
                       {selectedOffice.phoneNumber && (
                         <InfoTile
                           icon={Info}
-                          label="Phone"
+                          label={t("Phone")}
                           value={selectedOffice.phoneNumber}
                         />
                       )}
                       {selectedOffice.roomNumber && (
                         <InfoTile
                           icon={MapPin}
-                          label="Room"
+                          label={t("Room")}
                           value={`Room ${selectedOffice.roomNumber}`}
                         />
                       )}
@@ -591,7 +595,7 @@ function ApplyServiceContent() {
                 <div className="relative shrink-0 border-b border-border/60 bg-primary px-5 py-4 text-primary-foreground sm:px-6 sm:py-5">
                   <SheetClose className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:size-10">
                     <X className="size-4" />
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">{t("Close")}</span>
                   </SheetClose>
 
                   <SheetHeader className="gap-0.5 p-0 pr-14">
@@ -611,20 +615,20 @@ function ApplyServiceContent() {
                   <div className="grid grid-cols-2 gap-2">
                     <InfoTile
                       icon={Clock}
-                      label="Time to take"
+                      label={t("Time to take")}
                       value={detailService.timeToTake}
                     />
                     {detailService.roomNumber ? (
                       <InfoTile
                         icon={MapPin}
-                        label="Room"
+                        label={t("Room")}
                         value={detailService.roomNumber}
                       />
                     ) : (
                       selectedOffice?.address && (
                         <InfoTile
                           icon={MapPin}
-                          label="Address"
+                          label={t("Address")}
                           value={selectedOffice.address}
                         />
                       )
@@ -633,7 +637,7 @@ function ApplyServiceContent() {
 
                   {detailService.description && (
                     <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-                      <SectionLabel title="Description" icon={FileText} />
+                      <SectionLabel title={t("Description")} icon={FileText} />
                       <p className="mt-2.5 text-sm leading-relaxed text-foreground/80">
                         {detailService.description}
                       </p>
@@ -644,7 +648,7 @@ function ApplyServiceContent() {
                     detailService.requirements.length > 0 && (
                       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 sm:p-5">
                         <SectionLabel
-                          title="Required Documents"
+                          title={t("Required Documents")}
                           icon={CheckCircle2}
                         />
                         <ul className="mt-3 space-y-2.5">
@@ -670,7 +674,7 @@ function ApplyServiceContent() {
                   {detailService.serviceFors &&
                     detailService.serviceFors.length > 0 && (
                       <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-                        <SectionLabel title="This Service Is For" icon={Users} />
+                        <SectionLabel title={t("This Service Is For")} icon={Users} />
                         <ul className="mt-3 space-y-2.5">
                           {detailService.serviceFors.map((item) => (
                             <li
@@ -703,7 +707,7 @@ function ApplyServiceContent() {
                       className="h-12 shrink-0 rounded-xl px-5 font-bold sm:h-11"
                       onClick={() => setDetailService(null)}
                     >
-                      Close
+                      {t("Close")}
                     </Button>
                     <Button
                       className="h-12 min-w-0 flex-1 rounded-xl text-sm font-black sm:h-11"
@@ -713,7 +717,7 @@ function ApplyServiceContent() {
                       }}
                     >
                       <Send className="mr-2 size-4" />
-                      <span className="truncate">Apply Now</span>
+                      <span className="truncate">{t("Apply Now")}</span>
                     </Button>
                   </div>
                 </div>
@@ -742,16 +746,18 @@ function ApplyServiceContent() {
                 <div className="relative shrink-0 border-b border-border/60 bg-primary px-5 py-4 text-primary-foreground sm:px-7 sm:py-5">
                   <SheetClose className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 sm:size-10">
                     <X className="size-4" />
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">{t("Close")}</span>
                   </SheetClose>
 
                   <SheetHeader className="gap-0 p-0 pr-14">
                     <SheetTitle className="text-lg font-black leading-tight text-primary-foreground sm:text-2xl">
-                      Apply for Service
+                      {t("Apply for Service")}
                     </SheetTitle>
                     <SheetDescription className="sr-only">
-                      Submit an application for {applyService.name} at{" "}
-                      {selectedOffice?.name ?? "the selected office"}.
+                      {t("Submit an application for {service} at {office}.", {
+                        service: applyService.name,
+                        office: selectedOffice?.name ?? t("the selected office"),
+                      })}
                     </SheetDescription>
                   </SheetHeader>
 
@@ -763,11 +769,11 @@ function ApplyServiceContent() {
                     <span className="inline-flex min-w-0 max-w-full items-center gap-2 rounded-lg bg-white/15 px-2.5 py-1.5 text-xs font-semibold text-white/90 sm:px-3 sm:py-2 sm:text-sm">
                       <Building2 className="size-3.5 shrink-0" />
                       <span className="truncate">
-                        {selectedOffice?.name ?? "Office"}
+                        {selectedOffice?.name ?? t("Office")}
                       </span>
                     </span>
                     <Badge className="border-white/20 bg-white/15 px-2.5 py-1.5 text-xs font-semibold text-white sm:px-3 sm:py-2">
-                      {uploadedFiles.length} file
+                      {uploadedFiles.length} {t("file")}
                       {uploadedFiles.length !== 1 ? "s" : ""}
                     </Badge>
                   </div>
@@ -777,8 +783,8 @@ function ApplyServiceContent() {
                 <div className="flex shrink-0 items-center gap-2 border-b border-border/50 bg-muted/30 px-4 py-2.5 lg:hidden">
                   {(
                     [
-                      { key: "details", label: "Service info" },
-                      { key: "form", label: "Your details" },
+                      { key: "details", label: t("Service info") },
+                      { key: "form", label: t("Your details") },
                     ] as const
                   ).map((s, i) => {
                     const active = mobileApplyStep === s.key;
@@ -832,36 +838,36 @@ function ApplyServiceContent() {
                       <div>
                         <SectionLabel
                           step={1}
-                          title="Service Information"
+                          title={t("Service Information")}
                           icon={Info}
                         />
                         <div className="mt-3 space-y-2">
                           <InfoTile
                             icon={FileText}
-                            label="Service"
+                            label={t("Service")}
                             value={applyService.name}
                           />
                           <InfoTile
                             icon={Building2}
-                            label="Office"
+                            label={t("Office")}
                             value={selectedOffice?.name ?? "—"}
                           />
                           <InfoTile
                             icon={Clock}
-                            label="Processing Time"
+                            label={t("Processing Time")}
                             value={applyService.timeToTake}
                           />
                           {applyService.roomNumber && (
                             <InfoTile
                               icon={MapPin}
-                              label="Room"
+                              label={t("Room")}
                               value={`Room ${applyService.roomNumber}`}
                             />
                           )}
                           {selectedOffice?.address && (
                             <InfoTile
                               icon={MapPin}
-                              label="Address"
+                              label={t("Address")}
                               value={selectedOffice.address}
                             />
                           )}
@@ -873,7 +879,7 @@ function ApplyServiceContent() {
                         <div>
                           <SectionLabel
                             step={2}
-                            title="Office Availability"
+                            title={t("Office Availability")}
                             icon={CalendarDays}
                           />
                           <div className="mt-3 grid grid-cols-4 gap-1 sm:grid-cols-7">
@@ -901,7 +907,7 @@ function ApplyServiceContent() {
                                     </p>
                                   ) : (
                                     <p className="text-[8px] mt-1 opacity-50">
-                                      Closed
+                                      {t("Closed")}
                                     </p>
                                   )}
                                 </div>
@@ -910,7 +916,7 @@ function ApplyServiceContent() {
                           </div>
                           {slotDuration && (
                             <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
-                              <Clock className="size-3" /> Slot:{" "}
+                              <Clock className="size-3" /> {t("Slot:")}{" "}
                               <span className="font-semibold">
                                 {slotDuration} min
                               </span>
@@ -925,7 +931,7 @@ function ApplyServiceContent() {
                           <div>
                             <SectionLabel
                               step={weeklySchedule ? 3 : 2}
-                              title="Required Documents"
+                              title={t("Required Documents")}
                               icon={CheckCircle2}
                             />
                             <div className="mt-3 p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20">
@@ -958,7 +964,7 @@ function ApplyServiceContent() {
                         applyService.serviceFors.length > 0 && (
                           <div>
                             <SectionLabel
-                              title="This Service Is For"
+                              title={t("This Service Is For")}
                               icon={Users}
                             />
                             <ul className="mt-3 space-y-1.5">
@@ -1001,7 +1007,7 @@ function ApplyServiceContent() {
                                 ? 3
                                 : 2
                           }
-                          title="Application Details"
+                          title={t("Application Details")}
                           icon={CalendarIcon}
                         />
                         <div className="mt-3 space-y-3">
@@ -1009,11 +1015,11 @@ function ApplyServiceContent() {
                           <div className="space-y-1.5">
                             <label className="text-sm font-bold flex items-center gap-1.5">
                               <MapPin className="size-3.5 text-primary" />
-                              Current Address{" "}
+                              {t("Current Address")}{" "}
                               <span className="text-destructive ml-0.5">*</span>
                             </label>
                             <Input
-                              placeholder="Enter your current address"
+                              placeholder={t("Enter your current address")}
                               value={form.address}
                               onChange={(e) =>
                                 setForm((p) => ({
@@ -1029,7 +1035,7 @@ function ApplyServiceContent() {
                           <div className="space-y-1.5">
                             <label className="text-sm font-bold flex items-center gap-1.5">
                               <CalendarIcon className="size-3.5 text-primary" />
-                              Preferred Date{" "}
+                              {t("Preferred Date")}{" "}
                               <span className="text-destructive ml-0.5">*</span>
                             </label>
                             <Input
@@ -1047,13 +1053,13 @@ function ApplyServiceContent() {
                           <div className="space-y-1.5">
                             <label className="text-sm font-bold flex items-center gap-1.5">
                               <Info className="size-3.5 text-primary" />
-                              Notes{" "}
+                              {t("Notes")}{" "}
                               <span className="text-muted-foreground font-normal">
-                                (Optional)
+                                {t("(Optional)")}
                               </span>
                             </label>
                             <Textarea
-                              placeholder="Add any additional notes or information..."
+                              placeholder={t("Add any additional notes or information...")}
                               value={form.notes}
                               onChange={(e) =>
                                 setForm((p) => ({
@@ -1072,9 +1078,9 @@ function ApplyServiceContent() {
 
                       {/* File upload */}
                       <div>
-                        <SectionLabel title="Attach Files" icon={Paperclip} />
+                        <SectionLabel title={t("Attach Files")} icon={Paperclip} />
                         <p className="text-xs text-muted-foreground mt-1 mb-3">
-                          PDF or images · max 10 MB each
+                          {t("PDF or images · max 10 MB each")}
                         </p>
 
                         <label
@@ -1092,11 +1098,11 @@ function ApplyServiceContent() {
                           <div className="text-center">
                             <p className="text-sm font-semibold text-muted-foreground">
                               {isUploading
-                                ? "Uploading…"
-                                : "Click to choose files"}
+                                ? t("Uploading…")
+                                : t("Click to choose files")}
                             </p>
                             <p className="text-xs text-muted-foreground/60 mt-0.5">
-                              PDF, PNG, JPG, WEBP
+                              {t("PDF, PNG, JPG, WEBP")}
                             </p>
                           </div>
                           <input
@@ -1124,7 +1130,7 @@ function ApplyServiceContent() {
                                     {file.name}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    {(file.size / 1024).toFixed(0)} KB
+                                    {(file.size / 1024).toFixed(0)} {t("KB")}
                                   </p>
                                 </div>
                                 <button
@@ -1153,7 +1159,7 @@ function ApplyServiceContent() {
                         className="h-12 w-full rounded-xl text-sm font-black"
                         onClick={() => setMobileApplyStep("form")}
                       >
-                        Continue to application
+                        {t("Continue to application")}
                         <ChevronRight className="ml-1.5 size-4" />
                       </Button>
                     ) : (
@@ -1166,7 +1172,7 @@ function ApplyServiceContent() {
                         >
                           <ArrowLeft className="size-4" />
                           <span className="sr-only sm:not-sr-only sm:ml-1.5">
-                            Back
+                            {t("Back")}
                           </span>
                         </Button>
                         <Button
@@ -1179,7 +1185,7 @@ function ApplyServiceContent() {
                           ) : (
                             <Send className="mr-2 size-4" />
                           )}
-                          <span className="truncate">Submit Application</span>
+                          <span className="truncate">{t("Submit Application")}</span>
                         </Button>
                       </>
                     )}
@@ -1193,7 +1199,7 @@ function ApplyServiceContent() {
                       onClick={() => setApplyService(null)}
                       disabled={isSubmitting || isUploading}
                     >
-                      Cancel
+                      {t("Cancel")}
                     </Button>
                     <Button
                       className="h-11 flex-[2] rounded-xl text-sm font-black"
@@ -1205,7 +1211,7 @@ function ApplyServiceContent() {
                       ) : (
                         <Send className="mr-2 size-4" />
                       )}
-                      Submit Application
+                      {t("Submit Application")}
                     </Button>
                   </div>
                 </div>
@@ -1228,6 +1234,8 @@ function ServiceRow({
   onDetail: () => void;
   onApply: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="group min-w-0 rounded-xl border border-border/70 bg-card p-3.5 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md sm:p-4">
       <div className="flex min-w-0 gap-3 sm:items-center sm:gap-4">
@@ -1252,7 +1260,7 @@ function ServiceRow({
             {service.requirements && service.requirements.length > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 font-semibold text-amber-700">
                 <CheckCircle2 className="size-3 shrink-0" />
-                {service.requirements.length} requirements
+                {service.requirements.length} {t("requirements")}
               </span>
             )}
           </div>
@@ -1266,14 +1274,14 @@ function ServiceRow({
             className="h-9 rounded-xl px-3 text-xs font-semibold"
             onClick={onDetail}
           >
-            Details
+            {t("Details")}
           </Button>
           <Button
             size="sm"
             className="h-9 rounded-xl px-4 text-xs font-semibold"
             onClick={onApply}
           >
-            <Send className="mr-1.5 size-3" /> Apply
+            <Send className="mr-1.5 size-3" /> {t("Apply")}
           </Button>
         </div>
       </div>
@@ -1286,14 +1294,14 @@ function ServiceRow({
           className="h-10 w-full rounded-xl text-xs font-semibold"
           onClick={onDetail}
         >
-          Details
+          {t("Details")}
         </Button>
         <Button
           size="sm"
           className="h-10 w-full rounded-xl text-xs font-semibold"
           onClick={onApply}
         >
-          <Send className="mr-1.5 size-3" /> Apply
+          <Send className="mr-1.5 size-3" /> {t("Apply")}
         </Button>
       </div>
     </div>
@@ -1308,13 +1316,15 @@ function AvailabilityBanner({
   schedule: Record<string, DaySchedule>;
   slotDuration?: number;
 }) {
+  const { t } = useTranslation();
+
   const activeDays = DAY_NAMES.filter((_, i) => schedule[String(i)]?.enabled);
   if (activeDays.length === 0) return null;
 
   return (
     <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4">
       <p className="text-xs font-bold uppercase tracking-wider text-primary/70 mb-3 flex items-center gap-1.5">
-        <CalendarDays className="size-3.5" /> Office Availability
+        <CalendarDays className="size-3.5" /> {t("Office Availability")}
       </p>
       <div className="flex flex-wrap gap-2">
         {DAY_NAMES.map((name, idx) => {
@@ -1342,7 +1352,7 @@ function AvailabilityBanner({
       </div>
       {slotDuration && (
         <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
-          <Clock className="size-3.5" /> Slot duration:{" "}
+          <Clock className="size-3.5" /> {t("Slot duration:")}{" "}
           <span className="font-semibold">{slotDuration} min</span>
         </p>
       )}

@@ -26,8 +26,11 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { PushSettingsCard } from "@/components/notifications/push-settings-card";
 import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { useTheme } from "@/components/providers/theme-provider";
+import { useTranslation } from "@/lib/i18n";
 
 export function PreferencesTab() {
+  const { t } = useTranslation();
+
   const { selectedLanguage, setSelectedLanguage, availableLanguages } =
     useLanguagesStore();
   const { theme, setTheme } = useTheme();
@@ -79,9 +82,9 @@ export function PreferencesTab() {
       // TODO: Replace with actual API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       localStorage.setItem("userPreferences", JSON.stringify(preferences));
-      toast.success("Preferences saved successfully");
+      toast.success(t("Preferences saved successfully"));
     } catch (err: any) {
-      toast.error(err?.message || "Failed to save preferences");
+      toast.error(err?.message || t("Failed to save preferences"));
     } finally {
       setIsSubmitting(false);
     }
@@ -91,14 +94,14 @@ export function PreferencesTab() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Language & Region</CardTitle>
+          <CardTitle>{t("Language & Region")}</CardTitle>
           <CardDescription>
-            Configure your language and regional settings
+            {t("Configure your language and regional settings")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="language">Language</Label>
+            <Label htmlFor="language">{t("Language")}</Label>
             <Select
               value={preferences.language}
               onValueChange={(value) =>
@@ -107,7 +110,7 @@ export function PreferencesTab() {
               disabled={isSubmitting}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select language" />
+                <SelectValue placeholder={t("Select language")} />
               </SelectTrigger>
               <SelectContent>
                 {availableLanguages.map((language) => (
@@ -125,7 +128,7 @@ export function PreferencesTab() {
           </div>
 
           <div>
-            <Label htmlFor="dateFormat">Date Format</Label>
+            <Label htmlFor="dateFormat">{t("Date Format")}</Label>
             <Select
               value={preferences.dateFormat}
               onValueChange={(value) =>
@@ -145,7 +148,7 @@ export function PreferencesTab() {
           </div>
 
           <div>
-            <Label htmlFor="timeFormat">Time Format</Label>
+            <Label htmlFor="timeFormat">{t("Time Format")}</Label>
             <Select
               value={preferences.timeFormat}
               onValueChange={(value) =>
@@ -167,14 +170,14 @@ export function PreferencesTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Appearance</CardTitle>
+          <CardTitle>{t("Appearance")}</CardTitle>
           <CardDescription>
-            Customize the look and feel of the application
+            {t("Customize the look and feel of the application")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="theme">Theme</Label>
+            <Label htmlFor="theme">{t("Theme")}</Label>
             <div className="flex items-center gap-4">
               <Select
                 value={preferences.theme}
@@ -187,9 +190,9 @@ export function PreferencesTab() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="light">{t("Light")}</SelectItem>
+                  <SelectItem value="dark">{t("Dark")}</SelectItem>
+                  <SelectItem value="system">{t("System")}</SelectItem>
                 </SelectContent>
               </Select>
               <ThemeToggle />
@@ -208,12 +211,12 @@ export function PreferencesTab() {
           {isSubmitting ? (
             <>
               <Spinner className="mr-2 size-4" />
-              Saving...
+              {t("Saving...")}
             </>
           ) : (
             <>
               <Save className="mr-2 size-4" />
-              Save Preferences
+              {t("Save Preferences")}
             </>
           )}
         </Button>

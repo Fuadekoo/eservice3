@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAboutStore, type AboutSection } from "@/lib/stores/about-store";
 import { uploadFileOnly } from "@/lib/file-upload";
 import { getUploadUrl } from "@/lib/axios";
+import { useTranslation } from "@/lib/i18n";
 
 const aboutSectionSchema = z.object({
   name: z.string().min(2, "Title is required"),
@@ -49,6 +50,8 @@ export function AboutSectionDialog({
   onOpenChange,
   section,
 }: AboutSectionDialogProps) {
+  const { t } = useTranslation();
+
   const { createAbout, updateAbout } = useAboutStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -86,9 +89,9 @@ export function AboutSectionDialog({
     try {
       const result = await uploadFileOnly(file);
       form.setValue("image", result.filename);
-      toast.success("Image uploaded successfully");
+      toast.success(t("Image uploaded successfully"));
     } catch (error) {
-      toast.error("Failed to upload image");
+      toast.error(t("Failed to upload image"));
     } finally {
       setIsUploading(false);
     }
@@ -99,17 +102,17 @@ export function AboutSectionDialog({
     try {
       if (section) {
         await updateAbout(section.id, values);
-        toast.success("About section updated successfully");
+        toast.success(t("About section updated successfully"));
       } else {
         await createAbout(values);
-        toast.success("About section created successfully");
+        toast.success(t("About section created successfully"));
       }
       onOpenChange(false);
     } catch (error) {
       toast.error(
         section
-          ? "Failed to update about section"
-          : "Failed to create about section",
+          ? t("Failed to update about section")
+          : t("Failed to create about section"),
       );
     } finally {
       setIsSubmitting(false);
@@ -121,12 +124,12 @@ export function AboutSectionDialog({
       <DialogContent className="sm:max-w-[500px] bg-card text-foreground border-border">
         <DialogHeader>
           <DialogTitle>
-            {section ? "Edit About Section" : "Add About Section"}
+            {section ? t("Edit About Section") : t("Add About Section")}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {section
-              ? "Update about section details."
-              : "Add a new content section to the about page."}
+              ? t("Update about section details.")
+              : t("Add a new content section to the about page.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -138,7 +141,7 @@ export function AboutSectionDialog({
                   <>
                     <Image
                       src={getUploadUrl(form.watch("image"))}
-                      alt="Preview"
+                      alt={t("Preview")}
                       fill
                       className="object-cover"
                     />
@@ -155,7 +158,7 @@ export function AboutSectionDialog({
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Upload className="size-10" />
-                    <span className="text-sm">Upload Cover Image</span>
+                    <span className="text-sm">{t("Upload Cover Image")}</span>
                   </div>
                 )}
                 <input
@@ -174,11 +177,11 @@ export function AboutSectionDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>{t("Title")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g. Our Mission"
+                      placeholder={t("e.g. Our Mission")}
                       className="bg-muted border-border focus:ring-primary text-foreground"
                     />
                   </FormControl>
@@ -192,11 +195,11 @@ export function AboutSectionDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel>{t("Content")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="Enter content details..."
+                      placeholder={t("Enter content details...")}
                       className="bg-muted border-border focus:ring-primary text-foreground min-h-[150px]"
                     />
                   </FormControl>
@@ -212,7 +215,7 @@ export function AboutSectionDialog({
                 onClick={() => onOpenChange(false)}
                 className="bg-transparent border-border text-foreground hover:bg-muted"
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
@@ -222,7 +225,7 @@ export function AboutSectionDialog({
                 {isSubmitting && (
                   <Loader2 className="mr-2 size-4 animate-spin" />
                 )}
-                {section ? "Update" : "Create"}
+                {section ? t("Update") : t("Create")}
               </Button>
             </div>
           </form>

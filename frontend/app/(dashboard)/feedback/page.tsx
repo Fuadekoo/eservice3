@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type ServiceRequest = {
@@ -126,6 +127,8 @@ function StarDisplay({ rating, size = "sm" }: { rating: number; size?: "sm" | "m
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function FeedbackPage() {
+  const { t } = useTranslation();
+
   const { isPending: isSessionPending } = useSession();
 
   const [tab, setTab] = React.useState<"pending" | "submitted">("pending");
@@ -154,7 +157,7 @@ export default function FeedbackPage() {
       setRequests(approved);
       setFeedbacks(getListData(fbBody));
     } catch {
-      toast.error("Failed to load feedback data.");
+      toast.error(t("Failed to load feedback data."));
     } finally {
       setIsLoading(false);
     }
@@ -189,15 +192,15 @@ export default function FeedbackPage() {
 
   const handleSubmit = async () => {
     if (!dialogReq) return;
-    if (rating === 0) { toast.error("Please select a rating."); return; }
+    if (rating === 0) { toast.error(t("Please select a rating.")); return; }
     setIsSubmitting(true);
     try {
       await axiosInstance.put(`/feedback/${dialogReq.id}`, { rating, comment: comment || undefined });
-      toast.success(existingFeedback ? "Feedback updated!" : "Thank you for your feedback!");
+      toast.success(existingFeedback ? t("Feedback updated!") : t("Thank you for your feedback!"));
       setDialogReq(null);
       void load();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to submit feedback.";
+      const message = err instanceof Error ? err.message : t("Failed to submit feedback.");
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -212,8 +215,8 @@ export default function FeedbackPage() {
     <div className="space-y-6 p-6 lg:p-8 max-w-4xl">
       {/* Header */}
       <PageHeader
-        title="Feedback"
-        description="Rate your experience with completed service requests"
+        title={t("Feedback")}
+        description={t("Rate your experience with completed service requests")}
         icon={MessageSquare}
       />
 
@@ -222,21 +225,21 @@ export default function FeedbackPage() {
         <div className="grid grid-cols-3 gap-4">
           {[
             {
-              label: "Awaiting Feedback",
+              label: t("Awaiting Feedback"),
               value: pendingRequests.length,
               icon: Inbox,
               color: "text-amber-600",
               bg: "bg-amber-500/10",
             },
             {
-              label: "Reviews Given",
+              label: t("Reviews Given"),
               value: reviewedRequests.length,
               icon: ThumbsUp,
               color: "text-emerald-600",
               bg: "bg-emerald-500/10",
             },
             {
-              label: "Avg Rating",
+              label: t("Avg Rating"),
               value: avgRating ? `${avgRating}/5` : "—",
               icon: Star,
               color: "text-amber-500",
@@ -261,18 +264,18 @@ export default function FeedbackPage() {
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 border border-border/50 w-fit">
         {([
-          { label: `Awaiting Feedback (${isLoading ? "…" : pendingRequests.length})`, value: "pending" },
-          { label: `My Reviews (${isLoading ? "…" : reviewedRequests.length})`,       value: "submitted" },
-        ] as const).map((t) => (
+          { label: `${t("Awaiting Feedback")} (${isLoading ? "…" : pendingRequests.length})`, value: "pending" },
+          { label: `${t("My Reviews")} (${isLoading ? "…" : reviewedRequests.length})`,       value: "submitted" },
+        ] as const).map((item) => (
           <button
-            key={t.value}
-            onClick={() => setTab(t.value)}
+            key={item.value}
+            onClick={() => setTab(item.value)}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-semibold transition-all",
-              tab === t.value ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              tab === item.value ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {t.label}
+            {item.label}
           </button>
         ))}
       </div>
@@ -286,8 +289,8 @@ export default function FeedbackPage() {
         pendingRequests.length === 0 ? (
           <EmptyState
             icon={ThumbsUp}
-            title="All caught up!"
-            body="You've rated all your completed service requests. Thank you!"
+            title={t("All caught up!")}
+            body={t("You've rated all your completed service requests. Thank you!")}
           />
         ) : (
           <div className="space-y-3">
@@ -300,8 +303,8 @@ export default function FeedbackPage() {
         reviewedRequests.length === 0 ? (
           <EmptyState
             icon={MessageSquare}
-            title="No reviews yet"
-            body="Your submitted ratings will appear here once you rate a completed request."
+            title={t("No reviews yet")}
+            body={t("Your submitted ratings will appear here once you rate a completed request.")}
           />
         ) : (
           <div className="space-y-4">
@@ -329,7 +332,7 @@ export default function FeedbackPage() {
               <div className="bg-primary px-6 py-5">
                 <DialogHeader>
                   <DialogTitle className="text-white font-black text-xl">
-                    {existingFeedback ? "Update Your Review" : "Rate This Service"}
+                    {existingFeedback ? t("Update Your Review") : t("Rate This Service")}
                   </DialogTitle>
                   <p className="text-primary-foreground/70 text-sm mt-0.5">
                     {dialogReq.service?.name}
@@ -352,7 +355,7 @@ export default function FeedbackPage() {
 
                 {/* Star picker */}
                 <div className="space-y-3 text-center">
-                  <p className="text-sm font-bold text-muted-foreground">How was your experience?</p>
+                  <p className="text-sm font-bold text-muted-foreground">{t("How was your experience?")}</p>
                   <div className="flex justify-center">
                     <StarInput value={rating} onChange={setRating} size="lg" />
                   </div>
@@ -368,12 +371,12 @@ export default function FeedbackPage() {
                 {/* Comment */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold">
-                    Your Comment <span className="font-normal text-muted-foreground">(optional)</span>
+                    {t("Your Comment")} <span className="font-normal text-muted-foreground">{t("(optional)")}</span>
                   </label>
                   <textarea
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Tell us what went well or what could be improved..."
+                    placeholder={t("Tell us what went well or what could be improved...")}
                     rows={4}
                     className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   />
@@ -387,7 +390,7 @@ export default function FeedbackPage() {
                     onClick={() => setDialogReq(null)}
                     disabled={isSubmitting}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </Button>
                   <Button
                     className="flex-1 rounded-xl h-11 font-bold"
@@ -399,7 +402,7 @@ export default function FeedbackPage() {
                     ) : (
                       <Send className="size-4 mr-2" />
                     )}
-                    {existingFeedback ? "Update Review" : "Submit Review"}
+                    {existingFeedback ? t("Update Review") : t("Submit Review")}
                   </Button>
                 </div>
               </div>
@@ -413,6 +416,8 @@ export default function FeedbackPage() {
 
 // ── Pending Request Card ──────────────────────────────────────────────────────
 function PendingRequestCard({ req, onRate }: { req: ServiceRequest; onRate: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center gap-4 p-5 rounded-2xl border border-border/60 bg-card hover:border-primary/30 hover:bg-muted/10 transition-all group">
       {/* Service icon */}
@@ -423,7 +428,7 @@ function PendingRequestCard({ req, onRate }: { req: ServiceRequest; onRate: () =
       {/* Info */}
       <div className="flex-1 min-w-0 space-y-1">
         <p className="font-bold text-sm group-hover:text-primary transition-colors line-clamp-1">
-          {req.service?.name ?? "Service"}
+          {req.service?.name ?? t("Service")}
         </p>
         <div className="flex flex-wrap gap-x-3 gap-y-0.5">
           {req.service?.office?.name && (
@@ -436,7 +441,7 @@ function PendingRequestCard({ req, onRate }: { req: ServiceRequest; onRate: () =
           </span>
           {req.service?.office?.roomNumber && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="size-3" /> Room {req.service.office.roomNumber}
+              <MapPin className="size-3" /> {t("Room")} {req.service.office.roomNumber}
             </span>
           )}
         </div>
@@ -448,14 +453,14 @@ function PendingRequestCard({ req, onRate }: { req: ServiceRequest; onRate: () =
           variant="outline"
           className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-semibold text-xs hidden sm:flex"
         >
-          <CheckCircle className="size-3 mr-1" /> Approved
+          <CheckCircle className="size-3 mr-1" /> {t("Approved")}
         </Badge>
         <Button
           size="sm"
           className="h-9 rounded-xl font-bold px-4 bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20"
           onClick={onRate}
         >
-          <Star className="size-3.5 mr-1.5 fill-white" /> Rate
+          <Star className="size-3.5 mr-1.5 fill-white" /> {t("Rate")}
         </Button>
       </div>
     </div>
@@ -472,6 +477,8 @@ function ReviewCard({
   feedback: FeedbackRecord;
   onEdit: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <Card className="border-none shadow-sm ring-1 ring-border/50 bg-card/60 hover:ring-primary/20 transition-all">
       <CardHeader className="p-5 pb-3">
@@ -483,7 +490,7 @@ function ReviewCard({
               <p className="text-[9px] text-amber-500/70 font-bold">/ 5</p>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm line-clamp-1">{req.service?.name ?? "Service"}</p>
+              <p className="font-bold text-sm line-clamp-1">{req.service?.name ?? t("Service")}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{req.service?.office?.name}</p>
               <StarDisplay rating={feedback.rating} />
             </div>
@@ -504,7 +511,7 @@ function ReviewCard({
               variant="ghost"
               className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary"
               onClick={onEdit}
-              title="Edit review"
+              title={t("Edit review")}
             >
               <Edit3 className="size-4" />
             </Button>
@@ -519,11 +526,11 @@ function ReviewCard({
             &quot;{feedback.comment}&quot;
           </p>
         ) : (
-          <p className="text-xs text-muted-foreground/50 italic">No written comment.</p>
+          <p className="text-xs text-muted-foreground/50 italic">{t("No written comment.")}</p>
         )}
         <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Calendar className="size-3" /> Submitted {fmtDate(req.date)}
+            <Calendar className="size-3" /> {t("Submitted")} {fmtDate(req.date)}
           </span>
           <span className="flex items-center gap-1">
             <Clock className="size-3" /> {fmtDate(feedback.createdAt)}

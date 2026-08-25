@@ -5,19 +5,22 @@ import { Users, Info } from "lucide-react";
 import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
 import { AdministratorsTab } from "./_components/administrators-tab";
 import { AboutContentTab } from "./_components/about-content-tab";
+import { useTranslation } from "@/lib/i18n";
 
 export default function AboutPage() {
+  const { t } = useTranslation();
+
   const [activeTab, setActiveTab] = React.useState("administrators");
 
   const tabs: PageTab[] = [
-    { label: "Administrators", value: "administrators" },
-    { label: "About Content", value: "content" },
+    { label: t("Administrators"), value: "administrators" },
+    { label: t("About Content"), value: "content" },
   ];
 
   return (
     <PageLayout
-      title="About Page Management"
-      description="Manage administrators and about page content"
+      title={t("About Page Management")}
+      description={t("Manage administrators and about page content")}
       icon={Info}
       tabs={tabs}
       activeTab={activeTab}

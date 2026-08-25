@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { User } from "@/lib/stores/user-store";
+import { useTranslation } from "@/lib/i18n";
 
 interface UserTableProps {
   users: User[];
@@ -31,6 +32,8 @@ interface UserTableProps {
 }
 
 export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTableProps) {
+  const { t } = useTranslation();
+
   const getInitials = (username: string) => {
     return username.substring(0, 1).toUpperCase();
   };
@@ -42,25 +45,25 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
           <TableHeader className="bg-muted/30">
             <TableRow className="hover:bg-transparent border-none">
               <TableHead className="w-[300px] py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider pl-6">
-                User Member
+                {t("User Member")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider">
-                Contact
+                {t("Contact")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider">
-                Role
+                {t("Role")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider">
-                Office
+                {t("Office")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-center">
-                Permissions
+                {t("Permissions")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-center">
-                Status
+                {t("Status")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-right pr-6">
-                Actions
+                {t("Actions")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -71,7 +74,7 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                   colSpan={7}
                   className="h-32 text-center text-muted-foreground"
                 >
-                  No users found.
+                  {t("No users found.")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -115,7 +118,7 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                           variant="secondary"
                           className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none text-[9px] h-4 px-1.5 font-bold uppercase"
                         >
-                          Verified
+                          {t("Verified")}
                         </Badge>
                       )}
                     </div>
@@ -125,7 +128,7 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                       variant="secondary"
                       className="rounded-full px-3 py-0.5 font-bold border-none text-[10px] uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400"
                     >
-                      {user.role?.name || "customer"}
+                      {user.role?.name || t("customer")}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-5">
@@ -139,7 +142,7 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                         </>
                       ) : (
                         <span className="text-sm text-muted-foreground">
-                          No office
+                          {t("No office")}
                         </span>
                       )}
                     </div>
@@ -147,13 +150,13 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                   <TableCell className="text-center py-5">
                     <Badge className="bg-blue-600/10 text-blue-600 dark:text-blue-400 border-none flex items-center gap-1 mx-auto w-fit px-3 py-1 text-[10px] font-bold uppercase">
                       <CheckCircle2 className="size-3" />
-                      Full Permissions
+                      {t("Full Permissions")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center py-5">
                     <button
                       onClick={() => onToggleActive?.(user)}
-                      title={user.isActive ? "Click to deactivate" : "Click to activate"}
+                      title={user.isActive ? t("Click to deactivate") : t("Click to activate")}
                       className="group/toggle inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       {user.isActive
@@ -167,7 +170,7 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                             : "bg-destructive/10 text-destructive"
                         }`}
                       >
-                        {user.isActive ? "Active" : "Inactive"}
+                        {user.isActive ? t("Active") : t("Inactive")}
                       </Badge>
                     </button>
                   </TableCell>
@@ -177,7 +180,7 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                         variant="ghost"
                         size="icon"
                         className="size-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="View"
+                        title={t("View")}
                       >
                         <Eye className="size-4" />
                       </Button>
@@ -186,7 +189,7 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                         size="icon"
                         className="size-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                         onClick={() => onEdit(user)}
-                        title="Edit"
+                        title={t("Edit")}
                       >
                         <Edit className="size-4" />
                       </Button>
@@ -195,7 +198,7 @@ export function UserTable({ users, onEdit, onDelete, onToggleActive }: UserTable
                         size="icon"
                         className="size-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                         onClick={() => onDelete(user.id)}
-                        title="Delete"
+                        title={t("Delete")}
                       >
                         <Trash2 className="size-4" />
                       </Button>

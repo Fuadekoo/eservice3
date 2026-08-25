@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,8 @@ export function AssignServicesDialog({
   staffName,
   onSuccess,
 }: AssignServicesDialogProps) {
+  const { t } = useTranslation();
+
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -95,7 +98,7 @@ export function AssignServicesDialog({
         setInitialIds(new Set(assigned));
       } catch (error: any) {
         toast.error(
-          error?.message || "Failed to load services for this staff member",
+          error?.message || t("Failed to load services for this staff member"),
         );
         onOpenChange(false);
       } finally {
@@ -165,7 +168,7 @@ export function AssignServicesDialog({
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error?.message || "Failed to update service assignments");
+      toast.error(error?.message || t("Failed to update service assignments"));
     } finally {
       setIsSaving(false);
     }
@@ -192,18 +195,15 @@ export function AssignServicesDialog({
               </div>
               <div className="flex min-w-0 flex-col gap-1">
                 <DialogTitle className="text-lg font-bold text-foreground">
-                  Assign Services
+                  {t("Assign Services")}
                 </DialogTitle>
                 <DialogDescription className="truncate text-sm text-muted-foreground">
                   {staffName ? (
                     <>
-                      Managing services for{" "}
-                      <span className="font-semibold text-foreground">
-                        {staffName}
-                      </span>
+                      {t("Managing services for {name}", { name: staffName })}
                     </>
                   ) : (
-                    "Select services to assign to this staff member"
+                    t("Select services to assign to this staff member")
                   )}
                 </DialogDescription>
               </div>
@@ -218,7 +218,7 @@ export function AssignServicesDialog({
               className="absolute right-3 top-3 rounded-lg text-muted-foreground hover:text-foreground"
             >
               <X className="size-4" />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{t("Close")}</span>
             </Button>
           </DialogClose>
         </div>
@@ -230,7 +230,7 @@ export function AssignServicesDialog({
               <Loader2 className="absolute left-3 top-3 size-6 animate-spin text-violet-500" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">
-              Loading services…
+              {t("Loading services…")}
             </p>
           </div>
         ) : data && data.services.length === 0 ? (
@@ -239,12 +239,13 @@ export function AssignServicesDialog({
               <Briefcase className="size-6 text-muted-foreground" />
             </div>
             <p className="text-sm font-semibold text-foreground">
-              No Services Available
+              {t("No Services Available")}
             </p>
             <p className="max-w-[280px] text-center text-xs text-muted-foreground">
-              There are no services in{" "}
-              <span className="font-medium">{data.officeName}</span>. Create
-              services first before assigning them.
+              {t(
+                "There are no services in {office}. Create services first before assigning them.",
+                { office: data.officeName },
+              )}
             </p>
           </div>
         ) : (
@@ -258,7 +259,7 @@ export function AssignServicesDialog({
                   className="gap-1 rounded-full border-none bg-violet-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400"
                 >
                   <Sparkles className="size-3" />
-                  {assignedCount} / {totalCount} assigned
+                  {assignedCount} / {totalCount} {t("assigned")}
                 </Badge>
                 <div className="flex items-center gap-1">
                   <Button
@@ -267,7 +268,7 @@ export function AssignServicesDialog({
                     className="h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
                     onClick={handleSelectAll}
                   >
-                    Select All
+                    {t("Select All")}
                   </Button>
                   <span className="text-muted-foreground/40">|</span>
                   <Button
@@ -276,7 +277,7 @@ export function AssignServicesDialog({
                     className="h-7 rounded-lg px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
                     onClick={handleDeselectAll}
                   >
-                    Deselect All
+                    {t("Deselect All")}
                   </Button>
                 </div>
               </div>
@@ -285,7 +286,7 @@ export function AssignServicesDialog({
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search services…"
+                  placeholder={t("Search services…")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-9 rounded-xl border-border bg-muted/50 pl-9 pr-9 text-sm focus:ring-violet-500/30"
@@ -308,7 +309,7 @@ export function AssignServicesDialog({
                   <div className="flex flex-col items-center justify-center gap-2 py-10">
                     <Search className="size-5 text-muted-foreground/50" />
                     <p className="text-sm text-muted-foreground">
-                      No services match &quot;{searchQuery}&quot;
+                      {t("No services match \"")}{searchQuery}&quot;
                     </p>
                   </div>
                 ) : (
@@ -371,11 +372,11 @@ export function AssignServicesDialog({
               <p className="text-xs text-muted-foreground">
                 {hasChanges ? (
                   <span className="font-medium text-amber-500">
-                    • Unsaved changes
+                    {t("• Unsaved changes")}
                   </span>
                 ) : (
                   <span className="font-medium text-emerald-500">
-                    ✓ All changes saved
+                    {t("✓ All changes saved")}
                   </span>
                 )}
               </p>
@@ -386,7 +387,7 @@ export function AssignServicesDialog({
                   className="h-9 rounded-xl px-4 text-sm font-medium"
                   disabled={isSaving}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   onClick={handleSave}
@@ -396,12 +397,12 @@ export function AssignServicesDialog({
                   {isSaving ? (
                     <>
                       <Loader2 className="mr-2 size-4 animate-spin" />
-                      Saving…
+                      {t("Saving…")}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="mr-2 size-4" />
-                      Save Assignments
+                      {t("Save Assignments")}
                     </>
                   )}
                 </Button>

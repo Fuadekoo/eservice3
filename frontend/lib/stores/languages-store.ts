@@ -169,7 +169,11 @@ export interface LanguagesStore {
   addLanguage: (language: Language) => Promise<void>
   deleteLanguage: (langCode: string) => Promise<void>
   loadTranslationData: (langCode: string) => Promise<void>
-  t: (key: string, defaultValue?: string) => string
+  t: (
+    key: string,
+    defaultValueOrVars?: string | Record<string, string | number>,
+    vars?: Record<string, string | number>
+  ) => string
 }
 
 // ──────────────────────────────────────────
@@ -328,10 +332,20 @@ export const useLanguagesStore = create<LanguagesStore>()(
           try {
             set({ isLoading: true })
             const data = await fetchAllTranslations()
+            // Also seed the flat map t() reads, so every label is translated on
+            // the very first paint. Without this it only filled in after the
+            // user actively switched language, and the whole UI stayed English.
+            const lang = get().selectedLanguage
+            const flat: Record<string, string> = {}
+            for (const entry of data.translations) {
+              const value = entry.translations[lang] ?? entry.translations["en"]
+              if (value) flat[entry.key] = value
+            }
             set({
               availableLanguages: data.availableLanguages,
               translations: data.translations,
               filteredTranslations: data.translations,
+              translationData: flat,
               isHydrated: true,
             })
           } catch (e) {
@@ -427,9 +441,32 @@ export const useLanguagesStore = create<LanguagesStore>()(
       },
 
       // ── Translation helper t() ──
-      t: (key, defaultValue) => {
+      // t("Save")                                → "Save"
+      // t("Save", "Save changes")                → default when the key is missing
+      // t("{count} services", { count: 3 })      → "3 services"
+      // t("{count} services", "…", { count: 3 }) → default + placeholders
+      t: (key, defaultValueOrVars, vars) => {
         const { translationData } = get()
-        return translationData[key] || defaultValue || key
+        const varsGiven =
+          typeof defaultValueOrVars === "object" && defaultValueOrVars !== null
+        const values = varsGiven
+          ? (defaultValueOrVars as Record<string, string | number>)
+          : vars
+        const fallback = varsGiven ? undefined : (defaultValueOrVars as string | undefined)
+
+        // Either source may be the one that is loaded: `translationData` is the
+        // flat per-language map, `translations` the full catalogue used by the
+        // admin screens. Read both so t() never falls back to English early.
+        const { translations, selectedLanguage } = get()
+        const template =
+          translationData[key] ||
+          getIndex(translations).get(key)?.[selectedLanguage] ||
+          fallback ||
+          key
+        if (!values) return template
+        return template.replace(/\{(\w+)\}/g, (match, name) =>
+          name in values ? String(values[name]) : match
+        )
       },
     }),
     {

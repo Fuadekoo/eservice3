@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaProvider } from "@/components/providers/pwa-provider";
+import { TranslationsProvider } from "@/components/providers/translations-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -71,6 +72,7 @@ export default function RootLayout({
         </ThemeProvider>
         <Toaster />
         <PwaProvider />
+        <TranslationsProvider />
       </body>
     </html>
   );

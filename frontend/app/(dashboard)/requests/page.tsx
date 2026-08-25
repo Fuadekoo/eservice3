@@ -51,6 +51,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 type OverallStatus = "pending" | "processing" | "approved" | "rejected";
@@ -75,12 +76,13 @@ const STATUS_CONFIG: Record<OverallStatus, {
 };
 
 function StatusBadge({ status }: { status: OverallStatus }) {
+  const { t } = useTranslation();
   const cfg = STATUS_CONFIG[status];
   const Icon = cfg.icon;
   return (
     <Badge variant="outline" className={cn("font-semibold text-xs gap-1.5", cfg.badge)}>
       <Icon className="size-3" />
-      {cfg.label}
+      {t(cfg.label)}
     </Badge>
   );
 }
@@ -99,6 +101,8 @@ const TABS = [
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function MyRequestsPage() {
+  const { t } = useTranslation();
+
   const { isPending: isSessionPending } = useSession();
   const { requests, isLoading, pagination, fetchRequests } = useRequestStore();
 
@@ -143,18 +147,18 @@ export default function MyRequestsPage() {
     setIsDeleting(true);
     try {
       await axiosInstance.delete(`/requests/${deleteId}`);
-      toast.success("Request cancelled successfully");
+      toast.success(t("Request cancelled successfully"));
       setDeleteId(null);
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to cancel request");
+      toast.error(err instanceof Error ? err.message : t("Failed to cancel request"));
     } finally {
       setIsDeleting(false);
     }
   };
 
   const tabs: PageTab[] = TABS.map(tab => ({
-    label: tab.label,
+    label: t(tab.label),
     value: tab.value,
     badge: tab.value === "" ? stats.total :
            tab.value === "pending" ? stats.pending :
@@ -173,8 +177,8 @@ export default function MyRequestsPage() {
 
   return (
     <PageLayout
-      title="My Requests"
-      description="Track and manage your service applications"
+      title={t("My Requests")}
+      description={t("Track and manage your service applications")}
       icon={FileText}
       tabs={tabs}
       activeTab={statusTab}
@@ -182,7 +186,7 @@ export default function MyRequestsPage() {
       actions={
         <Button variant="outline" onClick={refresh} className="h-10 rounded-xl shrink-0">
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
-          Refresh
+          {t("Refresh")}
         </Button>
       }
     >
@@ -190,11 +194,11 @@ export default function MyRequestsPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
-            { label: "Total",      value: stats.total,      icon: FileText,      color: "text-primary",     bg: "bg-primary/10" },
-            { label: "Pending",    value: stats.pending,    icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
-            { label: "Processing", value: stats.processing, icon: Activity,      color: "text-blue-600",    bg: "bg-blue-500/10" },
-            { label: "Approved",   value: stats.approved,   icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
-            { label: "Rejected",   value: stats.rejected,   icon: XCircle,       color: "text-red-600",     bg: "bg-red-500/10" },
+            { label: t("Total"),      value: stats.total,      icon: FileText,      color: "text-primary",     bg: "bg-primary/10" },
+            { label: t("Pending"),    value: stats.pending,    icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
+            { label: t("Processing"), value: stats.processing, icon: Activity,      color: "text-blue-600",    bg: "bg-blue-500/10" },
+            { label: t("Approved"),   value: stats.approved,   icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
+            { label: t("Rejected"),   value: stats.rejected,   icon: XCircle,       color: "text-red-600",     bg: "bg-red-500/10" },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50">
               <CardContent className="p-4 flex items-center gap-3">
@@ -217,7 +221,7 @@ export default function MyRequestsPage() {
             <div className="relative flex-1 sm:w-60">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search requests..."
+                placeholder={t("Search requests...")}
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                 className="pl-9 h-10 rounded-xl"
@@ -231,7 +235,7 @@ export default function MyRequestsPage() {
                 size="icon"
                 className="h-8 w-8 rounded-lg"
                 onClick={() => setView("table")}
-                title="Table view"
+                title={t("Table view")}
               >
                 <List className="size-4" />
               </Button>
@@ -240,7 +244,7 @@ export default function MyRequestsPage() {
                 size="icon"
                 className="h-8 w-8 rounded-lg"
                 onClick={() => setView("card")}
-                title="Card view"
+                title={t("Card view")}
               >
                 <LayoutGrid className="size-4" />
               </Button>
@@ -283,7 +287,7 @@ export default function MyRequestsPage() {
           onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
           canGoNext={currentPage < totalPages}
           canGoPrevious={currentPage > 1}
-          itemLabel="requests"
+          itemLabel={t("requests")}
         />
       )}
 
@@ -297,20 +301,20 @@ export default function MyRequestsPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel this request?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Cancel this request?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete your request. This action cannot be undone.
+              {t("This will permanently delete your request. This action cannot be undone.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl" disabled={isDeleting}>Keep it</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl" disabled={isDeleting}>{t("Keep it")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="rounded-xl bg-destructive hover:bg-destructive/90"
             >
               {isDeleting && <Loader2 className="size-4 animate-spin mr-2" />}
-              Yes, cancel request
+              {t("Yes, cancel request")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -321,14 +325,16 @@ export default function MyRequestsPage() {
 
 // ── Empty State ───────────────────────────────────────────────────────────────
 function EmptyState({ search, statusTab }: { search: string; statusTab: string }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col items-center justify-center py-24 rounded-2xl border-2 border-dashed border-border text-center">
       <div className="p-4 rounded-full bg-muted/30 mb-4">
         <FileText className="size-10 text-muted-foreground/30" />
       </div>
-      <p className="font-bold text-lg">No requests found</p>
+      <p className="font-bold text-lg">{t("No requests found")}</p>
       <p className="text-sm text-muted-foreground mt-1">
-        {search || statusTab ? "Try adjusting your filters." : "You haven't submitted any service requests yet."}
+        {search || statusTab ? t("Try adjusting your filters.") : t("You haven't submitted any service requests yet.")}
       </p>
     </div>
   );
@@ -344,18 +350,20 @@ function TableView({
   onView: (r: ServiceRequest) => void;
   onDelete: (id: string) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border/50 bg-muted/30">
-              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">Service</th>
-              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">Office</th>
-              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground hidden md:table-cell">Date</th>
-              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Address</th>
-              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">Status</th>
-              <th className="px-5 py-3.5 text-right font-bold text-xs uppercase tracking-wider text-muted-foreground">Actions</th>
+              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Service")}</th>
+              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Office")}</th>
+              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground hidden md:table-cell">{t("Date")}</th>
+              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground hidden lg:table-cell">{t("Address")}</th>
+              <th className="px-5 py-3.5 text-left font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Status")}</th>
+              <th className="px-5 py-3.5 text-right font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -375,7 +383,7 @@ function TableView({
                         <p className="font-semibold line-clamp-1">{req.service?.name}</p>
                         {req.appointments?.length > 0 && (
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {req.appointments.length} appointment{req.appointments.length > 1 ? "s" : ""}
+                            {req.appointments.length} {t("appointment")}{req.appointments.length > 1 ? "s" : ""}
                           </p>
                         )}
                       </div>
@@ -410,7 +418,7 @@ function TableView({
                         variant="ghost"
                         className="h-8 w-8 rounded-lg"
                         onClick={() => onView(req)}
-                        title="View details"
+                        title={t("View details")}
                       >
                         <Eye className="size-4" />
                       </Button>
@@ -420,7 +428,7 @@ function TableView({
                           variant="ghost"
                           className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => onDelete(req.id)}
-                          title="Cancel request"
+                          title={t("Cancel request")}
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -447,6 +455,8 @@ function CardView({
   onView: (r: ServiceRequest) => void;
   onDelete: (id: string) => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {requests.map((req) => {
@@ -493,14 +503,14 @@ function CardView({
                   <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
                     <Calendar className="size-3.5 shrink-0 text-violet-500" />
                     <span className="text-violet-600 font-semibold">
-                      {req.appointments.length} appointment{req.appointments.length > 1 ? "s" : ""}
+                      {req.appointments.length} {t("appointment")}{req.appointments.length > 1 ? "s" : ""}
                     </span>
                   </div>
                 )}
                 {req.fileData?.length > 0 && (
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     <Paperclip className="size-3.5 shrink-0" />
-                    <span>{req.fileData.length} file{req.fileData.length > 1 ? "s" : ""}</span>
+                    <span>{req.fileData.length} {t("file")}{req.fileData.length > 1 ? "s" : ""}</span>
                   </div>
                 )}
                 {req.customerSatisfaction?.rating && (
@@ -520,7 +530,7 @@ function CardView({
                   req.statusbystaff === "rejected" ? "bg-red-500/10 text-red-600" :
                   "bg-muted text-muted-foreground"
                 )}>
-                  Staff: {req.statusbystaff}
+                  {t("Staff:")} {req.statusbystaff}
                 </div>
                 <div className={cn(
                   "flex-1 text-center text-xs py-1.5 rounded-lg font-semibold",
@@ -528,7 +538,7 @@ function CardView({
                   req.statusbyadmin === "rejected" ? "bg-red-500/10 text-red-600" :
                   "bg-muted text-muted-foreground"
                 )}>
-                  Manager: {req.statusbyadmin}
+                  {t("Manager:")} {req.statusbyadmin}
                 </div>
               </div>
 
@@ -540,7 +550,7 @@ function CardView({
                   className="flex-1 h-9 rounded-xl text-xs font-bold gap-1.5"
                   onClick={() => onView(req)}
                 >
-                  <Eye className="size-3.5" /> View Details
+                  <Eye className="size-3.5" /> {t("View Details")}
                 </Button>
                 {canDelete && (
                   <Button
@@ -548,7 +558,7 @@ function CardView({
                     variant="outline"
                     className="h-9 w-9 rounded-xl p-0 text-destructive border-destructive/30 hover:bg-destructive/5"
                     onClick={() => onDelete(req.id)}
-                    title="Cancel request"
+                    title={t("Cancel request")}
                   >
                     <Trash2 className="size-4" />
                   </Button>
@@ -570,6 +580,8 @@ function RequestDetailDialog({
   request: ServiceRequest | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
+
   if (!request) return null;
   const status = getOverallStatus(request);
   const cfg = STATUS_CONFIG[status];
@@ -595,33 +607,33 @@ function RequestDetailDialog({
           {/* Overall status + submitted */}
           <div className="flex items-center justify-between">
             <Badge variant="outline" className={cn("font-bold text-sm gap-1.5 px-3 py-1", cfg.badge)}>
-              <Icon className="size-4" /> {cfg.label}
+              <Icon className="size-4" /> {t(cfg.label)}
             </Badge>
             <p className="text-xs text-muted-foreground">
-              Submitted {fmtDate(request.createdAt)}
+              {t("Submitted")} {fmtDate(request.createdAt)}
             </p>
           </div>
 
           {/* Details grid */}
           <div className="rounded-xl border border-border bg-muted/20 p-4 grid sm:grid-cols-2 gap-4 text-sm">
-            <DetailRow icon={Calendar} label="Preferred Date" value={fmtDate(request.date)} />
-            <DetailRow icon={MapPin} label="Address" value={request.currentAddress} />
-            <DetailRow icon={Building2} label="Office" value={request.service?.office?.name ?? "—"} />
-            <DetailRow icon={MapPin} label="Room" value={request.service?.office?.roomNumber ?? "—"} />
+            <DetailRow icon={Calendar} label={t("Preferred Date")} value={fmtDate(request.date)} />
+            <DetailRow icon={MapPin} label={t("Address")} value={request.currentAddress} />
+            <DetailRow icon={Building2} label={t("Office")} value={request.service?.office?.name ?? "—"} />
+            <DetailRow icon={MapPin} label={t("Room")} value={request.service?.office?.roomNumber ?? "—"} />
           </div>
 
           {/* Approval pipeline */}
           <div className="rounded-xl border border-border p-4 space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Approval Pipeline</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Approval Pipeline")}</p>
             <div className="space-y-2">
               <PipelineStep
-                label="Staff Review"
+                label={t("Staff Review")}
                 status={request.statusbystaff}
                 who={request.approveStaff?.user?.username}
               />
               <div className="h-4 w-px bg-border ml-4" />
               <PipelineStep
-                label="Manager Review"
+                label={t("Manager Review")}
                 status={request.statusbyadmin}
                 who={request.approveManager?.user?.username}
               />
@@ -632,7 +644,7 @@ function RequestDetailDialog({
           {request.appointments?.length > 0 && (
             <div className="rounded-xl border border-border p-4 space-y-3">
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Appointments ({request.appointments.length})
+                {t("Appointments ({count})", { count: request.appointments.length })}
               </p>
               <div className="space-y-2">
                 {request.appointments.map((apt) => (
@@ -663,7 +675,7 @@ function RequestDetailDialog({
           {request.fileData?.length > 0 && (
             <div className="rounded-xl border border-border p-4 space-y-3">
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Attachments ({request.fileData.length})
+                {t("Attachments ({count})", { count: request.fileData.length })}
               </p>
               <div className="space-y-2">
                 {request.fileData.map((f) => (
@@ -679,7 +691,7 @@ function RequestDetailDialog({
           {/* Customer satisfaction */}
           {request.customerSatisfaction && (
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Your Rating</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-600">{t("Your Rating")}</p>
               <div className="flex items-center gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star

@@ -22,8 +22,11 @@ import {
   useOfficeStore,
   type UpdateOfficePayload,
 } from "@/lib/stores/office-store";
+import { useTranslation } from "@/lib/i18n";
 
 export function OfficeInfoTab() {
+  const { t } = useTranslation();
+
   const { data: sessionData } = useSession();
   const session = sessionData?.session;
   const isManager =
@@ -78,7 +81,7 @@ export function OfficeInfoTab() {
 
   const handleSubmit = React.useCallback(async () => {
     if (!sessionOfficeId) {
-      toast.error("Office ID not found in session");
+      toast.error(t("Office ID not found in session"));
       return;
     }
 
@@ -87,12 +90,12 @@ export function OfficeInfoTab() {
 
     try {
       await updateOffice(sessionOfficeId, formData);
-      toast.success("Office information saved successfully");
+      toast.success(t("Office information saved successfully"));
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||
         err?.message ||
-        "Failed to save office information";
+        t("Failed to save office information");
       setError(message);
       toast.error(message);
     } finally {
@@ -119,7 +122,7 @@ export function OfficeInfoTab() {
     return (
       <div className="flex items-center justify-center py-10">
         <Spinner className="mr-2 size-5" />
-        Loading office information...
+        {t("Loading office information...")}
       </div>
     );
   }
@@ -129,17 +132,16 @@ export function OfficeInfoTab() {
       {!isManager && (
         <Alert className="bg-amber-50 border-amber-200">
           <ShieldAlert className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800">View Only Mode</AlertTitle>
+          <AlertTitle className="text-amber-800">{t("View Only Mode")}</AlertTitle>
           <AlertDescription className="text-amber-700">
-            Only administrators with the <strong>Manager</strong> role are
-            authorized to modify office details.
+            {t("Only administrators with the")} <strong>{t("Manager")}</strong> {t("role are authorized to modify office details.")}
           </AlertDescription>
         </Alert>
       )}
 
       {error ? (
         <Alert variant="destructive">
-          <AlertTitle>Something went wrong</AlertTitle>
+          <AlertTitle>{t("Something went wrong")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
@@ -149,19 +151,19 @@ export function OfficeInfoTab() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-xl flex items-center gap-2">
-                Office Information
+                {t("Office Information")}
                 {isManager && (
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 )}
               </CardTitle>
               <CardDescription>
-                Details about your office and organizational identity
+                {t("Details about your office and organizational identity")}
               </CardDescription>
             </div>
             {isManager && (
               <Button onClick={handleSubmit} disabled={isSubmitting || !office}>
                 <Save className="mr-2 size-4" />
-                {isSubmitting ? "Saving..." : "Save Changes"}
+                {isSubmitting ? t("Saving...") : t("Save Changes")}
               </Button>
             )}
           </div>
@@ -171,18 +173,18 @@ export function OfficeInfoTab() {
             <div className="md:col-span-2 space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="officeName">Office Name</Label>
+                  <Label htmlFor="officeName">{t("Office Name")}</Label>
                   <Input
                     id="officeName"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     disabled={isSubmitting || !isManager}
-                    placeholder="e.g. Adama E-Service Office"
+                    placeholder={t("e.g. Adama E-Service Office")}
                     className={!isManager ? "bg-muted cursor-default" : ""}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="slogan">Office Slogan</Label>
+                  <Label htmlFor="slogan">{t("Office Slogan")}</Label>
                   <Input
                     id="slogan"
                     value={formData.slogan}
@@ -190,7 +192,7 @@ export function OfficeInfoTab() {
                       handleInputChange("slogan", e.target.value)
                     }
                     disabled={isSubmitting || !isManager}
-                    placeholder="Your office slogan"
+                    placeholder={t("Your office slogan")}
                     className={!isManager ? "bg-muted cursor-default" : ""}
                   />
                 </div>
@@ -199,7 +201,7 @@ export function OfficeInfoTab() {
               <div className="grid gap-4 sm:grid-cols-2"></div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Physical Address</Label>
+                <Label htmlFor="address">{t("Physical Address")}</Label>
                 <Textarea
                   id="address"
                   value={formData.address}
@@ -212,7 +214,7 @@ export function OfficeInfoTab() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">About the Office</Label>
+                <Label htmlFor="description">{t("About the Office")}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -220,7 +222,7 @@ export function OfficeInfoTab() {
                     handleInputChange("description", e.target.value)
                   }
                   disabled={isSubmitting || !isManager}
-                  placeholder="Detailed description of office services..."
+                  placeholder={t("Detailed description of office services...")}
                   rows={4}
                   className={!isManager ? "bg-muted cursor-default" : ""}
                 />
@@ -230,20 +232,20 @@ export function OfficeInfoTab() {
             <div className="space-y-6">
               <div className="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-border p-8 bg-muted/30">
                 <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                  Office Logo
+                  {t("Office Logo")}
                 </Label>
                 {formData.logo ? (
                   <div className="relative group">
                     <img
                       src={formData.logo}
-                      alt="Office logo"
+                      alt={t("Office logo")}
                       className="h-40 w-40 rounded-full object-cover border-4 border-white shadow-lg shadow-primary/10 transition-transform group-hover:scale-105"
                     />
                     {isManager && (
                       <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <Label htmlFor="logo-upload" className="cursor-pointer">
                           <Button variant="secondary" size="sm" asChild>
-                            <span>Change</span>
+                            <span>{t("Change")}</span>
                           </Button>
                         </Label>
                       </div>
@@ -252,7 +254,7 @@ export function OfficeInfoTab() {
                 ) : (
                   <div className="flex h-40 w-40 items-center justify-center rounded-full border-2 border-border bg-muted/50">
                     <span className="text-sm text-muted-foreground">
-                      No logo uploaded
+                      {t("No logo uploaded")}
                     </span>
                   </div>
                 )}
@@ -268,7 +270,7 @@ export function OfficeInfoTab() {
                       >
                         <span>
                           <Upload className="mr-2 size-4" />
-                          Update Brand Logo
+                          {t("Update Brand Logo")}
                         </span>
                       </Button>
                     </Label>
@@ -283,7 +285,7 @@ export function OfficeInfoTab() {
                   </div>
                 )}
                 <p className="text-[10px] text-muted-foreground text-center">
-                  Recommended size: 400x400px. PNG, JPG allowed.
+                  {t("Recommended size: 400x400px. PNG, JPG allowed.")}
                 </p>
               </div>
             </div>

@@ -51,9 +51,12 @@ export function PaginationFooter({
   return (
     <div className="flex items-center justify-between gap-4 border-t pt-4">
       <span className="text-sm text-muted-foreground whitespace-nowrap">
-        {t("Showing")} {startIndex + 1} {t("to")}{" "}
-        {Math.min(endIndex, totalItems)} {t("of")} {totalItems}{" "}
-        {resolvedItemLabel}
+        {t("Showing {from} to {to} of {total} {items}", {
+          from: startIndex + 1,
+          to: Math.min(endIndex, totalItems),
+          total: totalItems,
+          items: resolvedItemLabel,
+        })}
       </span>
 
       <div className="flex items-center gap-4">

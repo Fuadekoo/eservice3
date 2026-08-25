@@ -47,6 +47,7 @@ import {
   ethiopianMobilePhoneSchema,
   normalizeEthiopianMobilePhone,
 } from "@/lib/phone";
+import { useTranslation } from "@/lib/i18n";
 
 const userSchema = z.object({
   username: z.string().min(2, "Username is required"),
@@ -76,6 +77,8 @@ export function UserCreateDialog({
   onOpenChange,
   user,
 }: UserCreateDialogProps) {
+  const { t } = useTranslation();
+
   const { createUser, updateUser } = useUserStore();
   const { roles, fetchRoles } = useSecurityStore();
   const { offices, fetchOffices } = useOfficeStore();
@@ -140,10 +143,10 @@ export function UserCreateDialog({
 
       if (user) {
         await updateUser(user.id, payload);
-        toast.success("User updated successfully");
+        toast.success(t("User updated successfully"));
       } else {
         if (!values.password) {
-          toast.error("Password is required for new users");
+          toast.error(t("Password is required for new users"));
           setIsSubmitting(false);
           return;
         }
@@ -156,11 +159,11 @@ export function UserCreateDialog({
           isActive: values.isActive,
         };
         await createUser(createPayload);
-        toast.success("User created successfully");
+        toast.success(t("User created successfully"));
       }
       onOpenChange(false);
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error) || "Failed to save user");
+      toast.error(getErrorMessage(error) || t("Failed to save user"));
     } finally {
       setIsSubmitting(false);
     }
@@ -170,9 +173,9 @@ export function UserCreateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{user ? "Edit User" : "Add User"}</DialogTitle>
+          <DialogTitle>{user ? t("Edit User") : t("Add User")}</DialogTitle>
           <DialogDescription>
-            {user ? "Update user details and permissions." : "Create a new user account."}
+            {user ? t("Update user details and permissions.") : t("Create a new user account.")}
           </DialogDescription>
         </DialogHeader>
 
@@ -183,7 +186,7 @@ export function UserCreateDialog({
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>{t("Username")}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="johndoe" />
                   </FormControl>
@@ -197,7 +200,7 @@ export function UserCreateDialog({
               name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>{t("Phone Number")}</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="0912345678 or 251912345678" />
                   </FormControl>
@@ -211,7 +214,7 @@ export function UserCreateDialog({
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{user ? "New Password (optional)" : "Password"}</FormLabel>
+                  <FormLabel>{user ? t("New Password (optional)") : t("Password")}</FormLabel>
                   <FormControl>
                     <PasswordInput
                       {...field}
@@ -231,11 +234,11 @@ export function UserCreateDialog({
                 name="roleName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role</FormLabel>
+                    <FormLabel>{t("Role")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
+                          <SelectValue placeholder={t("Select role")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -256,15 +259,15 @@ export function UserCreateDialog({
                 name="officeId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Office (Optional)</FormLabel>
+                    <FormLabel>{t("Office (Optional)")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select office" />
+                          <SelectValue placeholder={t("Select office")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="none">No office</SelectItem>
+                        <SelectItem value="none">{t("No office")}</SelectItem>
                         {offices.map((office) => (
                           <SelectItem key={office.id} value={office.id}>
                             {office.name}
@@ -284,9 +287,9 @@ export function UserCreateDialog({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Active Status</FormLabel>
+                    <FormLabel className="text-base">{t("Active Status")}</FormLabel>
                     <p className="text-sm text-muted-foreground">
-                      Enable or disable this user account.
+                      {t("Enable or disable this user account.")}
                     </p>
                   </div>
                   <FormControl>
@@ -305,14 +308,14 @@ export function UserCreateDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t("Cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
               >
                 {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {user ? "Update User" : "Create User"}
+                {user ? t("Update User") : t("Create User")}
               </Button>
             </div>
           </form>

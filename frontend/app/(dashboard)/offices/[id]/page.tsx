@@ -235,7 +235,7 @@ export default function OfficeDetailsPage() {
           <div
             className="flex gap-0 overflow-x-auto scrollbar-hide -mb-px"
             role="tablist"
-            aria-label="Office navigation"
+            aria-label={t("Office navigation")}
           >
             {tabs.map((tab) => {
               const isActive = activeTab === tab.value;

@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { PdfViewerModal } from "@/components/ui/pdf-viewer-modal";
+import { useTranslation } from "@/lib/i18n";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type FileData = { id: string; name: string; filepath: string; description?: string | null };
@@ -87,12 +88,13 @@ function getStatusCfg(status: string) {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const cfg = getStatusCfg(status);
   const Icon = cfg.icon;
   return (
     <Badge variant="outline" className={cn("font-semibold text-xs gap-1.5", cfg.badge)}>
       <Icon className="size-3" />
-      {cfg.label}
+      {t(cfg.label)}
     </Badge>
   );
 }
@@ -141,6 +143,8 @@ function filterAppointments(list: Appointment[], tab: string, search: string) {
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 export default function AppointmentsPage() {
+  const { t } = useTranslation();
+
   const { isPending: isSessionPending } = useSession();
 
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
@@ -164,7 +168,7 @@ export default function AppointmentsPage() {
       setAppointments(body.data ?? []);
     } catch (err) {
       if (axios.isCancel(err) || (err as any)?.code === "ERR_CANCELED") return;
-      toast.error("Failed to load appointments.");
+      toast.error(t("Failed to load appointments."));
     } finally {
       setIsLoading(false);
     }
@@ -207,7 +211,7 @@ export default function AppointmentsPage() {
 
   const handleSaveEdit = async () => {
     if (!editApt) return;
-    if (!editForm.date) { toast.error("Please select a date."); return; }
+    if (!editForm.date) { toast.error(t("Please select a date.")); return; }
     setIsSaving(true);
     try {
       await axiosInstance.patch(`/appointments/${editApt.id}`, {
@@ -215,26 +219,26 @@ export default function AppointmentsPage() {
         time:  editForm.time || undefined,
         notes: editForm.notes || undefined,
       });
-      toast.success("Appointment updated.");
+      toast.success(t("Appointment updated."));
       setEditApt(null);
       void load();
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to update appointment.");
+      toast.error(err?.message ?? t("Failed to update appointment."));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const tabs: PageTab[] = TABS.map(t => ({
-    label: t.label,
-    value: t.value,
-    badge: t.value === "today" && stats.today > 0 ? stats.today : undefined
+  const tabs: PageTab[] = TABS.map(tab => ({
+    label: t(tab.label),
+    value: tab.value,
+    badge: tab.value === "today" && stats.today > 0 ? stats.today : undefined
   }));
 
   return (
     <PageLayout
-      title="My Appointments"
-      description="View and manage your scheduled service appointments"
+      title={t("My Appointments")}
+      description={t("View and manage your scheduled service appointments")}
       icon={CalendarDays}
       tabs={tabs}
       activeTab={tab}
@@ -242,7 +246,7 @@ export default function AppointmentsPage() {
       actions={
         <Button variant="outline" onClick={load} className="h-10 rounded-xl shrink-0" disabled={isLoading}>
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
-          Refresh
+          {t("Refresh")}
         </Button>
       }
     >
@@ -250,12 +254,12 @@ export default function AppointmentsPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {[
-            { label: "Total",     value: stats.total,     icon: Calendar,      color: "text-primary",     bg: "bg-primary/10" },
-            { label: "Upcoming",  value: stats.upcoming,  icon: ChevronRight,  color: "text-violet-600",  bg: "bg-violet-500/10" },
-            { label: "Today",     value: stats.today,     icon: CalendarDays,  color: "text-orange-600",  bg: "bg-orange-500/10" },
-            { label: "Pending",   value: stats.pending,   icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
-            { label: "Confirmed", value: stats.confirmed, icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
-            { label: "Completed", value: stats.completed, icon: CheckCheck,    color: "text-blue-600",    bg: "bg-blue-500/10" },
+            { label: t("Total"),     value: stats.total,     icon: Calendar,      color: "text-primary",     bg: "bg-primary/10" },
+            { label: t("Upcoming"),  value: stats.upcoming,  icon: ChevronRight,  color: "text-violet-600",  bg: "bg-violet-500/10" },
+            { label: t("Today"),     value: stats.today,     icon: CalendarDays,  color: "text-orange-600",  bg: "bg-orange-500/10" },
+            { label: t("Pending"),   value: stats.pending,   icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
+            { label: t("Confirmed"), value: stats.confirmed, icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
+            { label: t("Completed"), value: stats.completed, icon: CheckCheck,    color: "text-blue-600",    bg: "bg-blue-500/10" },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50">
               <CardContent className="p-3 sm:p-4 text-center">
@@ -274,7 +278,7 @@ export default function AppointmentsPage() {
           <div className="relative">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search service or office..."
+              placeholder={t("Search service or office...")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-9 h-10 rounded-xl w-52"
@@ -317,7 +321,7 @@ export default function AppointmentsPage() {
           onPageSizeChange={aptPagination.setPageSize}
           canGoNext={aptPagination.canGoNext}
           canGoPrevious={aptPagination.canGoPrevious}
-          itemLabel="appointments"
+          itemLabel={t("appointments")}
         />
       )}
 
@@ -331,13 +335,13 @@ export default function AppointmentsPage() {
             <>
               <div className="bg-primary px-6 py-5">
                 <DialogHeader>
-                  <DialogTitle className="text-white font-black text-lg">Reschedule Appointment</DialogTitle>
+                  <DialogTitle className="text-white font-black text-lg">{t("Reschedule Appointment")}</DialogTitle>
                   <p className="text-primary-foreground/70 text-sm mt-0.5">{editApt.request?.service?.name}</p>
                 </DialogHeader>
               </div>
               <div className="p-6 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold">New Date <span className="text-destructive">*</span></label>
+                  <label className="text-sm font-bold">{t("New Date")} <span className="text-destructive">*</span></label>
                   <Input
                     type="date"
                     value={editForm.date}
@@ -347,7 +351,7 @@ export default function AppointmentsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold">Preferred Time</label>
+                  <label className="text-sm font-bold">{t("Preferred Time")}</label>
                   <Input
                     type="time"
                     value={editForm.time}
@@ -356,11 +360,11 @@ export default function AppointmentsPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold">Notes (optional)</label>
+                  <label className="text-sm font-bold">{t("Notes (optional)")}</label>
                   <textarea
                     value={editForm.notes}
                     onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))}
-                    placeholder="Any additional notes..."
+                    placeholder={t("Any additional notes...")}
                     rows={3}
                     className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   />
@@ -368,11 +372,11 @@ export default function AppointmentsPage() {
                 <Separator />
                 <div className="flex gap-3">
                   <Button variant="outline" className="flex-1 rounded-xl h-11 font-bold" onClick={() => setEditApt(null)} disabled={isSaving}>
-                    Cancel
+                    {t("Cancel")}
                   </Button>
                   <Button className="flex-1 rounded-xl h-11 font-bold" onClick={handleSaveEdit} disabled={isSaving}>
                     {isSaving ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle className="size-4 mr-2" />}
-                    Save Changes
+                    {t("Save Changes")}
                   </Button>
                 </div>
               </div>
@@ -386,16 +390,18 @@ export default function AppointmentsPage() {
 
 // ── Empty State ────────────────────────────────────────────────────────────────
 function EmptyState({ tab, search }: { tab: string; search: string }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col items-center justify-center py-24 rounded-2xl border-2 border-dashed border-border text-center">
       <div className="p-4 rounded-full bg-muted/30 mb-4">
         <CalendarDays className="size-10 text-muted-foreground/30" />
       </div>
-      <p className="font-bold text-lg">No appointments found</p>
+      <p className="font-bold text-lg">{t("No appointments found")}</p>
       <p className="text-sm text-muted-foreground mt-1">
         {search || tab
-          ? "Try adjusting your filters."
-          : "Appointments are created once your service request is approved."}
+          ? t("Try adjusting your filters.")
+          : t("Appointments are created once your service request is approved.")}
       </p>
     </div>
   );
@@ -403,6 +409,8 @@ function EmptyState({ tab, search }: { tab: string; search: string }) {
 
 // ── Card Grid ─────────────────────────────────────────────────────────────────
 function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: Appointment) => void; onEdit: (a: Appointment) => void }) {
+  const { t } = useTranslation();
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {apts.map(apt => {
@@ -435,7 +443,7 @@ function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: A
 
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                    {apt.request?.service?.name ?? "Appointment"}
+                    {apt.request?.service?.name ?? t("Appointment")}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1">
                     <Building2 className="size-3 text-muted-foreground shrink-0" />
@@ -458,17 +466,17 @@ function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: A
                 {apt.request?.service?.office?.roomNumber && (
                   <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <MapPin className="size-3.5 text-primary/70" />
-                    Room {apt.request.service.office.roomNumber}
+                    {t("Room")} {apt.request.service.office.roomNumber}
                   </span>
                 )}
                 {today && (
                   <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20 font-black px-1.5 py-0">
-                    TODAY
+                    {t("TODAY")}
                   </Badge>
                 )}
                 {upcoming && !today && (
                   <Badge variant="outline" className="text-[10px] text-muted-foreground font-semibold px-1.5 py-0">
-                    Upcoming
+                    {t("Upcoming")}
                   </Badge>
                 )}
               </div>
@@ -494,11 +502,11 @@ function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: A
               {/* Actions */}
               <div className="flex gap-2 pt-1">
                 <Button size="sm" variant="outline" className="flex-1 h-9 rounded-xl text-xs font-bold gap-1.5" onClick={() => onView(apt)}>
-                  <Eye className="size-3.5" /> Details
+                  <Eye className="size-3.5" /> {t("Details")}
                 </Button>
                 {canEdit && (
                   <Button size="sm" variant="outline" className="flex-1 h-9 rounded-xl text-xs font-bold gap-1.5 text-primary border-primary/30 hover:bg-primary/5" onClick={() => onEdit(apt)}>
-                    <Edit3 className="size-3.5" /> Reschedule
+                    <Edit3 className="size-3.5" /> {t("Reschedule")}
                   </Button>
                 )}
               </div>
@@ -512,6 +520,8 @@ function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: A
 
 // ── Table View ─────────────────────────────────────────────────────────────────
 function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: Appointment) => void; onEdit: (a: Appointment) => void }) {
+  const { t } = useTranslation();
+
   return (
     <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
       <div className="overflow-x-auto">
@@ -538,7 +548,7 @@ function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: 
                       <span className={cn("size-2 rounded-full shrink-0", cfg.dot)} />
                       <div>
                         <p className="font-semibold line-clamp-1">{apt.request?.service?.name ?? "—"}</p>
-                        {today && <Badge className="text-[9px] bg-primary/10 text-primary border-primary/20 mt-0.5 px-1 py-0">TODAY</Badge>}
+                        {today && <Badge className="text-[9px] bg-primary/10 text-primary border-primary/20 mt-0.5 px-1 py-0">{t("TODAY")}</Badge>}
                       </div>
                     </div>
                   </td>
@@ -561,11 +571,11 @@ function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: 
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1 justify-end">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => onView(apt)} title="View details">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => onView(apt)} title={t("View details")}>
                         <Eye className="size-4" />
                       </Button>
                       {canEdit && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10" onClick={() => onEdit(apt)} title="Reschedule">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10" onClick={() => onEdit(apt)} title={t("Reschedule")}>
                           <Edit3 className="size-4" />
                         </Button>
                       )}
@@ -583,6 +593,8 @@ function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: 
 
 // ── Detail Dialog ──────────────────────────────────────────────────────────────
 function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: () => void }) {
+  const { t } = useTranslation();
+
   const [viewingFile, setViewingFile] = React.useState<FileData | null>(null);
 
   if (!apt) return null;
@@ -600,7 +612,7 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
           <div className="bg-primary px-6 py-5">
             <DialogHeader>
               <DialogTitle className="text-white font-black text-xl leading-snug">
-                {apt.request?.service?.name ?? "Appointment"}
+                {apt.request?.service?.name ?? t("Appointment")}
               </DialogTitle>
               <p className="text-primary-foreground/70 text-sm mt-0.5 flex items-center gap-1.5">
                 <Building2 className="size-3.5" />
@@ -613,11 +625,11 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
             {/* Status + date highlight */}
             <div className="flex items-center justify-between">
               <Badge variant="outline" className={cn("font-bold text-sm gap-1.5 px-3 py-1", cfg.badge)}>
-                <Icon className="size-4" /> {cfg.label}
+                <Icon className="size-4" /> {t(cfg.label)}
               </Badge>
               <div className="flex gap-2">
-                {today && <Badge className="bg-primary text-primary-foreground font-black text-xs">TODAY</Badge>}
-                {upcoming && !today && <Badge variant="outline" className="text-muted-foreground text-xs">Upcoming</Badge>}
+                {today && <Badge className="bg-primary text-primary-foreground font-black text-xs">{t("TODAY")}</Badge>}
+                {upcoming && !today && <Badge variant="outline" className="text-muted-foreground text-xs">{t("Upcoming")}</Badge>}
               </div>
             </div>
 
@@ -639,7 +651,7 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
                 )}
                 {apt.request?.service?.office?.roomNumber && (
                   <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="size-4 text-primary" /> Room {apt.request.service.office.roomNumber}
+                    <MapPin className="size-4 text-primary" /> {t("Room")} {apt.request.service.office.roomNumber}
                   </p>
                 )}
               </div>
@@ -648,7 +660,7 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
             {/* Office info */}
             {apt.request?.service?.office && (
               <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Office Details</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Office Details")}</p>
                 <div className="space-y-1.5 text-sm">
                   <p className="font-semibold">{apt.request.service.office.name}</p>
                   {apt.request.service.office.address && (
@@ -663,11 +675,11 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
             {/* Request pipeline */}
             {apt.request && (
               <div className="rounded-xl border border-border p-4 space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Related Request</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Related Request")}</p>
                 <div className="space-y-2">
                   {[
-                    { label: "Staff Review",   status: apt.request.statusbystaff },
-                    { label: "Manager Review", status: apt.request.statusbyadmin },
+                    { label: t("Staff Review"),   status: apt.request.statusbystaff },
+                    { label: t("Manager Review"), status: apt.request.statusbyadmin },
                   ].map(({ label, status }) => (
                     <div key={label} className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{label}</span>
@@ -693,7 +705,7 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
               <div className="rounded-xl border border-border p-4 space-y-3">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Paperclip className="size-3.5" />
-                  Submitted Documents ({files.length})
+                  {t("Submitted Documents ({count})", { count: files.length })}
                 </p>
                 <div className="space-y-2">
                   {files.map((file) => (
@@ -723,7 +735,7 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
             {/* Approver */}
             {apt.approveStaff && (
               <div className="rounded-xl border border-border p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Confirmed By</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t("Confirmed By")}</p>
                 <div className="flex items-center gap-2 text-sm">
                   <div className="size-7 rounded-full bg-emerald-500/10 flex items-center justify-center">
                     <User className="size-3.5 text-emerald-600" />
@@ -737,7 +749,7 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
             {/* Notes */}
             {apt.notes && (
               <div className="rounded-xl border border-border p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Notes</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t("Notes")}</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">{apt.notes}</p>
               </div>
             )}

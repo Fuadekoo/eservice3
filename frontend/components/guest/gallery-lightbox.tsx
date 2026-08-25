@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getUploadUrl } from "@/lib/axios";
 import type { Gallery } from "@/lib/stores/gallery-store";
+import { useTranslation } from "@/lib/i18n";
 
 type GalleryLightboxProps = {
   gallery: Gallery | null;
@@ -28,6 +29,8 @@ export function GalleryLightbox({
   initialIndex = 0,
   imageCounterLabel = (current, total) => `Image ${current} of ${total}`,
 }: GalleryLightboxProps) {
+  const { t } = useTranslation();
+
   const images = gallery?.images ?? [];
   const [activeIndex, setActiveIndex] = React.useState(initialIndex);
 
@@ -71,7 +74,7 @@ export function GalleryLightbox({
         className="w-[calc(100vw-1.5rem)] max-w-5xl sm:max-w-5xl p-0 gap-0 overflow-hidden rounded-2xl border-none bg-background shadow-2xl"
       >
         <DialogDescription className="sr-only">
-          {gallery.name} image gallery viewer
+          {gallery.name} {t("image gallery viewer")}
         </DialogDescription>
 
         <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border">
@@ -86,13 +89,13 @@ export function GalleryLightbox({
             onClick={() => onOpenChange(false)}
           >
             <X className="size-5" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t("Close")}</span>
           </Button>
         </div>
 
         {images.length === 0 ? (
           <div className="flex items-center justify-center py-24 text-muted-foreground">
-            No images in this gallery.
+            {t("No images in this gallery.")}
           </div>
         ) : (
           <>
@@ -114,7 +117,7 @@ export function GalleryLightbox({
                       className="absolute left-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white"
                     >
                       <ChevronLeft className="size-6" />
-                      <span className="sr-only">Previous image</span>
+                      <span className="sr-only">{t("Previous image")}</span>
                     </Button>
                     <Button
                       type="button"
@@ -124,7 +127,7 @@ export function GalleryLightbox({
                       className="absolute right-3 top-1/2 -translate-y-1/2 size-11 rounded-full bg-black/50 text-white hover:bg-black/70 hover:text-white"
                     >
                       <ChevronRight className="size-6" />
-                      <span className="sr-only">Next image</span>
+                      <span className="sr-only">{t("Next image")}</span>
                     </Button>
                   </>
                 )}

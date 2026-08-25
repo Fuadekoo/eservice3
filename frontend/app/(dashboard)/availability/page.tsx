@@ -589,7 +589,7 @@ export default function AvailabilityPage() {
                               : "border-border bg-background text-muted-foreground",
                           )}
                         >
-                          {day.short}
+                          {t(day.short)}
                         </div>
                         <div className="min-w-0">
                           <p className="font-black">{t(day.label)}</p>

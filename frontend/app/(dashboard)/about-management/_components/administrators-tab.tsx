@@ -17,8 +17,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export function AdministratorsTab() {
+  const { t } = useTranslation();
+
   const {
     sections,
     isLoading,
@@ -47,9 +50,9 @@ export function AdministratorsTab() {
     if (!deletingId) return;
     try {
       await deleteAdministration(deletingId);
-      toast.success("Administrator deleted successfully");
+      toast.success(t("Administrator deleted successfully"));
     } catch (error) {
-      toast.error("Failed to delete administrator");
+      toast.error(t("Failed to delete administrator"));
     } finally {
       setDeletingId(null);
     }
@@ -64,32 +67,32 @@ export function AdministratorsTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          Administrators
+          {t("Administrators")}
         </h2>
         <Button
           onClick={handleAdd}
           className="bg-primary hover:bg-primary/90 rounded-xl"
         >
           <Plus className="mr-2 size-4" />
-          Add Administrator
+          {t("Add Administrator")}
         </Button>
       </div>
 
       {isLoading && sections.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-500">
           <Loader2 className="size-10 animate-spin mb-4 text-primary" />
-          <p>Loading administrators...</p>
+          <p>{t("Loading administrators...")}</p>
         </div>
       ) : sections.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-gray-800 rounded-3xl bg-[#121212]">
           <div className="size-16 rounded-full bg-gray-800/50 flex items-center justify-center mb-4">
             <Users className="size-8 text-gray-600" />
           </div>
-          <h3 className="text-lg font-medium text-white mb-1">No administrators found</h3>
-          <p className="text-gray-500 mb-6">Start by adding your first administrator.</p>
+          <h3 className="text-lg font-medium text-white mb-1">{t("No administrators found")}</h3>
+          <p className="text-gray-500 mb-6">{t("Start by adding your first administrator.")}</p>
           <Button onClick={handleAdd} variant="outline" className="border-gray-700 text-white">
             <Plus className="mr-2 size-4" />
-            Add Administrator
+            {t("Add Administrator")}
           </Button>
         </div>
       ) : (
@@ -114,21 +117,20 @@ export function AdministratorsTab() {
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
         <AlertDialogContent className="bg-[#121212] border-gray-800 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Are you absolutely sure?")}</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
-              This action cannot be undone. This will permanently delete the administrator
-              and remove their data from our servers.
+              {t("This action cannot be undone. This will permanently delete the administrator and remove their data from our servers.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border-gray-800 text-white hover:bg-gray-800">
-              Cancel
+              {t("Cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-[#f05252] hover:bg-[#d94444] text-white"
             >
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

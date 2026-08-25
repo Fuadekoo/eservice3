@@ -57,6 +57,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSecurityStore, type Role } from "@/lib/stores/security-store";
+import { useTranslation } from "@/lib/i18n";
 
 function SummaryCard({
   title,
@@ -89,31 +90,35 @@ function SummaryCard({
 
 /** Shows the office a role is scoped to, or a "Global" marker for system roles. */
 function OfficeBadge({ role }: { role: Role }) {
+  const { t } = useTranslation();
+
   if (role.officeId) {
     return (
       <Badge variant="secondary" className="gap-1 font-medium">
         <Building2 className="h-3 w-3" />
-        {role.officeName || "Unknown office"}
+        {role.officeName || t("Unknown office")}
       </Badge>
     );
   }
   return (
     <Badge variant="outline" className="gap-1 text-muted-foreground">
       <Globe className="h-3 w-3" />
-      Global
+      {t("Global")}
     </Badge>
   );
 }
 
 export function RoleCatalogPage({
   basePath,
-  title = "Roles",
-  description = "Define access levels, permission coverage, and operational ownership for each team role.",
+  title,
+  description,
 }: {
   basePath: string;
   title?: string;
   description?: string;
 }) {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const { roles, isLoading, fetchRoles, deleteRole } = useSecurityStore();
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
@@ -221,11 +226,11 @@ export function RoleCatalogPage({
 
     try {
       await deleteRole(roleToDelete.id);
-      toast.success("Role deleted successfully");
+      toast.success(t("Role deleted successfully"));
       setDeleteDialogOpen(false);
       setRoleToDelete(null);
     } catch (error) {
-      toast.error("Failed to delete role");
+      toast.error(t("Failed to delete role"));
       console.error(error);
     }
   };
@@ -233,8 +238,11 @@ export function RoleCatalogPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={title}
-        description={description}
+        title={title ?? t("Roles")}
+        description={
+          description ??
+          t("Define access levels, permission coverage, and operational ownership for each team role.")
+        }
         icon={Shield}
         actions={
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -244,7 +252,7 @@ export function RoleCatalogPage({
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => setViewMode("card")}
-                title="Card view"
+                title={t("Card view")}
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
@@ -253,7 +261,7 @@ export function RoleCatalogPage({
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => setViewMode("table")}
-                title="Table view"
+                title={t("Table view")}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -262,7 +270,7 @@ export function RoleCatalogPage({
               <Button asChild className="w-full sm:w-auto">
                 <Link href={`${basePath}/new`}>
                   <Plus className="mr-2 h-4 w-4" />
-                  New Role
+                  {t("New Role")}
                 </Link>
               </Button>
             </PermissionGuard>
@@ -272,27 +280,27 @@ export function RoleCatalogPage({
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          title="Visible Roles"
+          title={t("Visible Roles")}
           value={String(summary.totalRoles)}
-          description="Roles matching the current search"
+          description={t("Roles matching the current search")}
           icon={Shield}
         />
         <SummaryCard
-          title="Assigned Members"
+          title={t("Assigned Members")}
           value={String(summary.totalMembers)}
-          description="Users attached to visible roles"
+          description={t("Users attached to visible roles")}
           icon={Users}
         />
         <SummaryCard
-          title="Granted Permissions"
+          title={t("Granted Permissions")}
           value={String(summary.totalPermissions)}
-          description="Permission assignments across visible roles"
+          description={t("Permission assignments across visible roles")}
           icon={KeyRound}
         />
         <SummaryCard
-          title="Active Roles"
+          title={t("Active Roles")}
           value={String(summary.assignedRoles)}
-          description="Visible roles with at least one member"
+          description={t("Visible roles with at least one member")}
           icon={Users}
         />
       </div>
@@ -306,31 +314,31 @@ export function RoleCatalogPage({
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search role, office, or permission..."
+                  placeholder={t("Search role, office, or permission...")}
                   className="pl-9"
                 />
               </div>
               <Select value={officeFilter} onValueChange={setOfficeFilter}>
                 <SelectTrigger className="w-full sm:w-56">
                   <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="All offices" />
+                  <SelectValue placeholder={t("All offices")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All offices</SelectItem>
+                  <SelectItem value="all">{t("All offices")}</SelectItem>
                   {officeOptions.hasGlobal ? (
-                    <SelectItem value="__global__">Global (system roles)</SelectItem>
+                    <SelectItem value="__global__">{t("Global (system roles)")}</SelectItem>
                   ) : null}
                   {officeOptions.list.map((office) => (
                     <SelectItem key={office.id} value={office.id}>
-                      {office.name}
+                      {t(office.name)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <p className="text-sm text-muted-foreground whitespace-nowrap">
-              {filteredRoles.length} role
-              {filteredRoles.length === 1 ? "" : "s"} visible
+              {filteredRoles.length} {t("role")}
+              {filteredRoles.length === 1 ? "" : "s"} {t("visible")}
             </p>
           </div>
         </CardContent>
@@ -338,22 +346,22 @@ export function RoleCatalogPage({
 
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle>Role Catalogue</CardTitle>
+          <CardTitle>{t("Role Catalogue")}</CardTitle>
           <CardDescription>
-            Review permissions, member assignments, and edit access rules.
+            {t("Review permissions, member assignments, and edit access rules.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              Loading role catalogue...
+              {t("Loading role catalogue...")}
             </div>
           ) : filteredRoles.length === 0 ? (
             <div className="rounded-2xl border border-dashed px-6 py-12 text-center">
               <Shield className="mx-auto h-12 w-12 text-muted-foreground/30" />
-              <h3 className="mt-4 text-lg font-semibold">No roles found</h3>
+              <h3 className="mt-4 text-lg font-semibold">{t("No roles found")}</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Adjust your search or create a new role.
+                {t("Adjust your search or create a new role.")}
               </p>
             </div>
           ) : viewMode === "card" ? (
@@ -372,7 +380,7 @@ export function RoleCatalogPage({
                         <div>
                           <CardTitle className="text-base">{role.name}</CardTitle>
                           <CardDescription className="mt-1">
-                            {role.memberCount ?? 0} member
+                            {role.memberCount ?? 0} {t("member")}
                             {(role.memberCount ?? 0) === 1 ? "" : "s"}
                           </CardDescription>
                         </div>
@@ -382,11 +390,11 @@ export function RoleCatalogPage({
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="min-h-[40px] text-sm text-muted-foreground">
-                      {role.description || "No description provided."}
+                      {role.description || t("No description provided.")}
                     </p>
                     <div className="space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                        Permissions
+                        {t("Permissions")}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {(role.permissions || []).length > 0 ? (
@@ -402,13 +410,13 @@ export function RoleCatalogPage({
                             ))}
                             {(role.permissions || []).length > 4 ? (
                               <Badge variant="outline" className="text-[10px]">
-                                +{(role.permissions || []).length - 4} more
+                                +{(role.permissions || []).length - 4} {t("more")}
                               </Badge>
                             ) : null}
                           </>
                         ) : (
                           <span className="text-xs text-muted-foreground">
-                            No permissions assigned
+                            {t("No permissions assigned")}
                           </span>
                         )}
                       </div>
@@ -422,7 +430,7 @@ export function RoleCatalogPage({
                         onClick={() => handleEdit(role)}
                       >
                         <Edit2 className="mr-2 h-4 w-4" />
-                        Edit
+                        {t("Edit")}
                       </Button>
                     </PermissionGuard>
                     <PermissionGuard requiredPermission="roles.delete">
@@ -432,7 +440,7 @@ export function RoleCatalogPage({
                         onClick={() => handleDeleteClick(role)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
+                        {t("Delete")}
                       </Button>
                     </PermissionGuard>
                   </div>
@@ -444,12 +452,12 @@ export function RoleCatalogPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Office</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Permissions</TableHead>
-                    <TableHead>Members</TableHead>
-                    <TableHead className="w-[96px] text-right">Actions</TableHead>
+                    <TableHead>{t("Role")}</TableHead>
+                    <TableHead>{t("Office")}</TableHead>
+                    <TableHead>{t("Description")}</TableHead>
+                    <TableHead>{t("Permissions")}</TableHead>
+                    <TableHead>{t("Members")}</TableHead>
+                    <TableHead className="w-[96px] text-right">{t("Actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -465,7 +473,7 @@ export function RoleCatalogPage({
                         <OfficeBadge role={role} />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {role.description || "No description provided."}
+                        {role.description || t("No description provided.")}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1.5">
@@ -478,13 +486,13 @@ export function RoleCatalogPage({
                               ))}
                               {(role.permissions || []).length > 3 ? (
                                 <Badge variant="outline">
-                                  +{(role.permissions || []).length - 3} more
+                                  +{(role.permissions || []).length - 3} {t("more")}
                                 </Badge>
                               ) : null}
                             </>
                           ) : (
                             <span className="text-xs text-muted-foreground">
-                              No permissions assigned
+                              {t("No permissions assigned")}
                             </span>
                           )}
                         </div>
@@ -533,7 +541,7 @@ export function RoleCatalogPage({
                 onPageSizeChange={setPageSize}
                 canGoNext={currentPage < totalPages}
                 canGoPrevious={currentPage > 1}
-                itemLabel="roles"
+                itemLabel={t("roles")}
               />
             </div>
           ) : null}
@@ -543,16 +551,18 @@ export function RoleCatalogPage({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Role</AlertDialogTitle>
+            <AlertDialogTitle>{t("Delete Role")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{roleToDelete?.name}"? This
-              action cannot be undone.
+              {t(
+                "Are you sure you want to delete \u201c{name}\u201d? This action cannot be undone.",
+                { name: roleToDelete?.name ?? "" },
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm}>
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

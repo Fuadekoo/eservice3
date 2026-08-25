@@ -41,6 +41,7 @@ import { Switch } from "@/components/ui/switch";
 import { logout, useSession, type DeviceSessionInfo } from "@/lib/auth-client";
 import { axiosInstance } from "@/lib/axios";
 import { checkPasswordCriteria } from "@/lib/password-strength";
+import { useTranslation } from "@/lib/i18n";
 
 type TwoFactorStatus = {
   accountName: string;
@@ -136,6 +137,8 @@ function getSessionIcon(deviceType?: string | null) {
 }
 
 export function SecurityTab() {
+  const { t } = useTranslation();
+
   const { data: sessionData } = useSession();
   const currentSession = sessionData?.session?.currentSession;
   const [accountSessions, setAccountSessions] = React.useState<
@@ -174,7 +177,7 @@ export function SecurityTab() {
     (session) => !session.isCurrent
   ).length;
   const sessionLabel =
-    displayCurrentSession?.deviceName?.trim() || detectCurrentSession();
+    displayCurrentSession?.deviceName?.trim() || t(detectCurrentSession());
   const sessionLastSeen = formatSessionDate(displayCurrentSession?.lastSeenAt);
   const sessionSignedInAt = formatSessionDate(displayCurrentSession?.createdAt);
 
@@ -228,12 +231,12 @@ export function SecurityTab() {
 
   const handlePasswordSubmit = React.useCallback(async () => {
     if (!passwordData.currentPassword || !passwordData.newPassword) {
-      toast.error("Current password and new password are required");
+      toast.error(t("Current password and new password are required"));
       return;
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error(t("New passwords do not match"));
       return;
     }
 
@@ -242,9 +245,9 @@ export function SecurityTab() {
       .filter(([, v]) => !v)
       .map(([k]) => k);
     if (unmet.length > 0) {
-      toast.error("Password is too weak", {
+      toast.error(t("Password is too weak"), {
         description:
-          "Use 8+ characters with uppercase, lowercase, a number, and a special character.",
+          t("Use 8+ characters with uppercase, lowercase, a number, and a special character."),
       });
       return;
     }
@@ -256,7 +259,7 @@ export function SecurityTab() {
         newPassword: passwordData.newPassword,
       });
 
-      toast.success("Password changed successfully");
+      toast.success(t("Password changed successfully"));
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -278,7 +281,7 @@ export function SecurityTab() {
       setSetupData(payload);
       setSetupCode("");
       setShowDisableForm(false);
-      toast.success("Scan the QR code, then enter the 6-digit code to finish setup.");
+      toast.success(t("Scan the QR code, then enter the 6-digit code to finish setup."));
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Failed to start two-factor setup"));
     } finally {
@@ -288,7 +291,7 @@ export function SecurityTab() {
 
   const handleVerifyTwoFactor = React.useCallback(async () => {
     if (setupCode.length !== 6) {
-      toast.error("Enter the 6-digit code from your authenticator app");
+      toast.error(t("Enter the 6-digit code from your authenticator app"));
       return;
     }
 
@@ -297,7 +300,7 @@ export function SecurityTab() {
       await axiosInstance.post("/auth/2fa/verify", {
         code: setupCode,
       });
-      toast.success("Two-factor authentication is now enabled");
+      toast.success(t("Two-factor authentication is now enabled"));
       setSetupCode("");
       setSetupData(null);
       await loadTwoFactorStatus();
@@ -311,12 +314,12 @@ export function SecurityTab() {
 
   const handleDisableTwoFactor = React.useCallback(async () => {
     if (!disablePassword) {
-      toast.error("Enter your current password to disable two-factor authentication");
+      toast.error(t("Enter your current password to disable two-factor authentication"));
       return;
     }
 
     if (disableCode.length !== 6) {
-      toast.error("Enter the current 6-digit code from your authenticator app");
+      toast.error(t("Enter the current 6-digit code from your authenticator app"));
       return;
     }
 
@@ -326,7 +329,7 @@ export function SecurityTab() {
         currentPassword: disablePassword,
         code: disableCode,
       });
-      toast.success("Two-factor authentication disabled");
+      toast.success(t("Two-factor authentication disabled"));
       setDisableCode("");
       setDisablePassword("");
       setShowDisableForm(false);
@@ -351,7 +354,7 @@ export function SecurityTab() {
       setRevokingSessionId(session.id);
       try {
         await axiosInstance.delete(`/auth/sessions/${session.id}`);
-        toast.success("Session removed successfully");
+        toast.success(t("Session removed successfully"));
         await loadAccountSessions();
       } catch (error: unknown) {
         toast.error(getErrorMessage(error, "Failed to remove session"));
@@ -370,7 +373,7 @@ export function SecurityTab() {
     setIsRevokingOtherSessions(true);
     try {
       await axiosInstance.post("/auth/sessions/revoke-others");
-      toast.success("Other sessions removed successfully");
+      toast.success(t("Other sessions removed successfully"));
       await loadAccountSessions();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Failed to remove other sessions"));
@@ -386,9 +389,9 @@ export function SecurityTab() {
 
     try {
       await navigator.clipboard.writeText(setupData.manualEntryKey);
-      toast.success("Manual setup key copied");
+      toast.success(t("Manual setup key copied"));
     } catch {
-      toast.error("Failed to copy the setup key");
+      toast.error(t("Failed to copy the setup key"));
     }
   }, [setupData?.manualEntryKey]);
 
@@ -398,15 +401,15 @@ export function SecurityTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="size-5" />
-            Change Password
+            {t("Change Password")}
           </CardTitle>
           <CardDescription>
-            Update your password to keep your account secure
+            {t("Update your password to keep your account secure")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="currentPassword">Current Password</Label>
+            <Label htmlFor="currentPassword">{t("Current Password")}</Label>
             <PasswordInput
               id="currentPassword"
               value={passwordData.currentPassword}
@@ -414,13 +417,13 @@ export function SecurityTab() {
                 handlePasswordChange("currentPassword", event.target.value)
               }
               disabled={isPasswordSubmitting}
-              placeholder="Enter current password"
+              placeholder={t("Enter current password")}
               autoComplete="current-password"
             />
           </div>
 
           <div>
-            <Label htmlFor="newPassword">New Password</Label>
+            <Label htmlFor="newPassword">{t("New Password")}</Label>
             <PasswordInput
               id="newPassword"
               showStrength
@@ -429,13 +432,13 @@ export function SecurityTab() {
                 handlePasswordChange("newPassword", event.target.value)
               }
               disabled={isPasswordSubmitting}
-              placeholder="Enter new password"
+              placeholder={t("Enter new password")}
               autoComplete="new-password"
             />
           </div>
 
           <div>
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <Label htmlFor="confirmPassword">{t("Confirm New Password")}</Label>
             <PasswordInput
               id="confirmPassword"
               value={passwordData.confirmPassword}
@@ -443,7 +446,7 @@ export function SecurityTab() {
                 handlePasswordChange("confirmPassword", event.target.value)
               }
               disabled={isPasswordSubmitting}
-              placeholder="Confirm new password"
+              placeholder={t("Confirm new password")}
               autoComplete="new-password"
             />
           </div>
@@ -453,12 +456,12 @@ export function SecurityTab() {
               {isPasswordSubmitting ? (
                 <>
                   <Spinner className="mr-2 size-4" />
-                  Changing...
+                  {t("Changing...")}
                 </>
               ) : (
                 <>
                   <Save className="mr-2 size-4" />
-                  Change Password
+                  {t("Change Password")}
                 </>
               )}
             </Button>
@@ -470,10 +473,10 @@ export function SecurityTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="size-5" />
-            Two-Factor Authentication
+            {t("Two-Factor Authentication")}
           </CardTitle>
           <CardDescription>
-            Require an authenticator-app code whenever you sign in
+            {t("Require an authenticator-app code whenever you sign in")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -481,7 +484,7 @@ export function SecurityTab() {
             <div className="flex items-center gap-3 rounded-lg border p-4">
               <Spinner className="size-4" />
               <span className="text-sm text-muted-foreground">
-                Loading two-factor status...
+                {t("Loading two-factor status...")}
               </span>
             </div>
           ) : (
@@ -490,24 +493,26 @@ export function SecurityTab() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
                     <Label htmlFor="two-factor-toggle" className="text-base">
-                      Two-Factor Authentication
+                      {t("Two-Factor Authentication")}
                     </Label>
                     {twoFactorStatus?.enabled ? (
                       <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                        Enabled
+                        {t("Enabled")}
                       </span>
                     ) : twoFactorStatus?.pendingSetup ? (
                       <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
-                        Setup in progress
+                        {t("Setup in progress")}
                       </span>
                     ) : (
                       <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                        Disabled
+                        {t("Disabled")}
                       </span>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Account: {twoFactorStatus?.accountName || "This account"}
+                    {t("Account: {name}", {
+                      name: twoFactorStatus?.accountName || t("This account"),
+                    })}
                   </p>
                 </div>
 
@@ -519,7 +524,7 @@ export function SecurityTab() {
                       disabled
                     />
                     <span className="text-sm text-muted-foreground">
-                      {twoFactorStatus?.enabled ? "Protected" : "Not protected"}
+                      {twoFactorStatus?.enabled ? t("Protected") : t("Not protected")}
                     </span>
                   </div>
 
@@ -528,7 +533,7 @@ export function SecurityTab() {
                       variant="destructive"
                       onClick={() => setShowDisableForm((prev) => !prev)}
                     >
-                      {showDisableForm ? "Cancel" : "Disable 2FA"}
+                      {showDisableForm ? t("Cancel") : t("Disable 2FA")}
                     </Button>
                   ) : (
                     <Button
@@ -538,12 +543,12 @@ export function SecurityTab() {
                       {isPreparingTwoFactor ? (
                         <>
                           <Spinner className="mr-2 size-4" />
-                          Preparing...
+                          {t("Preparing...")}
                         </>
                       ) : twoFactorStatus?.pendingSetup ? (
-                        "Resume setup"
+                        t("Resume setup")
                       ) : (
-                        "Set up with QR code"
+                        t("Set up with QR code")
                       )}
                     </Button>
                   )}
@@ -553,10 +558,9 @@ export function SecurityTab() {
               {twoFactorStatus?.enabled && !showDisableForm && (
                 <Alert>
                   <ShieldCheck className="size-4" />
-                  <AlertTitle>Two-factor protection is active</AlertTitle>
+                  <AlertTitle>{t("Two-factor protection is active")}</AlertTitle>
                   <AlertDescription>
-                    New sign-ins must include a valid authenticator code in
-                    addition to your password.
+                    {t("New sign-ins must include a valid authenticator code in addition to your password.")}
                   </AlertDescription>
                 </Alert>
               )}
@@ -575,23 +579,24 @@ export function SecurityTab() {
                   <div className="space-y-4">
                     <Alert>
                       <Smartphone className="size-4" />
-                      <AlertTitle>Finish setup in three steps</AlertTitle>
+                      <AlertTitle>{t("Finish setup in three steps")}</AlertTitle>
                       <AlertDescription>
-                        1. Open Google Authenticator, Microsoft Authenticator,
-                        or another TOTP app.
+                        {t("1. Open Google Authenticator, Microsoft Authenticator, or another TOTP app.")}
                         <br />
-                        2. Scan this QR code or enter the manual key.
+                        {t("2. Scan this QR code or enter the manual key.")}
                         <br />
-                        3. Enter the current 6-digit code below to enable 2FA.
+                        {t("3. Enter the current 6-digit code below to enable 2FA.")}
                       </AlertDescription>
                     </Alert>
 
                     <div className="rounded-xl border p-4 space-y-3">
                       <div>
-                        <Label htmlFor="manualSetupKey">Manual setup key</Label>
+                        <Label htmlFor="manualSetupKey">{t("Manual setup key")}</Label>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Issuer: {setupData.issuer}. Codes refresh every{" "}
-                          {setupData.periodSeconds} seconds.
+                          {t("Issuer: {issuer}. Codes refresh every {seconds} seconds.", {
+                            issuer: setupData.issuer,
+                            seconds: setupData.periodSeconds,
+                          })}
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row">
@@ -603,16 +608,16 @@ export function SecurityTab() {
                         />
                         <Button variant="outline" onClick={() => void copyManualKey()}>
                           <Copy className="mr-2 size-4" />
-                          Copy
+                          {t("Copy")}
                         </Button>
                       </div>
                     </div>
 
                     <div className="space-y-3 rounded-xl border p-4">
                       <div>
-                        <Label>Verification code</Label>
+                        <Label>{t("Verification code")}</Label>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Enter the 6-digit code shown for this account.
+                          {t("Enter the 6-digit code shown for this account.")}
                         </p>
                       </div>
                       <div className="flex justify-center sm:justify-start">
@@ -644,7 +649,7 @@ export function SecurityTab() {
                           }}
                           disabled={isVerifyingTwoFactor}
                         >
-                          Close
+                          {t("Close")}
                         </Button>
                         <Button
                           onClick={() => void handleVerifyTwoFactor()}
@@ -653,10 +658,10 @@ export function SecurityTab() {
                           {isVerifyingTwoFactor ? (
                             <>
                               <Spinner className="mr-2 size-4" />
-                              Verifying...
+                              {t("Verifying...")}
                             </>
                           ) : (
-                            "Verify and enable"
+                            t("Verify and enable")
                           )}
                         </Button>
                       </div>
@@ -668,27 +673,26 @@ export function SecurityTab() {
               {showDisableForm && twoFactorStatus?.enabled && (
                 <div className="space-y-4 rounded-xl border border-destructive/20 bg-destructive/5 p-4">
                   <div className="space-y-1">
-                    <h3 className="font-medium">Disable two-factor authentication</h3>
+                    <h3 className="font-medium">{t("Disable two-factor authentication")}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Confirm your password and enter a current authenticator
-                      code before 2FA is removed.
+                      {t("Confirm your password and enter a current authenticator code before 2FA is removed.")}
                     </p>
                   </div>
 
                   <div>
-                    <Label htmlFor="disablePassword">Current Password</Label>
+                    <Label htmlFor="disablePassword">{t("Current Password")}</Label>
                     <PasswordInput
                       id="disablePassword"
                       value={disablePassword}
                       onChange={(event) => setDisablePassword(event.target.value)}
                       disabled={isDisablingTwoFactor}
-                      placeholder="Enter current password"
+                      placeholder={t("Enter current password")}
                       autoComplete="current-password"
                     />
                   </div>
 
                   <div className="space-y-3">
-                    <Label>Authenticator Code</Label>
+                    <Label>{t("Authenticator Code")}</Label>
                     <div className="flex justify-center sm:justify-start">
                       <InputOTP
                         maxLength={6}
@@ -721,7 +725,7 @@ export function SecurityTab() {
                       }}
                       disabled={isDisablingTwoFactor}
                     >
-                      Cancel
+                      {t("Cancel")}
                     </Button>
                     <Button
                       variant="destructive"
@@ -735,10 +739,10 @@ export function SecurityTab() {
                       {isDisablingTwoFactor ? (
                         <>
                           <Spinner className="mr-2 size-4" />
-                          Disabling...
+                          {t("Disabling...")}
                         </>
                       ) : (
-                        "Disable 2FA"
+                        t("Disable 2FA")
                       )}
                     </Button>
                   </div>
@@ -753,10 +757,10 @@ export function SecurityTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShieldCheck className="size-5" />
-            Session Security
+            {t("Session Security")}
           </CardTitle>
           <CardDescription>
-            Review every device signed in to this account and remove any session
+            {t("Review every device signed in to this account and remove any session")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -775,35 +779,34 @@ export function SecurityTab() {
             )}
             {displayCurrentSession?.ipAddress && (
               <p className="text-sm text-muted-foreground mt-1">
-                IP address: {displayCurrentSession.ipAddress}
+                {t("IP address:")} {displayCurrentSession.ipAddress}
               </p>
             )}
             {sessionLastSeen && (
               <p className="text-sm text-muted-foreground mt-1">
-                Last active: {sessionLastSeen}
+                {t("Last active:")} {sessionLastSeen}
               </p>
             )}
             {sessionSignedInAt && (
               <p className="text-sm text-muted-foreground mt-1">
-                Signed in: {sessionSignedInAt}
+                {t("Signed in:")} {sessionSignedInAt}
               </p>
             )}
             <p className="text-sm text-muted-foreground mt-1">
-              Time zone: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+              {t("Time zone:")} {Intl.DateTimeFormat().resolvedOptions().timeZone}
             </p>
             <p className="text-sm text-muted-foreground mt-3">
-              This device stays signed in only while its server session exists.
-              If this session is removed, this device must sign in again.
+              {t("This device stays signed in only while its server session exists. If this session is removed, this device must sign in again.")}
             </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium">
-                Active sessions ({accountSessions.length})
+                {t("Active sessions ({count})", { count: accountSessions.length })}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                These are all devices currently signed in to this account.
+                {t("These are all devices currently signed in to this account.")}
               </p>
             </div>
 
@@ -818,7 +821,7 @@ export function SecurityTab() {
                 ) : (
                   <RefreshCw className="mr-2 size-4" />
                 )}
-                Refresh
+                {t("Refresh")}
               </Button>
               <Button
                 variant="outline"
@@ -830,7 +833,7 @@ export function SecurityTab() {
                 ) : (
                   <Trash2 className="mr-2 size-4" />
                 )}
-                Sign Out Other Devices
+                {t("Sign Out Other Devices")}
               </Button>
             </div>
           </div>
@@ -839,15 +842,15 @@ export function SecurityTab() {
             <div className="flex items-center gap-3 rounded-lg border p-4">
               <Spinner className="size-4" />
               <span className="text-sm text-muted-foreground">
-                Loading active sessions...
+                {t("Loading active sessions...")}
               </span>
             </div>
           ) : accountSessions.length === 0 ? (
             <Alert>
               <ShieldCheck className="size-4" />
-              <AlertTitle>No active sessions found</AlertTitle>
+              <AlertTitle>{t("No active sessions found")}</AlertTitle>
               <AlertDescription>
-                No saved login sessions were found for this account.
+                {t("No saved login sessions were found for this account.")}
               </AlertDescription>
             </Alert>
           ) : (
@@ -871,10 +874,10 @@ export function SecurityTab() {
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-medium">
-                              {session.deviceName?.trim() || "Unknown device"}
+                              {session.deviceName?.trim() || t("Unknown device")}
                             </p>
                             {session.isCurrent ? (
-                              <Badge variant="secondary">Current device</Badge>
+                              <Badge variant="secondary">{t("Current device")}</Badge>
                             ) : null}
                             {session.deviceType ? (
                               <Badge variant="outline" className="capitalize">
@@ -893,13 +896,13 @@ export function SecurityTab() {
 
                           {session.ipAddress && (
                             <p className="text-sm text-muted-foreground">
-                              IP address: {session.ipAddress}
+                              {t("IP address:")} {session.ipAddress}
                             </p>
                           )}
 
                           <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-3">
-                            {lastSeen ? <span>Last active: {lastSeen}</span> : null}
-                            {signedIn ? <span>Signed in: {signedIn}</span> : null}
+                            {lastSeen ? <span>{t("Last active:")} {lastSeen}</span> : null}
+                            {signedIn ? <span>{t("Signed in:")} {signedIn}</span> : null}
                           </div>
                         </div>
                       </div>
@@ -911,7 +914,7 @@ export function SecurityTab() {
                             onClick={() => void handleRevokeSession(session)}
                           >
                             <LogOut className="mr-2 size-4" />
-                            Sign Out This Device
+                            {t("Sign Out This Device")}
                           </Button>
                         ) : (
                           <Button
@@ -924,7 +927,7 @@ export function SecurityTab() {
                             ) : (
                               <Trash2 className="mr-2 size-4" />
                             )}
-                            Remove Session
+                            {t("Remove Session")}
                           </Button>
                         )}
                       </div>

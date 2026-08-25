@@ -109,6 +109,7 @@ const STEPS = [
 ];
 
 function StepIndicator({ current }: { current: number }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center gap-0 mb-8">
       {STEPS.map((s, i) => {
@@ -138,7 +139,7 @@ function StepIndicator({ current }: { current: number }) {
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                {s.label}
+                {t(s.label)}
               </span>
             </div>
             {i < STEPS.length - 1 && (
@@ -409,17 +410,17 @@ function SignupContent() {
                   {[
                     {
                       icon: FileText,
-                      title: "Easy document requests",
+                      title: t("Easy document requests"),
                       desc: "Submit and track service requests online",
                     },
                     {
                       icon: Clock,
-                      title: "Real-time updates",
+                      title: t("Real-time updates"),
                       desc: "Get notified on your request status",
                     },
                     {
                       icon: ShieldCheck,
-                      title: "Secure & private",
+                      title: t("Secure & private"),
                       desc: "Your data is protected end-to-end",
                     },
                   ].map((item) => (

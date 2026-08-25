@@ -30,8 +30,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useTranslation } from "@/lib/i18n";
 
 export default function UsersPage() {
+  const { t } = useTranslation();
+
   const {
     users,
     isLoading,
@@ -97,9 +100,9 @@ export default function UsersPage() {
     if (!deletingId) return;
     try {
       await deleteUser(deletingId);
-      toast.success("User deleted successfully");
+      toast.success(t("User deleted successfully"));
     } catch (error) {
-      toast.error("Failed to delete user");
+      toast.error(t("Failed to delete user"));
     } finally {
       setDeletingId(null);
     }
@@ -108,9 +111,9 @@ export default function UsersPage() {
   const handleToggleActive = async (user: User) => {
     try {
       await updateUser(user.id, { isActive: !user.isActive });
-      toast.success(user.isActive ? "User deactivated" : "User activated");
+      toast.success(user.isActive ? t("User deactivated") : t("User activated"));
     } catch {
-      toast.error("Failed to update user status");
+      toast.error(t("Failed to update user status"));
     }
   };
 
@@ -122,13 +125,13 @@ export default function UsersPage() {
       roleName: selectedRole !== "all" ? selectedRole : undefined,
       isActive: statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
     });
-    toast.success("User list refreshed");
+    toast.success(t("User list refreshed"));
   };
 
   return (
     <PageLayout
-      title="User Management"
-      description="Manage users, assign roles, and assign offices"
+      title={t("User Management")}
+      description={t("Manage users, assign roles, and assign offices")}
       icon={UserCog}
       actions={
         <>
@@ -138,14 +141,14 @@ export default function UsersPage() {
             className="rounded-xl h-10"
           >
             <RotateCw className={`mr-2 size-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
+            {t("Refresh")}
           </Button>
           <Button
             onClick={handleCreate}
             className="bg-primary hover:bg-primary/90 rounded-xl h-10 px-6 font-semibold"
           >
             <Plus className="mr-2 size-4" />
-            Add User
+            {t("Add User")}
           </Button>
         </>
       }
@@ -156,7 +159,7 @@ export default function UsersPage() {
           <div className="relative flex-1 max-w-2xl">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search users by name, phone, role, or office..."
+              placeholder={t("Search users by name, phone, role, or office...")}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -174,10 +177,10 @@ export default function UsersPage() {
               }}
             >
               <SelectTrigger className="w-40 h-11 rounded-xl">
-                <SelectValue placeholder="All Roles" />
+                <SelectValue placeholder={t("All Roles")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="all">{t("All Roles")}</SelectItem>
                 {distinctRoles.map((role) => (
                   <SelectItem key={role.key} value={role.key}>
                     {role.label}
@@ -197,13 +200,13 @@ export default function UsersPage() {
                       : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
-                  {s === "all" ? "All" : s === "active" ? "Active" : "Inactive"}
+                  {s === "all" ? t("All") : s === "active" ? t("Active") : t("Inactive")}
                 </button>
               ))}
             </div>
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Show:</span>
+              <span>{t("Show:")}</span>
               <Select
                 value={pageSize.toString()}
                 onValueChange={(v) => {
@@ -248,7 +251,7 @@ export default function UsersPage() {
               }}
               canGoNext={currentPage < pagination.totalPages}
               canGoPrevious={currentPage > 1}
-              itemLabel="users"
+              itemLabel={t("users")}
             />
           </div>
         )}
@@ -263,19 +266,18 @@ export default function UsersPage() {
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Are you absolutely sure?")}</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              This action cannot be undone. This will permanently delete the user
-              account and remove their data from our servers.
+              {t("This action cannot be undone. This will permanently delete the user account and remove their data from our servers.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">{t("Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl"
             >
-              Delete
+              {t("Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

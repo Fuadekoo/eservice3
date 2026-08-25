@@ -3,6 +3,7 @@
 import { Image as ImageIcon } from "lucide-react";
 import { getUploadUrl } from "@/lib/axios";
 import type { Gallery } from "@/lib/stores/gallery-store";
+import { useTranslation } from "@/lib/i18n";
 
 type GuestGalleryCardProps = {
   gallery: Gallery;
@@ -10,6 +11,8 @@ type GuestGalleryCardProps = {
 };
 
 export function GuestGalleryCard({ gallery, onClick }: GuestGalleryCardProps) {
+  const { t } = useTranslation();
+
   const images = gallery.images || [];
   const coverImage = images[0];
 
@@ -30,7 +33,7 @@ export function GuestGalleryCard({ gallery, onClick }: GuestGalleryCardProps) {
           <div className="size-full flex flex-col items-center justify-center text-muted-foreground/40">
             <ImageIcon className="size-10 mb-2" />
             <span className="text-xs font-bold uppercase tracking-widest">
-              No Images
+              {t("No Images")}
             </span>
           </div>
         )}

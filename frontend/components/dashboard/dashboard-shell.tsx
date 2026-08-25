@@ -115,6 +115,7 @@ function getBreadcrumbs(pathname: string) {
 }
 
 function UserAvatarDropdown() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [user, setUser] = React.useState<{
     name: string;
@@ -175,7 +176,7 @@ function UserAvatarDropdown() {
           <Avatar className="h-8 w-8">
             <AvatarImage
               src={user?.image ? getUploadUrl(user.image) : undefined}
-              alt={user?.name || "User"}
+              alt={user?.name || t("User")}
             />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
@@ -185,26 +186,26 @@ function UserAvatarDropdown() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user?.name || "Administrator"}
+              {user?.name || t("Administrator")}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user?.phone || user?.username || "No phone"}
+              {user?.phone || user?.username || t("No phone")}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.push("/settings")}>
           <User className="mr-2 size-4" />
-          <span>Profile</span>
+          <span>{t("Profile")}</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => router.push("/settings")}>
           <Settings className="mr-2 size-4" />
-          <span>Settings</span>
+          <span>{t("Settings")}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} variant="destructive">
           <LogOut className="mr-2 size-4" />
-          <span>Log out</span>
+          <span>{t("Log out")}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -214,7 +215,7 @@ function UserAvatarDropdown() {
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { getTranslationForKey, selectedLanguage } = useTranslation();
+  const { getTranslationForKey, selectedLanguage, t } = useTranslation();
   const { loadTranslations } = useLanguagesStore();
   const {
     role,
@@ -306,7 +307,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <div className="shrink-0 size-8 flex items-center justify-center">
               <Image
                 src="/logo.png"
-                alt="e-service Logo"
+                alt={t("e-service Logo")}
                 width={32}
                 height={32}
                 className="object-contain"
@@ -325,21 +326,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <SidebarContent>
           {isLoadingPermissions ? (
             <div className="px-4 py-2 text-sm text-muted-foreground">
-              Loading navigation...
+              {t("Loading navigation...")}
             </div>
           ) : !role?.name ? (
             <div className="px-4 py-2 space-y-2">
               <div className="text-sm font-medium text-destructive">
-                ⚠️ No role detected
+                {t("⚠️ No role detected")}
               </div>
               <div className="text-xs text-muted-foreground space-y-1">
                 <div>isLoading: {String(isLoadingPermissions)}</div>
-                <div>role: {JSON.stringify(role)}</div>
-                <div className="mt-2">Please check:</div>
+                <div>{t("role:")} {JSON.stringify(role)}</div>
+                <div className="mt-2">{t("Please check:")}</div>
                 <ul className="list-disc list-inside ml-2 space-y-1">
-                  <li>Are you logged in?</li>
-                  <li>Check browser console for errors</li>
-                  <li>Check Network tab for /auth/me response</li>
+                  <li>{t("Are you logged in?")}</li>
+                  <li>{t("Check browser console for errors")}</li>
+                  <li>{t("Check Network tab for /auth/me response")}</li>
                 </ul>
               </div>
             </div>

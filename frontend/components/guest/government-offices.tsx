@@ -33,6 +33,7 @@ import { useLanguagesStore } from "@/lib/stores/languages-store";
 import { getUploadUrl } from "@/lib/axios";
 import { isAuthenticated } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function GovernmentOffices() {
@@ -199,6 +200,7 @@ function OfficeDialog({
   onOpenChange: (v: boolean) => void;
   t: (k: string) => string;
 }) {
+
   const selectedService = useHomepageStore((state) => state.selectedService);
   const setSelectedService = useHomepageStore((state) => state.setSelectedService);
   const isLoggedIn = isAuthenticated();
@@ -245,7 +247,7 @@ function OfficeDialog({
                     {office.name}
                   </SheetTitle>
                   <p className="mt-1.5 text-sm leading-relaxed font-medium wrap-break-word text-white/70 italic opacity-80 sm:mt-2 sm:text-base">
-                    {office.slogan || "Excellence in Public Service"}
+                    {office.slogan || t("Excellence in Public Service")}
                   </p>
                 </div>
               </div>

@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useGalleryStore, type Gallery } from "@/lib/stores/gallery-store";
 import { uploadFileOnly } from "@/lib/file-upload";
+import { useTranslation } from "@/lib/i18n";
 
 const gallerySchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -47,6 +48,8 @@ export function GalleryDialog({
   onOpenChange,
   gallery,
 }: GalleryDialogProps) {
+  const { t } = useTranslation();
+
   const { createGallery, updateGallery, addImage } = useGalleryStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]);
@@ -81,7 +84,7 @@ export function GalleryDialog({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (selectedFiles.length + files.length > 10) {
-      toast.error("You can only upload up to 10 images");
+      toast.error(t("You can only upload up to 10 images"));
       return;
     }
 
@@ -130,12 +133,12 @@ export function GalleryDialog({
       }
 
       toast.success(
-        gallery ? "Gallery updated" : "Gallery created successfully",
+        gallery ? t("Gallery updated") : t("Gallery created successfully"),
       );
       onOpenChange(false);
     } catch (error) {
       toast.error(
-        gallery ? "Failed to update gallery" : "Failed to create gallery",
+        gallery ? t("Failed to update gallery") : t("Failed to create gallery"),
       );
     } finally {
       setIsSubmitting(false);
@@ -148,7 +151,7 @@ export function GalleryDialog({
         <div className="p-6 space-y-6">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0">
             <DialogTitle className="text-xl font-bold">
-              {gallery ? "Edit Gallery" : "Create Gallery"}
+              {gallery ? t("Edit Gallery") : t("Create Gallery")}
             </DialogTitle>
           </DialogHeader>
 
@@ -160,12 +163,12 @@ export function GalleryDialog({
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-sm font-medium">
-                      Gallery Name
+                      {t("Gallery Name")}
                     </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Enter gallery name"
+                        placeholder={t("Enter gallery name")}
                         className="bg-muted border-border focus:ring-primary text-foreground h-11 rounded-lg"
                       />
                     </FormControl>
@@ -180,12 +183,12 @@ export function GalleryDialog({
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-sm font-medium">
-                      Description (Optional)
+                      {t("Description (Optional)")}
                     </FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Enter gallery description"
+                        placeholder={t("Enter gallery description")}
                         className="bg-muted border-border focus:ring-primary text-foreground min-h-[120px] rounded-lg resize-none"
                       />
                     </FormControl>
@@ -196,7 +199,7 @@ export function GalleryDialog({
 
               <div className="space-y-3">
                 <FormLabel className="text-sm font-medium">
-                  Images *
+                  {t("Images *")}
                 </FormLabel>
 
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
@@ -207,7 +210,7 @@ export function GalleryDialog({
                     >
                       <Image
                         src={preview}
-                        alt="Preview"
+                        alt={t("Preview")}
                         fill
                         className="object-cover"
                       />
@@ -225,9 +228,9 @@ export function GalleryDialog({
                     <label className="relative aspect-square rounded-xl border-2 border-dashed border-border bg-muted flex flex-col items-center justify-center cursor-pointer hover:bg-accent transition-colors">
                       <ImageIcon className="size-6 text-muted-foreground mb-1" />
                       <span className="text-[10px] text-muted-foreground text-center px-1 leading-tight">
-                        Add Images
+                        {t("Add Images")}
                         <br />
-                        (Multiple)
+                        {t("(Multiple)")}
                       </span>
                       <input
                         type="file"
@@ -240,7 +243,7 @@ export function GalleryDialog({
                   )}
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  {selectedFiles.length} / 10 images selected
+                  {t("{count} / 10 images selected", { count: selectedFiles.length })}
                 </p>
               </div>
 
@@ -251,7 +254,7 @@ export function GalleryDialog({
                   onClick={() => onOpenChange(false)}
                   className="px-6 h-11 rounded-xl"
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -263,7 +266,7 @@ export function GalleryDialog({
                   {isSubmitting && (
                     <Loader2 className="mr-2 size-4 animate-spin" />
                   )}
-                  {gallery ? "Update Gallery" : "Create Gallery"}
+                  {gallery ? t("Update Gallery") : t("Create Gallery")}
                 </Button>
               </div>
             </form>

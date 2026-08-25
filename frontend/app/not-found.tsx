@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { Home, ArrowLeft, Search, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useTranslation } from "@/lib/i18n";
 
 export default function NotFound() {
+  const { t } = useTranslation();
+
   const router = useRouter();
 
   return (
@@ -15,7 +18,7 @@ export default function NotFound() {
       <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
         <Image
           src="/logo.png"
-          alt="Logo"
+          alt={t("Logo")}
           width={400}
           height={400}
           className="w-full max-w-md sm:max-w-lg md:max-w-xl h-auto object-contain"
@@ -43,13 +46,13 @@ export default function NotFound() {
         {/* Title and Description */}
         <div className="mb-8 sm:mb-10">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-foreground">
-            Page Not Found
+            {t("Page Not Found")}
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-2 leading-relaxed">
-            Oops! The page you're looking for doesn't exist.
+            {t("Oops! The page you're looking for doesn't exist.")}
           </p>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-lg mx-auto">
-            It might have been moved, deleted, or the URL might be incorrect.
+            {t("It might have been moved, deleted, or the URL might be incorrect.")}
           </p>
         </div>
 
@@ -62,7 +65,7 @@ export default function NotFound() {
             className="w-full sm:w-auto min-w-[140px] sm:min-w-[160px] text-sm sm:text-base"
           >
             <ArrowLeft className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-            Go Back
+            {t("Go Back")}
           </Button>
           <Button
             asChild
@@ -71,7 +74,7 @@ export default function NotFound() {
           >
             <Link href="/">
               <Home className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              Go Home
+              {t("Go Home")}
             </Link>
           </Button>
         </div>
@@ -79,7 +82,7 @@ export default function NotFound() {
         {/* Additional Help */}
         <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-border">
           <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-            Need help? Try these options:
+            {t("Need help? Try these options:")}
           </p>
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
             <Button
@@ -89,7 +92,7 @@ export default function NotFound() {
               className="text-xs sm:text-sm text-muted-foreground hover:text-foreground"
             >
               <Search className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              Search
+              {t("Search")}
             </Button>
             <Button
               variant="ghost"
@@ -97,7 +100,7 @@ export default function NotFound() {
               onClick={() => router.push("/")}
               className="text-xs sm:text-sm text-muted-foreground hover:text-foreground"
             >
-              Browse Services
+              {t("Browse Services")}
             </Button>
           </div>
         </div>

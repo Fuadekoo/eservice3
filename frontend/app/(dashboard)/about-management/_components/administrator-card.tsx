@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import type { Administration } from "@/lib/stores/administration-store";
 import { getUploadUrl } from "@/lib/axios";
+import { useTranslation } from "@/lib/i18n";
 
 interface AdministratorCardProps {
   administrator: Administration;
@@ -19,6 +20,8 @@ export function AdministratorCard({
   onEdit,
   onDelete,
 }: AdministratorCardProps) {
+  const { t } = useTranslation();
+
   return (
     <Card className="overflow-hidden bg-card border border-border rounded-2xl group hover:shadow-lg transition-all duration-300">
       <CardContent className="p-5 flex flex-col gap-4">
@@ -37,7 +40,7 @@ export function AdministratorCard({
             {administrator.name}
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-            {administrator.description || "No description provided."}
+            {administrator.description || t("No description provided.")}
           </p>
         </div>
 
@@ -49,7 +52,7 @@ export function AdministratorCard({
             className="rounded-xl font-semibold"
           >
             <Edit className="size-4 mr-2" />
-            Edit
+            {t("Edit")}
           </Button>
           <Button
             variant="destructive"
@@ -58,7 +61,7 @@ export function AdministratorCard({
             className="rounded-xl font-semibold shadow-sm"
           >
             <Trash2 className="size-4 mr-2" />
-            Delete
+            {t("Delete")}
           </Button>
         </div>
       </CardContent>

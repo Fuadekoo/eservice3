@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { usePermissions } from "@/lib/hooks/use-permissions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface PermissionGuardProps {
   children: ReactNode;
@@ -25,10 +26,12 @@ export function PermissionGuard({
   fallback = null,
   showError = false,
 }: PermissionGuardProps) {
+  const { t } = useTranslation();
+
   const { permissions, role, isLoading, hasPermission, hasAnyPermission, hasAllPermissions } = usePermissions();
 
   if (isLoading) {
-    return <div className="animate-pulse">Loading...</div>;
+    return <div className="animate-pulse">{t("Loading...")}</div>;
   }
 
   // SUPERADMIN and MANAGER restrictions are handled in hasPermission/hasAnyPermission/hasAllPermissions
@@ -52,9 +55,9 @@ export function PermissionGuard({
       return (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Access Denied</AlertTitle>
+          <AlertTitle>{t("Access Denied")}</AlertTitle>
           <AlertDescription>
-            You do not have permission to access this content.
+            {t("You do not have permission to access this content.")}
             {requiredPermission && ` Required: ${requiredPermission}`}
             {requiredPermissions && ` Required: ${requiredPermissions.join(", ")}`}
           </AlertDescription>

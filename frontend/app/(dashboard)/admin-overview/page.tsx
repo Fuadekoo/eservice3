@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type OfficeItem = {
@@ -96,6 +97,8 @@ export default function AdminOverviewPage() {
 }
 
 function AdminOverviewContent() {
+  const { t } = useTranslation();
+
   const { isPending: isSessionPending } = useSession();
   const [overview, setOverview] = React.useState<Overview | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -166,7 +169,7 @@ function AdminOverviewContent() {
       setOverview({ offices, totalUsers, totalStaff, totalServices, totalRequests, totalAppointments, staffStatus, requestStatus, appointmentStatus, officeChart });
       setUpdatedAt(new Date());
     } catch {
-      toast.error("Failed to load overview data");
+      toast.error(t("Failed to load overview data"));
     } finally {
       setIsLoading(false);
     }
@@ -179,19 +182,19 @@ function AdminOverviewContent() {
 
   return (
     <PageLayout
-      title="Admin Overview"
-      description="Real-time system analytics and performance at a glance"
+      title={t("Admin Overview")}
+      description={t("Real-time system analytics and performance at a glance")}
       icon={LayoutDashboard}
       actions={
         <div className="flex items-center gap-3">
           {updatedAt && (
             <span className="text-xs text-muted-foreground hidden sm:block">
-              Updated {updatedAt.toLocaleTimeString()}
+              {t("Updated")} {updatedAt.toLocaleTimeString()}
             </span>
           )}
           <Button variant="outline" onClick={load} disabled={isLoading} className="h-10 rounded-xl gap-2">
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
-            Refresh
+            {t("Refresh")}
           </Button>
         </div>
       }
@@ -199,7 +202,7 @@ function AdminOverviewContent() {
       {isLoading && !overview ? (
         <div className="flex flex-col items-center justify-center py-32 gap-3">
           <Loader2 className="size-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading analytics…</p>
+          <p className="text-sm text-muted-foreground">{t("Loading analytics…")}</p>
         </div>
       ) : overview ? (
         <div className="space-y-6">
@@ -207,12 +210,12 @@ function AdminOverviewContent() {
           {/* ── KPI Cards ────────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { label: "Offices",      value: overview.offices.length,       icon: Building2,  color: "text-violet-600",  bg: "bg-violet-500/10",  border: "border-violet-500/20" },
-              { label: "Staff",        value: overview.totalStaff,            icon: UserCheck,  color: "text-emerald-600", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-              { label: "Users",        value: overview.totalUsers,            icon: Users,      color: "text-blue-600",    bg: "bg-blue-500/10",    border: "border-blue-500/20" },
-              { label: "Services",     value: overview.totalServices,         icon: Layers,     color: "text-orange-600",  bg: "bg-orange-500/10",  border: "border-orange-500/20" },
-              { label: "Requests",     value: overview.totalRequests,         icon: FileText,   color: "text-pink-600",    bg: "bg-pink-500/10",    border: "border-pink-500/20" },
-              { label: "Appointments", value: overview.totalAppointments,     icon: Calendar,   color: "text-cyan-600",    bg: "bg-cyan-500/10",    border: "border-cyan-500/20" },
+              { label: t("Offices"),      value: overview.offices.length,       icon: Building2,  color: "text-violet-600",  bg: "bg-violet-500/10",  border: "border-violet-500/20" },
+              { label: t("Staff"),        value: overview.totalStaff,            icon: UserCheck,  color: "text-emerald-600", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+              { label: t("Users"),        value: overview.totalUsers,            icon: Users,      color: "text-blue-600",    bg: "bg-blue-500/10",    border: "border-blue-500/20" },
+              { label: t("Services"),     value: overview.totalServices,         icon: Layers,     color: "text-orange-600",  bg: "bg-orange-500/10",  border: "border-orange-500/20" },
+              { label: t("Requests"),     value: overview.totalRequests,         icon: FileText,   color: "text-pink-600",    bg: "bg-pink-500/10",    border: "border-pink-500/20" },
+              { label: t("Appointments"), value: overview.totalAppointments,     icon: Calendar,   color: "text-cyan-600",    bg: "bg-cyan-500/10",    border: "border-cyan-500/20" },
             ].map(({ label, value, icon: Icon, color, bg, border }) => (
               <Card key={label} className={cn("border shadow-sm bg-card/50", border)}>
                 <CardContent className="p-5">
@@ -229,22 +232,22 @@ function AdminOverviewContent() {
           {/* ── Donut Charts Row ─────────────────────────────────────────── */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <DonutCard
-              title="Request Status"
+              title={t("Request Status")}
               icon={<FileText className="size-4 text-pink-600" />}
               slices={overview.requestStatus}
-              empty="No requests yet"
+              empty={t("No requests yet")}
             />
             <DonutCard
-              title="Staff Status"
+              title={t("Staff Status")}
               icon={<UserCheck className="size-4 text-emerald-600" />}
               slices={overview.staffStatus}
-              empty="No staff data"
+              empty={t("No staff data")}
             />
             <DonutCard
-              title="Appointment Status"
+              title={t("Appointment Status")}
               icon={<Calendar className="size-4 text-cyan-600" />}
               slices={overview.appointmentStatus}
-              empty="No appointments yet"
+              empty={t("No appointments yet")}
             />
           </div>
 
@@ -254,8 +257,8 @@ function AdminOverviewContent() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <TrendingUp className="size-4 text-violet-600" />
-                  Office Performance
-                  <span className="text-xs text-muted-foreground font-normal ml-1">— Services · Staff · Requests</span>
+                  {t("Office Performance")}
+                  <span className="text-xs text-muted-foreground font-normal ml-1">{t("— Services · Staff · Requests")}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -280,7 +283,7 @@ function AdminOverviewContent() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <Activity className="size-4 text-violet-600" />
-                Office Breakdown
+                {t("Office Breakdown")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -308,7 +311,7 @@ function AdminOverviewContent() {
                         </td>
                         <td className="px-5 py-4">
                           <Badge variant="outline" className={cn("text-xs font-semibold", office.status ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-gray-500/10 text-gray-500 border-gray-500/20")}>
-                            {office.status ? "Active" : "Inactive"}
+                            {office.status ? t("Active") : t("Inactive")}
                           </Badge>
                         </td>
                         <StatCell value={office._count?.service ?? 0} color="text-orange-600" />
@@ -320,7 +323,7 @@ function AdminOverviewContent() {
                     {overview.offices.length === 0 && (
                       <tr>
                         <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground text-sm">
-                          No offices found
+                          {t("No offices found")}
                         </td>
                       </tr>
                     )}
@@ -338,13 +341,15 @@ function AdminOverviewContent() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 function DonutCard({ title, icon, slices, empty }: { title: string; icon: React.ReactNode; slices: SliceItem[]; empty: string }) {
+  const { t } = useTranslation();
+
   const total = slices.reduce((s, i) => s + i.value, 0);
   return (
     <Card className="border shadow-sm ring-0 bg-card/50 border-border/50">
       <CardHeader className="pb-0">
         <CardTitle className="text-sm font-bold flex items-center gap-2">
           {icon} {title}
-          {total > 0 && <span className="ml-auto text-xs text-muted-foreground font-normal">{total} total</span>}
+          {total > 0 && <span className="ml-auto text-xs text-muted-foreground font-normal">{total} {t("total")}</span>}
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
@@ -358,7 +363,7 @@ function DonutCard({ title, icon, slices, empty }: { title: string; icon: React.
               </Pie>
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
-                formatter={(v: any, n: any) => [`${v} (${total > 0 ? Math.round((v / total) * 100) : 0}%)`, n]}
+                formatter={(v: any, n: any) => [`${v} (${total > 0 ? Math.round((v / total) * 100) : 0}%)`, t(String(n))]}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -367,7 +372,7 @@ function DonutCard({ title, icon, slices, empty }: { title: string; icon: React.
           {slices.map(s => (
             <div key={s.name} className="flex items-center gap-2 text-xs">
               <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-              <span className="text-muted-foreground flex-1">{s.name}</span>
+              <span className="text-muted-foreground flex-1">{t(s.name)}</span>
               <span className="font-bold tabular-nums">{s.value}</span>
               {total > 0 && <span className="text-muted-foreground/60 w-8 text-right">{Math.round((s.value / total) * 100)}%</span>}
             </div>

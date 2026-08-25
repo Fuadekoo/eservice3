@@ -66,17 +66,20 @@ import {
   type DemoAccount,
 } from "@/lib/demo-accounts";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n";
 
 function getErrorMessage(error: unknown): string | undefined {
   return error instanceof Error ? error.message : undefined;
 }
 
 function EServiceLogo() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center justify-center animate-in fade-in duration-700">
       <Image
         src="/logo.png"
-        alt="Mesob E-Service System Logo"
+        alt={t("Mesob E-Service System Logo")}
         width={200}
         height={200}
         className="object-contain"

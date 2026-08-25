@@ -40,6 +40,7 @@ import {
   PHONE_FORMAT_MESSAGE,
   normalizeEthiopianMobilePhone,
 } from "@/lib/phone";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -127,6 +128,8 @@ function Field({
 // ─── ProfileTab ───────────────────────────────────────────────────────────────
 
 export function ProfileTab() {
+  const { t } = useTranslation();
+
   const [profile, setProfile] = React.useState<ProfileForm>(defaultProfile);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -190,11 +193,11 @@ export function ProfileTab() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image file");
+      toast.error(t("Please choose an image file"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be 5 MB or smaller");
+      toast.error(t("Image must be 5 MB or smaller"));
       return;
     }
 
@@ -202,7 +205,7 @@ export function ProfileTab() {
     try {
       const uploaded = await uploadFileOnly(file);
       set("image", uploaded.filename);
-      toast.success("Photo uploaded. Click Save Changes to apply.");
+      toast.success(t("Photo uploaded. Click Save Changes to apply."));
     } catch (error) {
       toast.error(getErrorMessage(error, "Failed to upload photo"));
     } finally {
@@ -227,7 +230,7 @@ export function ProfileTab() {
       const updated = payload?.user ? toProfile(payload.user) : profile;
       setProfile(updated);
       syncCachedUser(payload?.user ?? {});
-      toast.success("Profile updated successfully");
+      toast.success(t("Profile updated successfully"));
     } catch (error) {
       toast.error(getErrorMessage(error, "Failed to update profile"));
     } finally {
@@ -264,7 +267,7 @@ export function ProfileTab() {
       });
       setOtpCode("");
       setPhoneStep("otp");
-      toast.success("Verification code sent to the new number.");
+      toast.success(t("Verification code sent to the new number."));
     } catch (error) {
       const message = getErrorMessage(error, "Failed to send verification code");
       setPhoneError(message);
@@ -301,7 +304,7 @@ export function ProfileTab() {
         phone: nextPhone,
       });
       setPhoneDialogOpen(false);
-      toast.success("Phone number updated successfully");
+      toast.success(t("Phone number updated successfully"));
     } catch (error) {
       const message = getErrorMessage(error, "Failed to verify the code");
       setPhoneError(message);
@@ -317,9 +320,9 @@ export function ProfileTab() {
     <Card className="rounded-3xl border shadow-none p-8">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">
-          Profile Information
+          {t("Profile Information")}
         </CardTitle>
-        <CardDescription>Update your personal information</CardDescription>
+        <CardDescription>{t("Update your personal information")}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-8 pt-6">
@@ -343,7 +346,7 @@ export function ProfileTab() {
             ) : (
               <Upload className="size-4" />
             )}
-            {isUploading ? "Uploading..." : "Upload Photo"}
+            {isUploading ? t("Uploading...") : t("Upload Photo")}
             <input
               id="photo-upload"
               type="file"
@@ -357,49 +360,49 @@ export function ProfileTab() {
 
         {/* Fields grid */}
         <div className="grid grid-cols-1 gap-x-12 gap-y-6 sm:grid-cols-2 max-w-6xl mx-auto">
-          <Field icon={User} label="First Name">
+          <Field icon={User} label={t("First Name")}>
             <Input
               value={profile.firstName}
               onChange={(e) => set("firstName", e.target.value)}
-              placeholder="First name"
+              placeholder={t("First name")}
               disabled={busy}
             />
           </Field>
 
-          <Field icon={User} label="Father's Name">
+          <Field icon={User} label={t("Father's Name")}>
             <Input
               value={profile.fatherName}
               onChange={(e) => set("fatherName", e.target.value)}
-              placeholder="Father's name"
+              placeholder={t("Father's name")}
               disabled={busy}
             />
           </Field>
 
-          <Field icon={User} label="Grandfather's Name">
+          <Field icon={User} label={t("Grandfather's Name")}>
             <Input
               value={profile.lastName}
               onChange={(e) => set("lastName", e.target.value)}
-              placeholder="Grandfather's name"
+              placeholder={t("Grandfather's name")}
               disabled={busy}
             />
           </Field>
 
-          <Field label="Username">
+          <Field label={t("Username")}>
             <Input
               value={profile.username}
               onChange={(e) => set("username", e.target.value)}
-              placeholder="Enter username"
+              placeholder={t("Enter username")}
               disabled={busy}
             />
           </Field>
 
-          <Field icon={Phone} label="Phone Number">
+          <Field icon={Phone} label={t("Phone Number")}>
             <div className="flex gap-2">
               <Input
                 type="tel"
                 value={profile.phoneNumber}
                 readOnly
-                placeholder="No phone number"
+                placeholder={t("No phone number")}
                 className="bg-muted/40"
               />
               <Button
@@ -409,27 +412,27 @@ export function ProfileTab() {
                 disabled={busy}
                 className="shrink-0"
               >
-                Change
+                {t("Change")}
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Changing your phone number requires SMS verification.
+              {t("Changing your phone number requires SMS verification.")}
             </p>
           </Field>
 
-          <Field label="Gender">
+          <Field label={t("Gender")}>
             <Select
               value={profile.gender}
               onValueChange={(v) => set("gender", v)}
               disabled={busy}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select gender" />
+                <SelectValue placeholder={t("Select gender")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="MALE">Male</SelectItem>
-                <SelectItem value="FEMALE">Female</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
+                <SelectItem value="MALE">{t("Male")}</SelectItem>
+                <SelectItem value="FEMALE">{t("Female")}</SelectItem>
+                <SelectItem value="OTHER">{t("Other")}</SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -445,12 +448,12 @@ export function ProfileTab() {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />
-                Saving...
+                {t("Saving...")}
               </>
             ) : (
               <>
                 <Save className="mr-2 size-4" />
-                Save Changes
+                {t("Save Changes")}
               </>
             )}
           </Button>
@@ -469,14 +472,14 @@ export function ProfileTab() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShieldCheck className="size-5" />
-              Change phone number
+              {t("Change phone number")}
             </DialogTitle>
             <DialogDescription>
               {phoneStep === "input"
-                ? "Enter your new phone number. We'll send a 6-digit code to confirm it's yours."
-                : `Enter the 6-digit code we sent to ${
-                    normalizeEthiopianMobilePhone(newPhone) || newPhone
-                  }.`}
+                ? t("Enter your new phone number. We'll send a 6-digit code to confirm it's yours.")
+                : t("Enter the 6-digit code we sent to {phone}.", {
+                    phone: normalizeEthiopianMobilePhone(newPhone) || newPhone,
+                  })}
             </DialogDescription>
           </DialogHeader>
 
@@ -507,7 +510,7 @@ export function ProfileTab() {
                   onClick={() => setPhoneDialogOpen(false)}
                   disabled={isSendingOtp}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   onClick={() => void handleSendPhoneOtp()}
@@ -516,10 +519,10 @@ export function ProfileTab() {
                   {isSendingOtp ? (
                     <>
                       <Loader2 className="mr-2 size-4 animate-spin" />
-                      Sending...
+                      {t("Sending...")}
                     </>
                   ) : (
-                    "Send Code"
+                    t("Send Code")
                   )}
                 </Button>
               </div>
@@ -561,7 +564,7 @@ export function ProfileTab() {
                   onClick={() => void handleSendPhoneOtp()}
                   disabled={isSendingOtp || isVerifyingOtp}
                 >
-                  Resend code
+                  {t("Resend code")}
                 </Button>
                 <div className="flex gap-2">
                   <Button
@@ -569,7 +572,7 @@ export function ProfileTab() {
                     onClick={() => setPhoneStep("input")}
                     disabled={isVerifyingOtp}
                   >
-                    Back
+                    {t("Back")}
                   </Button>
                   <Button
                     onClick={() => void handleVerifyPhoneOtp()}
@@ -578,10 +581,10 @@ export function ProfileTab() {
                     {isVerifyingOtp ? (
                       <>
                         <Loader2 className="mr-2 size-4 animate-spin" />
-                        Verifying...
+                        {t("Verifying...")}
                       </>
                     ) : (
-                      "Verify & Update"
+                      t("Verify & Update")
                     )}
                   </Button>
                 </div>

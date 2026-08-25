@@ -19,8 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSecurityStore, type Permission } from "@/lib/stores/security-store";
+import { useTranslation } from "@/lib/i18n";
 
 export default function EditPermissionPage() {
+  const { t } = useTranslation();
+
   const router = useRouter();
   const params = useParams();
   const permissionId = params.permissionId as string;
@@ -44,13 +47,13 @@ export default function EditPermissionPage() {
         (p) => p.id === permissionId
       );
       if (!foundPermission) {
-        toast.error("Permission not found");
+        toast.error(t("Permission not found"));
         router.push("/security/permissions");
         return;
       }
       setPermission(foundPermission);
     } catch (error) {
-      toast.error("Failed to load permission");
+      toast.error(t("Failed to load permission"));
       console.error(error);
       router.push("/security/permissions");
     } finally {
@@ -75,10 +78,10 @@ export default function EditPermissionPage() {
         name,
         description: description || undefined,
       });
-      toast.success("Permission updated successfully");
+      toast.success(t("Permission updated successfully"));
       router.push("/security/permissions");
     } catch (error) {
-      toast.error("Failed to update permission");
+      toast.error(t("Failed to update permission"));
       console.error(error);
       setIsSubmitting(false);
     }
@@ -88,9 +91,9 @@ export default function EditPermissionPage() {
     return (
       <ProtectedRoute requiredPermission="permissions.update">
         <div className="space-y-8">
-          <PageHeader title="Edit permission" description="Loading..." />
+          <PageHeader title={t("Edit permission")} description={t("Loading...")} />
           <div className="py-8 text-center text-sm text-muted-foreground">
-            Loading permission data...
+            {t("Loading permission data...")}
           </div>
         </div>
       </ProtectedRoute>
@@ -105,69 +108,68 @@ export default function EditPermissionPage() {
     <ProtectedRoute requiredPermission="permissions.update">
       <div className="space-y-8">
         <PageHeader
-          title={`Edit permission – ${permission.name}`}
-          description="Update permission details."
+          title={t("Edit permission – {name}", { name: permission.name })}
+          description={t("Update permission details.")}
           actions={
             <Button variant="outline" size="sm" asChild>
-              <Link href="/security/permissions">Back to permissions</Link>
+              <Link href="/security/permissions">{t("Back to permissions")}</Link>
             </Button>
           }
         />
 
         <Card>
           <CardHeader>
-            <CardTitle>Permission details</CardTitle>
+            <CardTitle>{t("Permission details")}</CardTitle>
             <CardDescription>
-              Update the permission code, name, and description.
+              {t("Update the permission code, name, and description.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="grid gap-6" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="permission-code">Permission code</Label>
+                <Label htmlFor="permission-code">{t("Permission code")}</Label>
                 <Input
                   id="permission-code"
                   name="permission-code"
-                  placeholder="e.g. students.create"
+                  placeholder={t("e.g. students.create")}
                   defaultValue={permission.code}
                   required
                   pattern="[a-z0-9._-]+"
-                  title="Use lowercase letters, numbers, dots, underscores, or hyphens"
+                  title={t("Use lowercase letters, numbers, dots, underscores, or hyphens")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Unique identifier for this permission (lowercase, use dots or
-                  underscores)
+                  {t("Unique identifier for this permission (lowercase, use dots or underscores)")}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="permission-name">Permission name</Label>
+                <Label htmlFor="permission-name">{t("Permission name")}</Label>
                 <Input
                   id="permission-name"
                   name="permission-name"
-                  placeholder="e.g. Create Students"
+                  placeholder={t("e.g. Create Students")}
                   defaultValue={permission.name}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="permission-description">Description</Label>
+                <Label htmlFor="permission-description">{t("Description")}</Label>
                 <Textarea
                   id="permission-description"
                   name="permission-description"
                   rows={3}
-                  placeholder="Briefly describe what this permission allows."
+                  placeholder={t("Briefly describe what this permission allows.")}
                   defaultValue={permission.description || ""}
                 />
               </div>
 
               <div className="flex items-center justify-end gap-2">
                 <Button type="button" variant="outline" asChild>
-                  <Link href="/security/permissions">Cancel</Link>
+                  <Link href="/security/permissions">{t("Cancel")}</Link>
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save changes"}
+                  {isSubmitting ? t("Saving...") : t("Save changes")}
                 </Button>
               </div>
             </form>

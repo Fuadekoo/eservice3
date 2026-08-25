@@ -38,8 +38,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 export default function AuditLogList() {
+  const { t } = useTranslation();
+
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(25);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -67,9 +70,9 @@ export default function AuditLogList() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight">Audit Logs</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("Audit Logs")}</h2>
           <p className="text-muted-foreground">
-            Track all activities and system events across the platform.
+            {t("Track all activities and system events across the platform.")}
           </p>
         </div>
       </div>
@@ -80,7 +83,7 @@ export default function AuditLogList() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search by actor..."
+                placeholder={t("Search by actor...")}
                 className="pl-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -89,12 +92,12 @@ export default function AuditLogList() {
             <div className="w-full md:w-48">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder={t("Filter by status")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="SUCCESS">Success</SelectItem>
-                  <SelectItem value="FAILED">Failed</SelectItem>
+                  <SelectItem value="all">{t("All Statuses")}</SelectItem>
+                  <SelectItem value="SUCCESS">{t("Success")}</SelectItem>
+                  <SelectItem value="FAILED">{t("Failed")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -105,12 +108,12 @@ export default function AuditLogList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">Timestamp</TableHead>
-                  <TableHead>Actor</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Resource</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Details</TableHead>
+                  <TableHead className="w-[180px]">{t("Timestamp")}</TableHead>
+                  <TableHead>{t("Actor")}</TableHead>
+                  <TableHead>{t("Action")}</TableHead>
+                  <TableHead>{t("Resource")}</TableHead>
+                  <TableHead>{t("Status")}</TableHead>
+                  <TableHead className="text-right">{t("Details")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -119,7 +122,7 @@ export default function AuditLogList() {
                     <TableCell colSpan={6} className="h-32 text-center">
                       <div className="flex items-center justify-center gap-2 text-muted-foreground">
                         <Loader2 className="size-4 animate-spin" />
-                        <span>Loading audit logs...</span>
+                        <span>{t("Loading audit logs...")}</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -129,7 +132,7 @@ export default function AuditLogList() {
                       colSpan={6}
                       className="h-32 text-center text-destructive"
                     >
-                      {error.message || "Failed to load audit logs"}
+                      {error.message || t("Failed to load audit logs")}
                     </TableCell>
                   </TableRow>
                 ) : logs.length === 0 ? (
@@ -138,7 +141,7 @@ export default function AuditLogList() {
                       colSpan={6}
                       className="h-32 text-center text-muted-foreground"
                     >
-                      No audit logs found.
+                      {t("No audit logs found.")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -162,7 +165,7 @@ export default function AuditLogList() {
                                 : log.actor}
                             </span>
                             <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                              {log.role || "N/A"}
+                              {log.role || t("N/A")}
                             </span>
                           </div>
                         </div>
@@ -202,26 +205,26 @@ export default function AuditLogList() {
                             <DialogHeader>
                               <DialogTitle className="flex items-center gap-2">
                                 <ShieldCheck className="size-5 text-primary" />
-                                Audit Log Details
+                                {t("Audit Log Details")}
                               </DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4 pt-4">
                               <div className="grid grid-cols-2 gap-4">
                                 <DetailItem
-                                  label="Timestamp"
+                                  label={t("Timestamp")}
                                   value={format(
                                     new Date(log.timestamp),
                                     "PPpp",
                                   )}
                                 />
                                 <DetailItem
-                                  label="Status"
+                                  label={t("Status")}
                                   value={log.status}
                                   isBadge
                                   badgeColor={getStatusColor(log.status)}
                                 />
                                 <DetailItem
-                                  label="Actor"
+                                  label={t("Actor")}
                                   value={
                                     log.user?.firstName
                                       ? `${log.user.firstName} ${log.user.fatherName || ""} (${log.actor})`
@@ -229,16 +232,16 @@ export default function AuditLogList() {
                                   }
                                 />
                                 <DetailItem
-                                  label="Role"
+                                  label={t("Role")}
                                   value={log.role || "N/A"}
                                 />
                                 <DetailItem
-                                  label="Action"
+                                  label={t("Action")}
                                   value={log.action}
                                   className="col-span-2"
                                 />
                                 <DetailItem
-                                  label="Resource"
+                                  label={t("Resource")}
                                   value={log.resource}
                                   className="col-span-2"
                                   isCode
@@ -247,7 +250,7 @@ export default function AuditLogList() {
                               {log.metadata && (
                                 <div className="space-y-1.5">
                                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                                    Metadata
+                                    {t("Metadata")}
                                   </span>
                                   <pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto border border-border">
                                     {JSON.stringify(log.metadata, null, 2)}
@@ -279,7 +282,7 @@ export default function AuditLogList() {
           onPageSizeChange={setPageSize}
           canGoNext={currentPage < pagination.totalPages}
           canGoPrevious={currentPage > 1}
-          itemLabel="logs"
+          itemLabel={t("logs")}
         />
       )}
     </div>

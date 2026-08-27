@@ -591,19 +591,13 @@ export async function createRole(
     return res.status(400).json(buildValidationError(parsed.error));
   }
 
-  const { permissions, officeId, ...data } = parsed.data;
-
-  // Determine the officeId to use
-  // For office staff, getOfficeId returns their officeId
-  // For super admin, getOfficeId returns null, so we use the officeId from request if provided
-  const scopedOfficeId = getOfficeId(req, res);
-  const targetOfficeId = scopedOfficeId || officeId;
+  // A role is a job description, not a place, so it no longer belongs to an
+  // office. An officeId in the body is accepted and ignored, so an older
+  // client sending it does not break.
+  const { permissions, officeId: _unusedOfficeId, ...data } = parsed.data;
 
   const created = await prisma.role.create({
-    data: {
-      ...(data as any),
-      officeId: targetOfficeId || null,
-    },
+    data: data as any,
   });
 
   if (permissions?.length) {

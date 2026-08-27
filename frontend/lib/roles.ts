@@ -38,3 +38,32 @@ export function dedupeRolesByName(
     a.label.localeCompare(b.label),
   );
 }
+
+/**
+ * Roles that belong to portal customers rather than office staff.
+ *
+ * A customer who registers against an office does get a `staff` row (see
+ * registerCustomer in the API), so these names still appear in the role list —
+ * but they are not internal office roles and must never be offered when
+ * assigning someone to an office.
+ */
+const NON_OFFICE_ROLE_NAMES = new Set(["customer"]);
+
+/** True when `name` is a role an office member can legitimately hold. */
+export function isOfficeAssignableRole(name?: string | null): boolean {
+  const key = name?.trim().toLowerCase();
+  if (!key) return false;
+  return !NON_OFFICE_ROLE_NAMES.has(key);
+}
+
+/**
+ * Distinct roles assignable to a member of an office: the same collapsing as
+ * `dedupeRolesByName`, minus the customer-facing roles. Use this for office
+ * assignment dropdowns; use `dedupeRolesByName` for views that legitimately
+ * span customers too, such as the all-users list.
+ */
+export function dedupeOfficeRolesByName(
+  roles: Array<{ name?: string | null }>,
+): DistinctRole[] {
+  return dedupeRolesByName(roles.filter((role) => isOfficeAssignableRole(role.name)));
+}

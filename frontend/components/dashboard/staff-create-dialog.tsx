@@ -39,7 +39,10 @@ import {
   type UpdateStaffMemberPayload,
 } from "@/lib/stores/staff-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
-import { dedupeRolesByName } from "@/lib/roles";
+import {
+  dedupeOfficeRolesByName,
+  dedupeRolesByName,
+} from "@/lib/roles";
 import { useTranslation } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -92,7 +95,23 @@ export function StaffCreateDialog({
   const { roles, fetchRoles } = useSecurityStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const distinctRoles = React.useMemo(() => dedupeRolesByName(roles), [roles]);
+  // Customers are not office staff, so they are never offered as a role here.
+  // A member who already holds one (customers registering against an office do
+  // get a staff row) keeps it listed, so editing shows their real role rather
+  // than an empty select.
+  const distinctRoles = React.useMemo(() => {
+    const assignable = dedupeOfficeRolesByName(roles);
+    const currentName = member?.role?.name?.trim();
+    const currentKey = currentName?.toLowerCase();
+    if (!currentKey || assignable.some((role) => role.key === currentKey)) {
+      return assignable;
+    }
+    const [current] = dedupeRolesByName([{ name: currentName }]);
+    if (!current) return assignable;
+    return [...assignable, current].sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+  }, [roles, member]);
 
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffSchema),

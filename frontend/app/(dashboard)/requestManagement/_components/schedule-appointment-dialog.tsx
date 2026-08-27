@@ -25,6 +25,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/lib/i18n";
+import { axiosInstance } from "@/lib/axios";
+import {
+  bookingDateIssue,
+  todayAsInputValue,
+  weeklyScheduleOf,
+  type WeeklySchedule,
+} from "@/lib/office-hours";
 
 interface ScheduleAppointmentDialogProps {
   request: ServiceRequest | null;
@@ -47,6 +54,12 @@ export function ScheduleAppointmentDialog({
   const [time, setTime] = React.useState("");
   const [notes, setNotes] = React.useState("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [dateError, setDateError] = React.useState("");
+  // Which weekdays this office takes bookings on. Fetched per request,
+  // since a request only carries its office id.
+  const [schedule, setSchedule] = React.useState<WeeklySchedule | undefined>(
+    undefined,
+  );
 
   React.useEffect(() => {
     if (open && request) {
@@ -58,12 +71,42 @@ export function ScheduleAppointmentDialog({
       }
       setTime("09:00");
       setNotes("");
+      setDateError("");
+      setSchedule(undefined);
+
+      const officeId = request.service?.office?.id;
+      if (officeId) {
+        void (async () => {
+          try {
+            const res = (await axiosInstance.get(
+              `/offices/${officeId}`,
+            )) as unknown as {
+              data?: Parameters<typeof weeklyScheduleOf>[0];
+            };
+            setSchedule(weeklyScheduleOf(res?.data));
+          } catch {
+            // Without a schedule the weekend counts as closed, which is the
+            // safe default; the API validates the date regardless.
+            setSchedule(undefined);
+          }
+        })();
+      }
     }
   }, [open, request]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!request || !date) return;
+    if (!request) return;
+
+    // The request's preferred date is pre-filled and may itself be in the
+    // past by the time staff get to it, so this is checked on submit too.
+    const issue = bookingDateIssue(date, schedule);
+    if (issue) {
+      const message = t(issue.key, issue.vars ?? {});
+      setDateError(message);
+      toast.error(message);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -111,11 +154,24 @@ export function ScheduleAppointmentDialog({
                   type="date"
                   required
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  aria-invalid={Boolean(dateError)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setDate(value);
+                    const next = value
+                      ? bookingDateIssue(value, schedule)
+                      : null;
+                    setDateError(next ? t(next.key, next.vars ?? {}) : "");
+                  }}
                   className="pl-9 rounded-xl"
-                  min={new Date().toISOString().split("T")[0]}
+                  min={todayAsInputValue()}
                 />
               </div>
+              {dateError ? (
+                <p role="alert" className="text-xs font-medium text-destructive">
+                  {dateError}
+                </p>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="time" className="text-xs font-semibold uppercase text-muted-foreground">{t("Time")}</Label>

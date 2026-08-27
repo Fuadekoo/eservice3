@@ -314,6 +314,14 @@
       }
     },
     {
+      "key": "The date cannot be in the past.",
+      "translations": {
+        "en": "The date cannot be in the past.",
+        "am": "ቀኑ ያለፈ መሆን አይችልም።",
+        "om": "Guyyaan kan darbe ta'uu hin danda'u."
+      }
+    },
+    {
       "key": "The office is closed on {day}. Please choose another day.",
       "translations": {
         "en": "The office is closed on {day}. Please choose another day.",

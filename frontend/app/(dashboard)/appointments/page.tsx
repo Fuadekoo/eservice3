@@ -26,6 +26,12 @@ import { toast } from "sonner";
 import axios from "axios";
 
 import { axiosInstance } from "@/lib/axios";
+import {
+  bookingDateIssue,
+  todayAsInputValue,
+  weeklyScheduleOf,
+  type WeeklySchedule,
+} from "@/lib/office-hours";
 import { useSession } from "@/hooks/use-session";
 import { usePagination } from "@/hooks/use-pagination";
 import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
@@ -202,18 +208,51 @@ export default function AppointmentsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, search]);
 
-  const openEdit = (apt: Appointment) => {
+  // The office decides which weekdays it takes bookings on, and an appointment
+  // only carries its office id — so the schedule is fetched when the dialog
+  // opens rather than guessed.
+  const [editSchedule, setEditSchedule] = React.useState<
+    WeeklySchedule | undefined
+  >(undefined);
+  const [dateError, setDateError] = React.useState("");
+
+  const openEdit = async (apt: Appointment) => {
     setEditApt(apt);
     setEditForm({
       date:  apt.date?.split("T")[0] ?? "",
       time:  apt.time ?? "",
       notes: apt.notes ?? "",
     });
+    setDateError("");
+    setEditSchedule(undefined);
+
+    const officeId = apt.request?.service?.office?.id;
+    if (!officeId) return;
+    try {
+      const res = (await axiosInstance.get(
+        `/offices/${officeId}`,
+      )) as unknown as { data?: Parameters<typeof weeklyScheduleOf>[0] };
+      setEditSchedule(weeklyScheduleOf(res?.data));
+    } catch {
+      // Without the schedule the weekend is treated as closed, which is the
+      // safe default — the API validates the date regardless.
+      setEditSchedule(undefined);
+    }
   };
 
   const handleSaveEdit = async () => {
     if (!editApt) return;
-    if (!editForm.date) { toast.error(t("Please select a date.")); return; }
+
+    // `min` only constrains the picker UI, and this dialog submits from an
+    // onClick rather than a form — so a typed date is checked here too.
+    const issue = bookingDateIssue(editForm.date, editSchedule);
+    if (issue) {
+      const message = t(issue.key, issue.vars ?? {});
+      setDateError(message);
+      toast.error(message);
+      return;
+    }
+
     setIsSaving(true);
     try {
       await axiosInstance.patch(`/appointments/${editApt.id}`, {
@@ -351,10 +390,25 @@ export default function AppointmentsPage() {
                   <Input
                     type="date"
                     value={editForm.date}
-                    min={new Date().toISOString().split("T")[0]}
-                    onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))}
+                    min={todayAsInputValue()}
+                    aria-invalid={Boolean(dateError)}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setEditForm(p => ({ ...p, date: value }));
+                      // Browsers cannot grey out individual weekdays, so a
+                      // closed day is refused the moment it is picked.
+                      const issue = value
+                        ? bookingDateIssue(value, editSchedule)
+                        : null;
+                      setDateError(issue ? t(issue.key, issue.vars ?? {}) : "");
+                    }}
                     className="h-11 rounded-xl"
                   />
+                  {dateError ? (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {dateError}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold">{t("Preferred Time")}</label>
@@ -380,7 +434,7 @@ export default function AppointmentsPage() {
                   <Button variant="outline" className="flex-1 rounded-xl h-11 font-bold" onClick={() => setEditApt(null)} disabled={isSaving}>
                     {t("Cancel")}
                   </Button>
-                  <Button className="flex-1 rounded-xl h-11 font-bold" onClick={handleSaveEdit} disabled={isSaving}>
+                  <Button className="flex-1 rounded-xl h-11 font-bold" onClick={handleSaveEdit} disabled={isSaving || Boolean(dateError)}>
                     {isSaving ? <Loader2 className="size-4 animate-spin mr-2" /> : <CheckCircle className="size-4 mr-2" />}
                     {t("Save Changes")}
                   </Button>

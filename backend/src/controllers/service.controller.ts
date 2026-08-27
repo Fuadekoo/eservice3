@@ -186,11 +186,11 @@ export async function getService(
         .json({ error: "NotFound", message: "Service not found." });
     }
 
-    if (
-      !req.isAdmin &&
-      !req.isManager &&
-      !canAccessOffice(req, service.officeId)
-    ) {
+    // Office membership alone decides this, for every role. A manager used to
+    // be waved through unconditionally, which let one read any office's
+    // service by guessing its id — the list is scoped, so the single-record
+    // read must be too. Administrators still pass, via canAccessOffice.
+    if (!canAccessOffice(req, service.officeId)) {
       return res
         .status(403)
         .json({ error: "Forbidden", message: "You do not have access to this service." });

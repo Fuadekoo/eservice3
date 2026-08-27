@@ -7,6 +7,7 @@ import {
   updateOfficeSchema,
   buildValidationError,
 } from "../validators/office.validator.js";
+import { canAccessOffice } from "../helper/myOffice.js";
 
 function handlePrismaError(
   error: unknown,
@@ -429,6 +430,17 @@ export async function updateOffice(
 ): Promise<Response | void> {
   try {
     const id = req.params["id"] as string;
+
+    // Holding the permission is not enough: a manager may only edit the office
+    // they belong to. Without this, any permitted caller could edit any office
+    // simply by putting its id in the URL.
+    if (!canAccessOffice(req, id)) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "You do not have access to this office.",
+      });
+    }
+
     const validation = updateOfficeSchema.safeParse(req.body);
 
     if (!validation.success) {

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requirePermission } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   listReports,
@@ -13,12 +13,49 @@ import {
 
 const router = Router();
 
-router.get("/admins", requireAuth, asyncHandler(getAdminUsers));
-router.get("/managers", requireAuth, asyncHandler(getManagerUsers));
-router.get("/", requireAuth, asyncHandler(listReports));
-router.post("/", requireAuth, asyncHandler(createReport));
-router.get("/:id", requireAuth, asyncHandler(getReport));
-router.patch("/:id/status", requireAuth, asyncHandler(updateReportStatus));
-router.delete("/:id", requireAuth, asyncHandler(deleteReport));
+// The /admins and /managers lookups exist to pick a report recipient, so they
+// are gated on being able to send a report rather than on merely signing in.
+router.get(
+  "/admins",
+  requireAuth,
+  requirePermission("report:create"),
+  asyncHandler(getAdminUsers),
+);
+router.get(
+  "/managers",
+  requireAuth,
+  requirePermission("report:create"),
+  asyncHandler(getManagerUsers),
+);
+router.get(
+  "/",
+  requireAuth,
+  requirePermission("report:read"),
+  asyncHandler(listReports),
+);
+router.post(
+  "/",
+  requireAuth,
+  requirePermission("report:create"),
+  asyncHandler(createReport),
+);
+router.get(
+  "/:id",
+  requireAuth,
+  requirePermission("report:read"),
+  asyncHandler(getReport),
+);
+router.patch(
+  "/:id/status",
+  requireAuth,
+  requirePermission("report:approve"),
+  asyncHandler(updateReportStatus),
+);
+router.delete(
+  "/:id",
+  requireAuth,
+  requirePermission("report:delete"),
+  asyncHandler(deleteReport),
+);
 
 export default router;

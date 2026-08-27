@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import {
+  requireAuth,
+  requireAdmin,
+  requirePermission,
+} from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
   listServices,
@@ -18,12 +22,32 @@ router.get("/", asyncHandler(listServices));
 
 // Auth required
 router.get("/:id", requireAuth, asyncHandler(getService));
-router.post("/", requireAuth, asyncHandler(createService));
-router.put("/:id", requireAuth, asyncHandler(updateService));
+router.post(
+  "/",
+  requireAuth,
+  requirePermission("service:create"),
+  asyncHandler(createService),
+);
+router.put(
+  "/:id",
+  requireAuth,
+  requirePermission("service:update"),
+  asyncHandler(updateService),
+);
 router.delete("/:id", requireAuth, requireAdmin, asyncHandler(deleteService));
 
 // Staff assignment management (admin or manager, enforced in controller)
-router.post("/:id/staff", requireAuth, asyncHandler(assignStaff));
-router.delete("/:id/staff/:staffId", requireAuth, asyncHandler(removeStaff));
+router.post(
+  "/:id/staff",
+  requireAuth,
+  requirePermission("service:assign-staff"),
+  asyncHandler(assignStaff),
+);
+router.delete(
+  "/:id/staff/:staffId",
+  requireAuth,
+  requirePermission("service:assign-staff"),
+  asyncHandler(removeStaff),
+);
 
 export default router;

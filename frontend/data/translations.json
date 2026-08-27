@@ -18,6 +18,14 @@
   ],
   "translations": [
     {
+      "key": "403 Forbidden",
+      "translations": {
+        "en": "403 Forbidden",
+        "am": "403 ተከልክሏል",
+        "om": "403 Dhorkame"
+      }
+    },
+    {
       "key": "Account Access",
       "translations": {
         "en": "Account Access",
@@ -95,6 +103,14 @@
         "en": "Optional. Leave empty for a user who is not tied to one office.",
         "am": "አማራጭ ነው። ከአንድ ጽሕፈት ቤት ጋር ላልተያያዘ ተጠቃሚ ባዶ ይተዉት።",
         "om": "Filannoodha. Fayyadamaa waajjira tokkotti hin hidhamneef duwwaa dhiisi."
+      }
+    },
+    {
+      "key": "Page",
+      "translations": {
+        "en": "Page",
+        "am": "ገጽ",
+        "om": "Fuula"
       }
     },
     {

@@ -8,7 +8,11 @@ import {
   updateOffice,
   deleteOffice,
 } from "../controllers/office.controller.js";
-import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import {
+  requireAuth,
+  requireAdmin,
+  requireAnyPermission,
+} from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
@@ -31,7 +35,14 @@ router.get("/:id/public", asyncHandler(getPublicOffice));
 router.get("/stats", requireAuth, asyncHandler(getOverviewStats));
 router.get("/:id", requireAuth, asyncHandler(getOffice));
 router.post("/", requireAuth, requireAdmin, asyncHandler(createOffice));
-router.put("/:id", requireAuth, asyncHandler(updateOffice));
+// Managers configure their own office, admins any office. updateOffice
+// re-checks the office scope, so this guard only decides who may edit at all.
+router.put(
+  "/:id",
+  requireAuth,
+  requireAnyPermission("office:update", "office:manage", "office:configure"),
+  asyncHandler(updateOffice),
+);
 router.delete("/:id", requireAuth, requireAdmin, asyncHandler(deleteOffice));
 
 export default router;

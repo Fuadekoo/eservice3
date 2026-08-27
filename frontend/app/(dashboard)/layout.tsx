@@ -1,4 +1,5 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { RouteGuard } from "@/components/auth/route-guard";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
@@ -15,7 +16,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="fixed inset-0 h-dvh grid overflow-hidden">
-      <DashboardShell>{children}</DashboardShell>
+      <DashboardShell>
+        <RouteGuard>{children}</RouteGuard>
+      </DashboardShell>
     </div>
   );
 }

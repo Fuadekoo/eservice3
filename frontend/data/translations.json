@@ -18,11 +18,35 @@
   ],
   "translations": [
     {
+      "key": "Account Access",
+      "translations": {
+        "en": "Account Access",
+        "am": "የመለያ መዳረሻ",
+        "om": "Argannoo Herregaa"
+      }
+    },
+    {
       "key": "Assigned Office",
       "translations": {
         "en": "Assigned Office",
         "am": "የተመደበ ጽሕፈት ቤት",
         "om": "Waajjira Ramadame"
+      }
+    },
+    {
+      "key": "Choose a role first — it decides whether an office applies.",
+      "translations": {
+        "en": "Choose a role first — it decides whether an office applies.",
+        "am": "መጀመሪያ ሚና ይምረጡ — ጽሕፈት ቤት እንደሚያስፈልግ የሚወስነው ሚናው ነው።",
+        "om": "Jalqaba gahee filadhu — waajjirri barbaachisaa ta'uu isaa kan murteessu gahee dha."
+      }
+    },
+    {
+      "key": "Customers apply to any office, so they are not assigned to one.",
+      "translations": {
+        "en": "Customers apply to any office, so they are not assigned to one.",
+        "am": "ደንበኞች ወደ ማንኛውም ጽሕፈት ቤት ማመልከት ስለሚችሉ ለአንዱ አይመደቡም።",
+        "om": "Maamiltoonni waajjira kamiyyuu iyyachuu waan danda'aniif, tokkotti hin ramadaman."
       }
     },
     {
@@ -58,11 +82,43 @@
       }
     },
     {
+      "key": "Not applicable to customers",
+      "translations": {
+        "en": "Not applicable to customers",
+        "am": "ለደንበኞች አይሠራም",
+        "om": "Maamiltootaaf hin hojjetu"
+      }
+    },
+    {
+      "key": "Optional. Leave empty for a user who is not tied to one office.",
+      "translations": {
+        "en": "Optional. Leave empty for a user who is not tied to one office.",
+        "am": "አማራጭ ነው። ከአንድ ጽሕፈት ቤት ጋር ላልተያያዘ ተጠቃሚ ባዶ ይተዉት።",
+        "om": "Filannoodha. Fayyadamaa waajjira tokkotti hin hidhamneef duwwaa dhiisi."
+      }
+    },
+    {
       "key": "Please fill in all required fields",
       "translations": {
         "en": "Please fill in all required fields",
         "am": "እባክዎ ሁሉንም አስፈላጊ መስኮች ይሙሉ",
         "om": "Maaloo iddoowwan barbaachisan hunda guutaa"
+      }
+    },
+    {
+      "key": "Role & Office",
+      "translations": {
+        "en": "Role & Office",
+        "am": "ሚና እና ጽሕፈት ቤት",
+        "om": "Gahee fi Waajjira"
+      }
+    },
+    {
+      "key": "Select a role first",
+      "translations": {
+        "en": "Select a role first",
+        "am": "መጀመሪያ ሚና ይምረጡ",
+        "om": "Jalqaba gahee filadhu"
       }
     },
     {

@@ -40,6 +40,8 @@ export const createUserSchema = z
     password: z.string().min(6, "Password must be at least 6 characters."),
     roleId: z.string().trim().min(1).optional(),
     roleName: z.string().trim().min(1).optional(),
+    // Assigning an office creates the staff row that links the user to it.
+    officeId: z.string().trim().min(1).optional(),
     isActive: z.boolean().optional(),
   })
   .superRefine((value, ctx) => {
@@ -70,6 +72,7 @@ export const updateUserSchema = z
       .optional(),
     roleId: z.string().trim().min(1).optional(),
     roleName: z.string().trim().min(1).optional(),
+    officeId: z.string().trim().min(1).optional(),
     isActive: z.boolean().optional(),
   })
   .refine(

@@ -114,6 +114,21 @@ const staffInclude = {
 
 type StaffRecord = NonNullable<Awaited<ReturnType<typeof findStaffRecord>>>;
 
+/**
+ * Build the denormalized `name` column from the three name parts. The
+ * validator guarantees each part is non-blank, so the result is never empty.
+ */
+function composeName(
+  firstName?: string | null,
+  fatherName?: string | null,
+  lastName?: string | null,
+) {
+  return [firstName, fatherName, lastName]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 function buildStaffResponse(staff: StaffRecord) {
   return {
     id: staff.id,
@@ -510,7 +525,13 @@ export async function createStaff(
           firstName: parsed.data.firstName,
           fatherName: parsed.data.fatherName,
           lastName: parsed.data.lastName,
-          name: parsed.data.name,
+          name:
+            parsed.data.name ??
+            composeName(
+              parsed.data.firstName,
+              parsed.data.fatherName,
+              parsed.data.lastName,
+            ),
           gender: parsed.data.gender as any,
           status: parsed.data.status as any,
           phoneNumber,
@@ -662,6 +683,22 @@ export async function updateStaff(
         });
       }
 
+      // Keep the denormalized `name` in sync whenever a part changes, merging
+      // the submitted parts over the stored ones.
+      const nameChanged =
+        parsed.data.firstName !== undefined ||
+        parsed.data.fatherName !== undefined ||
+        parsed.data.lastName !== undefined;
+      const composedName =
+        parsed.data.name ??
+        (nameChanged
+          ? composeName(
+              parsed.data.firstName ?? existing.user.firstName,
+              parsed.data.fatherName ?? existing.user.fatherName,
+              parsed.data.lastName ?? existing.user.lastName,
+            )
+          : undefined);
+
       const userData: Prisma.UserUpdateInput = {
         ...(parsed.data.username !== undefined
           ? { username: parsed.data.username }
@@ -675,7 +712,7 @@ export async function updateStaff(
         ...(parsed.data.lastName !== undefined
           ? { lastName: parsed.data.lastName }
           : {}),
-        ...(parsed.data.name !== undefined ? { name: parsed.data.name } : {}),
+        ...(composedName !== undefined ? { name: composedName } : {}),
         ...(parsed.data.gender !== undefined
           ? { gender: parsed.data.gender as any }
           : {}),

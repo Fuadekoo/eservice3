@@ -54,6 +54,21 @@ const userInclude = {
   },
 } as const;
 
+/**
+ * Build the denormalized `name` column from the three name parts. Callers
+ * validate that each part is non-blank, so the result is never empty.
+ */
+function composeName(
+  firstName?: string | null,
+  fatherName?: string | null,
+  lastName?: string | null,
+) {
+  return [firstName, fatherName, lastName]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 function formatUser(user: any) {
   return {
     id: user.id,
@@ -212,6 +227,9 @@ export async function createUser(req: AuthRequest, res: Response) {
 
     const {
       username,
+      firstName,
+      fatherName,
+      lastName,
       phone,
       phoneNumber,
       password,
@@ -252,6 +270,10 @@ export async function createUser(req: AuthRequest, res: Response) {
       data: {
         id: randomUUID(),
         username,
+        firstName,
+        fatherName,
+        lastName,
+        name: composeName(firstName, fatherName, lastName),
         phoneNumber: normalizedPhone,
         password: hashed,
         roleId: resolvedRoleId || null,
@@ -303,6 +325,9 @@ export async function updateUser(req: AuthRequest, res: Response) {
 
     const {
       username,
+      firstName,
+      fatherName,
+      lastName,
       phone,
       phoneNumber,
       password,
@@ -332,6 +357,27 @@ export async function updateUser(req: AuthRequest, res: Response) {
           .status(400)
           .json({ success: false, error: "Phone number already in use" });
       updateData.phoneNumber = normalizedPhone;
+    }
+
+    // Only the supplied parts change; `name` is recomposed from the merged set
+    // so it can never drift out of sync with the parts it mirrors.
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (fatherName !== undefined) updateData.fatherName = fatherName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (
+      firstName !== undefined ||
+      fatherName !== undefined ||
+      lastName !== undefined
+    ) {
+      const current = await prisma.user.findUnique({
+        where: { id },
+        select: { firstName: true, fatherName: true, lastName: true },
+      });
+      updateData.name = composeName(
+        firstName ?? current?.firstName,
+        fatherName ?? current?.fatherName,
+        lastName ?? current?.lastName,
+      );
     }
 
     if (password) updateData.password = await hash(password, 10);

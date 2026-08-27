@@ -50,9 +50,10 @@ import {
 } from "@/lib/phone";
 
 const staffSchema = z.object({
-  firstName: z.string().min(2, "First name is required"),
-  fatherName: z.string().min(2, "Father name is required"),
-  lastName: z.string().min(2, "Last name is required"),
+  // Trimmed before the length check so a whitespace-only name is rejected.
+  firstName: z.string().trim().min(1, "First name is required"),
+  fatherName: z.string().trim().min(1, "Father name is required"),
+  lastName: z.string().trim().min(1, "Last name is required"),
   phone: ethiopianMobilePhoneSchema,
   username: z.string().min(2, "Username is required"),
   password: z

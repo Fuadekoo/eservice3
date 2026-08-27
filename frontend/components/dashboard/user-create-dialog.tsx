@@ -50,7 +50,11 @@ import {
 import { useTranslation } from "@/lib/i18n";
 
 const userSchema = z.object({
-  username: z.string().min(2, "Username is required"),
+  // Trimmed before the length check so a whitespace-only name is rejected.
+  firstName: z.string().trim().min(1, "First name is required"),
+  fatherName: z.string().trim().min(1, "Father name is required"),
+  lastName: z.string().trim().min(1, "Last name is required"),
+  username: z.string().trim().min(2, "Username is required"),
   phoneNumber: ethiopianMobilePhoneSchema,
   password: optionalStrongPasswordSchema,
   // Holds a de-duplicated role name (lower-cased); the backend resolves it to a
@@ -89,6 +93,9 @@ export function UserCreateDialog({
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema) as Resolver<UserFormValues>,
     defaultValues: {
+      firstName: "",
+      fatherName: "",
+      lastName: "",
       username: "",
       phoneNumber: "",
       password: "",
@@ -108,6 +115,9 @@ export function UserCreateDialog({
   React.useEffect(() => {
     if (user) {
       form.reset({
+        firstName: user.firstName ?? "",
+        fatherName: user.fatherName ?? "",
+        lastName: user.lastName ?? "",
         username: user.username,
         phoneNumber: user.phoneNumber,
         password: "",
@@ -117,6 +127,9 @@ export function UserCreateDialog({
       });
     } else {
       form.reset({
+        firstName: "",
+        fatherName: "",
+        lastName: "",
         username: "",
         phoneNumber: "",
         password: "",
@@ -133,6 +146,9 @@ export function UserCreateDialog({
       const normalizedPhone =
         normalizeEthiopianMobilePhone(values.phoneNumber) ?? values.phoneNumber;
       const payload: UpdateUserPayload = {
+        firstName: values.firstName,
+        fatherName: values.fatherName,
+        lastName: values.lastName,
         username: values.username,
         phoneNumber: normalizedPhone,
         roleName: values.roleName,
@@ -151,6 +167,9 @@ export function UserCreateDialog({
           return;
         }
         const createPayload: CreateUserPayload = {
+          firstName: values.firstName,
+          fatherName: values.fatherName,
+          lastName: values.lastName,
           username: values.username,
           phoneNumber: normalizedPhone,
           password: values.password,
@@ -181,6 +200,48 @@ export function UserCreateDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("First Name")}</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder={t("First name")} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="fatherName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("Father Name")}</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder={t("Father name")} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("Last Name")}</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder={t("Last name")} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="username"

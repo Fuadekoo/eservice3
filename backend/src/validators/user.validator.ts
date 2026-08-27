@@ -4,6 +4,21 @@ import {
   normalizeEthiopianMobilePhone,
 } from "../utils/phone.js";
 
+/**
+ * A stored name part must never be null, empty, or whitespace-only.
+ * `.trim()` runs before `.min(1)`, so "   " is rejected too.
+ */
+const requiredNameField = (label: string) =>
+  z
+    .string({ error: label + " is required." })
+    .trim()
+    .min(1, label + " is required.")
+    .max(100, label + " must be 100 characters or fewer.");
+
+/** Same rules, but the field may be omitted entirely (partial updates). */
+const optionalNameField = (label: string) =>
+  requiredNameField(label).optional();
+
 const phoneField = z
   .string()
   .trim()
@@ -17,6 +32,9 @@ const phoneField = z
 export const createUserSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required."),
+    firstName: requiredNameField("First name"),
+    fatherName: requiredNameField("Father name"),
+    lastName: requiredNameField("Last name"),
     phone: phoneField,
     phoneNumber: phoneField,
     password: z.string().min(6, "Password must be at least 6 characters."),
@@ -41,6 +59,9 @@ export const createUserSchema = z
 export const updateUserSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
+    firstName: optionalNameField("First name"),
+    fatherName: optionalNameField("Father name"),
+    lastName: optionalNameField("Last name"),
     phone: phoneField,
     phoneNumber: phoneField,
     password: z

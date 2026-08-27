@@ -18,6 +18,46 @@
   ],
   "translations": [
     {
+      "key": "Father name",
+      "translations": {
+        "en": "Father name",
+        "am": "የአባት ስም",
+        "om": "Maqaa abbaa"
+      }
+    },
+    {
+      "key": "Grandfather's name is required.",
+      "translations": {
+        "en": "Grandfather's name is required.",
+        "am": "የአያት ስም ያስፈልጋል።",
+        "om": "Maqaan akaakayyuu barbaachisaadha."
+      }
+    },
+    {
+      "key": "Last name",
+      "translations": {
+        "en": "Last name",
+        "am": "የአያት ስም",
+        "om": "Maqaa akaakayyuu"
+      }
+    },
+    {
+      "key": "Please fill in all required fields",
+      "translations": {
+        "en": "Please fill in all required fields",
+        "am": "እባክዎ ሁሉንም አስፈላጊ መስኮች ይሙሉ",
+        "om": "Maaloo iddoowwan barbaachisan hunda guutaa"
+      }
+    },
+    {
+      "key": "Username is required.",
+      "translations": {
+        "en": "Username is required.",
+        "am": "የተጠቃሚ ስም ያስፈልጋል።",
+        "om": "Maqaan fayyadamaa barbaachisaadha."
+      }
+    },
+    {
       "key": "— Services · Staff · Requests",
       "translations": {
         "en": "— Services · Staff · Requests",

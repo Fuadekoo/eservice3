@@ -41,12 +41,26 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required."),
 });
 
+/**
+ * A name part is optional on a partial profile update, but when present it
+ * must be a real value: null, "" and "   " are all rejected.
+ */
+const nameField = (label: string) =>
+  z
+    .string({ error: label + " is required." })
+    .trim()
+    .min(1, label + " is required.")
+    .max(100, label + " must be 100 characters or fewer.")
+    .optional();
+
 const updateProfileSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
-    firstName: z.string().trim().max(100).optional(),
-    fatherName: z.string().trim().max(100).optional(),
-    lastName: z.string().trim().max(100).optional(),
+    // Optional (partial update), but a supplied part may never be blank —
+    // clearing a name is not an allowed edit.
+    firstName: nameField("First name"),
+    fatherName: nameField("Father name"),
+    lastName: nameField("Last name"),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
     // Stored image is an uploaded filename (see /files/upload); empty string
     // clears the current photo.

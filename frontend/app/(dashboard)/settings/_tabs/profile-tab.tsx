@@ -103,15 +103,37 @@ function syncCachedUser(user: Record<string, unknown>) {
   }
 }
 
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+/** Fields that must hold a real value — never null, empty, or whitespace-only. */
+const REQUIRED_FIELDS = [
+  { key: "firstName", message: "First name is required." },
+  { key: "fatherName", message: "Father's name is required." },
+  { key: "lastName", message: "Grandfather's name is required." },
+  { key: "username", message: "Username is required." },
+] as const;
+
+type FieldErrors = Partial<Record<keyof ProfileForm, string>>;
+
+function validateProfile(profile: ProfileForm): FieldErrors {
+  const errors: FieldErrors = {};
+  for (const field of REQUIRED_FIELDS) {
+    if (!profile[field.key].trim()) errors[field.key] = field.message;
+  }
+  return errors;
+}
+
 // ─── Field ────────────────────────────────────────────────────────────────────
 
 function Field({
   icon: Icon,
   label,
+  error,
   children,
 }: {
   icon?: React.ElementType;
   label: string;
+  error?: string | undefined;
   children: React.ReactNode;
 }) {
   return (
@@ -121,6 +143,11 @@ function Field({
         {label}
       </p>
       {children}
+      {error ? (
+        <p role="alert" className="text-xs font-medium text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -133,6 +160,7 @@ export function ProfileTab() {
   const [profile, setProfile] = React.useState<ProfileForm>(defaultProfile);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
+  const [fieldErrors, setFieldErrors] = React.useState<FieldErrors>({});
 
   // Phone-change (OTP) dialog state.
   const [phoneDialogOpen, setPhoneDialogOpen] = React.useState(false);
@@ -176,6 +204,13 @@ export function ProfileTab() {
 
   const set = (field: keyof ProfileForm, value: string) => {
     setProfile((p) => ({ ...p, [field]: value }));
+    // Clear the field's error as soon as the user starts correcting it.
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   const initials =
@@ -214,6 +249,15 @@ export function ProfileTab() {
   };
 
   const handleSave = async () => {
+    // A name may never be cleared: block the request rather than persisting a
+    // blank, and surface the reason next to each offending field.
+    const errors = validateProfile(profile);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error(t("Please fill in all required fields"));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Phone is intentionally excluded here — it can only change via OTP.
@@ -360,39 +404,64 @@ export function ProfileTab() {
 
         {/* Fields grid */}
         <div className="grid grid-cols-1 gap-x-12 gap-y-6 sm:grid-cols-2 max-w-6xl mx-auto">
-          <Field icon={User} label={t("First Name")}>
+          <Field
+            icon={User}
+            label={t("First Name")}
+            error={fieldErrors.firstName ? t(fieldErrors.firstName) : undefined}
+          >
             <Input
               value={profile.firstName}
               onChange={(e) => set("firstName", e.target.value)}
               placeholder={t("First name")}
               disabled={busy}
+              aria-invalid={Boolean(fieldErrors.firstName)}
+              required
             />
           </Field>
 
-          <Field icon={User} label={t("Father's Name")}>
+          <Field
+            icon={User}
+            label={t("Father's Name")}
+            error={
+              fieldErrors.fatherName ? t(fieldErrors.fatherName) : undefined
+            }
+          >
             <Input
               value={profile.fatherName}
               onChange={(e) => set("fatherName", e.target.value)}
               placeholder={t("Father's name")}
               disabled={busy}
+              aria-invalid={Boolean(fieldErrors.fatherName)}
+              required
             />
           </Field>
 
-          <Field icon={User} label={t("Grandfather's Name")}>
+          <Field
+            icon={User}
+            label={t("Grandfather's Name")}
+            error={fieldErrors.lastName ? t(fieldErrors.lastName) : undefined}
+          >
             <Input
               value={profile.lastName}
               onChange={(e) => set("lastName", e.target.value)}
               placeholder={t("Grandfather's name")}
               disabled={busy}
+              aria-invalid={Boolean(fieldErrors.lastName)}
+              required
             />
           </Field>
 
-          <Field label={t("Username")}>
+          <Field
+            label={t("Username")}
+            error={fieldErrors.username ? t(fieldErrors.username) : undefined}
+          >
             <Input
               value={profile.username}
               onChange={(e) => set("username", e.target.value)}
               placeholder={t("Enter username")}
               disabled={busy}
+              aria-invalid={Boolean(fieldErrors.username)}
+              required
             />
           </Field>
 

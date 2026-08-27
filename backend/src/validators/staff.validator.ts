@@ -4,6 +4,21 @@ import {
   normalizeEthiopianMobilePhone,
 } from "../utils/phone.js";
 
+/**
+ * A stored name part must never be null, empty, or whitespace-only.
+ * `.trim()` runs before `.min(1)`, so "   " is rejected too.
+ */
+const requiredNameField = (label: string) =>
+  z
+    .string({ error: label + " is required." })
+    .trim()
+    .min(1, label + " is required.")
+    .max(100, label + " must be 100 characters or fewer.");
+
+/** Same rules, but the field may be omitted entirely (partial updates). */
+const optionalNameField = (label: string) =>
+  requiredNameField(label).optional();
+
 const phoneField = z
   .string()
   .trim()
@@ -21,10 +36,11 @@ const phoneField = z
 export const createStaffSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required."),
-    firstName: z.string().trim().min(1, "First name is required.").optional(),
-    fatherName: z.string().trim().min(1, "Father name is required.").optional(),
-    lastName: z.string().trim().min(1, "Last name is required.").optional(),
-    name: z.string().trim().optional(),
+    firstName: requiredNameField("First name"),
+    fatherName: requiredNameField("Father name"),
+    lastName: requiredNameField("Last name"),
+    // Derived from the parts above when omitted; never accepted as blank.
+    name: optionalNameField("Name"),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
     status: z
       .enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"])
@@ -62,10 +78,10 @@ export const createStaffSchema = z
 export const updateStaffSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
-    firstName: z.string().trim().min(1, "First name is required.").optional(),
-    fatherName: z.string().trim().min(1, "Father name is required.").optional(),
-    lastName: z.string().trim().min(1, "Last name is required.").optional(),
-    name: z.string().trim().optional(),
+    firstName: optionalNameField("First name"),
+    fatherName: optionalNameField("Father name"),
+    lastName: optionalNameField("Last name"),
+    name: optionalNameField("Name"),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
     status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"]).optional(),
     phone: phoneField,

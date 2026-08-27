@@ -32,6 +32,9 @@ export type User = {
 
 export type CreateUserPayload = {
   username: string;
+  firstName: string;
+  fatherName: string;
+  lastName: string;
   phoneNumber: string;
   password?: string;
   roleId?: string;

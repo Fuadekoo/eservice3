@@ -96,6 +96,66 @@ type UploadedFile = { name: string; filepath: string; size: number };
 // ── Day names ─────────────────────────────────────────────────────────────────
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+// ── Dates ─────────────────────────────────────────────────────────────────────
+/**
+ * Today as `YYYY-MM-DD` in the viewer's own timezone.
+ *
+ * `toISOString()` alone yields the UTC day, which is the previous date for
+ * anyone east of UTC during their morning — that would let them pick a date
+ * that is already past locally.
+ */
+function todayAsInputValue(): string {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+  return local.toISOString().split("T")[0] as string;
+}
+
+/**
+ * Parse a `YYYY-MM-DD` input value as a local date.
+ *
+ * `new Date("2026-08-29")` is read as UTC midnight, which falls on the
+ * previous day west of UTC — and so reports the wrong weekday.
+ */
+function parseInputDate(value: string): Date | null {
+  const parts = value.split("-");
+  if (parts.length !== 3) return null;
+  const [year, month, day] = parts.map(Number);
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  ) {
+    return null;
+  }
+  const date = new Date(year as number, (month as number) - 1, day as number);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Whether the office takes applications on `value`'s weekday.
+ *
+ * Driven by the office's own weekly schedule, so an office that opens on a
+ * Saturday still accepts Saturdays. With no schedule to go on, the weekend
+ * is treated as closed.
+ */
+function isOfficeOpenOn(
+  value: string,
+  schedule: Record<string, DaySchedule> | undefined,
+): boolean {
+  const date = parseInputDate(value);
+  if (!date) return false;
+  const weekday = date.getDay();
+  const day = schedule?.[String(weekday)];
+  if (day) return day.enabled;
+  return weekday !== 0 && weekday !== 6;
+}
+
+/** Long weekday name for `value`, e.g. "Saturday". */
+function weekdayNameOf(value: string): string {
+  const date = parseInputDate(value);
+  return date ? date.toLocaleDateString("en-US", { weekday: "long" }) : "";
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ApplyServicePage() {
   return (
@@ -134,6 +194,7 @@ function ApplyServiceContent() {
   >("details");
   const [form, setForm] = React.useState({ address: "", date: "", notes: "" });
   const [uploadedFiles, setUploadedFiles] = React.useState<UploadedFile[]>([]);
+  const [dateError, setDateError] = React.useState("");
   const [isUploading, setIsUploading] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   // Kept after the apply sheet closes: the reference number is the one thing
@@ -157,6 +218,7 @@ function ApplyServiceContent() {
     setApplyService(service);
     setMobileApplyStep("details");
     setForm({ address: "", date: "", notes: "" });
+    setDateError("");
     setUploadedFiles([]);
   }, []);
 
@@ -271,6 +333,16 @@ function ApplyServiceContent() {
       toast.error(t("Please select a preferred date."));
       return;
     }
+    if (form.date < todayAsInputValue()) {
+      toast.error(t("The preferred date cannot be in the past."));
+      return;
+    }
+    if (!isOfficeOpenOn(form.date, weeklySchedule)) {
+      const message = closedDayMessage(form.date);
+      setDateError(message);
+      toast.error(message);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -286,6 +358,7 @@ function ApplyServiceContent() {
       toast.success(t("Application submitted successfully!"));
       setApplyService(null);
       setForm({ address: "", date: "", notes: "" });
+      setDateError("");
       setUploadedFiles([]);
 
       if (requestNumber) {
@@ -323,6 +396,12 @@ function ApplyServiceContent() {
   const slotDuration =
     selectedOffice?.settings?.slotDuration ??
     selectedOffice?.availability?.slotDuration;
+
+  /** Why the chosen day is unavailable, named so it is actionable. */
+  const closedDayMessage = (value: string) =>
+    t("The office is closed on {day}. Please choose another day.", {
+      day: t(weekdayNameOf(value)),
+    });
 
   // ── Derived data ──────────────────────────────────────────────────────────
   const filteredOffices = offices.filter((o) =>
@@ -1072,11 +1151,30 @@ function ApplyServiceContent() {
                             <Input
                               type="date"
                               value={form.date}
-                              onChange={(e) =>
-                                setForm((p) => ({ ...p, date: e.target.value }))
-                              }
+                              min={todayAsInputValue()}
+                              aria-invalid={Boolean(dateError)}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setForm((p) => ({ ...p, date: value }));
+                                // Browsers cannot grey out individual weekdays,
+                                // so a closed day is refused the moment it is
+                                // picked rather than silently accepted.
+                                setDateError(
+                                  value && !isOfficeOpenOn(value, weeklySchedule)
+                                    ? closedDayMessage(value)
+                                    : "",
+                                );
+                              }}
                               className="h-11 rounded-xl"
                             />
+                            {dateError ? (
+                              <p
+                                role="alert"
+                                className="text-xs font-medium text-destructive"
+                              >
+                                {dateError}
+                              </p>
+                            ) : null}
                           </div>
 
                           {/* Notes */}

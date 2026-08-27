@@ -132,11 +132,15 @@ axiosInstance.interceptors.response.use(
       const status = error.response.status;
 
       // Safely extract error data
-      let errorData: {
+      type ApiErrorPayload = {
         error?: string;
         message?: string;
         details?: Array<{ path?: string; message?: string }>;
-      } = {};
+        /** Some endpoints nest the validation payload under this key. */
+        errors?: ApiErrorPayload;
+      };
+
+      let errorData: ApiErrorPayload = {};
 
       // Try to parse error response data
       if (error.response.data) {
@@ -173,16 +177,43 @@ axiosInstance.interceptors.response.use(
         }
       }
 
-      const message =
-        errorData?.message ||
-        errorData?.error ||
-        `API request failed (${status})`;
-      const details = Array.isArray(errorData?.details)
-        ? errorData.details.map((item) => ({
+      // Validation failures arrive in two shapes: flat
+      // ({ error, message, details }) and nested
+      // ({ success: false, errors: { error, message, details } }). Without
+      // unwrapping the nested one, every endpoint that uses it — including
+      // POST /requests — surfaces only "API request failed (400)".
+      const nested =
+        errorData.errors && typeof errorData.errors === "object"
+          ? errorData.errors
+          : undefined;
+
+      const rawDetails = Array.isArray(errorData?.details)
+        ? errorData.details
+        : Array.isArray(nested?.details)
+          ? nested.details
+          : undefined;
+
+      const details = rawDetails
+        ? rawDetails.map((item) => ({
             path: typeof item?.path === "string" ? item.path : undefined,
             message: typeof item?.message === "string" ? item.message : "",
           }))
         : undefined;
+
+      // The field-level messages say what to fix; the wrapper message
+      // ("One or more fields are invalid.") does not, so prefer the specifics.
+      const detailMessage = details
+        ?.map((item) => item.message)
+        .filter(Boolean)
+        .join(" ");
+
+      const message =
+        detailMessage ||
+        errorData?.message ||
+        errorData?.error ||
+        nested?.message ||
+        nested?.error ||
+        `API request failed (${status})`;
 
       return Promise.reject(new ApiError(message, status, details));
     }

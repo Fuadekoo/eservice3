@@ -66,6 +66,22 @@
       }
     },
     {
+      "key": "The office is closed on {day}. Please choose another day.",
+      "translations": {
+        "en": "The office is closed on {day}. Please choose another day.",
+        "am": "ጽሕፈት ቤቱ በ{day} ዝግ ነው። እባክዎ ሌላ ቀን ይምረጡ።",
+        "om": "Waajjirri {day} cufaadha. Maaloo guyyaa biraa filadhu."
+      }
+    },
+    {
+      "key": "The preferred date cannot be in the past.",
+      "translations": {
+        "en": "The preferred date cannot be in the past.",
+        "am": "የተመረጠው ቀን ያለፈ መሆን አይችልም።",
+        "om": "Guyyaan filatame kan darbe ta'uu hin danda'u."
+      }
+    },
+    {
       "key": "Username is required.",
       "translations": {
         "en": "Username is required.",

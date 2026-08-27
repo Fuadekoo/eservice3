@@ -38,7 +38,7 @@ router.get(
 router.post(
   "/for-other",
   requireAuth,
-  requirePermission("request:create"),
+  requirePermission("request:create-for-other"),
   asyncHandler(createRequestForOther),
 );
 router.get(

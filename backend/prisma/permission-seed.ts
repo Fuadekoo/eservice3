@@ -75,6 +75,10 @@ async function main() {
 
     // --- Request Management ---
     { name: "request:create", description: "Create service requests" },
+    {
+      name: "request:create-for-other",
+      description: "Submit a service request on behalf of a family member",
+    },
     { name: "request:read", description: "View service requests" },
     { name: "request:update", description: "Update service requests" },
     { name: "request:delete", description: "Delete service requests" },

@@ -8,6 +8,7 @@ import { createAuthSession, deleteAuthSession, listUserAuthSessions, revokeOther
 import { prisma } from "../lib/db.js";
 import { generateToken } from "../lib/jwt.js";
 import { buildValidationError } from "../validators/security.validator.js";
+import { optionalNameField, requiredNameField } from "../utils/name.js";
 import { ETHIOPIAN_MOBILE_PHONE_MESSAGE, getEthiopianMobilePhoneCandidates, normalizeEthiopianMobilePhone, } from "../utils/phone.js";
 const loginSchema = z.object({
     phone: z
@@ -23,9 +24,11 @@ const loginSchema = z.object({
 const updateProfileSchema = z
     .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
-    firstName: z.string().trim().max(100).optional(),
-    fatherName: z.string().trim().max(100).optional(),
-    lastName: z.string().trim().max(100).optional(),
+    // Optional (partial update), but a supplied part may never be blank or
+    // carry digits — clearing or numbering a name is not an allowed edit.
+    firstName: optionalNameField("First name"),
+    fatherName: optionalNameField("Father name"),
+    lastName: optionalNameField("Last name"),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
     // Stored image is an uploaded filename (see /files/upload); empty string
     // clears the current photo.
@@ -543,9 +546,9 @@ export async function verifyLoginTwoFactor(req, res) {
     return verifyLoginTwoFactorHandler(req, res);
 }
 const registerCustomerSchema = z.object({
-    firstName: z.string().trim().min(1, "First name is required."),
-    fatherName: z.string().trim().min(1, "Father's name is required."),
-    lastName: z.string().trim().min(1, "Last name is required."),
+    firstName: requiredNameField("First name"),
+    fatherName: requiredNameField("Father name"),
+    lastName: requiredNameField("Last name"),
     username: z.string().trim().min(1, "Username is required."),
     phone: z
         .string()

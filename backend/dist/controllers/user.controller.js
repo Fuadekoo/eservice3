@@ -1,6 +1,7 @@
 import { hash } from "bcryptjs";
 import { randomUUID } from "crypto";
 import { prisma } from "../lib/db.js";
+import { Prisma } from "../lib/prisma-client.js";
 import { createUserSchema, updateUserSchema, buildValidationError, } from "../validators/user.validator.js";
 import { getEthiopianMobilePhoneCandidates } from "../utils/phone.js";
 function parseQueryString(value) {
@@ -41,6 +42,43 @@ const userInclude = {
         },
     },
 };
+/**
+ * Build the denormalized `name` column from the three name parts. Callers
+ * validate that each part is non-blank, so the result is never empty.
+ */
+function composeName(firstName, fatherName, lastName) {
+    return [firstName, fatherName, lastName]
+        .map((part) => (part ?? "").trim())
+        .filter(Boolean)
+        .join(" ");
+}
+/**
+ * Link a user to an office by way of the `staff` join row, which is what the
+ * rest of the app reads an office assignment from.
+ *
+ * Existing rows are moved rather than duplicated, and never deleted here —
+ * a staff row can be referenced by approved requests.
+ */
+async function assignOffice(tx, userId, officeId) {
+    const office = await tx.office.findUnique({
+        where: { id: officeId },
+        select: { id: true },
+    });
+    if (!office)
+        throw new Error("Office not found");
+    const existing = await tx.staff.findFirst({
+        where: { userId },
+        select: { id: true },
+    });
+    if (existing) {
+        await tx.staff.update({
+            where: { id: existing.id },
+            data: { officeId },
+        });
+        return;
+    }
+    await tx.staff.create({ data: { userId, officeId } });
+}
 function formatUser(user) {
     return {
         id: user.id,
@@ -189,7 +227,7 @@ export async function createUser(req, res) {
                 success: false,
                 errors: buildValidationError(validation.error),
             });
-        const { username, phone, phoneNumber, password, roleId, roleName: roleNameInput, isActive, } = validation.data;
+        const { username, firstName, fatherName, lastName, phone, phoneNumber, password, roleId, roleName: roleNameInput, officeId, isActive, } = validation.data;
         const normalizedPhone = phoneNumber || phone || "";
         const phoneCandidates = getEthiopianMobilePhoneCandidates(normalizedPhone);
         // Unique checks
@@ -209,22 +247,51 @@ export async function createUser(req, res) {
                     .status(400)
                     .json({ success: false, error: "Phone number already in use" });
         }
+        if (officeId) {
+            const office = await prisma.office.findUnique({
+                where: { id: officeId },
+                select: { id: true },
+            });
+            if (!office)
+                return res
+                    .status(400)
+                    .json({ success: false, error: "Office not found" });
+        }
         const hashed = await hash(password, 10);
         let resolvedRoleId = roleId;
         if (!resolvedRoleId && roleNameInput) {
             resolvedRoleId = await resolveRoleIdByName(roleNameInput);
         }
-        const newUser = await prisma.user.create({
-            data: {
-                id: randomUUID(),
-                username,
-                phoneNumber: normalizedPhone,
-                password: hashed,
-                roleId: resolvedRoleId || null,
-                isActive: isActive ?? true,
-            },
+        // User and office assignment are written together: a user created
+        // without the office that was asked for would be a silent half-success.
+        const createdId = await prisma.$transaction(async (tx) => {
+            const created = await tx.user.create({
+                data: {
+                    id: randomUUID(),
+                    username,
+                    firstName,
+                    fatherName,
+                    lastName,
+                    name: composeName(firstName, fatherName, lastName),
+                    phoneNumber: normalizedPhone,
+                    password: hashed,
+                    roleId: resolvedRoleId || null,
+                    isActive: isActive ?? true,
+                },
+                select: { id: true },
+            });
+            if (officeId)
+                await assignOffice(tx, created.id, officeId);
+            return created.id;
+        });
+        const newUser = await prisma.user.findUnique({
+            where: { id: createdId },
             include: userInclude,
         });
+        if (!newUser)
+            return res
+                .status(500)
+                .json({ success: false, error: "Failed to load the created user" });
         return res
             .status(201)
             .json({
@@ -262,7 +329,7 @@ export async function updateUser(req, res) {
                 success: false,
                 errors: buildValidationError(validation.error),
             });
-        const { username, phone, phoneNumber, password, roleId, roleName: roleNameInput, isActive, } = validation.data;
+        const { username, firstName, fatherName, lastName, phone, phoneNumber, password, roleId, roleName: roleNameInput, officeId, isActive, } = validation.data;
         const updateData = {};
         if (username) {
             const exists = await prisma.user.findUnique({ where: { username } });
@@ -284,6 +351,33 @@ export async function updateUser(req, res) {
                     .json({ success: false, error: "Phone number already in use" });
             updateData.phoneNumber = normalizedPhone;
         }
+        // Only the supplied parts change; `name` is recomposed from the merged set
+        // so it can never drift out of sync with the parts it mirrors.
+        if (firstName !== undefined)
+            updateData.firstName = firstName;
+        if (fatherName !== undefined)
+            updateData.fatherName = fatherName;
+        if (lastName !== undefined)
+            updateData.lastName = lastName;
+        if (firstName !== undefined ||
+            fatherName !== undefined ||
+            lastName !== undefined) {
+            const current = await prisma.user.findUnique({
+                where: { id },
+                select: { firstName: true, fatherName: true, lastName: true },
+            });
+            updateData.name = composeName(firstName ?? current?.firstName, fatherName ?? current?.fatherName, lastName ?? current?.lastName);
+        }
+        if (officeId) {
+            const office = await prisma.office.findUnique({
+                where: { id: officeId },
+                select: { id: true },
+            });
+            if (!office)
+                return res
+                    .status(400)
+                    .json({ success: false, error: "Office not found" });
+        }
         if (password)
             updateData.password = await hash(password, 10);
         let resolvedRoleId = roleId;
@@ -294,11 +388,19 @@ export async function updateUser(req, res) {
             updateData.roleId = resolvedRoleId || null;
         if (isActive !== undefined)
             updateData.isActive = isActive;
-        const updated = await prisma.user.update({
+        await prisma.$transaction(async (tx) => {
+            await tx.user.update({ where: { id }, data: updateData });
+            if (officeId)
+                await assignOffice(tx, id, officeId);
+        });
+        const updated = await prisma.user.findUnique({
             where: { id },
-            data: updateData,
             include: userInclude,
         });
+        if (!updated)
+            return res
+                .status(404)
+                .json({ success: false, error: "User not found" });
         return res
             .status(200)
             .json({

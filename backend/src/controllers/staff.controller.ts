@@ -206,23 +206,42 @@ async function ensureOfficeExists(officeId: string) {
  * scope here. The office a staff member belongs to is recorded on their staff
  * row, which is the single place it lives.
  */
+/** Roles that grant administration of the system itself. */
+const PRIVILEGED_ROLE_NAMES = new Set(["admin", "administrator", "superadmin"]);
+
 async function resolveRoleId(
   tx: Prisma.TransactionClient,
   input: { roleId?: string | undefined; roleName?: string | undefined },
+  opts: { allowPrivileged: boolean },
 ): Promise<string> {
   const normalizedRoleId = normalizeString(input.roleId);
   if (normalizedRoleId) {
     const role = await tx.role.findUnique({
       where: { id: normalizedRoleId },
-      select: { id: true },
+      select: { id: true, name: true },
     });
     if (!role) throw new Error("Role not found.");
+    if (
+      !opts.allowPrivileged &&
+      PRIVILEGED_ROLE_NAMES.has(role.name.trim().toLowerCase())
+    ) {
+      throw new Error(
+        "Only an administrator can assign an administrator role.",
+      );
+    }
     return role.id;
   }
 
   const normalizedRoleName = normalizeString(input.roleName);
   if (!normalizedRoleName)
     throw new Error("Either roleId or roleName is required.");
+
+  if (
+    !opts.allowPrivileged &&
+    PRIVILEGED_ROLE_NAMES.has(normalizedRoleName.toLowerCase())
+  ) {
+    throw new Error("Only an administrator can assign an administrator role.");
+  }
 
   const existing = await tx.role.findFirst({
     where: { name: normalizedRoleName },
@@ -508,7 +527,7 @@ export async function createStaff(
       const resolvedRoleId = await resolveRoleId(tx, {
         roleId: parsed.data.roleId,
         roleName: parsed.data.roleName,
-      });
+      }, { allowPrivileged: req.isAdmin === true });
 
       const newUser = await tx.user.create({
         data: {
@@ -671,7 +690,7 @@ export async function updateStaff(
         resolvedRoleId = await resolveRoleId(tx, {
           roleId: parsed.data.roleId,
           roleName: parsed.data.roleName,
-        });
+        }, { allowPrivileged: req.isAdmin === true });
       }
 
       // Keep the denormalized `name` in sync whenever a part changes, merging

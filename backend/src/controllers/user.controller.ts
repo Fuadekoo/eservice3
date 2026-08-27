@@ -231,6 +231,36 @@ export async function getUser(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * Roles that grant administration of the system itself.
+ *
+ * Only an administrator may hand one out. The account forms do not list them,
+ * but a request can name any role id, so the rule is enforced here — otherwise
+ * anyone able to create a user could make themselves an administrator.
+ */
+const PRIVILEGED_ROLE_NAMES = new Set([
+  "admin",
+  "administrator",
+  "superadmin",
+]);
+
+/**
+ * True when the caller may not assign `roleId`.
+ *
+ * An administrator may assign anything; anyone else is refused a privileged
+ * role. An unknown id is left alone — the caller handles that separately.
+ */
+async function assigningForbiddenRole(
+  req: AuthRequest,
+  roleId: string | null | undefined,
+): Promise<boolean> {
+  if (!roleId || req.isAdmin) return false;
+  const role = await prisma.role.findUnique({
+    where: { id: roleId },
+    select: { name: true },
+  });
+  return Boolean(role) && PRIVILEGED_ROLE_NAMES.has(role!.name.trim().toLowerCase());
+}
 export async function createUser(req: AuthRequest, res: Response) {
   try {
     const authUserId = req.user?.id;
@@ -303,6 +333,13 @@ export async function createUser(req: AuthRequest, res: Response) {
     let resolvedRoleId = roleId;
     if (!resolvedRoleId && roleNameInput) {
       resolvedRoleId = await resolveRoleIdByName(roleNameInput);
+    }
+
+    if (await assigningForbiddenRole(req, resolvedRoleId)) {
+      return res.status(403).json({
+        success: false,
+        error: "Only an administrator can assign an administrator role.",
+      });
     }
 
     // User and office assignment are written together: a user created
@@ -452,6 +489,14 @@ export async function updateUser(req: AuthRequest, res: Response) {
     if (!resolvedRoleId && roleNameInput) {
       resolvedRoleId = await resolveRoleIdByName(roleNameInput);
     }
+
+    if (await assigningForbiddenRole(req, resolvedRoleId)) {
+      return res.status(403).json({
+        success: false,
+        error: "Only an administrator can assign an administrator role.",
+      });
+    }
+
     if (resolvedRoleId !== undefined)
       updateData.roleId = resolvedRoleId || null;
 

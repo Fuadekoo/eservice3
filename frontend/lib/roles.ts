@@ -49,6 +49,26 @@ export function dedupeRolesByName(
  */
 const NON_OFFICE_ROLE_NAMES = new Set(["customer"]);
 
+/**
+ * Roles that hold the keys to the system itself.
+ *
+ * These are never offered when creating or editing an account. An
+ * administrator can do everything — including granting administration to
+ * others — so handing one out from an ordinary user form is the shortest path
+ * from "can add a colleague" to "owns the system". Administrators are made
+ * deliberately, through the seed or a script, not from a dropdown.
+ *
+ * The API enforces this too; hiding it here only keeps it off the screen.
+ */
+const PRIVILEGED_ROLE_NAMES = new Set(["admin", "administrator", "superadmin"]);
+
+/** True when the role may be handed out from the account forms. */
+export function isAssignableRole(name?: string | null): boolean {
+  const key = name?.trim().toLowerCase();
+  if (!key) return false;
+  return !PRIVILEGED_ROLE_NAMES.has(key);
+}
+
 /** True when `name` is a role an office member can legitimately hold. */
 export function isOfficeAssignableRole(name?: string | null): boolean {
   const key = name?.trim().toLowerCase();

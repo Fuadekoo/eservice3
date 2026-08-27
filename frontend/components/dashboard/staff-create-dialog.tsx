@@ -105,7 +105,10 @@ export function StaffCreateDialog({
   // to is recorded on their staff row, not on the role — so the same list
   // serves every office. Customers are excluded: they are not office staff.
   const roleOptions = React.useMemo(() => {
-    const options = assignableRoles(roles, { officeOnly: true });
+    const options = assignableRoles(roles, {
+      officeOnly: true,
+      keepRoleId: member?.role?.id,
+    });
 
     // A member already holding an excluded role (customers registering
     // against an office do get a staff row) keeps it listed, so editing shows

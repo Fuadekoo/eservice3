@@ -144,14 +144,16 @@ export function UserCreateDialog({
   const scopedOfficeId =
     selectedOfficeId && selectedOfficeId !== NO_OFFICE ? selectedOfficeId : null;
 
-  // Roles are global, so the same list serves every office.
+  // Roles are global, so the same list serves every office. Administrator
+  // roles are withheld — see assignableRoles — except the one an edited
+  // account already holds, so its select is never blank.
   const roleOptions = React.useMemo<SearchSelectOption[]>(
     () =>
-      assignableRoles(roles).map((role) => ({
+      assignableRoles(roles, { keepRoleId: user?.role?.id }).map((role) => ({
         value: role.id,
         label: t(role.label),
       })),
-    [roles, t],
+    [roles, user?.role?.id, t],
   );
 
   const officeOptions = React.useMemo<SearchSelectOption[]>(

@@ -518,6 +518,9 @@ export async function createRequest(req: AuthRequest, res: Response) {
       id: randomUUID(),
       userId,
       serviceId,
+      // Denormalised so the office can be filtered and counted without joining
+      // through the service on every read.
+      officeId: service.officeId,
       currentAddress,
       date: new Date(date),
       statusbystaff: "pending",

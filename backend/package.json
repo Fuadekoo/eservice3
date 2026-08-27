@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "tsx": "npx tsx src/server.ts --watch",
     "seed": "npx tsx prisma/seed.ts",
+    "backfill:office-ids": "npx tsx prisma/backfill-office-ids.ts",
     "vapid": "node scripts/generate-vapid.mjs"
   },
   "keywords": [],

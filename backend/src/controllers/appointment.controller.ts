@@ -253,10 +253,15 @@ export async function createAppointment(req: AuthRequest, res: Response) {
 
     const { requestId, date, time, notes } = validation.data;
 
-    // Verify request exists
+    // Verify request exists. The service comes along so the appointment can
+    // record which office it belongs to.
     const request = await prisma.request.findUnique({
       where: { id: requestId },
-      select: { userId: true, id: true },
+      select: {
+        userId: true,
+        id: true,
+        service: { select: { officeId: true } },
+      },
     });
 
     if (!request) {
@@ -282,6 +287,9 @@ export async function createAppointment(req: AuthRequest, res: Response) {
       data: {
         requestId,
         userId: request.userId,
+        // Denormalised from the request's service so office dashboards can
+        // count and filter appointments without a three-table join.
+        officeId: request.service?.officeId ?? null,
         date: new Date(date),
         time: time || null,
         notes: notes || null,

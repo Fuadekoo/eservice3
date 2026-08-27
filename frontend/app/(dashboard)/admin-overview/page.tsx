@@ -40,18 +40,21 @@ import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-type OfficeItem = {
+// ── Types ────────────────────────────────────────────────────────────
+type OfficeRow = {
   id: string;
   name: string;
   status: boolean;
-  _count?: { service: number; staffs: number; requests?: number; appointments?: number };
+  services: number;
+  staff: number;
+  requests: number;
+  appointments: number;
 };
 
 type SliceItem = { name: string; value: number; color: string };
 
 type Overview = {
-  offices: OfficeItem[];
+  offices: OfficeRow[];
   totalUsers: number;
   totalStaff: number;
   totalServices: number;
@@ -63,7 +66,23 @@ type Overview = {
   officeChart: { name: string; services: number; staff: number; requests: number }[];
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+/** Shape returned by GET /offices/stats — every figure aggregated in the DB. */
+type StatsPayload = {
+  totals: {
+    offices: number;
+    users: number;
+    staff: number;
+    services: number;
+    requests: number;
+    appointments: number;
+  };
+  staffStatus: Record<string, number>;
+  requestStatus: { pending: number; processing: number; approved: number; rejected: number };
+  appointmentStatus: Record<string, number>;
+  offices: OfficeRow[];
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────
 function getReqOverall(r: any): string {
   if (r.statusbystaff === "rejected" || r.statusbyadmin === "rejected") return "Rejected";
   if (r.statusbystaff === "approved" && r.statusbyadmin === "approved") return "Approved";
@@ -75,6 +94,41 @@ function settled<T>(r: PromiseSettledResult<T>): T | null {
   return r.status === "fulfilled" ? r.value : null;
 }
 
+const STAFF_STATUS_META: { key: string; name: string; color: string }[] = [
+  { key: "ACTIVE",   name: "Active",   color: "#10b981" },
+  { key: "INACTIVE", name: "Inactive", color: "#6b7280" },
+  { key: "PENDING",  name: "Pending",  color: "#f59e0b" },
+  { key: "BLOCKED",  name: "Blocked",  color: "#ef4444" },
+];
+
+const APT_STATUS_META: Record<string, { name: string; color: string }> = {
+  pending:   { name: "Pending",   color: "#f59e0b" },
+  approved:  { name: "Confirmed", color: "#10b981" },
+  completed: { name: "Completed", color: "#3b82f6" },
+  rejected:  { name: "Rejected",  color: "#ef4444" },
+  cancelled: { name: "Cancelled", color: "#6b7280" },
+};
+
+const REQ_STATUS_META: { key: keyof StatsPayload["requestStatus"]; name: string; color: string }[] = [
+  { key: "pending",    name: "Pending",    color: "#f59e0b" },
+  { key: "processing", name: "Processing", color: "#3b82f6" },
+  { key: "approved",   name: "Approved",   color: "#10b981" },
+  { key: "rejected",   name: "Rejected",   color: "#ef4444" },
+];
+
+/** Top 8 offices by request volume, for the comparison bars. */
+function buildOfficeChart(offices: OfficeRow[]) {
+  return [...offices]
+    .sort((a, b) => b.requests - a.requests)
+    .slice(0, 8)
+    .map((o) => ({
+      name: o.name.length > 18 ? o.name.slice(0, 16) + "…" : o.name,
+      services: o.services,
+      staff: o.staff,
+      requests: o.requests,
+    }));
+}
+
 const TOOLTIP_STYLE = {
   backgroundColor: "hsl(var(--card))",
   border: "1px solid hsl(var(--border))",
@@ -83,7 +137,7 @@ const TOOLTIP_STYLE = {
   color: "hsl(var(--foreground))",
 };
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Page ────────────────────────────────────────────────────────────
 export default function AdminOverviewPage() {
   return (
     <ProtectedRoute
@@ -104,76 +158,154 @@ function AdminOverviewContent() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [updatedAt, setUpdatedAt] = React.useState<Date | null>(null);
 
+  /**
+   * Preferred path: one aggregated call. Counts come straight out of the
+   * database, so nothing depends on how many rows a paginated list happened to
+   * return, and offices whose denormalised `officeId` column was never written
+   * still report the work they actually own.
+   */
+  const loadFromStats = React.useCallback(async (): Promise<Overview> => {
+    const body = (await axiosInstance.get("/offices/stats")) as unknown as {
+      data: StatsPayload;
+    };
+    const stats = body?.data;
+    if (!stats?.totals) throw new Error("Malformed stats payload");
+
+    const offices = stats.offices ?? [];
+
+    return {
+      offices,
+      totalUsers: stats.totals.users,
+      totalStaff: stats.totals.staff,
+      totalServices: stats.totals.services,
+      totalRequests: stats.totals.requests,
+      totalAppointments: stats.totals.appointments,
+      staffStatus: STAFF_STATUS_META.map(({ key, name, color }) => ({
+        name,
+        value: stats.staffStatus?.[key] ?? 0,
+        color,
+      })).filter((s) => s.value > 0),
+      requestStatus: REQ_STATUS_META.map(({ key, name, color }) => ({
+        name,
+        value: stats.requestStatus?.[key] ?? 0,
+        color,
+      })).filter((s) => s.value > 0),
+      appointmentStatus: Object.entries(stats.appointmentStatus ?? {})
+        .map(([key, value]) => ({
+          name: APT_STATUS_META[key]?.name ?? key,
+          value,
+          color: APT_STATUS_META[key]?.color ?? "#6b7280",
+        }))
+        .filter((s) => s.value > 0),
+      officeChart: buildOfficeChart(offices),
+    };
+  }, []);
+
+  /**
+   * Fallback for a backend without /offices/stats: derive the same figures from
+   * the individual list endpoints. Totals take the largest of the signals
+   * available — a relation count of 0 must never win over a list that clearly
+   * holds rows, which is what the old `a || b` chain allowed.
+   */
+  const loadFromLists = React.useCallback(async (): Promise<Overview> => {
+    const [offRes, staffRes, usersRes, reqRes, aptRes] = await Promise.allSettled([
+      axiosInstance.get("/offices"),
+      axiosInstance.get("/staff", { params: { pageSize: 500 } }),
+      axiosInstance.get("/users", { params: { page: 1, pageSize: 1 } }),
+      axiosInstance.get("/requests", { params: { pageSize: 500 } }),
+      axiosInstance.get("/appointments"),
+    ]);
+
+    const rawOffices: any[] = (settled(offRes) as any)?.data ?? [];
+    const staffList: any[] = (settled(staffRes) as any)?.data ?? [];
+    const totalUsers: number = (settled(usersRes) as any)?.pagination?.total ?? 0;
+    const reqBody = settled(reqRes) as any;
+    const reqList: any[] = reqBody?.data ?? [];
+    const aptList: any[] = (settled(aptRes) as any)?.data ?? [];
+
+    const offices: OfficeRow[] = rawOffices.map((o) => ({
+      id: o.id,
+      name: o.name,
+      status: !!o.status,
+      services: o._count?.service ?? 0,
+      staff: o._count?.staffs ?? 0,
+      requests: o._count?.requests ?? 0,
+      appointments: o._count?.appointments ?? 0,
+    }));
+
+    const sum = (key: "services" | "staff" | "requests" | "appointments") =>
+      offices.reduce((acc, o) => acc + (o[key] ?? 0), 0);
+
+    // `pagination.total` is the server's own count and outranks the single page
+    // of rows we were handed; the relation sums are the last resort.
+    const totalRequests = Math.max(
+      reqBody?.pagination?.total ?? 0,
+      reqList.length,
+      sum("requests"),
+    );
+    const totalAppointments = Math.max(aptList.length, sum("appointments"));
+
+    const staffCount: Record<string, number> = {};
+    staffList.forEach((s) => {
+      const key = String(s.status ?? "ACTIVE");
+      staffCount[key] = (staffCount[key] ?? 0) + 1;
+    });
+
+    const reqCount: Record<string, number> = { Pending: 0, Processing: 0, Approved: 0, Rejected: 0 };
+    reqList.forEach((r) => {
+      reqCount[getReqOverall(r)]++;
+    });
+
+    const aptCount: Record<string, number> = {};
+    aptList.forEach((a) => {
+      aptCount[a.status] = (aptCount[a.status] ?? 0) + 1;
+    });
+
+    return {
+      offices,
+      totalUsers,
+      totalStaff: Math.max(staffList.length, sum("staff")),
+      totalServices: sum("services"),
+      totalRequests,
+      totalAppointments,
+      staffStatus: STAFF_STATUS_META.map(({ key, name, color }) => ({
+        name,
+        value: staffCount[key] ?? 0,
+        color,
+      })).filter((s) => s.value > 0),
+      requestStatus: REQ_STATUS_META.map(({ name, color }) => ({
+        name,
+        value: reqCount[name] ?? 0,
+        color,
+      })).filter((s) => s.value > 0),
+      appointmentStatus: Object.entries(aptCount)
+        .map(([key, value]) => ({
+          name: APT_STATUS_META[key]?.name ?? key,
+          value,
+          color: APT_STATUS_META[key]?.color ?? "#6b7280",
+        }))
+        .filter((s) => s.value > 0),
+      officeChart: buildOfficeChart(offices),
+    };
+  }, []);
+
   const load = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const [offRes, staffRes, usersRes, reqRes, aptRes] = await Promise.allSettled([
-        axiosInstance.get("/offices"),
-        axiosInstance.get("/staff", { params: { pageSize: 500 } }),
-        axiosInstance.get("/users", { params: { page: 1, pageSize: 1 } }),
-        axiosInstance.get("/requests", { params: { pageSize: 500 } }),
-        axiosInstance.get("/appointments"),
-      ]);
-
-      const offices: OfficeItem[] = (settled(offRes) as any)?.data ?? [];
-      const staffList: any[] = (settled(staffRes) as any)?.data ?? [];
-      const totalUsers: number = (settled(usersRes) as any)?.pagination?.total ?? 0;
-      const reqList: any[] = (settled(reqRes) as any)?.data ?? [];
-      const aptList: any[] = (settled(aptRes) as any)?.data ?? [];
-
-      // Prefer _count totals from offices (accurate DB aggregates)
-      const totalServices = offices.reduce((s, o) => s + (o._count?.service ?? 0), 0);
-      const totalStaff = offices.reduce((s, o) => s + (o._count?.staffs ?? 0), 0) || staffList.length;
-      const totalRequests = offices.reduce((s, o) => s + (o._count?.requests ?? 0), 0) || reqList.length;
-      const totalAppointments = offices.reduce((s, o) => s + (o._count?.appointments ?? 0), 0) || aptList.length;
-
-      // Staff status slices
-      const staffStatus: SliceItem[] = [
-        { name: "Active",   value: staffList.filter(s => s.status === "ACTIVE").length,   color: "#10b981" },
-        { name: "Inactive", value: staffList.filter(s => s.status === "INACTIVE").length, color: "#6b7280" },
-        { name: "Pending",  value: staffList.filter(s => s.status === "PENDING").length,  color: "#f59e0b" },
-        { name: "Blocked",  value: staffList.filter(s => s.status === "BLOCKED").length,  color: "#ef4444" },
-      ].filter(s => s.value > 0);
-
-      // Request status slices
-      const reqCount = { Pending: 0, Processing: 0, Approved: 0, Rejected: 0 };
-      reqList.forEach(r => { (reqCount as any)[getReqOverall(r)]++; });
-      const requestStatus: SliceItem[] = [
-        { name: "Pending",    value: reqCount.Pending,    color: "#f59e0b" },
-        { name: "Processing", value: reqCount.Processing, color: "#3b82f6" },
-        { name: "Approved",   value: reqCount.Approved,   color: "#10b981" },
-        { name: "Rejected",   value: reqCount.Rejected,   color: "#ef4444" },
-      ].filter(s => s.value > 0);
-
-      // Appointment status slices
-      const aptCount: Record<string, number> = {};
-      aptList.forEach(a => { aptCount[a.status] = (aptCount[a.status] ?? 0) + 1; });
-      const aptColors: Record<string, string> = { pending: "#f59e0b", approved: "#10b981", completed: "#3b82f6", rejected: "#ef4444", cancelled: "#6b7280" };
-      const aptLabels: Record<string, string> = { pending: "Pending", approved: "Confirmed", completed: "Completed", rejected: "Rejected", cancelled: "Cancelled" };
-      const appointmentStatus: SliceItem[] = Object.entries(aptCount).map(([k, v]) => ({
-        name: aptLabels[k] ?? k, value: v, color: aptColors[k] ?? "#6b7280",
-      }));
-
-      // Office bar chart – top 8 by request volume
-      const officeChart = offices
-        .filter(o => o._count)
-        .sort((a, b) => (b._count?.requests ?? 0) - (a._count?.requests ?? 0))
-        .slice(0, 8)
-        .map(o => ({
-          name: o.name.length > 18 ? o.name.slice(0, 16) + "…" : o.name,
-          services: o._count?.service ?? 0,
-          staff: o._count?.staffs ?? 0,
-          requests: o._count?.requests ?? 0,
-        }));
-
-      setOverview({ offices, totalUsers, totalStaff, totalServices, totalRequests, totalAppointments, staffStatus, requestStatus, appointmentStatus, officeChart });
+      let next: Overview;
+      try {
+        next = await loadFromStats();
+      } catch {
+        next = await loadFromLists();
+      }
+      setOverview(next);
       setUpdatedAt(new Date());
     } catch {
       toast.error(t("Failed to load overview data"));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadFromStats, loadFromLists, t]);
 
   React.useEffect(() => {
     if (isSessionPending) return;
@@ -293,13 +425,13 @@ function AdminOverviewContent() {
                     <tr className="border-b border-border/50 bg-muted/30">
                       {["Office", "Status", "Services", "Staff", "Requests", "Appointments"].map(h => (
                         <th key={h} className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground first:pl-6">
-                          {h}
+                          {t(h)}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {overview.offices.map((office, i) => (
+                    {overview.offices.map((office) => (
                       <tr key={office.id} className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors">
                         <td className="px-5 py-4 pl-6">
                           <div className="flex items-center gap-2.5">
@@ -314,10 +446,10 @@ function AdminOverviewContent() {
                             {office.status ? t("Active") : t("Inactive")}
                           </Badge>
                         </td>
-                        <StatCell value={office._count?.service ?? 0} color="text-orange-600" />
-                        <StatCell value={office._count?.staffs ?? 0} color="text-emerald-600" />
-                        <StatCell value={office._count?.requests ?? 0} color="text-pink-600" />
-                        <StatCell value={office._count?.appointments ?? 0} color="text-cyan-600" />
+                        <StatCell value={office.services} color="text-orange-600" />
+                        <StatCell value={office.staff} color="text-emerald-600" />
+                        <StatCell value={office.requests} color="text-pink-600" />
+                        <StatCell value={office.appointments} color="text-cyan-600" />
                       </tr>
                     ))}
                     {overview.offices.length === 0 && (

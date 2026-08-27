@@ -224,7 +224,10 @@ export function NotificationBell() {
             className="size-7 text-muted-foreground"
             asChild
           >
-            <Link href="/settings" onClick={() => setOpen(false)}>
+            <Link
+              href="/settings?tab=preferences"
+              onClick={() => setOpen(false)}
+            >
               <Settings2 className="size-3.5" />
             </Link>
           </Button>

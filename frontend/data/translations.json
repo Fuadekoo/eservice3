@@ -74,6 +74,14 @@
       }
     },
     {
+      "key": "View and update your personal details",
+      "translations": {
+        "en": "View and update your personal details",
+        "am": "የግል መረጃዎን ይመልከቱ እና ያዘምኑ",
+        "om": "Ragaa dhuunfaa kee ilaali fi haaromsi"
+      }
+    },
+    {
       "key": "— Services · Staff · Requests",
       "translations": {
         "en": "— Services · Staff · Requests",

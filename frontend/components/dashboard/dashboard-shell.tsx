@@ -199,7 +199,7 @@ function UserAvatarDropdown() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/settings")}>
+        <DropdownMenuItem onClick={() => router.push("/profile")}>
           <User className="mr-2 size-4" />
           <span>{t("Profile")}</span>
         </DropdownMenuItem>
@@ -532,14 +532,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                       {breadcrumb.href === "#" ? (
                         <span className="text-muted-foreground">
                           {getTranslationForKey(
-                            breadcrumb.href,
+                            breadcrumb.titleKey,
                             selectedLanguage,
                           )}
                         </span>
                       ) : (
                         <BreadcrumbLink href={breadcrumb.href}>
                           {getTranslationForKey(
-                            breadcrumb.href,
+                            breadcrumb.titleKey,
                             selectedLanguage,
                           )}
                         </BreadcrumbLink>
@@ -550,7 +550,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 ))}
                 <BreadcrumbItem>
                   <BreadcrumbPage>
-                    {getTranslationForKey(current.href, selectedLanguage)}
+                    {getTranslationForKey(current.titleKey, selectedLanguage)}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>

@@ -153,9 +153,9 @@ function Field({
   );
 }
 
-// ─── ProfileTab ───────────────────────────────────────────────────────────────
+// ─── ProfileView ──────────────────────────────────────────────────────────────
 
-export function ProfileTab() {
+export function ProfileView() {
   const { t } = useTranslation();
 
   const [profile, setProfile] = React.useState<ProfileForm>(defaultProfile);

@@ -321,6 +321,12 @@ NAVIGATION_LOOKUP["/customer-overview"] = {
   href: "/customer-overview",
 };
 
+// Reached from the avatar menu rather than the sidebar. They are two distinct
+// destinations — personal details vs. application settings — so each needs its
+// own breadcrumb.
+NAVIGATION_LOOKUP["/profile"] = { titleKey: "My Profile", href: "/profile" };
+NAVIGATION_LOOKUP["/settings"] = { titleKey: "Settings", href: "/settings" };
+
 /**
  * Maps a page path to the permission codes declared for it in NAVIGATION.
  * Paths without declared permissions are absent, which ProtectedPage treats

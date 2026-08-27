@@ -3,6 +3,7 @@ import {
   requireAuth,
   requireAdmin,
   requirePermission,
+  optionalAuth,
 } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
@@ -17,8 +18,10 @@ import {
 
 const router = Router();
 
-// Public: list services from active offices (with optional ?officeId, ?search, ?page, ?pageSize)
-router.get("/", asyncHandler(listServices));
+// Public: list services from active offices (with optional ?officeId, ?search,
+// ?page, ?pageSize). `optionalAuth` leaves guests anonymous while identifying a
+// signed-in office user, so their view can be scoped to their own office.
+router.get("/", optionalAuth, asyncHandler(listServices));
 
 // Auth required
 router.get("/:id", requireAuth, asyncHandler(getService));

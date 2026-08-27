@@ -4,6 +4,7 @@ import { prisma } from "../lib/db.js";
 import type { AuthRequest } from "../middleware/auth.js";
 import {
   canAccessOffice,
+  getAssignedOfficeId,
   getMyOfficeId,
 } from "../helper/myOffice.js";
 import {
@@ -102,7 +103,16 @@ export async function listServices(
   res: Response,
 ): Promise<Response | void> {
   try {
-    const officeId = parseQueryString(req.query["officeId"]);
+    const requestedOfficeId = parseQueryString(req.query["officeId"]);
+
+    // An office member sees their own office and nothing else, whatever the
+    // query string asks for — otherwise a manager could read a rival office's
+    // catalogue simply by editing the URL. Guests and administrators are not
+    // scoped: the public site lists every office, and an administrator
+    // oversees all of them.
+    const ownOfficeId = req.isAdmin ? undefined : getAssignedOfficeId(req);
+    const officeId = ownOfficeId ?? requestedOfficeId;
+
     const search = parseQueryString(req.query["search"]);
     const page = Math.max(1, parseQueryInt(req.query["page"], 1));
     const pageSize = Math.min(

@@ -327,6 +327,53 @@ export async function requireAuth(
   }
 }
 
+/**
+ * Identify the caller when they present a token, and carry on when they do not.
+ *
+ * For endpoints that serve both the public site and the dashboard. The guest
+ * catalogue of services is open to anyone, but a signed-in office user must
+ * still be recognised so their view can be scoped to their own office — which
+ * is impossible on a route that never reads the token.
+ *
+ * Never rejects: an absent, malformed or expired token simply leaves the
+ * request anonymous. Use requireAuth wherever a caller must be known.
+ */
+export async function optionalAuth(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const token = extractTokenFromHeader(req.headers.authorization);
+  if (!token) return next();
+
+  try {
+    const decoded = verifyToken(token);
+    if (!decoded.sessionId) return next();
+
+    const session = await findActiveSession(decoded.sessionId);
+    if (!session || session.userId !== decoded.userId) return next();
+
+    const user = session.user;
+    if (!user.isActive) return next();
+
+    const roleName = normalizeRoleName(user.role?.name);
+
+    req.user = buildRequestUser(user);
+    req.userId = user.id;
+    req.permissions =
+      user.role?.rolePermissions.map((entry) => entry.permission.name) ?? [];
+    req.isAdmin = roleName === "ADMIN";
+    req.isManager = roleName === "MANAGER";
+    req.isStaff = roleName === "STAFF";
+    req.isCustomer = roleName === "CUSTOMER";
+    req.sessionId = session.id;
+  } catch {
+    // A bad token is treated as no token; the endpoint is public either way.
+  }
+
+  return next();
+}
+
 export function requirePermission(permission: string) {
   return (
     req: AuthRequest,

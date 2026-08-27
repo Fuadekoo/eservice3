@@ -15,12 +15,40 @@ import {
   rejectRequest,
   deleteRequest,
 } from "../controllers/request.controller.js";
+import {
+  createRequestForOther,
+  listRequestsForOther,
+  getRequestForOther,
+} from "../controllers/request-for-other.controller.js";
 
 const router = Router();
 
 // Every route states the permission it needs. Controllers still scope rows to
 // the caller (own requests / own office); the guards below decide who may
 // reach the endpoint at all, so a customer cannot approve their own request.
+
+// ── Requests submitted on behalf of a family member ──────────────────────
+// Declared before "/:id", otherwise Express matches "for-other" as an id.
+router.get(
+  "/for-other",
+  requireAuth,
+  requirePermission("request:read"),
+  asyncHandler(listRequestsForOther),
+);
+router.post(
+  "/for-other",
+  requireAuth,
+  requirePermission("request:create"),
+  asyncHandler(createRequestForOther),
+);
+router.get(
+  "/for-other/:id",
+  requireAuth,
+  requirePermission("request:read"),
+  asyncHandler(getRequestForOther),
+);
+
+// ── Ordinary self-requests ───────────────────────────────────────────────
 router.get("/", requireAuth, requirePermission("request:read"), asyncHandler(listRequests));
 router.get(
   "/:id",

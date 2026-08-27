@@ -1,4 +1,9 @@
 import { z, type ZodError } from "zod";
+import {
+  ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+  normalizeEthiopianMobilePhone,
+} from "../utils/phone.js";
+import { requiredNameField } from "../utils/name.js";
 
 /**
  * File data schema
@@ -19,6 +24,58 @@ export const createRequestSchema = z.object({
   notes: z.string().trim().optional(),
   files: z.array(fileDataSchema).optional().default([]),
 });
+
+/** Who the request is for. `self` is the ordinary case. */
+export const BENEFICIARY_TYPES = ["self", "other"] as const;
+
+/**
+ * Relationships a dependent may have to the applicant. A closed list keeps the
+ * column clean enough to group and report on, which free text would not be.
+ */
+export const BENEFICIARY_RELATIONSHIPS = [
+  "spouse",
+  "child",
+  "parent",
+  "sibling",
+  "grandparent",
+  "grandchild",
+  "guardian",
+  "other",
+] as const;
+
+const beneficiaryPhoneField = z
+  .string()
+  .trim()
+  .min(1, "Beneficiary phone number is required.")
+  .refine((value) => normalizeEthiopianMobilePhone(value) !== null, {
+    message: ETHIOPIAN_MOBILE_PHONE_MESSAGE,
+  })
+  .transform((value) => normalizeEthiopianMobilePhone(value) ?? value);
+
+/**
+ * Create a request on behalf of a family member.
+ *
+ * Same shape as an ordinary request plus the three fields that identify the
+ * dependent. The applicant stays the signed-in user — they are who the office
+ * deals with — while name/phoneNumber/relationship record who it is actually
+ * for. The name uses the same letters-only rule as every other person name.
+ */
+export const createRequestForOtherSchema = z.object({
+  serviceId: z.string().trim().min(1, "Service ID is required."),
+  currentAddress: z.string().trim().min(1, "Current address is required."),
+  date: z.string().datetime("Invalid date format."),
+  name: requiredNameField("Beneficiary name"),
+  phoneNumber: beneficiaryPhoneField,
+  relationship: z.enum(BENEFICIARY_RELATIONSHIPS, {
+    error: "Select how the beneficiary is related to you.",
+  }),
+  notes: z.string().trim().optional(),
+  files: z.array(fileDataSchema).optional().default([]),
+});
+
+export type CreateRequestForOtherInput = z.infer<
+  typeof createRequestForOtherSchema
+>;
 
 /**
  * Update request validator

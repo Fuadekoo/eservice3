@@ -50,6 +50,18 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import { personNameError } from "@/lib/name";
+import {
+  PHONE_FORMAT_MESSAGE,
+  normalizeEthiopianMobilePhone,
+} from "@/lib/phone";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Requirement = { id: string; name: string; description?: string | null };
@@ -150,6 +162,22 @@ function isOfficeOpenOn(
   return weekday !== 0 && weekday !== 6;
 }
 
+// ── Beneficiary ───────────────────────────────────────────────────────────────
+/** Relationships a dependent may have to the applicant. Mirrors
+ *  BENEFICIARY_RELATIONSHIPS in backend/src/validators/request.validator.ts. */
+const RELATIONSHIPS = [
+  "spouse",
+  "child",
+  "parent",
+  "sibling",
+  "grandparent",
+  "grandchild",
+  "guardian",
+  "other",
+] as const;
+
+type BeneficiaryType = "self" | "other";
+
 /** Long weekday name for `value`, e.g. "Saturday". */
 function weekdayNameOf(value: string): string {
   const date = parseInputDate(value);
@@ -193,6 +221,15 @@ function ApplyServiceContent() {
     "details" | "form"
   >("details");
   const [form, setForm] = React.useState({ address: "", date: "", notes: "" });
+  // Who the application is for. "self" is the ordinary case; "other" records a
+  // family member on the request instead of the applicant.
+  const [beneficiaryType, setBeneficiaryType] =
+    React.useState<BeneficiaryType>("self");
+  const [beneficiary, setBeneficiary] = React.useState({
+    name: "",
+    phoneNumber: "",
+    relationship: "",
+  });
   const [uploadedFiles, setUploadedFiles] = React.useState<UploadedFile[]>([]);
   const [dateError, setDateError] = React.useState("");
   const [isUploading, setIsUploading] = React.useState(false);
@@ -218,6 +255,8 @@ function ApplyServiceContent() {
     setApplyService(service);
     setMobileApplyStep("details");
     setForm({ address: "", date: "", notes: "" });
+    setBeneficiaryType("self");
+    setBeneficiary({ name: "", phoneNumber: "", relationship: "" });
     setDateError("");
     setUploadedFiles([]);
   }, []);
@@ -344,20 +383,57 @@ function ApplyServiceContent() {
       return;
     }
 
+    const isForOther = beneficiaryType === "other";
+    if (isForOther) {
+      const nameError = personNameError(
+        beneficiary.name,
+        t("Family member's name"),
+      );
+      if (nameError) {
+        toast.error(nameError);
+        return;
+      }
+      if (!normalizeEthiopianMobilePhone(beneficiary.phoneNumber)) {
+        toast.error(PHONE_FORMAT_MESSAGE);
+        return;
+      }
+      if (!beneficiary.relationship) {
+        toast.error(t("Please choose how they are related to you."));
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      const response = (await axiosInstance.post("/requests", {
+      const shared = {
         serviceId: applyService.id,
         currentAddress: form.address.trim(),
         date: new Date(form.date).toISOString(),
         notes: form.notes.trim() || undefined,
         files: uploadedFiles.map(({ name, filepath }) => ({ name, filepath })),
-      })) as unknown as { data?: { requestNumber?: string } };
+      };
+
+      // A dependent request is a different record, so it has its own endpoint.
+      const response = (await axiosInstance.post(
+        isForOther ? "/requests/for-other" : "/requests",
+        isForOther
+          ? {
+              ...shared,
+              name: beneficiary.name.trim(),
+              phoneNumber:
+                normalizeEthiopianMobilePhone(beneficiary.phoneNumber) ??
+                beneficiary.phoneNumber.trim(),
+              relationship: beneficiary.relationship,
+            }
+          : shared,
+      )) as unknown as { data?: { requestNumber?: string } };
 
       const requestNumber = response?.data?.requestNumber;
       toast.success(t("Application submitted successfully!"));
       setApplyService(null);
       setForm({ address: "", date: "", notes: "" });
+      setBeneficiaryType("self");
+      setBeneficiary({ name: "", phoneNumber: "", relationship: "" });
       setDateError("");
       setUploadedFiles([]);
 
@@ -1121,6 +1197,121 @@ function ApplyServiceContent() {
                           icon={CalendarIcon}
                         />
                         <div className="mt-3 space-y-3">
+                          {/* Who is this for */}
+                          <div className="space-y-1.5">
+                            <label className="text-sm font-bold flex items-center gap-1.5">
+                              <Users className="size-3.5 text-primary" />
+                              {t("Who is this application for?")}{" "}
+                              <span className="text-destructive ml-0.5">*</span>
+                            </label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {(["self", "other"] as const).map((option) => (
+                                <button
+                                  key={option}
+                                  type="button"
+                                  aria-pressed={beneficiaryType === option}
+                                  onClick={() => setBeneficiaryType(option)}
+                                  className={cn(
+                                    "rounded-xl border p-3 text-left transition-all",
+                                    beneficiaryType === option
+                                      ? "border-primary bg-primary/5 shadow-sm"
+                                      : "border-border/60 hover:border-primary/40",
+                                  )}
+                                >
+                                  <span className="block text-sm font-bold">
+                                    {option === "self"
+                                      ? t("Myself")
+                                      : t("Family member")}
+                                  </span>
+                                  <span className="block text-[11px] text-muted-foreground">
+                                    {option === "self"
+                                      ? t("I am the beneficiary")
+                                      : t("Applying on behalf of a dependent")}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Dependent details — only when applying for someone else */}
+                          {beneficiaryType === "other" && (
+                            <div className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+                              <p className="text-[11px] font-bold uppercase tracking-wider text-primary/70">
+                                {t("Family member details")}
+                              </p>
+
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold">
+                                  {t("Full name")}{" "}
+                                  <span className="text-destructive">*</span>
+                                </label>
+                                <Input
+                                  value={beneficiary.name}
+                                  onChange={(e) =>
+                                    setBeneficiary((p) => ({
+                                      ...p,
+                                      name: e.target.value,
+                                    }))
+                                  }
+                                  placeholder={t("Their full name")}
+                                  className="h-11 rounded-xl bg-background"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold">
+                                  {t("Phone Number")}{" "}
+                                  <span className="text-destructive">*</span>
+                                </label>
+                                <Input
+                                  type="tel"
+                                  value={beneficiary.phoneNumber}
+                                  onChange={(e) =>
+                                    setBeneficiary((p) => ({
+                                      ...p,
+                                      phoneNumber: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="0912345678"
+                                  className="h-11 rounded-xl bg-background"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold">
+                                  {t("Relationship to you")}{" "}
+                                  <span className="text-destructive">*</span>
+                                </label>
+                                <Select
+                                  value={beneficiary.relationship}
+                                  onValueChange={(value) =>
+                                    setBeneficiary((p) => ({
+                                      ...p,
+                                      relationship: value,
+                                    }))
+                                  }
+                                >
+                                  <SelectTrigger className="h-11 rounded-xl bg-background">
+                                    <SelectValue
+                                      placeholder={t("Select relationship")}
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-xl">
+                                    {RELATIONSHIPS.map((relationship) => (
+                                      <SelectItem
+                                        key={relationship}
+                                        value={relationship}
+                                        className="rounded-lg capitalize"
+                                      >
+                                        {t(relationship)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Address */}
                           <div className="space-y-1.5">
                             <label className="text-sm font-bold flex items-center gap-1.5">

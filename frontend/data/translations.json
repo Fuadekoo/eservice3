@@ -34,11 +34,27 @@
       }
     },
     {
+      "key": "Applying on behalf of a dependent",
+      "translations": {
+        "en": "Applying on behalf of a dependent",
+        "am": "ለጥገኛ ሰው በመወከል ማመልከት",
+        "om": "Nama irratti hirkatuuf bakka bu’ee iyyachuu"
+      }
+    },
+    {
       "key": "Assigned Office",
       "translations": {
         "en": "Assigned Office",
         "am": "የተመደበ ጽሕፈት ቤት",
         "om": "Waajjira Ramadame"
+      }
+    },
+    {
+      "key": "child",
+      "translations": {
+        "en": "child",
+        "am": "ልጅ",
+        "om": "Ijoollee"
       }
     },
     {
@@ -55,6 +71,30 @@
         "en": "Customers apply to any office, so they are not assigned to one.",
         "am": "ደንበኞች ወደ ማንኛውም ጽሕፈት ቤት ማመልከት ስለሚችሉ ለአንዱ አይመደቡም።",
         "om": "Maamiltoonni waajjira kamiyyuu iyyachuu waan danda'aniif, tokkotti hin ramadaman."
+      }
+    },
+    {
+      "key": "Family member",
+      "translations": {
+        "en": "Family member",
+        "am": "የቤተሰብ አባል",
+        "om": "Miseensa maatii"
+      }
+    },
+    {
+      "key": "Family member details",
+      "translations": {
+        "en": "Family member details",
+        "am": "የቤተሰብ አባል ዝርዝር",
+        "om": "Odeeffannoo miseensa maatii"
+      }
+    },
+    {
+      "key": "Family member's name",
+      "translations": {
+        "en": "Family member's name",
+        "am": "የቤተሰብ አባል ስም",
+        "om": "Maqaa miseensa maatii"
       }
     },
     {
@@ -82,6 +122,22 @@
       }
     },
     {
+      "key": "Full name",
+      "translations": {
+        "en": "Full name",
+        "am": "ሙሉ ስም",
+        "om": "Maqaa guutuu"
+      }
+    },
+    {
+      "key": "grandchild",
+      "translations": {
+        "en": "grandchild",
+        "am": "የልጅ ልጅ",
+        "om": "Ilma ilmaa"
+      }
+    },
+    {
       "key": "Grandfather's name is required.",
       "translations": {
         "en": "Grandfather's name is required.",
@@ -98,11 +154,43 @@
       }
     },
     {
+      "key": "grandparent",
+      "translations": {
+        "en": "grandparent",
+        "am": "አያት",
+        "om": "Akaakayyuu/Akkoo"
+      }
+    },
+    {
+      "key": "guardian",
+      "translations": {
+        "en": "guardian",
+        "am": "አሳዳጊ",
+        "om": "Guddiftuu"
+      }
+    },
+    {
+      "key": "I am the beneficiary",
+      "translations": {
+        "en": "I am the beneficiary",
+        "am": "ተጠቃሚው እኔ ነኝ",
+        "om": "Fayyadamaan ana"
+      }
+    },
+    {
       "key": "Last name",
       "translations": {
         "en": "Last name",
         "am": "የአያት ስም",
         "om": "Maqaa akaakayyuu"
+      }
+    },
+    {
+      "key": "Myself",
+      "translations": {
+        "en": "Myself",
+        "am": "ለራሴ",
+        "om": "Anaaf"
       }
     },
     {
@@ -130,6 +218,14 @@
       }
     },
     {
+      "key": "other",
+      "translations": {
+        "en": "other",
+        "am": "ሌላ",
+        "om": "Kan biroo"
+      }
+    },
+    {
       "key": "Page",
       "translations": {
         "en": "Page",
@@ -138,11 +234,35 @@
       }
     },
     {
+      "key": "parent",
+      "translations": {
+        "en": "parent",
+        "am": "ወላጅ",
+        "om": "Maatii"
+      }
+    },
+    {
+      "key": "Please choose how they are related to you.",
+      "translations": {
+        "en": "Please choose how they are related to you.",
+        "am": "እባክዎ ከእርስዎ ጋር ያላቸውን ዝምድና ይምረጡ።",
+        "om": "Maaloo firooma isaan isin waliin qaban filadhaa."
+      }
+    },
+    {
       "key": "Please fill in all required fields",
       "translations": {
         "en": "Please fill in all required fields",
         "am": "እባክዎ ሁሉንም አስፈላጊ መስኮች ይሙሉ",
         "om": "Maaloo iddoowwan barbaachisan hunda guutaa"
+      }
+    },
+    {
+      "key": "Relationship to you",
+      "translations": {
+        "en": "Relationship to you",
+        "am": "ከእርስዎ ጋር ያለው ዝምድና",
+        "om": "Firooma isin waliin qabdan"
       }
     },
     {
@@ -162,6 +282,30 @@
       }
     },
     {
+      "key": "Select relationship",
+      "translations": {
+        "en": "Select relationship",
+        "am": "ዝምድና ይምረጡ",
+        "om": "Firooma filadhu"
+      }
+    },
+    {
+      "key": "sibling",
+      "translations": {
+        "en": "sibling",
+        "am": "ወንድም/እህት",
+        "om": "Obboleessa/Obboleettii"
+      }
+    },
+    {
+      "key": "spouse",
+      "translations": {
+        "en": "spouse",
+        "am": "የትዳር አጋር",
+        "om": "Hiriyaa gaa’elaa"
+      }
+    },
+    {
       "key": "The office is closed on {day}. Please choose another day.",
       "translations": {
         "en": "The office is closed on {day}. Please choose another day.",
@@ -178,6 +322,14 @@
       }
     },
     {
+      "key": "Their full name",
+      "translations": {
+        "en": "Their full name",
+        "am": "ሙሉ ስማቸው",
+        "om": "Maqaa isaanii guutuu"
+      }
+    },
+    {
       "key": "Username is required.",
       "translations": {
         "en": "Username is required.",
@@ -191,6 +343,14 @@
         "en": "View and update your personal details",
         "am": "የግል መረጃዎን ይመልከቱ እና ያዘምኑ",
         "om": "Ragaa dhuunfaa kee ilaali fi haaromsi"
+      }
+    },
+    {
+      "key": "Who is this application for?",
+      "translations": {
+        "en": "Who is this application for?",
+        "am": "ይህ ማመልከቻ ለማን ነው?",
+        "om": "Iyyannoon kun eenyuuf?"
       }
     },
     {

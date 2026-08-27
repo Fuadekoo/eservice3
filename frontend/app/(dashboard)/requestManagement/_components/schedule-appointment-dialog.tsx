@@ -29,8 +29,8 @@ import { axiosInstance } from "@/lib/axios";
 import {
   bookingDateIssue,
   todayAsInputValue,
-  weeklyScheduleOf,
-  type WeeklySchedule,
+  officeHoursOf,
+  type OfficeHours,
 } from "@/lib/office-hours";
 
 interface ScheduleAppointmentDialogProps {
@@ -57,7 +57,7 @@ export function ScheduleAppointmentDialog({
   const [dateError, setDateError] = React.useState("");
   // Which weekdays this office takes bookings on. Fetched per request,
   // since a request only carries its office id.
-  const [schedule, setSchedule] = React.useState<WeeklySchedule | undefined>(
+  const [schedule, setSchedule] = React.useState<OfficeHours | undefined>(
     undefined,
   );
 
@@ -81,9 +81,9 @@ export function ScheduleAppointmentDialog({
             const res = (await axiosInstance.get(
               `/offices/${officeId}`,
             )) as unknown as {
-              data?: Parameters<typeof weeklyScheduleOf>[0];
+              data?: Parameters<typeof officeHoursOf>[0];
             };
-            setSchedule(weeklyScheduleOf(res?.data));
+            setSchedule(officeHoursOf(res?.data));
           } catch {
             // Without a schedule the weekend counts as closed, which is the
             // safe default; the API validates the date regardless.

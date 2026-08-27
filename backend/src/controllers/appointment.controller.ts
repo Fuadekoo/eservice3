@@ -1,5 +1,11 @@
 import type { Response } from "express";
 import { prisma } from "../lib/db.js";
+import {
+  closureMessage,
+  officeClosureOn,
+  officeHoursOf,
+  toDateKey,
+} from "../utils/office-hours.js";
 import type { AuthRequest } from "../middleware/auth.js";
 import {
   createAppointmentSchema,
@@ -232,6 +238,42 @@ export async function getAppointment(req: AuthRequest, res: Response) {
 /**
  * POST - Create a new appointment (requires appointment:create permission)
  */
+/**
+ * Refuse a date the office is not open on, using that office's own
+ * configuration — weekly schedule, listed closed dates, holiday ranges and
+ * per-date overrides.
+ *
+ * The pickers already grey these days out, but `min` on an input cannot
+ * express "closed on Saturdays" and is absent from a direct API call, so the
+ * rule is enforced here as well.
+ *
+ * Returns an error message, or null when the date is bookable.
+ */
+async function closedDayError(
+  officeId: string | null | undefined,
+  date: Date,
+): Promise<string | null> {
+  if (!officeId) return null;
+
+  const office = await prisma.office.findUnique({
+    where: { id: officeId },
+    select: {
+      settings: true,
+      availability: {
+        select: {
+          defaultSchedule: true,
+          unavailableDates: true,
+          unavailableDateRanges: true,
+          dateOverrides: true,
+        },
+      },
+    },
+  });
+
+  const closure = officeClosureOn(toDateKey(date), officeHoursOf(office));
+  return closure ? closureMessage(closure) : null;
+}
+
 export async function createAppointment(req: AuthRequest, res: Response) {
   try {
     const userId = req.user?.id;
@@ -280,6 +322,14 @@ export async function createAppointment(req: AuthRequest, res: Response) {
         success: false,
         error: "Unauthorized",
       });
+    }
+
+    const closed = await closedDayError(
+      request.service?.officeId,
+      new Date(date),
+    );
+    if (closed) {
+      return res.status(400).json({ success: false, error: closed });
     }
 
     // Create appointment
@@ -391,7 +441,14 @@ export async function updateAppointment(req: AuthRequest, res: Response) {
     const { date, time, notes, status, approveStaffId } = validation.data;
     const updateData: any = {};
 
-    if (date) updateData.date = new Date(date);
+    if (date) {
+      // Rescheduling is subject to the same closed-day rule as booking.
+      const closed = await closedDayError(appointment.officeId, new Date(date));
+      if (closed) {
+        return res.status(400).json({ success: false, error: closed });
+      }
+      updateData.date = new Date(date);
+    }
     if (time !== undefined) updateData.time = time;
     if (notes !== undefined) updateData.notes = notes;
     if (status) updateData.status = status;

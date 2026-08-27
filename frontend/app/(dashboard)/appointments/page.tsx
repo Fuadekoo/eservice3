@@ -29,8 +29,8 @@ import { axiosInstance } from "@/lib/axios";
 import {
   bookingDateIssue,
   todayAsInputValue,
-  weeklyScheduleOf,
-  type WeeklySchedule,
+  officeHoursOf,
+  type OfficeHours,
 } from "@/lib/office-hours";
 import { useSession } from "@/hooks/use-session";
 import { usePagination } from "@/hooks/use-pagination";
@@ -212,7 +212,7 @@ export default function AppointmentsPage() {
   // only carries its office id — so the schedule is fetched when the dialog
   // opens rather than guessed.
   const [editSchedule, setEditSchedule] = React.useState<
-    WeeklySchedule | undefined
+    OfficeHours | undefined
   >(undefined);
   const [dateError, setDateError] = React.useState("");
 
@@ -231,8 +231,8 @@ export default function AppointmentsPage() {
     try {
       const res = (await axiosInstance.get(
         `/offices/${officeId}`,
-      )) as unknown as { data?: Parameters<typeof weeklyScheduleOf>[0] };
-      setEditSchedule(weeklyScheduleOf(res?.data));
+      )) as unknown as { data?: Parameters<typeof officeHoursOf>[0] };
+      setEditSchedule(officeHoursOf(res?.data));
     } catch {
       // Without the schedule the weekend is treated as closed, which is the
       // safe default — the API validates the date regardless.

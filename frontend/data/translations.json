@@ -322,6 +322,22 @@
       }
     },
     {
+      "key": "The office is closed on this date ({reason}). Please choose another day.",
+      "translations": {
+        "en": "The office is closed on this date ({reason}). Please choose another day.",
+        "am": "ጽሕፈት ቤቱ በዚህ ቀን ዝግ ነው ({reason})። እባክዎ ሌላ ቀን ይምረጡ።",
+        "om": "Waajjirri guyyaa kana cufaadha ({reason}). Maaloo guyyaa biraa filadhu."
+      }
+    },
+    {
+      "key": "The office is closed on this date. Please choose another day.",
+      "translations": {
+        "en": "The office is closed on this date. Please choose another day.",
+        "am": "ጽሕፈት ቤቱ በዚህ ቀን ዝግ ነው። እባክዎ ሌላ ቀን ይምረጡ።",
+        "om": "Waajjirri guyyaa kana cufaadha. Maaloo guyyaa biraa filadhu."
+      }
+    },
+    {
       "key": "The office is closed on {day}. Please choose another day.",
       "translations": {
         "en": "The office is closed on {day}. Please choose another day.",

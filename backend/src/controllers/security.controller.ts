@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/db.js";
 import type { AuthRequest } from "../middleware/auth.js";
+import { delegatablePermissions } from "../config/role-permissions.js";
 import { Prisma } from "../lib/prisma-client.js";
 // import { Prisma } from "../../generated/prisma/client.js";
 
@@ -302,14 +303,36 @@ export async function deleteSecurityReminder(
   }
 }
 
+/**
+ * GET /security/permissions
+ *
+ * Lists the permissions the caller may put on a role. An administrator sees
+ * the catalogue; anyone else sees only what they could delegate — never a
+ * system-level permission, and never one they do not hold themselves. A
+ * manager building a role for their office therefore cannot even be shown
+ * "manage users" or "edit permissions", let alone select them.
+ */
 export async function listPermissions(
-  _req: Request,
+  req: AuthRequest,
   res: Response,
 ): Promise<void> {
   const permissions = await prisma.permission.findMany({
-    orderBy: { code: "asc" },
+    orderBy: { name: "asc" },
   });
-  res.json({ data: permissions });
+
+  const allowed = new Set(
+    delegatablePermissions(
+      permissions.map((permission) => permission.name),
+      {
+        isAdmin: req.isAdmin === true,
+        permissions: req.permissions ?? [],
+      },
+    ),
+  );
+
+  res.json({
+    data: permissions.filter((permission) => allowed.has(permission.name)),
+  });
 }
 
 export async function createPermission(
@@ -952,18 +975,46 @@ async function syncPermissionSetPermissions(
   }
 }
 
-async function syncRolePermissions(roleId: string, codes: string[]) {
+/**
+ * Replace a role's permissions with `codes`.
+ *
+ * Matched on `name` as well as `code`: `requireAuth` reads a user's
+ * permissions from `name`, and rows created by permission-seed.ts leave
+ * `code` null — matching on `code` alone silently assigned nothing.
+ *
+ * `actor` is the person making the change. A non-admin cannot grant a
+ * system-level permission or one they do not hold, so a manager cannot mint
+ * a role more powerful than their own and then assume it.
+ */
+async function syncRolePermissions(
+  roleId: string,
+  codes: string[],
+  actor?: { isAdmin: boolean; permissions: string[] },
+) {
   const permissions = await prisma.permission.findMany({
-    where: { code: { in: codes } },
+    where: { OR: [{ code: { in: codes } }, { name: { in: codes } }] },
   });
+
+  const permitted = actor
+    ? new Set(
+        delegatablePermissions(
+          permissions.map((permission) => permission.name),
+          actor,
+        ),
+      )
+    : null;
+
+  const granted = permitted
+    ? permissions.filter((permission) => permitted.has(permission.name))
+    : permissions;
 
   await prisma.rolePermission.deleteMany({
     where: { roleId },
   });
 
-  if (permissions.length) {
+  if (granted.length) {
     await prisma.rolePermission.createMany({
-      data: permissions.map((permission) => ({
+      data: granted.map((permission) => ({
         roleId,
         permissionId: permission.id,
       })),

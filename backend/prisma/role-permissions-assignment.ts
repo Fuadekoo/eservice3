@@ -1,4 +1,5 @@
 import { prisma } from "../src/lib/db.ts";
+import { defaultPermissionsFor } from "../src/config/role-permissions.ts";
 
 /**
  * Role Permission Assignment Utility (for seed files)
@@ -8,185 +9,20 @@ import { prisma } from "../src/lib/db.ts";
  */
 
 /**
- * Get permission names for a specific role type
- * @param roleName - The role name (case-insensitive)
- * @returns Array of permission names for that role
+ * The default permissions for a role name.
+ *
+ * The lists themselves live in src/config/role-permissions.ts so that seeding
+ * and runtime assignment cannot drift apart. ADMIN resolves to every
+ * permission in the database rather than to a second hand-maintained copy of
+ * the catalogue.
  */
-export function getRolePermissions(roleName: string): string[] {
-  const normalizedRoleName = roleName.toUpperCase().trim();
+export async function getRolePermissions(roleName: string): Promise<string[]> {
+  const defaults = defaultPermissionsFor(roleName);
+  if (defaults !== null) return defaults;
 
-  switch (normalizedRoleName) {
-    case "ADMIN":
-      // Admin gets ALL permissions
-      return getAllPermissionNames();
-
-    case "MANAGER":
-      return [
-        // Dashboard & page access
-        "dashboard:view",
-        "dashboard:manager",
-        "page:manager:overview",
-        "page:manager:staff",
-        // Office management (own office only — enforced server-side)
-        "office:read",
-        "office:update",
-        "office:configure",
-        // Service management (own office)
-        "service:create",
-        "service:read",
-        "service:update",
-        "service:delete",
-        "service:manage",
-        "service:assign-staff",
-        // Staff management (own office)
-        "staff:create",
-        "staff:read",
-        "staff:update",
-        "staff:delete",
-        "staff:manage",
-        // Request management
-        "request:read",
-        "request:update",
-        "request:approve-manager",
-        "request:view-all",
-        // Appointments
-        "appointment:read",
-        "appointment:update",
-        "appointment:approve",
-        // Reports
-        "report:create",
-        "report:read",
-        // Configuration
-        "configuration:read",
-        "configuration:update",
-        // Profile
-        "profile:read",
-        "profile:update",
-        "profile:change-password",
-        // Feedback
-        "feedback:read",
-      ];
-
-    case "STAFF":
-      return [
-        "dashboard:view",
-        "dashboard:staff",
-        "page:staff:overview",
-        "service:read",
-        "request:read",
-        "request:update",
-        "request:approve-staff",
-        "appointment:read",
-        "appointment:update",
-        "appointment:approve",
-        "profile:read",
-        "profile:update",
-        "profile:change-password",
-      ];
-
-    case "CUSTOMER":
-      return [
-        "dashboard:view",
-        "dashboard:customer",
-        "page:customer:overview",
-        "office:read",
-        "service:read",
-        "request:create",
-        "request:create-for-other",
-        "request:read",
-        "appointment:create",
-        "appointment:read",
-        "feedback:create",
-        "profile:read",
-        "profile:update",
-        "profile:change-password",
-      ];
-
-    default:
-      console.warn(`Unknown role: ${roleName}`);
-      return [];
-  }
+  const all = await prisma.permission.findMany({ select: { name: true } });
+  return all.map((permission) => permission.name);
 }
-
-/**
- * Get all permission names (for admin role)
- */
-function getAllPermissionNames(): string[] {
-  return [
-    "user:create",
-    "user:read",
-    "user:update",
-    "user:delete",
-    "user:manage",
-    "office:create",
-    "office:read",
-    "office:update",
-    "office:delete",
-    "office:manage",
-    "office:configure",
-    "service:create",
-    "service:read",
-    "service:update",
-    "service:delete",
-    "service:manage",
-    "service:assign-staff",
-    "request:create",
-    "request:create-for-other",
-    "request:read",
-    "request:update",
-    "request:delete",
-    "request:approve-staff",
-    "request:approve-manager",
-    "request:approve-admin",
-    "request:view-all",
-    "appointment:create",
-    "appointment:read",
-    "appointment:update",
-    "appointment:delete",
-    "appointment:approve",
-    "appointment:manage",
-    "staff:create",
-    "staff:read",
-    "staff:update",
-    "staff:delete",
-    "staff:manage",
-    "report:create",
-    "report:read",
-    "report:update",
-    "report:delete",
-    "report:view-all",
-    "role:create",
-    "role:read",
-    "role:update",
-    "role:delete",
-    "role:assign-permissions",
-    "role:manage",
-    "permission:read",
-    "language:read",
-    "language:update",
-    "language:manage",
-    "configuration:read",
-    "configuration:update",
-    "profile:read",
-    "profile:update",
-    "profile:change-password",
-    "feedback:read",
-    "feedback:create",
-    "dashboard:view",
-    "dashboard:admin",
-    "dashboard:manager",
-    "dashboard:staff",
-    "dashboard:customer",
-    "page:admin:overview",
-    "page:admin:office",
-    "audit:read",
-    "page:manager:overview",
-    "page:manager:staff",
-    "page:staff:overview",
-    "page:customer:overview",
-  ];
-}
-
 /**
  * Assign default permissions to a role based on its name
  * @param roleId - The role ID
@@ -199,7 +35,7 @@ export async function assignDefaultPermissionsToRole(
 ): Promise<{ success: boolean; assignedCount: number; error?: string }> {
   try {
     // Get permission names for this role
-    const permissionNames = getRolePermissions(roleName);
+    const permissionNames = await getRolePermissions(roleName);
 
     if (permissionNames.length === 0) {
       return {

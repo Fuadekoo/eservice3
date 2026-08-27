@@ -100,7 +100,6 @@ const staffInclude = {
         select: {
           id: true,
           name: true,
-          officeId: true,
           rolePermissions: {
             select: {
               permission: { select: { id: true, name: true } },

@@ -13,6 +13,12 @@ export type ServiceRequest = {
   };
   currentAddress: string;
   date: string;
+  /** Who the request is for; null when the applicant applied for themselves. */
+  beneficiary: {
+    name: string;
+    phoneNumber: string;
+    relationship: string;
+  } | null;
   statusbystaff: "pending" | "approved" | "rejected";
   statusbyadmin: "pending" | "approved" | "rejected";
   approveStaff?: { id: string; user: { id: string; username: string; phoneNumber: string } } | null;

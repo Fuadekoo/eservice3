@@ -107,9 +107,84 @@ const requestInclude = {
 /**
  * Format request response with ISO date strings
  */
+/**
+ * What a `requestForOther` row needs loaded to be shown alongside an
+ * ordinary request.
+ */
+const requestForOtherInclude = {
+  user: { select: { id: true, username: true, phoneNumber: true } },
+  service: {
+    include: {
+      office: {
+        select: {
+          id: true,
+          name: true,
+          roomNumber: true,
+          address: true,
+          status: true,
+        },
+      },
+    },
+  },
+  fileData: true,
+  appointments: true,
+} as const;
+
+/**
+ * Present a `requestForOther` row in the same shape as an ordinary request,
+ * so one list can carry both.
+ *
+ * The two tables differ in three ways, reconciled here: a dependent request
+ * has no reference number, carries a single `status` rather than the separate
+ * staff/admin ones, and holds the beneficiary inline. Every row — of either
+ * kind — comes back with `beneficiary`, which is null when the applicant
+ * applied for themselves.
+ */
+function formatRequestForOther(row: any) {
+  return {
+    id: row.id,
+    requestNumber: "",
+    user: row.user,
+    service: row.service,
+    currentAddress: row.currentAddress,
+    date: row.date.toISOString(),
+    // Mirrored onto both status columns so existing filters and badges read
+    // a dependent request without special-casing it.
+    statusbystaff: row.status,
+    statusbyadmin: row.status,
+    approveStaff: null,
+    approveManager: null,
+    approveNote: null,
+    beneficiary: {
+      name: row.name,
+      phoneNumber: row.phoneNumber,
+      relationship: row.relationship,
+    },
+    fileData:
+      row.fileData?.map((file: any) => ({
+        ...file,
+        createdAt: file.createdAt.toISOString(),
+        updatedAt: file.updatedAt.toISOString(),
+      })) || [],
+    appointments:
+      row.appointments?.map((apt: any) => ({
+        ...apt,
+        date: apt.date.toISOString(),
+        createdAt: apt.createdAt.toISOString(),
+        updatedAt: apt.updatedAt.toISOString(),
+      })) || [],
+    customerSatisfaction: null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
 function formatRequest(req: any) {
   return {
     ...req,
+    // Explicitly null rather than absent: "applied for themselves" is a fact
+    // the list shows, not something the client should infer from a gap.
+    beneficiary: null,
     date: req.date.toISOString(),
     createdAt: req.createdAt.toISOString(),
     updatedAt: req.updatedAt.toISOString(),
@@ -357,21 +432,84 @@ export async function listRequests(req: AuthRequest, res: Response) {
       }
     }
 
-    // Get total count
-    const total = await prisma.request.count({ where });
+    // ── Requests submitted on behalf of a family member ────────────────
+    // They live in their own table, so the same scope has to be expressed
+    // against its columns: it has no requestNumber, a single `status`, and
+    // its own denormalised officeId.
+    const otherWhere: any = {};
 
-    // Fetch requests
-    const requests = await prisma.request.findMany({
-      where,
-      include: requestInclude,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+    if (isCustomer) {
+      otherWhere.userId = userId;
+    } else if (isManager) {
+      otherWhere.service = where.service;
+    } else if (isStaff) {
+      otherWhere.serviceId = where.serviceId;
+    }
+
+    if (isAdmin && officeId) {
+      otherWhere.service = { officeId };
+    }
+
+    if (status) {
+      // One column here, rather than the separate staff/admin pair.
+      otherWhere.status = status;
+    }
+
+    if (search) {
+      otherWhere.AND = [
+        ...(otherWhere.AND ?? []),
+        {
+          OR: [
+            { name: { contains: search } },
+            { phoneNumber: { contains: search } },
+            { currentAddress: { contains: search } },
+            { service: { name: { contains: search } } },
+            { service: { office: { name: { contains: search } } } },
+            { user: { username: { contains: search } } },
+          ],
+        },
+      ];
+    }
+
+    const skip = (page - 1) * pageSize;
+
+    // Page N of the merged list can only be drawn from the first N pages of
+    // either source, so taking that many from each and slicing afterwards
+    // gives exactly the same rows a single sorted table would — no estimate.
+    const upperBound = skip + pageSize;
+
+    const [selfRows, otherRows, selfTotal, otherTotal] = await Promise.all([
+      prisma.request.findMany({
+        where,
+        include: requestInclude,
+        orderBy: { createdAt: "desc" },
+        take: upperBound,
+      }),
+      prisma.requestForOther.findMany({
+        where: otherWhere,
+        include: requestForOtherInclude,
+        orderBy: { createdAt: "desc" },
+        take: upperBound,
+      }),
+      prisma.request.count({ where }),
+      prisma.requestForOther.count({ where: otherWhere }),
+    ]);
+
+    const total = selfTotal + otherTotal;
+
+    const merged = [
+      ...selfRows.map(formatRequest),
+      ...otherRows.map(formatRequestForOther),
+    ]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .slice(skip, skip + pageSize);
 
     return res.status(200).json({
       success: true,
-      data: requests.map(formatRequest),
+      data: merged,
       pagination: {
         page,
         pageSize,

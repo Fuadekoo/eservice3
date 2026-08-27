@@ -21,6 +21,8 @@ import {
   ChevronRight,
   Paperclip,
   User,
+  Users,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,11 +37,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +56,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import { RequestNumber } from "@/components/dashboard/request-number";
+import { BeneficiaryBadge, beneficiaryLabel } from "@/components/dashboard/beneficiary-badge";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 type OverallStatus = "pending" | "processing" | "approved" | "rejected";
@@ -379,7 +383,10 @@ function TableView({
                 >
                   {/* Request number */}
                   <td className="px-5 py-4">
-                    <RequestNumber value={req.requestNumber} copyable />
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <RequestNumber value={req.requestNumber} copyable />
+                      <BeneficiaryBadge beneficiary={req.beneficiary} />
+                    </div>
                   </td>
 
                   {/* Service */}
@@ -488,7 +495,10 @@ function CardView({
                     <Building2 className="size-3 text-muted-foreground shrink-0" />
                     <p className="text-xs text-muted-foreground line-clamp-1">{req.service?.office?.name}</p>
                   </div>
-                  <RequestNumber value={req.requestNumber} className="mt-1.5 text-muted-foreground" copyable />
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <RequestNumber value={req.requestNumber} className="text-muted-foreground" copyable />
+                    <BeneficiaryBadge beneficiary={req.beneficiary} />
+                  </div>
                 </div>
                 <StatusBadge status={status} />
               </div>
@@ -596,28 +606,40 @@ function RequestDetailDialog({
   const Icon = cfg.icon;
 
   return (
-    <Dialog open={!!request} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-xl rounded-2xl p-0 gap-0 overflow-hidden">
-        {/* Header */}
-        <div className="bg-primary px-6 py-5">
-          <DialogHeader>
-            <DialogTitle className="text-white font-black text-xl leading-snug">
-              {request.service?.name}
-            </DialogTitle>
-            <p className="text-primary-foreground/70 text-sm mt-0.5 flex items-center gap-1.5">
-              <Building2 className="size-3.5" />
-              {request.service?.office?.name}
-            </p>
-            <RequestNumber
-              value={request.requestNumber}
-              variant="badge"
-              copyable
-              className="mt-2 w-fit border-white/25 bg-white/10 text-white"
-            />
-          </DialogHeader>
-        </div>
+    <Sheet open={!!request} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent
+        side="right"
+        className="w-full! max-w-none! gap-0 overflow-hidden border-none p-0 shadow-2xl sm:w-[94vw]! sm:rounded-l-2xl lg:w-160!"
+      >
+        <div className="flex h-full min-h-0 flex-col">
+          {/* Header */}
+          <div className="shrink-0 bg-primary px-6 py-5 pr-14">
+            <SheetHeader className="gap-1 p-0">
+              <SheetTitle className="text-white font-black text-xl leading-snug">
+                {request.service?.name}
+              </SheetTitle>
+              <SheetDescription className="text-primary-foreground/70 text-sm mt-0.5 flex items-center gap-1.5">
+                <Building2 className="size-3.5" />
+                {request.service?.office?.name}
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {request.requestNumber ? (
+                <RequestNumber
+                  value={request.requestNumber}
+                  variant="badge"
+                  copyable
+                  className="w-fit border-white/25 bg-white/10 text-white"
+                />
+              ) : null}
+              <BeneficiaryBadge
+                beneficiary={request.beneficiary}
+                className="border-white/25 bg-white/10 text-white"
+              />
+            </div>
+          </div>
 
-        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          <div className="min-h-0 flex-1 p-6 space-y-4 overflow-y-auto">
           {/* Overall status + submitted */}
           <div className="flex items-center justify-between">
             <Badge variant="outline" className={cn("font-bold text-sm gap-1.5 px-3 py-1", cfg.badge)}>
@@ -626,6 +648,29 @@ function RequestDetailDialog({
             <p className="text-xs text-muted-foreground">
               {t("Submitted")} {fmtDate(request.createdAt)}
             </p>
+          </div>
+
+          {/* Who it is for */}
+          <div className="rounded-xl border border-border bg-muted/20 p-4 grid sm:grid-cols-2 gap-4 text-sm">
+            <DetailRow
+              icon={Users}
+              label={t("Applying for")}
+              value={t(beneficiaryLabel(request.beneficiary))}
+            />
+            {request.beneficiary ? (
+              <>
+                <DetailRow
+                  icon={User}
+                  label={t("Family member")}
+                  value={request.beneficiary.name}
+                />
+                <DetailRow
+                  icon={Phone}
+                  label={t("Phone Number")}
+                  value={request.beneficiary.phoneNumber}
+                />
+              </>
+            ) : null}
           </div>
 
           {/* Details grid */}
@@ -729,9 +774,10 @@ function RequestDetailDialog({
               )}
             </div>
           )}
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 

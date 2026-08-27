@@ -34,6 +34,14 @@
       }
     },
     {
+      "key": "Applying for",
+      "translations": {
+        "en": "Applying for",
+        "am": "ማመልከቻው ለ",
+        "om": "Kan iyyatamuuf"
+      }
+    },
+    {
       "key": "Applying on behalf of a dependent",
       "translations": {
         "en": "Applying on behalf of a dependent",

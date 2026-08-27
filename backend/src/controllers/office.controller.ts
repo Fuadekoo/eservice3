@@ -72,11 +72,22 @@ async function officeWorkloadCounts(): Promise<{
   type CountRow = { officeId: string | null; total: bigint | number | null };
 
   const [requestRows, appointmentRows] = await Promise.all([
+    // Both kinds of request count towards an office's workload: the ordinary
+    // ones and those submitted on behalf of a family member.
     prisma.$queryRaw<CountRow[]>`
-      SELECT \`s\`.\`officeId\` AS \`officeId\`, COUNT(*) AS \`total\`
-      FROM \`request\` \`r\`
-      JOIN \`service\` \`s\` ON \`s\`.\`id\` = \`r\`.\`serviceId\`
-      GROUP BY \`s\`.\`officeId\`
+      SELECT \`officeId\`, SUM(\`total\`) AS \`total\`
+      FROM (
+        SELECT \`s\`.\`officeId\` AS \`officeId\`, COUNT(*) AS \`total\`
+        FROM \`request\` \`r\`
+        JOIN \`service\` \`s\` ON \`s\`.\`id\` = \`r\`.\`serviceId\`
+        GROUP BY \`s\`.\`officeId\`
+        UNION ALL
+        SELECT \`s\`.\`officeId\` AS \`officeId\`, COUNT(*) AS \`total\`
+        FROM \`request_for_other\` \`o\`
+        JOIN \`service\` \`s\` ON \`s\`.\`id\` = \`o\`.\`serviceId\`
+        GROUP BY \`s\`.\`officeId\`
+      ) \`combined\`
+      GROUP BY \`officeId\`
     `,
     prisma.$queryRaw<CountRow[]>`
       SELECT \`s\`.\`officeId\` AS \`officeId\`, COUNT(*) AS \`total\`
@@ -193,9 +204,11 @@ export async function getOverviewStats(
       totalStaff,
       totalServices,
       totalRequests,
+      totalRequestsForOther,
       totalAppointments,
       staffStatusRows,
       requestStatusGroups,
+      requestForOtherStatusGroups,
       appointmentStatusGroups,
     ] = await Promise.all([
       prisma.office.findMany({
@@ -211,6 +224,7 @@ export async function getOverviewStats(
       prisma.staff.count(),
       prisma.service.count(),
       prisma.request.count(),
+      prisma.requestForOther.count(),
       prisma.appointment.count(),
       // Status lives on the user, not the staff row, and Prisma cannot group by
       // a relation field — so read the statuses and tally them here. One row
@@ -223,12 +237,27 @@ export async function getOverviewStats(
         by: ["statusbystaff", "statusbyadmin"],
         _count: { _all: true },
       }),
+      // Dependent requests carry one status column rather than the pair.
+      prisma.requestForOther.groupBy({
+        by: ["status"],
+        _count: { _all: true },
+      }),
       prisma.appointment.groupBy({ by: ["status"], _count: { _all: true } }),
     ]);
 
     const { requests, appointments } = await officeWorkloadCounts();
 
     const requestStatus = { pending: 0, processing: 0, approved: 0, rejected: 0 };
+
+    // A dependent request has a single status, so it maps straight across —
+    // it never reaches the "processing" half-approved state.
+    for (const group of requestForOtherStatusGroups) {
+      const count = group._count._all;
+      if (group.status === "rejected") requestStatus.rejected += count;
+      else if (group.status === "approved") requestStatus.approved += count;
+      else requestStatus.pending += count;
+    }
+
     for (const group of requestStatusGroups) {
       const count = group._count._all;
       if (group.statusbystaff === "rejected" || group.statusbyadmin === "rejected") {
@@ -260,7 +289,8 @@ export async function getOverviewStats(
           users: totalUsers,
           staff: totalStaff,
           services: totalServices,
-          requests: totalRequests,
+          // Both kinds, so the headline figure matches what the list shows.
+          requests: totalRequests + totalRequestsForOther,
           appointments: totalAppointments,
         },
         staffStatus,

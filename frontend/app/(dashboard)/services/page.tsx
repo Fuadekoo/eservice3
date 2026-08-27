@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { useServiceStore, type Service } from "@/lib/stores/service-store";
 import { useTranslation } from "@/lib/i18n";
 import { useSession } from "@/lib/auth-client";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,6 +69,9 @@ export default function ServicesPage() {
   } = useServiceStore();
 
   const [searchQuery, setSearchQuery] = React.useState("");
+  // The box updates on every keystroke; the request waits for a pause, so a
+  // word costs one query instead of one per letter.
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(10);
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
@@ -87,18 +91,21 @@ export default function ServicesPage() {
 
   React.useEffect(() => {
     if (!isSessionPending) {
-      fetchServices({
+      // The store records the failure and the empty state reports it; nothing
+      // here can recover from it, so the rejection is absorbed rather than
+      // left to surface as an unhandled promise.
+      void fetchServices({
         officeId: isAdmin ? undefined : officeId,
-        search: searchQuery || undefined,
+        search: debouncedSearch || undefined,
         page: currentPage,
         pageSize,
-      });
+      }).catch(() => {});
     }
   }, [
     fetchServices,
     officeId,
     isAdmin,
-    searchQuery,
+    debouncedSearch,
     isSessionPending,
     currentPage,
     pageSize,
@@ -162,7 +169,13 @@ export default function ServicesPage() {
               placeholder={t("Search services...")}
               className="pl-9 h-11 rounded-xl bg-background border-none ring-1 ring-border/50 focus-visible:ring-primary/50"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                // Results for a new term start at the beginning. Staying on
+                // page 3 while searching asks for the third page of a
+                // two-item result and shows "no services found".
+                setCurrentPage(1);
+              }}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -194,7 +207,7 @@ export default function ServicesPage() {
           </div>
         </div>
 
-        {isLoading ? (
+        {isLoading && services.length === 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card
@@ -210,13 +223,17 @@ export default function ServicesPage() {
             <div className="rounded-full bg-background p-6 shadow-sm mb-4">
               <Layers className="h-12 w-12 text-primary/20" />
             </div>
-            <h3 className="text-xl font-bold">{t("No services found")}</h3>
+            <h3 className="text-xl font-bold">
+              {error ? t("Could not load services") : t("No services found")}
+            </h3>
             <p className="text-muted-foreground mt-2 max-w-sm text-center">
-              {searchQuery
-                ? t("Try adjusting your search query.")
-                : t("Start by creating the first service.")}
+              {error
+                ? error
+                : debouncedSearch
+                  ? t("Try adjusting your search query.")
+                  : t("Start by creating the first service.")}
             </p>
-            {!searchQuery && (
+            {!error && !debouncedSearch && (
               <Button
                 className="mt-8 rounded-xl font-bold"
                 onClick={() => setIsCreateOpen(true)}
@@ -226,126 +243,141 @@ export default function ServicesPage() {
               </Button>
             )}
           </div>
-        ) : viewMode === "grid" ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                onEdit={() => handleEdit(service)}
-                onDelete={() => setDeletingService(service)}
-                isAdmin={isAdmin}
-                t={t}
-              />
-            ))}
-          </div>
         ) : (
-          <div className="rounded-2xl border border-border/50 bg-card overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left">
-              <thead>
-                <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="p-4 font-bold text-sm whitespace-nowrap">
-                    {t("Service Name")}
-                  </th>
-                  {isAdmin && (
-                    <th className="p-4 font-bold text-sm whitespace-nowrap">
-                      {t("Office")}
-                    </th>
-                  )}
-                  <th className="p-4 font-bold text-sm whitespace-nowrap">
-                    {t("Time")}
-                  </th>
-                  <th className="p-4 font-bold text-sm whitespace-nowrap">
-                    {t("Stats")}
-                  </th>
-                  <th className="p-4 font-bold text-sm text-right whitespace-nowrap">
-                    {t("Actions")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+          <div
+            className={cn(
+              "transition-opacity duration-150",
+              isLoading && "pointer-events-none opacity-60",
+            )}
+            aria-busy={isLoading}
+          >
+            {viewMode === "grid" ? (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {services.map((service) => (
-                  <tr
+                  <ServiceCard
                     key={service.id}
-                    className="border-b border-border/50 hover:bg-muted/10 transition-colors"
-                  >
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <FileText className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-sm">{service.name}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">
-                            {service.description}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    {isAdmin && (
-                      <td className="p-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          {service.office?.name}
-                        </div>
-                      </td>
-                    )}
-                    <td className="p-4 whitespace-nowrap">
-                      <Badge
-                        variant="secondary"
-                        className="bg-muted/50 font-medium"
-                      >
-                        <Clock className="mr-1.5 h-3.5 w-3.5" />
-                        {service.timeToTake}
-                      </Badge>
-                    </td>
-                    <td className="p-4 whitespace-nowrap">
-                      <div className="flex gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-bold border-emerald-500/20 text-emerald-600 bg-emerald-500/5"
-                        >
-                          {service.requirements?.length || 0} {t("Reqs")}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-bold border-blue-500/20 text-blue-600 bg-blue-500/5"
-                        >
-                          {service.serviceFors?.length || 0} {t("Target")}
-                        </Badge>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right whitespace-nowrap">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-full"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl">
-                          <DropdownMenuItem
-                            onClick={() => handleEdit(service)}
-                            className="gap-2"
-                          >
-                            <Edit className="h-4 w-4" /> {t("Edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeletingService(service)}
-                            className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/5"
-                          >
-                            <Trash2 className="h-4 w-4" /> {t("Delete")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
+                    service={service}
+                    onEdit={() => handleEdit(service)}
+                    onDelete={() => setDeletingService(service)}
+                    isAdmin={isAdmin}
+                    t={t}
+                  />
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border/50 bg-card overflow-x-auto">
+                <table className="w-full min-w-[720px] text-left">
+                  <thead>
+                    <tr className="border-b border-border/50 bg-muted/30">
+                      <th className="p-4 font-bold text-sm whitespace-nowrap">
+                        {t("Service Name")}
+                      </th>
+                      {isAdmin && (
+                        <th className="p-4 font-bold text-sm whitespace-nowrap">
+                          {t("Office")}
+                        </th>
+                      )}
+                      <th className="p-4 font-bold text-sm whitespace-nowrap">
+                        {t("Time")}
+                      </th>
+                      <th className="p-4 font-bold text-sm whitespace-nowrap">
+                        {t("Stats")}
+                      </th>
+                      <th className="p-4 font-bold text-sm text-right whitespace-nowrap">
+                        {t("Actions")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {services.map((service) => (
+                      <tr
+                        key={service.id}
+                        className="border-b border-border/50 hover:bg-muted/10 transition-colors"
+                      >
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <FileText className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-sm">
+                                {service.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">
+                                {service.description}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        {isAdmin && (
+                          <td className="p-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              {service.office?.name}
+                            </div>
+                          </td>
+                        )}
+                        <td className="p-4 whitespace-nowrap">
+                          <Badge
+                            variant="secondary"
+                            className="bg-muted/50 font-medium"
+                          >
+                            <Clock className="mr-1.5 h-3.5 w-3.5" />
+                            {service.timeToTake}
+                          </Badge>
+                        </td>
+                        <td className="p-4 whitespace-nowrap">
+                          <div className="flex gap-2">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-bold border-emerald-500/20 text-emerald-600 bg-emerald-500/5"
+                            >
+                              {service.requirements?.length || 0} {t("Reqs")}
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-bold border-blue-500/20 text-blue-600 bg-blue-500/5"
+                            >
+                              {service.serviceFors?.length || 0} {t("Target")}
+                            </Badge>
+                          </div>
+                        </td>
+                        <td className="p-4 text-right whitespace-nowrap">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-full"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="rounded-xl"
+                            >
+                              <DropdownMenuItem
+                                onClick={() => handleEdit(service)}
+                                className="gap-2"
+                              >
+                                <Edit className="h-4 w-4" /> {t("Edit")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => setDeletingService(service)}
+                                className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/5"
+                              >
+                                <Trash2 className="h-4 w-4" /> {t("Delete")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

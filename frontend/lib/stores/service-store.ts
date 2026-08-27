@@ -61,10 +61,23 @@ type ServiceStore = {
     pageSize?: number;
   }) => Promise<void>;
   createService: (payload: CreateServicePayload) => Promise<Service>;
-  updateService: (id: string, payload: UpdateServicePayload) => Promise<Service>;
+  updateService: (
+    id: string,
+    payload: UpdateServicePayload,
+  ) => Promise<Service>;
   deleteService: (id: string) => Promise<void>;
   setError: (error: string | null) => void;
 };
+
+/**
+ * Sequence number of the most recently issued list request.
+ *
+ * Typing in the search box fires one request per change, and the replies do
+ * not necessarily arrive in the order they were sent — a slower earlier reply
+ * landing last would paint results for a query the user has already moved on
+ * from. Only the newest request is allowed to write to the store.
+ */
+let latestListRequest = 0;
 
 export const useServiceStore = create<ServiceStore>((set) => ({
   services: [],
@@ -73,6 +86,9 @@ export const useServiceStore = create<ServiceStore>((set) => ({
   pagination: null,
 
   fetchServices: async (params = {}) => {
+    const requestId = ++latestListRequest;
+    const isStale = () => requestId !== latestListRequest;
+
     set({ isLoading: true, error: null });
     try {
       const { officeId, search, page = 1, pageSize = 10 } = params;
@@ -90,12 +106,18 @@ export const useServiceStore = create<ServiceStore>((set) => ({
         pagination: any;
       };
 
+      // A superseded reply is discarded rather than rendered; the request
+      // that overtook it owns the list, and the loading flag with it.
+      if (isStale()) return;
+
       set({
         services: response.data || [],
         pagination: response.pagination || null,
         isLoading: false,
       });
     } catch (error: any) {
+      if (isStale()) return;
+
       set({
         error: error?.message || "Failed to fetch services",
         isLoading: false,

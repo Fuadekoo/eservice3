@@ -53,6 +53,7 @@ import {
   ethiopianMobilePhoneSchema,
   normalizeEthiopianMobilePhone,
 } from "@/lib/phone";
+import { personNameSchema } from "@/lib/name";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -62,9 +63,9 @@ const phoneSchema = z.object({
 
 const profileSchema = z
   .object({
-    firstName: z.string().trim().min(1, "First name is required."),
-    fatherName: z.string().trim().min(1, "Father's name is required."),
-    lastName: z.string().trim().min(1, "Last name is required."),
+    firstName: personNameSchema("First name"),
+    fatherName: personNameSchema("Father name"),
+    lastName: personNameSchema("Last name"),
     username: z
       .string()
       .trim()

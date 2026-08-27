@@ -50,16 +50,19 @@ import {
   normalizeEthiopianMobilePhone,
 } from "@/lib/phone";
 import { useTranslation } from "@/lib/i18n";
+import { personNameSchema } from "@/lib/name";
 import { cn } from "@/lib/utils";
 
 /** Sentinel for "no office" — Radix Select cannot hold an empty string value. */
 const NO_OFFICE = "none";
 
 const userSchema = z.object({
-  // Trimmed before the length check so a whitespace-only name is rejected.
-  firstName: z.string().trim().min(1, "First name is required"),
-  fatherName: z.string().trim().min(1, "Father name is required"),
-  lastName: z.string().trim().min(1, "Last name is required"),
+  // Letters only: trimmed, non-blank, and no digits. The login username
+  // below is deliberately NOT restricted this way — real accounts use
+  // names like "manager24".
+  firstName: personNameSchema("First name"),
+  fatherName: personNameSchema("Father name"),
+  lastName: personNameSchema("Last name"),
   username: z.string().trim().min(2, "Username is required"),
   phoneNumber: ethiopianMobilePhoneSchema,
   password: optionalStrongPasswordSchema,

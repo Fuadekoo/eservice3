@@ -41,6 +41,7 @@ import {
   normalizeEthiopianMobilePhone,
 } from "@/lib/phone";
 import { useTranslation } from "@/lib/i18n";
+import { personNameError } from "@/lib/name";
 import { UserIdentitySummary } from "@/components/dashboard/user-identity";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -106,21 +107,29 @@ function syncCachedUser(user: Record<string, unknown>) {
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
-/** Fields that must hold a real value — never null, empty, or whitespace-only. */
-const REQUIRED_FIELDS = [
-  { key: "firstName", message: "First name is required." },
-  { key: "fatherName", message: "Father's name is required." },
-  { key: "lastName", message: "Grandfather's name is required." },
-  { key: "username", message: "Username is required." },
+/**
+ * Name parts are letters-only: blank, whitespace and digits are all refused.
+ * The username is only checked for being present — real accounts legitimately
+ * contain digits, so the letters-only rule must not apply to it.
+ */
+const NAME_FIELDS = [
+  { key: "firstName", label: "First name" },
+  { key: "fatherName", label: "Father's name" },
+  { key: "lastName", label: "Grandfather's name" },
 ] as const;
 
 type FieldErrors = Partial<Record<keyof ProfileForm, string>>;
 
 function validateProfile(profile: ProfileForm): FieldErrors {
   const errors: FieldErrors = {};
-  for (const field of REQUIRED_FIELDS) {
-    if (!profile[field.key].trim()) errors[field.key] = field.message;
+
+  for (const field of NAME_FIELDS) {
+    const message = personNameError(profile[field.key], field.label);
+    if (message) errors[field.key] = message;
   }
+
+  if (!profile.username.trim()) errors.username = "Username is required.";
+
   return errors;
 }
 

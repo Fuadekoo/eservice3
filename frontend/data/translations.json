@@ -66,11 +66,35 @@
       }
     },
     {
+      "key": "Father's name may only contain letters, spaces, hyphens and apostrophes.",
+      "translations": {
+        "en": "Father's name may only contain letters, spaces, hyphens and apostrophes.",
+        "am": "የአባት ስም ፊደላትን፣ ክፍተቶችን፣ ሰረዞችን እና አፖስትሮፊዎችን ብቻ መያዝ ይችላል።",
+        "om": "Maqaan abbaa qubee, iddoo duwwaa, sarara fi apostrofii qofa qabaachuu danda'a."
+      }
+    },
+    {
+      "key": "First name may only contain letters, spaces, hyphens and apostrophes.",
+      "translations": {
+        "en": "First name may only contain letters, spaces, hyphens and apostrophes.",
+        "am": "የመጀመሪያ ስም ፊደላትን፣ ክፍተቶችን፣ ሰረዞችን እና አፖስትሮፊዎችን ብቻ መያዝ ይችላል።",
+        "om": "Maqaan jalqabaa qubee, iddoo duwwaa, sarara fi apostrofii qofa qabaachuu danda'a."
+      }
+    },
+    {
       "key": "Grandfather's name is required.",
       "translations": {
         "en": "Grandfather's name is required.",
         "am": "የአያት ስም ያስፈልጋል።",
         "om": "Maqaan akaakayyuu barbaachisaadha."
+      }
+    },
+    {
+      "key": "Grandfather's name may only contain letters, spaces, hyphens and apostrophes.",
+      "translations": {
+        "en": "Grandfather's name may only contain letters, spaces, hyphens and apostrophes.",
+        "am": "የአያት ስም ፊደላትን፣ ክፍተቶችን፣ ሰረዞችን እና አፖስትሮፊዎችን ብቻ መያዝ ይችላል።",
+        "om": "Maqaan akaakayyuu qubee, iddoo duwwaa, sarara fi apostrofii qofa qabaachuu danda'a."
       }
     },
     {

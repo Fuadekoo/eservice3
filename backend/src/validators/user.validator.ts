@@ -3,21 +3,8 @@ import {
   ETHIOPIAN_MOBILE_PHONE_MESSAGE,
   normalizeEthiopianMobilePhone,
 } from "../utils/phone.js";
+import { optionalNameField, requiredNameField } from "../utils/name.js";
 
-/**
- * A stored name part must never be null, empty, or whitespace-only.
- * `.trim()` runs before `.min(1)`, so "   " is rejected too.
- */
-const requiredNameField = (label: string) =>
-  z
-    .string({ error: label + " is required." })
-    .trim()
-    .min(1, label + " is required.")
-    .max(100, label + " must be 100 characters or fewer.");
-
-/** Same rules, but the field may be omitted entirely (partial updates). */
-const optionalNameField = (label: string) =>
-  requiredNameField(label).optional();
 
 const phoneField = z
   .string()

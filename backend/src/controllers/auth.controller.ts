@@ -23,6 +23,7 @@ import {
 import { prisma } from "../lib/db.js";
 import { generateToken } from "../lib/jwt.js";
 import { buildValidationError } from "../validators/security.validator.js";
+import { optionalNameField, requiredNameField } from "../utils/name.js";
 import {
   ETHIOPIAN_MOBILE_PHONE_MESSAGE,
   getEthiopianMobilePhoneCandidates,
@@ -41,26 +42,15 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required."),
 });
 
-/**
- * A name part is optional on a partial profile update, but when present it
- * must be a real value: null, "" and "   " are all rejected.
- */
-const nameField = (label: string) =>
-  z
-    .string({ error: label + " is required." })
-    .trim()
-    .min(1, label + " is required.")
-    .max(100, label + " must be 100 characters or fewer.")
-    .optional();
 
 const updateProfileSchema = z
   .object({
     username: z.string().trim().min(1, "Username is required.").optional(),
-    // Optional (partial update), but a supplied part may never be blank —
-    // clearing a name is not an allowed edit.
-    firstName: nameField("First name"),
-    fatherName: nameField("Father name"),
-    lastName: nameField("Last name"),
+    // Optional (partial update), but a supplied part may never be blank or
+    // carry digits — clearing or numbering a name is not an allowed edit.
+    firstName: optionalNameField("First name"),
+    fatherName: optionalNameField("Father name"),
+    lastName: optionalNameField("Last name"),
     gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
     // Stored image is an uploaded filename (see /files/upload); empty string
     // clears the current photo.
@@ -710,9 +700,9 @@ export async function verifyLoginTwoFactor(
 }
 
 const registerCustomerSchema = z.object({
-  firstName: z.string().trim().min(1, "First name is required."),
-  fatherName: z.string().trim().min(1, "Father's name is required."),
-  lastName: z.string().trim().min(1, "Last name is required."),
+  firstName: requiredNameField("First name"),
+  fatherName: requiredNameField("Father name"),
+  lastName: requiredNameField("Last name"),
   username: z.string().trim().min(1, "Username is required."),
   phone: z
     .string()

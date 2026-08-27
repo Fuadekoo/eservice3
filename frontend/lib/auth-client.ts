@@ -189,11 +189,17 @@ export async function login(
       "permissions",
       JSON.stringify(session.permissions || []),
     );
+    // Clear rather than keep a previous session's values: signing in over an
+    // existing session must not leave a stale office on display.
     if (session.officeId) {
       localStorage.setItem("officeId", session.officeId);
+    } else {
+      localStorage.removeItem("officeId");
     }
     if (session.office) {
       localStorage.setItem("office", JSON.stringify(session.office));
+    } else {
+      localStorage.removeItem("office");
     }
     if (session.currentSession) {
       localStorage.setItem(
@@ -276,11 +282,17 @@ export async function verifyTwoFactor(
       "permissions",
       JSON.stringify(session.permissions || []),
     );
+    // Clear rather than keep a previous session's values: signing in over an
+    // existing session must not leave a stale office on display.
     if (session.officeId) {
       localStorage.setItem("officeId", session.officeId);
+    } else {
+      localStorage.removeItem("officeId");
     }
     if (session.office) {
       localStorage.setItem("office", JSON.stringify(session.office));
+    } else {
+      localStorage.removeItem("office");
     }
     if (session.currentSession) {
       localStorage.setItem(

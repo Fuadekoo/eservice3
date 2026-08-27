@@ -64,6 +64,10 @@ import { useSessionHeartbeat } from "@/hooks/use-session-heartbeat";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useTranslation } from "@/lib/i18n";
+import {
+  UserIdentityBadges,
+  UserIdentityRows,
+} from "@/components/dashboard/user-identity";
 
 function getBreadcrumbs(pathname: string) {
   const trail = [];
@@ -191,6 +195,7 @@ function UserAvatarDropdown() {
             <p className="text-xs leading-none text-muted-foreground">
               {user?.phone || user?.username || t("No phone")}
             </p>
+            <UserIdentityRows className="pt-2" />
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -518,7 +523,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <header className="p-2 border-b bg-background/90 backdrop-blur supports-backdrop-filter:bg-background/60 flex gap-2 items-center ">
           <SidebarTrigger />
           <Separator orientation="vertical" className="max-h-6 max-md:hidden" />
-          <div className="flex-1 flex items-center gap-3">
+          <div className="flex-1 min-w-0 flex items-center gap-3 overflow-hidden">
             <Breadcrumb className="max-md:hidden">
               <BreadcrumbList>
                 {breadcrumbItems.map((breadcrumb) => (
@@ -551,6 +556,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
+          <UserIdentityBadges className="max-lg:hidden" />
+          <Separator
+            orientation="vertical"
+            className="max-h-6 max-lg:hidden"
+          />
           <NotificationBell />
           <Separator orientation="vertical" className="max-h-6" />
           <ThemeToggle />

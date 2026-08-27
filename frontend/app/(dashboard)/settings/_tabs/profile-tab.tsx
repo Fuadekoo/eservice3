@@ -41,6 +41,7 @@ import {
   normalizeEthiopianMobilePhone,
 } from "@/lib/phone";
 import { useTranslation } from "@/lib/i18n";
+import { UserIdentitySummary } from "@/components/dashboard/user-identity";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -400,6 +401,9 @@ export function ProfileTab() {
               disabled={busy}
             />
           </label>
+
+          {/* Role and assigned office come from the session and are not editable here. */}
+          <UserIdentitySummary />
         </div>
 
         {/* Fields grid */}

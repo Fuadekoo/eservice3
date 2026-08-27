@@ -18,6 +18,14 @@
   ],
   "translations": [
     {
+      "key": "Assigned Office",
+      "translations": {
+        "en": "Assigned Office",
+        "am": "የተመደበ ጽሕፈት ቤት",
+        "om": "Waajjira Ramadame"
+      }
+    },
+    {
       "key": "Father name",
       "translations": {
         "en": "Father name",
@@ -39,6 +47,14 @@
         "en": "Last name",
         "am": "የአያት ስም",
         "om": "Maqaa akaakayyuu"
+      }
+    },
+    {
+      "key": "No role assigned",
+      "translations": {
+        "en": "No role assigned",
+        "am": "ምንም ሚና አልተመደበም",
+        "om": "Gahee hin ramadamne"
       }
     },
     {

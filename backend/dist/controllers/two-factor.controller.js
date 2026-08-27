@@ -28,11 +28,7 @@ const loginUserInclude = {
             },
         },
     },
-    staffs: {
-        orderBy: {
-            createdAt: "asc",
-        },
-        take: 1,
+    staff: {
         include: {
             office: {
                 select: {
@@ -50,7 +46,7 @@ async function findTwoFactorLoginUser(userId) {
     });
 }
 function getPrimaryStaff(user) {
-    return user.staffs[0] ?? null;
+    return user.staff ?? null;
 }
 function getPermissions(user) {
     return (user.role?.rolePermissions.map((entry) => entry.permission.code ?? entry.permission.name) ?? []);

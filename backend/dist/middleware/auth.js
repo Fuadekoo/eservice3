@@ -18,10 +18,7 @@ const sessionUserInclude = {
             },
         },
     },
-    staffs: {
-        orderBy: {
-            createdAt: "asc",
-        },
+    staff: {
         include: {
             office: {
                 select: {
@@ -48,7 +45,7 @@ function normalizeRoleName(roleName) {
     return roleName?.trim().toUpperCase() ?? "";
 }
 function getPrimaryStaff(user) {
-    return user.staffs[0] ?? null;
+    return user.staff ?? null;
 }
 function isDatabaseConnectionError(error) {
     if (!error || typeof error !== "object") {

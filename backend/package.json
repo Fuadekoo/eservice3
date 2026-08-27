@@ -12,6 +12,7 @@
     "backfill:office-ids": "npx tsx prisma/backfill-office-ids.ts",
     "seed:permissions": "npx tsx prisma/permission-seed.ts",
     "assign:role-permissions": "npx tsx prisma/assign-role-permissions.ts",
+    "merge:duplicate-roles": "npx tsx prisma/merge-duplicate-roles.ts",
     "vapid": "node scripts/generate-vapid.mjs"
   },
   "keywords": [],

@@ -49,7 +49,7 @@ model User {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
-  staffs               staff[]
+  staff                staff?
   requests             request[]
   requestForOthers     requestForOther[]
   appointments         appointment[]
@@ -153,7 +153,11 @@ model Notification {
 
 model staff {
   id                      String                   @id @default(cuid())
-  userId                  String
+  /// One staff row per person, which is how a user gets an office: role.officeId
+  /// says which office a role definition belongs to, not where the holder works.
+  /// The code always assumed a single row, so the database now guarantees it
+  /// rather than leaving a second one to be silently ignored.
+  userId                  String                   @unique
   user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   officeId                String
   office                  Office                   @relation(fields: [officeId], references: [id], onDelete: Cascade)
@@ -182,7 +186,6 @@ model Office {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 
-  roles            Role[]
   staffs           staff[]
   service          service[]
   availability     officeAvailability?
@@ -224,15 +227,21 @@ model officeAvailability {
   @@map("office_availability")
 }
 
+/// A job description, independent of any office.
+///
+/// Roles used to carry an officeId, so every office kept its own copy of the
+/// same role. Which office someone works in is recorded once, on their staff
+/// row; a role only says what they may do. One manager role now serves every
+/// office.
 model Role {
   id          String   @id @default(cuid())
-  name        String
+  /// Unique now that roles are global — two roles sharing a name would be
+  /// indistinguishable in every dropdown.
+  name        String   @unique
   description String?  @db.Text
-  officeId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 
-  office          Office?          @relation(fields: [officeId], references: [id], onDelete: Cascade)
   users           User[]
   rolePermissions RolePermission[]
 

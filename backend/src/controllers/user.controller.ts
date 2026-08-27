@@ -44,7 +44,7 @@ const userInclude = {
   role: {
     select: { id: true, name: true },
   },
-  staffs: {
+  staff: {
     select: {
       id: true,
       officeId: true,
@@ -115,7 +115,7 @@ function formatUser(user: any) {
     phoneVerified: user.phoneVerified,
     isActive: user.isActive,
     role: user.role ?? null,
-    staff: user.staffs?.[0] ?? null,
+    staff: user.staff ?? null,
     createdAt: user.createdAt?.toISOString(),
     updatedAt: user.updatedAt?.toISOString(),
   };
@@ -175,7 +175,7 @@ export async function listUsers(req: AuthRequest, res: Response) {
           is: { name: { equals: roleName } },
         },
       });
-    if (officeId) filters.push({ staffs: { some: { officeId } } });
+    if (officeId) filters.push({ staff: { officeId } });
     if (isActiveRaw === "true") filters.push({ isActive: true });
     else if (isActiveRaw === "false") filters.push({ isActive: false });
 

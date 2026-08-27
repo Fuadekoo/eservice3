@@ -39,7 +39,7 @@ const reportInclude = {
       username: true,
       phoneNumber: true,
       role: { select: { name: true } },
-      staffs: {
+      staff: {
         take: 1,
         select: {
           office: { select: { id: true, name: true } },
@@ -61,7 +61,7 @@ const reportInclude = {
 } as const;
 
 function formatReport(report: any) {
-  const office = report.reportSentByUser?.staffs?.[0]?.office ?? null;
+  const office = report.reportSentByUser?.staff?.office ?? null;
   return {
     id: report.id,
     name: report.name,
@@ -114,7 +114,7 @@ async function validateReportRecipient(
       select: {
         id: true,
         role: { select: { name: true } },
-        staffs: { take: 1, select: { officeId: true } },
+        staff: { select: { officeId: true } },
       },
     }),
     prisma.user.findUnique({
@@ -122,7 +122,7 @@ async function validateReportRecipient(
       select: {
         id: true,
         role: { select: { name: true } },
-        staffs: { take: 1, select: { officeId: true } },
+        staff: { select: { officeId: true } },
       },
     }),
   ]);
@@ -141,8 +141,8 @@ async function validateReportRecipient(
         error: "Staff reports must be sent to a manager.",
       };
     }
-    const senderOfficeId = sender.staffs[0]?.officeId;
-    const recipientOfficeId = recipient.staffs[0]?.officeId;
+    const senderOfficeId = sender.staff?.officeId;
+    const recipientOfficeId = recipient.staff?.officeId;
     if (!senderOfficeId || senderOfficeId !== recipientOfficeId) {
       return {
         ok: false,
@@ -223,7 +223,7 @@ export async function listReports(req: AuthRequest, res: Response) {
 
     if (officeId) {
       where.reportSentByUser = {
-        staffs: { some: { officeId } },
+        staff: { officeId },
       };
     }
 
@@ -564,7 +564,7 @@ export async function getManagerUsers(req: AuthRequest, res: Response) {
       where: {
         isActive: true,
         role: { name: { in: MANAGER_ROLE_NAMES } },
-        staffs: { some: { officeId } },
+        staff: { officeId },
       },
       select: { id: true, username: true, phoneNumber: true },
       orderBy: { username: "asc" },

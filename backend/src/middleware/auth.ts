@@ -78,10 +78,7 @@ const sessionUserInclude = {
       },
     },
   },
-  staffs: {
-    orderBy: {
-      createdAt: "asc" as const,
-    },
+  staff: {
     include: {
       office: {
         select: {
@@ -115,7 +112,7 @@ function normalizeRoleName(roleName?: string | null): string {
 }
 
 function getPrimaryStaff(user: ActiveSessionRecord["user"]) {
-  return user.staffs[0] ?? null;
+  return user.staff ?? null;
 }
 
 function isDatabaseConnectionError(error: unknown): boolean {

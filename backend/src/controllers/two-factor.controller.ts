@@ -47,11 +47,7 @@ const loginUserInclude = {
       },
     },
   },
-  staffs: {
-    orderBy: {
-      createdAt: "asc" as const,
-    },
-    take: 1,
+  staff: {
     include: {
       office: {
         select: {
@@ -75,7 +71,7 @@ type TwoFactorLoginUser = NonNullable<
 >;
 
 function getPrimaryStaff(user: TwoFactorLoginUser) {
-  return user.staffs[0] ?? null;
+  return user.staff ?? null;
 }
 
 function getPermissions(user: TwoFactorLoginUser): string[] {

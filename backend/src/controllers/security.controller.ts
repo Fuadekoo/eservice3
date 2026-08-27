@@ -549,19 +549,13 @@ export async function listRoles(
   req: AuthRequest,
   res: Response,
 ): Promise<void> {
-  const scopedOfficeId = getOfficeId(req, res);
-  const requestedOfficeId =
-    typeof req.query.officeId === "string" ? req.query.officeId.trim() : "";
   const search =
     typeof req.query.search === "string" ? req.query.search.trim() : "";
 
+  // Roles are global — a job description, not a place — so there is nothing
+  // to scope by office. An officeId query parameter is accepted and ignored
+  // so older callers keep working.
   const where: Prisma.RoleWhereInput = {};
-
-  if (scopedOfficeId) {
-    where.officeId = scopedOfficeId;
-  } else if (requestedOfficeId) {
-    where.officeId = requestedOfficeId;
-  }
 
   if (search) {
     where.name = {

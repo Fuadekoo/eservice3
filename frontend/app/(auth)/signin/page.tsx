@@ -8,6 +8,7 @@ import {
   Loader2,
   ShieldCheck,
   ArrowLeft,
+  ChevronLeft,
   ChevronDown,
   Zap,
   Search,
@@ -248,10 +249,21 @@ function SignInContent() {
 
   return (
     <div className="bg-linear-to-br from-primary/20 via-background to-primary/20  flex min-h-dvh flex-col items-center-justify-center gap-2 overflow-auto p-4 md:p-6 lg:p-10">
-      <div className=" p-2 flex items-center justify-end gap-5 ">
-        <ThemeToggle />
-        <Separator orientation="vertical" className="max-h-6" />
-        <LanguageToggle />
+      {/* Top bar */}
+      <div className="w-full max-w-sm md:max-w-5xl mx-auto p-2 flex items-center justify-between gap-4">
+        <Link
+          href="/"
+          aria-label={getTranslationForKey("Back to Home")}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronLeft className="size-4" />
+          {getTranslationForKey("Back to Home")}
+        </Link>
+        <div className="flex items-center gap-5">
+          <ThemeToggle />
+          <Separator orientation="vertical" className="max-h-6" />
+          <LanguageToggle />
+        </div>
       </div>
       <div className="w-full max-w-sm md:max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex flex-col gap-6">

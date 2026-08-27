@@ -1498,6 +1498,14 @@
       }
     },
     {
+      "key": "Back to Home",
+      "translations": {
+        "en": "Back to Home",
+        "am": "ወደ መነሻ ተመለስ",
+        "om": "Gara Fuula Jalqabaatti Deebi'i"
+      }
+    },
+    {
       "key": "Back to login",
       "translations": {
         "en": "Back to login",

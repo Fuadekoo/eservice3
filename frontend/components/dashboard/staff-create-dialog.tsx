@@ -39,10 +39,11 @@ import {
   type UpdateStaffMemberPayload,
 } from "@/lib/stores/staff-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
+import { assignableRoles } from "@/lib/assignable-roles";
 import {
-  dedupeOfficeRolesByName,
-  dedupeRolesByName,
-} from "@/lib/roles";
+  SearchSelect,
+  type SearchSelectOption,
+} from "@/components/ui/search-select";
 import { useTranslation } from "@/lib/i18n";
 import { personNameSchema } from "@/lib/name";
 import { Badge } from "@/components/ui/badge";
@@ -70,7 +71,8 @@ const staffSchema = z.object({
   gender: z.enum(["MALE", "FEMALE", "OTHER"]),
   // Holds a de-duplicated role name (lower-cased); the backend resolves it to
   // this office's role. Avoids repeating the same role name once per office.
-  roleName: z.string().min(1, "Role is required"),
+  // The role's own id — names are not unique across offices.
+  roleId: z.string().min(1, "Role is required"),
   status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"]),
 });
 
@@ -98,23 +100,42 @@ export function StaffCreateDialog({
   const { roles, fetchRoles } = useSecurityStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Customers are not office staff, so they are never offered as a role here.
-  // A member who already holds one (customers registering against an office do
-  // get a staff row) keeps it listed, so editing shows their real role rather
-  // than an empty select.
-  const distinctRoles = React.useMemo(() => {
-    const assignable = dedupeOfficeRolesByName(roles);
-    const currentName = member?.role?.name?.trim();
-    const currentKey = currentName?.toLowerCase();
-    if (!currentKey || assignable.some((role) => role.key === currentKey)) {
-      return assignable;
+  // This office's own roles plus the shared base ones, each as a distinct
+  // entry keyed by id. Listing by name used to collapse every role sharing a
+  // name — a second role in the same office simply never appeared.
+  // Customers are excluded: they are not office staff.
+  const roleOptions = React.useMemo(() => {
+    const options = assignableRoles(roles, officeId, { officeOnly: true });
+
+    // A member already holding an excluded role (customers registering
+    // against an office do get a staff row) keeps it listed, so editing shows
+    // their real role rather than an empty select.
+    const current = member?.role;
+    if (!current?.id || options.some((role) => role.id === current.id)) {
+      return options;
     }
-    const [current] = dedupeRolesByName([{ name: currentName }]);
-    if (!current) return assignable;
-    return [...assignable, current].sort((a, b) =>
-      a.label.localeCompare(b.label),
-    );
-  }, [roles, member]);
+    const name = current.name?.trim();
+    if (!name) return options;
+    return [
+      ...options,
+      {
+        id: current.id,
+        label: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
+        officeId: null,
+        officeName: null,
+      },
+    ];
+  }, [roles, member, officeId]);
+
+  const roleSelectOptions = React.useMemo<SearchSelectOption[]>(
+    () =>
+      roleOptions.map((role) => ({
+        value: role.id,
+        label: t(role.label),
+        group: role.officeId ? t("This office") : t("Shared roles"),
+      })),
+    [roleOptions, t],
+  );
 
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffSchema),
@@ -126,7 +147,7 @@ export function StaffCreateDialog({
       username: "",
       password: "",
       gender: "MALE",
-      roleName: "",
+      roleId: "",
       status: "ACTIVE",
     },
   });
@@ -147,7 +168,7 @@ export function StaffCreateDialog({
         username: member.username,
         password: "",
         gender: member.gender,
-        roleName: member.role?.name?.toLowerCase() || "",
+        roleId: member.role?.id || "",
         status: member.status,
       });
     } else {
@@ -159,7 +180,7 @@ export function StaffCreateDialog({
         username: "",
         password: "",
         gender: "MALE",
-        roleName: "",
+        roleId: "",
         status: "ACTIVE",
       });
     }
@@ -177,7 +198,7 @@ export function StaffCreateDialog({
         phone: normalizedPhone,
         username: values.username,
         gender: values.gender,
-        roleName: values.roleName,
+        roleId: values.roleId,
         status: values.status,
         officeId,
         password: values.password || undefined,
@@ -200,7 +221,7 @@ export function StaffCreateDialog({
           username: values.username,
           password: values.password,
           gender: values.gender,
-          roleName: values.roleName,
+          roleId: values.roleId,
           status: values.status,
           officeId,
         };
@@ -427,34 +448,24 @@ export function StaffCreateDialog({
 
                   <FormField
                     control={form.control}
-                    name="roleName"
+                    name="roleId"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-bold text-xs uppercase tracking-tighter">
                           {t("Assign Role")}
                         </FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/50 focus:ring-primary/20">
-                              <SelectValue placeholder={t("Select role")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="rounded-xl border-border/50 shadow-xl">
-                            {distinctRoles.map((role) => (
-                              <SelectItem
-                                key={role.key}
-                                value={role.key}
-                                className="rounded-lg"
-                              >
-                                {role.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormControl>
+                          <SearchSelect
+                            options={roleSelectOptions}
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            disabled={roleSelectOptions.length === 0}
+                            placeholder={t("Select role")}
+                            searchPlaceholder={t("Search role...")}
+                            emptyMessage={t("No matching role")}
+                            aria-label={t("Assign Role")}
+                          />
+                        </FormControl>
                         <FormMessage className="text-[10px]" />
                       </FormItem>
                     )}

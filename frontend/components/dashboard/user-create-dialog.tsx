@@ -35,6 +35,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import {
+  SearchSelect,
+  type SearchSelectOption,
+} from "@/components/ui/search-select";
 import { Switch } from "@/components/ui/switch";
 import {
   useUserStore,
@@ -43,7 +47,7 @@ import {
   type User as UserRecord,
 } from "@/lib/stores/user-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
-import { dedupeRolesByName, isOfficeAssignableRole } from "@/lib/roles";
+import { assignableRoles, isCustomerRoleId } from "@/lib/assignable-roles";
 import { useOfficeStore } from "@/lib/stores/office-store";
 import {
   ethiopianMobilePhoneSchema,
@@ -66,9 +70,10 @@ const userSchema = z.object({
   username: z.string().trim().min(2, "Username is required"),
   phoneNumber: ethiopianMobilePhoneSchema,
   password: optionalStrongPasswordSchema,
-  // Holds a de-duplicated role name (lower-cased); the backend resolves it to a
-  // concrete role. Avoids listing the same role name once per office.
-  roleName: z.string().min(1, "Role is required"),
+  // The role's own id. Names are not unique — a database holds one "manager"
+  // row per office — so submitting a name left the server to guess which was
+  // meant, and listing by name hid every duplicate after the first.
+  roleId: z.string().min(1, "Role is required"),
   officeId: z.string().optional().or(z.literal("")),
   isActive: z.boolean(),
 });
@@ -113,9 +118,7 @@ export function UserCreateDialog({
   const { offices, fetchOffices } = useOfficeStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Every role is listed here — unlike the office-assignment dialog, this screen
-  // legitimately creates customers too.
-  const distinctRoles = React.useMemo(() => dedupeRolesByName(roles), [roles]);
+
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema) as Resolver<UserFormValues>,
@@ -126,20 +129,44 @@ export function UserCreateDialog({
       username: "",
       phoneNumber: "",
       password: "",
-      roleName: "",
       officeId: "",
+      roleId: "",
       isActive: true,
     },
   });
 
-  const roleName = useWatch({ control: form.control, name: "roleName" });
+  const roleId = useWatch({ control: form.control, name: "roleId" });
+  const selectedOfficeId = useWatch({ control: form.control, name: "officeId" });
 
-  // A customer belongs to no office — they apply to any of them. Same rule as
-  // the office assignment dropdown, kept in one place in lib/roles.
-  const isCustomerRole = Boolean(roleName) && !isOfficeAssignableRole(roleName);
-  // The office cannot be chosen before the role, because the role decides
-  // whether an office applies at all.
-  const isOfficeLocked = !roleName || isCustomerRole;
+  // The office is chosen first, because it decides which roles exist: an
+  // office's own roles plus the shared base ones. With no office, only the
+  // shared roles are on offer — which is how a customer is created.
+  const scopedOfficeId =
+    selectedOfficeId && selectedOfficeId !== NO_OFFICE ? selectedOfficeId : null;
+
+  const roleOptions = React.useMemo<SearchSelectOption[]>(
+    () =>
+      assignableRoles(roles, scopedOfficeId).map((role) => ({
+        value: role.id,
+        label: t(role.label),
+        // Two roles can share a name across offices, so the owning office is
+        // what tells them apart — and it is searchable.
+        ...(role.officeName ? { description: role.officeName } : {}),
+        group: role.officeId ? t("This office") : t("Shared roles"),
+      })),
+    [roles, scopedOfficeId, t],
+  );
+
+  const officeOptions = React.useMemo<SearchSelectOption[]>(
+    () => [
+      { value: NO_OFFICE, label: t("No office") },
+      ...offices.map((office) => ({ value: office.id, label: office.name })),
+    ],
+    [offices, t],
+  );
+
+  // A customer belongs to no office — they apply to any of them.
+  const isCustomerRole = isCustomerRoleId(roles, roleId);
 
   React.useEffect(() => {
     if (open) {
@@ -157,8 +184,8 @@ export function UserCreateDialog({
         username: user.username,
         phoneNumber: user.phoneNumber,
         password: "",
-        roleName: user.role?.name?.toLowerCase() || "",
         officeId: user.staff?.officeId || "",
+        roleId: user.role?.id || "",
         isActive: user.isActive,
       });
     } else {
@@ -169,41 +196,45 @@ export function UserCreateDialog({
         username: "",
         phoneNumber: "",
         password: "",
-        roleName: "",
         officeId: "",
+        roleId: "",
         isActive: true,
       });
     }
   }, [user, form, open]);
 
-  // Switching to a role that has no office must not leave a stale selection
-  // behind, or the user would submit an office they can no longer see.
+  // Changing the office changes which roles exist, so a selection that is no
+  // longer on offer is cleared rather than submitted invisibly.
   React.useEffect(() => {
-    if (isOfficeLocked && form.getValues("officeId")) {
+    const current = form.getValues("roleId");
+    if (current && !roleOptions.some((role) => role.value === current)) {
+      form.setValue("roleId", "", { shouldDirty: true });
+    }
+  }, [roleOptions, form]);
+
+  // A customer is never tied to an office.
+  React.useEffect(() => {
+    if (isCustomerRole && form.getValues("officeId")) {
       form.setValue("officeId", "", { shouldDirty: true });
     }
-  }, [isOfficeLocked, form]);
+  }, [isCustomerRole, form]);
 
-  const officePlaceholder = !roleName
-    ? t("Select a role first")
-    : isCustomerRole
-      ? t("Not applicable to customers")
-      : t("Select office");
+  const officeHint = isCustomerRole
+    ? t("Customers apply to any office, so they are not assigned to one.")
+    : t("Choose the office first — it decides which roles are available.");
 
-  const officeHint = !roleName
-    ? t("Choose a role first — it decides whether an office applies.")
-    : isCustomerRole
-      ? t("Customers apply to any office, so they are not assigned to one.")
-      : t("Optional. Leave empty for a user who is not tied to one office.");
+  const rolePlaceholder = roleOptions.length
+    ? t("Select role")
+    : t("No roles available for this office");
 
   const onSubmit = async (values: UserFormValues) => {
     setIsSubmitting(true);
     try {
       const normalizedPhone =
         normalizeEthiopianMobilePhone(values.phoneNumber) ?? values.phoneNumber;
-      // A locked office is never sent, and the "no office" sentinel is not a real id.
+      // Customers hold no office, and the "no office" sentinel is not a real id.
       const officeId =
-        isOfficeLocked || !values.officeId || values.officeId === NO_OFFICE
+        isCustomerRole || !values.officeId || values.officeId === NO_OFFICE
           ? undefined
           : values.officeId;
 
@@ -213,7 +244,7 @@ export function UserCreateDialog({
         lastName: values.lastName,
         username: values.username,
         phoneNumber: normalizedPhone,
-        roleName: values.roleName,
+        roleId: values.roleId,
         officeId,
         password: values.password || undefined,
         isActive: values.isActive,
@@ -235,7 +266,7 @@ export function UserCreateDialog({
           username: values.username,
           phoneNumber: normalizedPhone,
           password: values.password,
-          roleName: values.roleName,
+          roleId: values.roleId,
           officeId,
           isActive: values.isActive,
         };
@@ -428,16 +459,14 @@ export function UserCreateDialog({
 
               <Separator className="bg-border/50" />
 
-              {/* Role, then office — in that order, because the role decides
-                  whether an office applies at all. */}
+              {/* Office, then role — in that order, because the office decides
+                  which roles exist: its own, plus the shared base roles. */}
               <div className="space-y-4">
-                <SectionTitle icon={Shield}>
-                  {t("Role & Office")}
-                </SectionTitle>
+                <SectionTitle icon={Shield}>{t("Office & Role")}</SectionTitle>
 
                 <FormField
                   control={form.control}
-                  name="roleName"
+                  name="officeId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold text-xs uppercase tracking-tighter">
@@ -445,30 +474,27 @@ export function UserCreateDialog({
                           <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-black text-primary-foreground">
                             1
                           </span>
-                          {t("Role")}
+                          {t("Office")}
                         </span>
                       </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/50 focus:ring-primary/20">
-                            <SelectValue placeholder={t("Select role")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="rounded-xl border-border/50 shadow-xl">
-                          {distinctRoles.map((role) => (
-                            <SelectItem
-                              key={role.key}
-                              value={role.key}
-                              className="rounded-lg"
-                            >
-                              {t(role.label)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <SearchSelect
+                          options={officeOptions}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          disabled={isCustomerRole}
+                          placeholder={t("No office")}
+                          searchPlaceholder={t("Search office...")}
+                          emptyMessage={t("No matching office")}
+                          aria-label={t("Office")}
+                          triggerIcon={
+                            <Building2 className="size-4 shrink-0 text-muted-foreground" />
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription className="text-[10px]">
+                        {officeHint}
+                      </FormDescription>
                       <FormMessage className="text-[10px]" />
                     </FormItem>
                   )}
@@ -476,64 +502,32 @@ export function UserCreateDialog({
 
                 <FormField
                   control={form.control}
-                  name="officeId"
+                  name="roleId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel
-                        className={cn(
-                          "font-bold text-xs uppercase tracking-tighter",
-                          isOfficeLocked && "text-muted-foreground/60",
-                        )}
-                        aria-disabled={isOfficeLocked}
-                      >
+                      <FormLabel className="font-bold text-xs uppercase tracking-tighter">
                         <span className="flex items-center gap-1.5">
-                          <span
-                            className={cn(
-                              "flex size-4 items-center justify-center rounded-full text-[9px] font-black",
-                              isOfficeLocked
-                                ? "bg-muted text-muted-foreground"
-                                : "bg-primary text-primary-foreground",
-                            )}
-                          >
+                          <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-black text-primary-foreground">
                             2
                           </span>
-                          {t("Office")}
+                          {t("Role")}
                         </span>
                       </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ""}
-                        disabled={isOfficeLocked}
-                      >
-                        <FormControl>
-                          <SelectTrigger
-                            className="h-11 rounded-xl bg-muted/30 border-border/50 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
-                            aria-label={t("Office")}
-                          >
-                            <span className="flex min-w-0 items-center gap-2">
-                              <Building2 className="size-4 shrink-0 text-muted-foreground" />
-                              <SelectValue placeholder={officePlaceholder} />
-                            </span>
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="rounded-xl border-border/50 shadow-xl">
-                          <SelectItem value={NO_OFFICE} className="rounded-lg">
-                            {t("No office")}
-                          </SelectItem>
-                          {offices.map((office) => (
-                            <SelectItem
-                              key={office.id}
-                              value={office.id}
-                              className="rounded-lg"
-                            >
-                              {office.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription className="text-[10px]">
-                        {officeHint}
-                      </FormDescription>
+                      <FormControl>
+                        <SearchSelect
+                          options={roleOptions}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          disabled={roleOptions.length === 0}
+                          placeholder={rolePlaceholder}
+                          searchPlaceholder={t("Search role...")}
+                          emptyMessage={t("No matching role")}
+                          aria-label={t("Role")}
+                          triggerIcon={
+                            <Shield className="size-4 shrink-0 text-muted-foreground" />
+                          }
+                        />
+                      </FormControl>
                       <FormMessage className="text-[10px]" />
                     </FormItem>
                   )}

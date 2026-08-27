@@ -74,6 +74,14 @@
       }
     },
     {
+      "key": "Choose the office first — it decides which roles are available.",
+      "translations": {
+        "en": "Choose the office first — it decides which roles are available.",
+        "am": "መጀመሪያ ጽሕፈት ቤቱን ይምረጡ — የትኞቹ ሚናዎች እንደሚገኙ የሚወስነው እሱ ነው።",
+        "om": "Jalqaba waajjira filadhu — gaheewwan argaman kan murteessu isa."
+      }
+    },
+    {
       "key": "Customers apply to any office, so they are not assigned to one.",
       "translations": {
         "en": "Customers apply to any office, so they are not assigned to one.",
@@ -202,6 +210,22 @@
       }
     },
     {
+      "key": "No matching office",
+      "translations": {
+        "en": "No matching office",
+        "am": "ተዛማጅ ጽሕፈት ቤት የለም",
+        "om": "Waajjirri walsimu hin jiru"
+      }
+    },
+    {
+      "key": "No matching role",
+      "translations": {
+        "en": "No matching role",
+        "am": "ተዛማጅ ሚና የለም",
+        "om": "Gaheen walsimu hin jiru"
+      }
+    },
+    {
       "key": "No role assigned",
       "translations": {
         "en": "No role assigned",
@@ -210,11 +234,35 @@
       }
     },
     {
+      "key": "No roles available for this office",
+      "translations": {
+        "en": "No roles available for this office",
+        "am": "ለዚህ ጽሕፈት ቤት ምንም ሚና የለም",
+        "om": "Waajjira kanaaf gaheen hin jiru"
+      }
+    },
+    {
       "key": "Not applicable to customers",
       "translations": {
         "en": "Not applicable to customers",
         "am": "ለደንበኞች አይሠራም",
         "om": "Maamiltootaaf hin hojjetu"
+      }
+    },
+    {
+      "key": "Nothing found",
+      "translations": {
+        "en": "Nothing found",
+        "am": "ምንም አልተገኘም",
+        "om": "Homaa hin argamne"
+      }
+    },
+    {
+      "key": "Office & Role",
+      "translations": {
+        "en": "Office & Role",
+        "am": "ጽሕፈት ቤት እና ሚና",
+        "om": "Waajjira fi Gahee"
       }
     },
     {
@@ -282,6 +330,30 @@
       }
     },
     {
+      "key": "Search office...",
+      "translations": {
+        "en": "Search office...",
+        "am": "ጽሕፈት ቤት ፈልግ...",
+        "om": "Waajjira barbaadi..."
+      }
+    },
+    {
+      "key": "Search role...",
+      "translations": {
+        "en": "Search role...",
+        "am": "ሚና ፈልግ...",
+        "om": "Gahee barbaadi..."
+      }
+    },
+    {
+      "key": "Search...",
+      "translations": {
+        "en": "Search...",
+        "am": "ፈልግ...",
+        "om": "Barbaadi..."
+      }
+    },
+    {
       "key": "Select a role first",
       "translations": {
         "en": "Select a role first",
@@ -290,11 +362,35 @@
       }
     },
     {
+      "key": "Select an option",
+      "translations": {
+        "en": "Select an option",
+        "am": "አማራጭ ይምረጡ",
+        "om": "Filannoo filadhu"
+      }
+    },
+    {
       "key": "Select relationship",
       "translations": {
         "en": "Select relationship",
         "am": "ዝምድና ይምረጡ",
         "om": "Firooma filadhu"
+      }
+    },
+    {
+      "key": "Shared roles",
+      "translations": {
+        "en": "Shared roles",
+        "am": "የጋራ ሚናዎች",
+        "om": "Gaheewwan waliinii"
+      }
+    },
+    {
+      "key": "Show {count} more",
+      "translations": {
+        "en": "Show {count} more",
+        "am": "ተጨማሪ {count} አሳይ",
+        "om": "Dabalataan {count} agarsiisi"
       }
     },
     {
@@ -359,6 +455,14 @@
         "en": "Their full name",
         "am": "ሙሉ ስማቸው",
         "om": "Maqaa isaanii guutuu"
+      }
+    },
+    {
+      "key": "This office",
+      "translations": {
+        "en": "This office",
+        "am": "ይህ ጽሕፈት ቤት",
+        "om": "Waajjira kana"
       }
     },
     {

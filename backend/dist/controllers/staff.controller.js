@@ -140,7 +140,6 @@ function buildStaffResponse(staff) {
             ? {
                 id: staff.user.role.id,
                 name: staff.user.role.name,
-                officeId: staff.user.role.officeId ?? null,
             }
             : null,
         permissions: staff.user.role?.rolePermissions.map((rp) => ({
@@ -164,39 +163,35 @@ async function ensureOfficeExists(officeId) {
     });
 }
 /**
- * Looks up an existing role by id or name, or creates one scoped to the office.
+ * Looks up an existing role by id or name, creating it if the name is new.
  * Must run inside a Prisma transaction.
+ *
+ * Roles are global — a job description, not a place — so there is nothing to
+ * scope here. The office a staff member belongs to is recorded on their staff
+ * row, which is the single place it lives.
  */
-async function resolveRoleId(tx, officeId, input) {
+async function resolveRoleId(tx, input) {
     const normalizedRoleId = normalizeString(input.roleId);
     if (normalizedRoleId) {
         const role = await tx.role.findUnique({
             where: { id: normalizedRoleId },
-            select: { id: true, officeId: true },
+            select: { id: true },
         });
         if (!role)
             throw new Error("Role not found.");
-        if (role.officeId && role.officeId !== officeId) {
-            throw new Error("Role belongs to a different office.");
-        }
         return role.id;
     }
     const normalizedRoleName = normalizeString(input.roleName);
     if (!normalizedRoleName)
         throw new Error("Either roleId or roleName is required.");
-    // Prefer an office-scoped role, fall back to a global role, else create.
-    const existing = (await tx.role.findFirst({
-        where: { name: normalizedRoleName, officeId },
+    const existing = await tx.role.findFirst({
+        where: { name: normalizedRoleName },
         select: { id: true },
-    })) ??
-        (await tx.role.findFirst({
-            where: { name: normalizedRoleName, officeId: null },
-            select: { id: true },
-        }));
+    });
     if (existing)
         return existing.id;
     const created = await tx.role.create({
-        data: { name: normalizedRoleName, officeId },
+        data: { name: normalizedRoleName },
         select: { id: true },
     });
     return created.id;
@@ -412,7 +407,7 @@ export async function createStaff(req, res) {
                     ? "Username already exists."
                     : "Phone number already exists.");
             }
-            const resolvedRoleId = await resolveRoleId(tx, scopedOfficeId, {
+            const resolvedRoleId = await resolveRoleId(tx, {
                 roleId: parsed.data.roleId,
                 roleName: parsed.data.roleName,
             });
@@ -539,7 +534,7 @@ export async function updateStaff(req, res) {
         const updatedStaff = await prisma.$transaction(async (tx) => {
             let resolvedRoleId;
             if (parsed.data.roleId || parsed.data.roleName) {
-                resolvedRoleId = await resolveRoleId(tx, targetOfficeId, {
+                resolvedRoleId = await resolveRoleId(tx, {
                     roleId: parsed.data.roleId,
                     roleName: parsed.data.roleName,
                 });

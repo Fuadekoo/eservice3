@@ -88,26 +88,6 @@ function SummaryCard({
   );
 }
 
-/** Shows the office a role is scoped to, or a "Global" marker for system roles. */
-function OfficeBadge({ role }: { role: Role }) {
-  const { t } = useTranslation();
-
-  if (role.officeId) {
-    return (
-      <Badge variant="secondary" className="gap-1 font-medium">
-        <Building2 className="h-3 w-3" />
-        {role.officeName || t("Unknown office")}
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="gap-1 text-muted-foreground">
-      <Globe className="h-3 w-3" />
-      {t("Global")}
-    </Badge>
-  );
-}
-
 export function RoleCatalogPage({
   basePath,
   title,
@@ -123,7 +103,6 @@ export function RoleCatalogPage({
   const { roles, isLoading, fetchRoles, deleteRole } = useSecurityStore();
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [search, setSearch] = useState("");
-  const [officeFilter, setOfficeFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [page, setPage] = useState(1);
@@ -136,36 +115,15 @@ export function RoleCatalogPage({
   // Return to the first page whenever the result set changes underneath us.
   useEffect(() => {
     setPage(1);
-  }, [search, officeFilter, pageSize]);
+  }, [search, pageSize]);
 
   // Distinct offices present in the loaded roles, for the office filter.
-  const officeOptions = useMemo(() => {
-    const byId = new Map<string, string>();
-    let hasGlobal = false;
-    for (const role of roles) {
-      if (role.officeId) byId.set(role.officeId, role.officeName || "Unknown office");
-      else hasGlobal = true;
-    }
-    const list = [...byId.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    return { list, hasGlobal };
-  }, [roles]);
-
   const filteredRoles = useMemo(() => {
     const query = search.trim().toLowerCase();
 
+    // Roles are global — a job description, not a place — so there is no office
+    // to filter by. Which office a person works in lives on their staff row.
     return roles.filter((role) => {
-      // Office scope filter.
-      if (officeFilter === "__global__" && role.officeId) return false;
-      if (
-        officeFilter !== "all" &&
-        officeFilter !== "__global__" &&
-        role.officeId !== officeFilter
-      ) {
-        return false;
-      }
-
       if (!query) return true;
 
       const permissionMatch = (role.permissions || []).some(
@@ -177,11 +135,10 @@ export function RoleCatalogPage({
       return (
         role.name.toLowerCase().includes(query) ||
         (role.description || "").toLowerCase().includes(query) ||
-        (role.officeName || "").toLowerCase().includes(query) ||
         permissionMatch
       );
     });
-  }, [roles, search, officeFilter]);
+  }, [roles, search]);
 
   const summary = useMemo(() => {
     const totalMembers = filteredRoles.reduce(
@@ -314,27 +271,10 @@ export function RoleCatalogPage({
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder={t("Search role, office, or permission...")}
+                  placeholder={t("Search role or permission...")}
                   className="pl-9"
                 />
               </div>
-              <Select value={officeFilter} onValueChange={setOfficeFilter}>
-                <SelectTrigger className="w-full sm:w-56">
-                  <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder={t("All offices")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("All offices")}</SelectItem>
-                  {officeOptions.hasGlobal ? (
-                    <SelectItem value="__global__">{t("Global (system roles)")}</SelectItem>
-                  ) : null}
-                  {officeOptions.list.map((office) => (
-                    <SelectItem key={office.id} value={office.id}>
-                      {t(office.name)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <p className="text-sm text-muted-foreground whitespace-nowrap">
               {filteredRoles.length} {t("role")}
@@ -385,7 +325,6 @@ export function RoleCatalogPage({
                           </CardDescription>
                         </div>
                       </div>
-                      <OfficeBadge role={role} />
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -453,7 +392,6 @@ export function RoleCatalogPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("Role")}</TableHead>
-                    <TableHead>{t("Office")}</TableHead>
                     <TableHead>{t("Description")}</TableHead>
                     <TableHead>{t("Permissions")}</TableHead>
                     <TableHead>{t("Members")}</TableHead>
@@ -468,9 +406,6 @@ export function RoleCatalogPage({
                           <Shield className="h-4 w-4 text-primary" />
                           {role.name}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <OfficeBadge role={role} />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {role.description || t("No description provided.")}

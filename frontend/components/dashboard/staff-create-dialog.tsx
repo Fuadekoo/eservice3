@@ -101,11 +101,11 @@ export function StaffCreateDialog({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // This office's own roles plus the shared base ones, each as a distinct
-  // entry keyed by id. Listing by name used to collapse every role sharing a
-  // name — a second role in the same office simply never appeared.
-  // Customers are excluded: they are not office staff.
+  // entry keyed by id. Roles are global — the office a staff member belongs
+  // to is recorded on their staff row, not on the role — so the same list
+  // serves every office. Customers are excluded: they are not office staff.
   const roleOptions = React.useMemo(() => {
-    const options = assignableRoles(roles, officeId, { officeOnly: true });
+    const options = assignableRoles(roles, { officeOnly: true });
 
     // A member already holding an excluded role (customers registering
     // against an office do get a staff row) keeps it listed, so editing shows
@@ -121,18 +121,15 @@ export function StaffCreateDialog({
       {
         id: current.id,
         label: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
-        officeId: null,
-        officeName: null,
       },
     ];
-  }, [roles, member, officeId]);
+  }, [roles, member]);
 
   const roleSelectOptions = React.useMemo<SearchSelectOption[]>(
     () =>
       roleOptions.map((role) => ({
         value: role.id,
         label: t(role.label),
-        group: role.officeId ? t("This office") : t("Shared roles"),
       })),
     [roleOptions, t],
   );

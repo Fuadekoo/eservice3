@@ -144,17 +144,14 @@ export function UserCreateDialog({
   const scopedOfficeId =
     selectedOfficeId && selectedOfficeId !== NO_OFFICE ? selectedOfficeId : null;
 
+  // Roles are global, so the same list serves every office.
   const roleOptions = React.useMemo<SearchSelectOption[]>(
     () =>
-      assignableRoles(roles, scopedOfficeId).map((role) => ({
+      assignableRoles(roles).map((role) => ({
         value: role.id,
         label: t(role.label),
-        // Two roles can share a name across offices, so the owning office is
-        // what tells them apart — and it is searchable.
-        ...(role.officeName ? { description: role.officeName } : {}),
-        group: role.officeId ? t("This office") : t("Shared roles"),
       })),
-    [roles, scopedOfficeId, t],
+    [roles, t],
   );
 
   const officeOptions = React.useMemo<SearchSelectOption[]>(

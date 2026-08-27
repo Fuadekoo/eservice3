@@ -568,7 +568,6 @@ export async function listRoles(
     include: {
       rolePermissions: { include: { permission: true } },
       users: { select: { id: true } },
-      office: { select: { id: true, name: true } },
     },
     orderBy: { name: "asc" },
   })) as any[];
@@ -577,7 +576,6 @@ export async function listRoles(
       ...role,
       permissions: role.rolePermissions.map((entry: any) => entry.permission),
       memberCount: role.users.length,
-      officeName: role.office?.name ?? null,
     })),
   });
 }

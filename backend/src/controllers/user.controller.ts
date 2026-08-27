@@ -17,26 +17,18 @@ function parseQueryString(value: unknown): string | undefined {
 }
 
 /**
- * Resolve a role name to a concrete role id. Role names are not unique (they
- * repeat per office, with mixed casing), so match case-insensitively and prefer
- * the global role (officeId null) that base user roles are assigned from,
- * falling back to any office role with that name.
+ * Resolve a role name to its id.
+ *
+ * Role names are unique now that roles are global, so there is exactly one
+ * match. Kept case-insensitive because callers send a lower-cased name.
  */
 async function resolveRoleIdByName(
   roleName: string,
 ): Promise<string | undefined> {
-  const role =
-    (await prisma.role.findFirst({
-      where: {
-        name: { equals: roleName },
-        officeId: null,
-      },
-      select: { id: true },
-    })) ??
-    (await prisma.role.findFirst({
-      where: { name: { equals: roleName } },
-      select: { id: true },
-    }));
+  const role = await prisma.role.findFirst({
+    where: { name: { equals: roleName } },
+    select: { id: true },
+  });
   return role?.id;
 }
 

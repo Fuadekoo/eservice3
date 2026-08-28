@@ -1,6 +1,13 @@
 -- CreateTable
 CREATE TABLE `User` (
     `id` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NULL,
+    `firstName` VARCHAR(191) NULL,
+    `fatherName` VARCHAR(191) NULL,
+    `lastName` VARCHAR(191) NULL,
+    `image` VARCHAR(191) NULL,
+    `gender` ENUM('MALE', 'FEMALE', 'OTHER') NULL DEFAULT 'OTHER',
+    `status` ENUM('ACTIVE', 'INACTIVE', 'PENDING', 'BLOCKED') NULL DEFAULT 'ACTIVE',
     `username` VARCHAR(191) NOT NULL,
     `phoneNumber` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
@@ -37,6 +44,42 @@ CREATE TABLE `session` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `web_push_subscription` (
+    `id` VARCHAR(191) NOT NULL,
+    `endpoint` VARCHAR(512) NOT NULL,
+    `p256dh` VARCHAR(255) NOT NULL,
+    `auth` VARCHAR(255) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `userAgent` VARCHAR(512) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `lastSeenAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `web_push_subscription_endpoint_key`(`endpoint`),
+    INDEX `web_push_subscription_userId_idx`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `notification` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `body` TEXT NOT NULL,
+    `url` VARCHAR(191) NOT NULL DEFAULT '/',
+    `icon` VARCHAR(191) NULL,
+    `kind` VARCHAR(191) NOT NULL DEFAULT 'message',
+    `dedupeKey` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `pushedAt` DATETIME(3) NULL,
+    `readAt` DATETIME(3) NULL,
+
+    INDEX `notification_userId_readAt_idx`(`userId`, `readAt`),
+    INDEX `notification_userId_createdAt_idx`(`userId`, `createdAt`),
+    UNIQUE INDEX `notification_userId_dedupeKey_key`(`userId`, `dedupeKey`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `staff` (
     `id` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
@@ -44,6 +87,7 @@ CREATE TABLE `staff` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `staff_userId_key`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -87,10 +131,10 @@ CREATE TABLE `role` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `description` TEXT NULL,
-    `officeId` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `role_name_key`(`name`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -149,6 +193,7 @@ CREATE TABLE `service` (
     `name` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NOT NULL,
     `timeToTake` VARCHAR(191) NOT NULL,
+    `roomNumber` VARCHAR(191) NULL,
     `officeId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -215,8 +260,10 @@ CREATE TABLE `audit_log` (
 -- CreateTable
 CREATE TABLE `request` (
     `id` VARCHAR(191) NOT NULL,
+    `requestNumber` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
     `serviceId` VARCHAR(191) NOT NULL,
+    `officeId` VARCHAR(191) NULL,
     `currentAddress` VARCHAR(191) NOT NULL,
     `date` DATETIME(3) NOT NULL,
     `statusbystaff` ENUM('pending', 'approved', 'rejected') NOT NULL,
@@ -227,6 +274,15 @@ CREATE TABLE `request` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `request_requestNumber_key`(`requestNumber`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `request_sequence` (
+    `id` VARCHAR(191) NOT NULL,
+    `seq` INTEGER NOT NULL DEFAULT 0,
+
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -235,6 +291,7 @@ CREATE TABLE `request_for_other` (
     `id` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
     `serviceId` VARCHAR(191) NOT NULL,
+    `officeId` VARCHAR(191) NULL,
     `currentAddress` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `phoneNumber` VARCHAR(191) NOT NULL,
@@ -267,6 +324,7 @@ CREATE TABLE `file_data` (
 CREATE TABLE `appointment` (
     `id` VARCHAR(191) NOT NULL,
     `requestId` VARCHAR(191) NOT NULL,
+    `officeId` VARCHAR(191) NULL,
     `date` DATETIME(3) NOT NULL,
     `time` VARCHAR(191) NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'pending',
@@ -345,7 +403,7 @@ CREATE TABLE `report` (
     `name` VARCHAR(191) NOT NULL,
     `description` TEXT NOT NULL,
     `reportSentTo` VARCHAR(191) NOT NULL,
-    `receiverStatus` ENUM('pending', 'sent', 'received', 'read', 'archived') NOT NULL DEFAULT 'pending',
+    `receiverStatus` ENUM('pending', 'sent', 'received', 'read', 'archived', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
     `reportSentBy` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -360,6 +418,12 @@ ALTER TABLE `User` ADD CONSTRAINT `User_roleId_fkey` FOREIGN KEY (`roleId`) REFE
 ALTER TABLE `session` ADD CONSTRAINT `session_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `web_push_subscription` ADD CONSTRAINT `web_push_subscription_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `notification` ADD CONSTRAINT `notification_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `staff` ADD CONSTRAINT `staff_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -367,9 +431,6 @@ ALTER TABLE `staff` ADD CONSTRAINT `staff_officeId_fkey` FOREIGN KEY (`officeId`
 
 -- AddForeignKey
 ALTER TABLE `office_availability` ADD CONSTRAINT `office_availability_officeId_fkey` FOREIGN KEY (`officeId`) REFERENCES `office`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `role` ADD CONSTRAINT `role_officeId_fkey` FOREIGN KEY (`officeId`) REFERENCES `office`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `role_permission` ADD CONSTRAINT `role_permission_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `role`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -405,6 +466,9 @@ ALTER TABLE `request` ADD CONSTRAINT `request_userId_fkey` FOREIGN KEY (`userId`
 ALTER TABLE `request` ADD CONSTRAINT `request_serviceId_fkey` FOREIGN KEY (`serviceId`) REFERENCES `service`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `request` ADD CONSTRAINT `request_officeId_fkey` FOREIGN KEY (`officeId`) REFERENCES `office`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `request` ADD CONSTRAINT `request_approveStaffId_fkey` FOREIGN KEY (`approveStaffId`) REFERENCES `staff`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -415,6 +479,9 @@ ALTER TABLE `request_for_other` ADD CONSTRAINT `request_for_other_userId_fkey` F
 
 -- AddForeignKey
 ALTER TABLE `request_for_other` ADD CONSTRAINT `request_for_other_serviceId_fkey` FOREIGN KEY (`serviceId`) REFERENCES `service`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `request_for_other` ADD CONSTRAINT `request_for_other_officeId_fkey` FOREIGN KEY (`officeId`) REFERENCES `office`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `request_for_other` ADD CONSTRAINT `request_for_other_customerSatisfactionId_fkey` FOREIGN KEY (`customerSatisfactionId`) REFERENCES `customer_satisfaction`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -430,6 +497,9 @@ ALTER TABLE `file_data` ADD CONSTRAINT `file_data_reportId_fkey` FOREIGN KEY (`r
 
 -- AddForeignKey
 ALTER TABLE `appointment` ADD CONSTRAINT `appointment_requestId_fkey` FOREIGN KEY (`requestId`) REFERENCES `request`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `appointment` ADD CONSTRAINT `appointment_officeId_fkey` FOREIGN KEY (`officeId`) REFERENCES `office`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `appointment` ADD CONSTRAINT `appointment_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

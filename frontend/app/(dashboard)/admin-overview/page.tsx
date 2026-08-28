@@ -13,6 +13,7 @@ import {
   Loader2,
   TrendingUp,
   Activity,
+  FileDown,
 } from "lucide-react";
 import {
   PieChart,
@@ -39,6 +40,17 @@ import { Button } from "@/components/ui/button";
 import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import {
+  ReportRangeDialog,
+  type ReportRange,
+} from "@/components/dashboard/report-range-dialog";
+import { generatePdfReport } from "@/lib/pdf-report";
+import {
+  buildAdminReport,
+  type AppointmentLike,
+  type RequestLike,
+} from "@/lib/overview-reports";
+import { fetchAllPages } from "@/lib/fetch-all";
 
 // ── Types ────────────────────────────────────────────────────────────
 type OfficeRow = {
@@ -63,7 +75,12 @@ type Overview = {
   staffStatus: SliceItem[];
   requestStatus: SliceItem[];
   appointmentStatus: SliceItem[];
-  officeChart: { name: string; services: number; staff: number; requests: number }[];
+  officeChart: {
+    name: string;
+    services: number;
+    staff: number;
+    requests: number;
+  }[];
 };
 
 /** Shape returned by GET /offices/stats — every figure aggregated in the DB. */
@@ -77,15 +94,22 @@ type StatsPayload = {
     appointments: number;
   };
   staffStatus: Record<string, number>;
-  requestStatus: { pending: number; processing: number; approved: number; rejected: number };
+  requestStatus: {
+    pending: number;
+    processing: number;
+    approved: number;
+    rejected: number;
+  };
   appointmentStatus: Record<string, number>;
   offices: OfficeRow[];
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────
 function getReqOverall(r: any): string {
-  if (r.statusbystaff === "rejected" || r.statusbyadmin === "rejected") return "Rejected";
-  if (r.statusbystaff === "approved" && r.statusbyadmin === "approved") return "Approved";
+  if (r.statusbystaff === "rejected" || r.statusbyadmin === "rejected")
+    return "Rejected";
+  if (r.statusbystaff === "approved" && r.statusbyadmin === "approved")
+    return "Approved";
   if (r.statusbystaff === "approved") return "Processing";
   return "Pending";
 }
@@ -95,25 +119,29 @@ function settled<T>(r: PromiseSettledResult<T>): T | null {
 }
 
 const STAFF_STATUS_META: { key: string; name: string; color: string }[] = [
-  { key: "ACTIVE",   name: "Active",   color: "#10b981" },
+  { key: "ACTIVE", name: "Active", color: "#10b981" },
   { key: "INACTIVE", name: "Inactive", color: "#6b7280" },
-  { key: "PENDING",  name: "Pending",  color: "#f59e0b" },
-  { key: "BLOCKED",  name: "Blocked",  color: "#ef4444" },
+  { key: "PENDING", name: "Pending", color: "#f59e0b" },
+  { key: "BLOCKED", name: "Blocked", color: "#ef4444" },
 ];
 
 const APT_STATUS_META: Record<string, { name: string; color: string }> = {
-  pending:   { name: "Pending",   color: "#f59e0b" },
-  approved:  { name: "Confirmed", color: "#10b981" },
+  pending: { name: "Pending", color: "#f59e0b" },
+  approved: { name: "Confirmed", color: "#10b981" },
   completed: { name: "Completed", color: "#3b82f6" },
-  rejected:  { name: "Rejected",  color: "#ef4444" },
+  rejected: { name: "Rejected", color: "#ef4444" },
   cancelled: { name: "Cancelled", color: "#6b7280" },
 };
 
-const REQ_STATUS_META: { key: keyof StatsPayload["requestStatus"]; name: string; color: string }[] = [
-  { key: "pending",    name: "Pending",    color: "#f59e0b" },
+const REQ_STATUS_META: {
+  key: keyof StatsPayload["requestStatus"];
+  name: string;
+  color: string;
+}[] = [
+  { key: "pending", name: "Pending", color: "#f59e0b" },
   { key: "processing", name: "Processing", color: "#3b82f6" },
-  { key: "approved",   name: "Approved",   color: "#10b981" },
-  { key: "rejected",   name: "Rejected",   color: "#ef4444" },
+  { key: "approved", name: "Approved", color: "#10b981" },
+  { key: "rejected", name: "Rejected", color: "#ef4444" },
 ];
 
 /** Top 8 offices by request volume, for the comparison bars. */
@@ -153,8 +181,9 @@ export default function AdminOverviewPage() {
 function AdminOverviewContent() {
   const { t } = useTranslation();
 
-  const { isPending: isSessionPending } = useSession();
+  const { data: sessionData, isPending: isSessionPending } = useSession();
   const [overview, setOverview] = React.useState<Overview | null>(null);
+  const [isReportOpen, setIsReportOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [updatedAt, setUpdatedAt] = React.useState<Date | null>(null);
 
@@ -208,17 +237,19 @@ function AdminOverviewContent() {
    * holds rows, which is what the old `a || b` chain allowed.
    */
   const loadFromLists = React.useCallback(async (): Promise<Overview> => {
-    const [offRes, staffRes, usersRes, reqRes, aptRes] = await Promise.allSettled([
-      axiosInstance.get("/offices"),
-      axiosInstance.get("/staff", { params: { pageSize: 500 } }),
-      axiosInstance.get("/users", { params: { page: 1, pageSize: 1 } }),
-      axiosInstance.get("/requests", { params: { pageSize: 500 } }),
-      axiosInstance.get("/appointments"),
-    ]);
+    const [offRes, staffRes, usersRes, reqRes, aptRes] =
+      await Promise.allSettled([
+        axiosInstance.get("/offices"),
+        axiosInstance.get("/staff", { params: { pageSize: 500 } }),
+        axiosInstance.get("/users", { params: { page: 1, pageSize: 1 } }),
+        axiosInstance.get("/requests", { params: { pageSize: 500 } }),
+        axiosInstance.get("/appointments"),
+      ]);
 
     const rawOffices: any[] = (settled(offRes) as any)?.data ?? [];
     const staffList: any[] = (settled(staffRes) as any)?.data ?? [];
-    const totalUsers: number = (settled(usersRes) as any)?.pagination?.total ?? 0;
+    const totalUsers: number =
+      (settled(usersRes) as any)?.pagination?.total ?? 0;
     const reqBody = settled(reqRes) as any;
     const reqList: any[] = reqBody?.data ?? [];
     const aptList: any[] = (settled(aptRes) as any)?.data ?? [];
@@ -251,7 +282,12 @@ function AdminOverviewContent() {
       staffCount[key] = (staffCount[key] ?? 0) + 1;
     });
 
-    const reqCount: Record<string, number> = { Pending: 0, Processing: 0, Approved: 0, Rejected: 0 };
+    const reqCount: Record<string, number> = {
+      Pending: 0,
+      Processing: 0,
+      Approved: 0,
+      Rejected: 0,
+    };
     reqList.forEach((r) => {
       reqCount[getReqOverall(r)]++;
     });
@@ -312,6 +348,48 @@ function AdminOverviewContent() {
     void load();
   }, [isSessionPending, load]);
 
+  /**
+   * The dashboard runs on aggregates from /offices/stats, which carry no
+   * dates — so the individual records a period report needs are fetched when
+   * it is asked for, in full rather than a first page.
+   */
+  const handleGenerateReport = React.useCallback(
+    async (range: ReportRange) => {
+      if (!overview) throw new Error(t("Analytics are still loading."));
+
+      const [requests, appointments] = await Promise.all([
+        fetchAllPages<RequestLike>("/requests"),
+        fetchAllPages<AppointmentLike>("/appointments"),
+      ]);
+
+      await generatePdfReport(
+        buildAdminReport({
+          range,
+          t,
+          generatedBy:
+            sessionData?.session?.user?.name ||
+            sessionData?.session?.user?.username,
+          totals: {
+            offices: overview.offices.length,
+            users: overview.totalUsers,
+            staff: overview.totalStaff,
+            services: overview.totalServices,
+          },
+          offices: overview.offices,
+          requests: requests.items,
+          appointments: appointments.items,
+        }),
+      );
+
+      if (requests.truncated || appointments.truncated) {
+        toast.warning(
+          t("The report covers as much history as the server would return."),
+        );
+      }
+    },
+    [overview, sessionData, t],
+  );
+
   return (
     <PageLayout
       title={t("Admin Overview")}
@@ -324,9 +402,22 @@ function AdminOverviewContent() {
               {t("Updated")} {updatedAt.toLocaleTimeString()}
             </span>
           )}
-          <Button variant="outline" onClick={load} disabled={isLoading} className="h-10 rounded-xl gap-2">
+          <Button
+            variant="outline"
+            onClick={load}
+            disabled={isLoading}
+            className="h-10 rounded-xl gap-2"
+          >
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
             {t("Refresh")}
+          </Button>
+          <Button
+            onClick={() => setIsReportOpen(true)}
+            disabled={!overview}
+            className="h-10 rounded-xl gap-2 font-bold"
+          >
+            <FileDown className="size-4" />
+            {t("Generate Report")}
           </Button>
         </div>
       }
@@ -334,28 +425,83 @@ function AdminOverviewContent() {
       {isLoading && !overview ? (
         <div className="flex flex-col items-center justify-center py-32 gap-3">
           <Loader2 className="size-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">{t("Loading analytics…")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("Loading analytics…")}
+          </p>
         </div>
       ) : overview ? (
         <div className="space-y-6">
-
           {/* ── KPI Cards ────────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              { label: t("Offices"),      value: overview.offices.length,       icon: Building2,  color: "text-violet-600",  bg: "bg-violet-500/10",  border: "border-violet-500/20" },
-              { label: t("Staff"),        value: overview.totalStaff,            icon: UserCheck,  color: "text-emerald-600", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-              { label: t("Users"),        value: overview.totalUsers,            icon: Users,      color: "text-blue-600",    bg: "bg-blue-500/10",    border: "border-blue-500/20" },
-              { label: t("Services"),     value: overview.totalServices,         icon: Layers,     color: "text-orange-600",  bg: "bg-orange-500/10",  border: "border-orange-500/20" },
-              { label: t("Requests"),     value: overview.totalRequests,         icon: FileText,   color: "text-pink-600",    bg: "bg-pink-500/10",    border: "border-pink-500/20" },
-              { label: t("Appointments"), value: overview.totalAppointments,     icon: Calendar,   color: "text-cyan-600",    bg: "bg-cyan-500/10",    border: "border-cyan-500/20" },
+              {
+                label: t("Offices"),
+                value: overview.offices.length,
+                icon: Building2,
+                color: "text-violet-600",
+                bg: "bg-violet-500/10",
+                border: "border-violet-500/20",
+              },
+              {
+                label: t("Staff"),
+                value: overview.totalStaff,
+                icon: UserCheck,
+                color: "text-emerald-600",
+                bg: "bg-emerald-500/10",
+                border: "border-emerald-500/20",
+              },
+              {
+                label: t("Users"),
+                value: overview.totalUsers,
+                icon: Users,
+                color: "text-blue-600",
+                bg: "bg-blue-500/10",
+                border: "border-blue-500/20",
+              },
+              {
+                label: t("Services"),
+                value: overview.totalServices,
+                icon: Layers,
+                color: "text-orange-600",
+                bg: "bg-orange-500/10",
+                border: "border-orange-500/20",
+              },
+              {
+                label: t("Requests"),
+                value: overview.totalRequests,
+                icon: FileText,
+                color: "text-pink-600",
+                bg: "bg-pink-500/10",
+                border: "border-pink-500/20",
+              },
+              {
+                label: t("Appointments"),
+                value: overview.totalAppointments,
+                icon: Calendar,
+                color: "text-cyan-600",
+                bg: "bg-cyan-500/10",
+                border: "border-cyan-500/20",
+              },
             ].map(({ label, value, icon: Icon, color, bg, border }) => (
-              <Card key={label} className={cn("border shadow-sm bg-card/50", border)}>
+              <Card
+                key={label}
+                className={cn("border shadow-sm bg-card/50", border)}
+              >
                 <CardContent className="p-5">
-                  <div className={cn("size-10 rounded-xl flex items-center justify-center mb-3", bg)}>
+                  <div
+                    className={cn(
+                      "size-10 rounded-xl flex items-center justify-center mb-3",
+                      bg,
+                    )}
+                  >
                     <Icon className={cn("size-5", color)} />
                   </div>
-                  <p className="text-3xl font-black leading-none tabular-nums">{value.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground font-semibold mt-1.5 uppercase tracking-wide">{label}</p>
+                  <p className="text-3xl font-black leading-none tabular-nums">
+                    {value.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-semibold mt-1.5 uppercase tracking-wide">
+                    {label}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -390,20 +536,70 @@ function AdminOverviewContent() {
                 <CardTitle className="text-sm font-bold flex items-center gap-2">
                   <TrendingUp className="size-4 text-violet-600" />
                   {t("Office Performance")}
-                  <span className="text-xs text-muted-foreground font-normal ml-1">{t("— Services · Staff · Requests")}</span>
+                  <span className="text-xs text-muted-foreground font-normal ml-1">
+                    {t("— Services · Staff · Requests")}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={overview.officeChart} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="services" name="Services"  fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                    <Bar dataKey="staff"    name="Staff"     fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                    <Bar dataKey="requests" name="Requests"  fill="#ec4899" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                  <BarChart
+                    data={overview.officeChart}
+                    margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="hsl(var(--border))"
+                      strokeOpacity={0.4}
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      tick={{
+                        fontSize: 11,
+                        fill: "hsl(var(--muted-foreground))",
+                      }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{
+                        fontSize: 11,
+                        fill: "hsl(var(--muted-foreground))",
+                      }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+                    />
+                    <Legend
+                      iconType="circle"
+                      iconSize={8}
+                      wrapperStyle={{ fontSize: 12 }}
+                    />
+                    <Bar
+                      dataKey="services"
+                      name="Services"
+                      fill="#f97316"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={32}
+                    />
+                    <Bar
+                      dataKey="staff"
+                      name="Staff"
+                      fill="#10b981"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={32}
+                    />
+                    <Bar
+                      dataKey="requests"
+                      name="Requests"
+                      fill="#ec4899"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={32}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -423,8 +619,18 @@ function AdminOverviewContent() {
                 <table className="w-full min-w-[720px] text-sm">
                   <thead>
                     <tr className="border-b border-border/50 bg-muted/30">
-                      {["Office", "Status", "Services", "Staff", "Requests", "Appointments"].map(h => (
-                        <th key={h} className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground first:pl-6">
+                      {[
+                        "Office",
+                        "Status",
+                        "Services",
+                        "Staff",
+                        "Requests",
+                        "Appointments",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground first:pl-6"
+                        >
                           {t(h)}
                         </th>
                       ))}
@@ -432,29 +638,57 @@ function AdminOverviewContent() {
                   </thead>
                   <tbody>
                     {overview.offices.map((office) => (
-                      <tr key={office.id} className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors">
+                      <tr
+                        key={office.id}
+                        className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors"
+                      >
                         <td className="px-5 py-4 pl-6">
                           <div className="flex items-center gap-2.5">
                             <div className="size-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
                               <Building2 className="size-4 text-violet-600" />
                             </div>
-                            <span className="font-semibold line-clamp-1">{office.name}</span>
+                            <span className="font-semibold line-clamp-1">
+                              {office.name}
+                            </span>
                           </div>
                         </td>
                         <td className="px-5 py-4">
-                          <Badge variant="outline" className={cn("text-xs font-semibold", office.status ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-gray-500/10 text-gray-500 border-gray-500/20")}>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs font-semibold",
+                              office.status
+                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                : "bg-gray-500/10 text-gray-500 border-gray-500/20",
+                            )}
+                          >
                             {office.status ? t("Active") : t("Inactive")}
                           </Badge>
                         </td>
-                        <StatCell value={office.services} color="text-orange-600" />
-                        <StatCell value={office.staff} color="text-emerald-600" />
-                        <StatCell value={office.requests} color="text-pink-600" />
-                        <StatCell value={office.appointments} color="text-cyan-600" />
+                        <StatCell
+                          value={office.services}
+                          color="text-orange-600"
+                        />
+                        <StatCell
+                          value={office.staff}
+                          color="text-emerald-600"
+                        />
+                        <StatCell
+                          value={office.requests}
+                          color="text-pink-600"
+                        />
+                        <StatCell
+                          value={office.appointments}
+                          color="text-cyan-600"
+                        />
                       </tr>
                     ))}
                     {overview.offices.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground text-sm">
+                        <td
+                          colSpan={6}
+                          className="px-5 py-12 text-center text-muted-foreground text-sm"
+                        >
                           {t("No offices found")}
                         </td>
                       </tr>
@@ -464,15 +698,33 @@ function AdminOverviewContent() {
               </div>
             </CardContent>
           </Card>
-
         </div>
       ) : null}
+
+      <ReportRangeDialog
+        open={isReportOpen}
+        onOpenChange={setIsReportOpen}
+        description={t(
+          "Requests, appointments and office totals across the whole system.",
+        )}
+        onGenerate={handleGenerateReport}
+      />
     </PageLayout>
   );
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-function DonutCard({ title, icon, slices, empty }: { title: string; icon: React.ReactNode; slices: SliceItem[]; empty: string }) {
+function DonutCard({
+  title,
+  icon,
+  slices,
+  empty,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  slices: SliceItem[];
+  empty: string;
+}) {
   const { t } = useTranslation();
 
   const total = slices.reduce((s, i) => s + i.value, 0);
@@ -481,32 +733,59 @@ function DonutCard({ title, icon, slices, empty }: { title: string; icon: React.
       <CardHeader className="pb-0">
         <CardTitle className="text-sm font-bold flex items-center gap-2">
           {icon} {title}
-          {total > 0 && <span className="ml-auto text-xs text-muted-foreground font-normal">{total} {t("total")}</span>}
+          {total > 0 && (
+            <span className="ml-auto text-xs text-muted-foreground font-normal">
+              {total} {t("total")}
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         {slices.length === 0 ? (
-          <div className="h-[180px] flex items-center justify-center text-muted-foreground/40 text-sm">{empty}</div>
+          <div className="h-[180px] flex items-center justify-center text-muted-foreground/40 text-sm">
+            {empty}
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie data={slices} cx="50%" cy="50%" innerRadius={52} outerRadius={75} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                {slices.map((e, i) => <Cell key={i} fill={e.color} />)}
+              <Pie
+                data={slices}
+                cx="50%"
+                cy="50%"
+                innerRadius={52}
+                outerRadius={75}
+                paddingAngle={3}
+                dataKey="value"
+                strokeWidth={0}
+              >
+                {slices.map((e, i) => (
+                  <Cell key={i} fill={e.color} />
+                ))}
               </Pie>
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
-                formatter={(v: any, n: any) => [`${v} (${total > 0 ? Math.round((v / total) * 100) : 0}%)`, t(String(n))]}
+                formatter={(v: any, n: any) => [
+                  `${v} (${total > 0 ? Math.round((v / total) * 100) : 0}%)`,
+                  t(String(n)),
+                ]}
               />
             </PieChart>
           </ResponsiveContainer>
         )}
         <div className="space-y-2 mt-1">
-          {slices.map(s => (
+          {slices.map((s) => (
             <div key={s.name} className="flex items-center gap-2 text-xs">
-              <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+              <span
+                className="size-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: s.color }}
+              />
               <span className="text-muted-foreground flex-1">{t(s.name)}</span>
               <span className="font-bold tabular-nums">{s.value}</span>
-              {total > 0 && <span className="text-muted-foreground/60 w-8 text-right">{Math.round((s.value / total) * 100)}%</span>}
+              {total > 0 && (
+                <span className="text-muted-foreground/60 w-8 text-right">
+                  {Math.round((s.value / total) * 100)}%
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -518,7 +797,12 @@ function DonutCard({ title, icon, slices, empty }: { title: string; icon: React.
 function StatCell({ value, color }: { value: number; color: string }) {
   return (
     <td className="px-5 py-4">
-      <span className={cn("font-bold tabular-nums", value > 0 ? color : "text-muted-foreground/40")}>
+      <span
+        className={cn(
+          "font-bold tabular-nums",
+          value > 0 ? color : "text-muted-foreground/40",
+        )}
+      >
         {value.toLocaleString()}
       </span>
     </td>

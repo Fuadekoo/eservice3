@@ -24,26 +24,33 @@ import {
   AlertCircle,
   Star,
   TrendingUp,
+  FileDown,
 } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 
 import { axiosInstance, getUploadUrl } from "@/lib/axios";
 import { useSession } from "@/hooks/use-session";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PageLayout } from "@/components/dashboard/page-layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import {
+  ReportRangeDialog,
+  type ReportRange,
+} from "@/components/dashboard/report-range-dialog";
+import { generatePdfReport } from "@/lib/pdf-report";
+import { buildManagerReport } from "@/lib/overview-reports";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Office = {
@@ -58,7 +65,12 @@ type Office = {
   status: boolean;
   startedAt?: string | null;
   createdAt: string;
-  _count?: { service: number; staffs: number; requests?: number; appointments?: number };
+  _count?: {
+    service: number;
+    staffs: number;
+    requests?: number;
+    appointments?: number;
+  };
   service?: { id: string; name: string }[];
 };
 
@@ -102,9 +114,13 @@ type OverviewData = {
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function getReqStatus(r: Request): "pending" | "processing" | "approved" | "rejected" {
-  if (r.statusbystaff === "rejected" || r.statusbyadmin === "rejected") return "rejected";
-  if (r.statusbystaff === "approved" && r.statusbyadmin === "approved") return "approved";
+function getReqStatus(
+  r: Request,
+): "pending" | "processing" | "approved" | "rejected" {
+  if (r.statusbystaff === "rejected" || r.statusbyadmin === "rejected")
+    return "rejected";
+  if (r.statusbystaff === "approved" && r.statusbyadmin === "approved")
+    return "approved";
   if (r.statusbystaff === "approved") return "processing";
   return "pending";
 }
@@ -127,18 +143,53 @@ const TOOLTIP_STYLE = {
 };
 
 const REQ_STATUS_CONFIG = {
-  pending:    { label: "Pending",    color: "#f59e0b", dot: "bg-amber-500",   badge: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  processing: { label: "Processing", color: "#3b82f6", dot: "bg-blue-500",    badge: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-  approved:   { label: "Approved",   color: "#10b981", dot: "bg-emerald-500", badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-  rejected:   { label: "Rejected",   color: "#ef4444", dot: "bg-red-500",     badge: "bg-red-500/10 text-red-600 border-red-500/20" },
+  pending: {
+    label: "Pending",
+    color: "#f59e0b",
+    dot: "bg-amber-500",
+    badge: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  },
+  processing: {
+    label: "Processing",
+    color: "#3b82f6",
+    dot: "bg-blue-500",
+    badge: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  },
+  approved: {
+    label: "Approved",
+    color: "#10b981",
+    dot: "bg-emerald-500",
+    badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  },
+  rejected: {
+    label: "Rejected",
+    color: "#ef4444",
+    dot: "bg-red-500",
+    badge: "bg-red-500/10 text-red-600 border-red-500/20",
+  },
 };
 
 const APT_STATUS_CONFIG: Record<string, { label: string; badge: string }> = {
-  pending:   { label: "Pending",   badge: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  approved:  { label: "Confirmed", badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-  completed: { label: "Completed", badge: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-  rejected:  { label: "Rejected",  badge: "bg-red-500/10 text-red-600 border-red-500/20" },
-  cancelled: { label: "Cancelled", badge: "bg-gray-500/10 text-gray-500 border-gray-500/20" },
+  pending: {
+    label: "Pending",
+    badge: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  },
+  approved: {
+    label: "Confirmed",
+    badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  },
+  completed: {
+    label: "Completed",
+    badge: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  },
+  rejected: {
+    label: "Rejected",
+    badge: "bg-red-500/10 text-red-600 border-red-500/20",
+  },
+  cancelled: {
+    label: "Cancelled",
+    badge: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  },
 };
 
 // ── Page ───────────────────────────────────────────────────────────────────────
@@ -164,6 +215,7 @@ function ManagerOverviewContent() {
   const [data, setData] = React.useState<OverviewData | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [updatedAt, setUpdatedAt] = React.useState<Date | null>(null);
+  const [isReportOpen, setIsReportOpen] = React.useState(false);
 
   const load = React.useCallback(async () => {
     if (!officeId) return;
@@ -197,6 +249,28 @@ function ManagerOverviewContent() {
     void load();
   }, [isSessionPending, officeId, load]);
 
+  // The report is built from the records already on screen, narrowed to the
+  // chosen period — so what it contains is exactly what the viewer can see.
+  const handleGenerateReport = React.useCallback(
+    async (range: ReportRange) => {
+      if (!data) throw new Error(t("Office data is still loading."));
+      await generatePdfReport(
+        buildManagerReport({
+          range,
+          t,
+          generatedBy: session?.user?.name || session?.user?.username,
+          officeName: data.office.name,
+          serviceCount:
+            data.office._count?.service ?? data.office.service?.length ?? 0,
+          staff: data.staff,
+          requests: data.requests,
+          appointments: data.appointments,
+        }),
+      );
+    },
+    [data, session, t],
+  );
+
   // ── No office assigned ───────────────────────────────────────────────────────
   if (!isSessionPending && !officeId) {
     return (
@@ -212,7 +286,9 @@ function ManagerOverviewContent() {
           <div>
             <p className="font-bold text-lg">{t("No Office Assigned")}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              {t("Your account is not linked to an office. Please contact an administrator.")}
+              {t(
+                "Your account is not linked to an office. Please contact an administrator.",
+              )}
             </p>
           </div>
         </div>
@@ -223,7 +299,11 @@ function ManagerOverviewContent() {
   return (
     <PageLayout
       title={t("Manager Overview")}
-      description={data?.office.name ? `${data.office.name} — live analytics` : t("Real-time office analytics")}
+      description={
+        data?.office.name
+          ? `${data.office.name} — live analytics`
+          : t("Real-time office analytics")
+      }
       icon={LayoutDashboard}
       actions={
         <div className="flex items-center gap-3">
@@ -232,9 +312,22 @@ function ManagerOverviewContent() {
               {t("Updated")} {updatedAt.toLocaleTimeString()}
             </span>
           )}
-          <Button variant="outline" onClick={load} disabled={isLoading} className="h-10 rounded-xl gap-2">
+          <Button
+            variant="outline"
+            onClick={load}
+            disabled={isLoading}
+            className="h-10 rounded-xl gap-2"
+          >
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
             {t("Refresh")}
+          </Button>
+          <Button
+            onClick={() => setIsReportOpen(true)}
+            disabled={!data}
+            className="h-10 rounded-xl gap-2 font-bold"
+          >
+            <FileDown className="size-4" />
+            {t("Generate Report")}
           </Button>
         </div>
       }
@@ -242,11 +335,24 @@ function ManagerOverviewContent() {
       {isLoading && !data ? (
         <div className="flex flex-col items-center justify-center py-32 gap-3">
           <Loader2 className="size-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">{t("Loading office data…")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("Loading office data…")}
+          </p>
         </div>
       ) : data ? (
         <OverviewContent data={data} />
       ) : null}
+
+      <ReportRangeDialog
+        open={isReportOpen}
+        onOpenChange={setIsReportOpen}
+        description={
+          data?.office.name
+            ? `${t("Requests, appointments and staff for")} ${data.office.name}.`
+            : undefined
+        }
+        onGenerate={handleGenerateReport}
+      />
     </PageLayout>
   );
 }
@@ -283,41 +389,50 @@ function OverviewContent({ data }: { data: OverviewData }) {
   const now = new Date();
 
   // ── Derived stats ────────────────────────────────────────────────────────────
-  const activeStaff   = staff.filter(s => s.status === "ACTIVE").length;
-  const inactiveStaff = staff.filter(s => s.status === "INACTIVE").length;
-  const pendingStaff  = staff.filter(s => s.status === "PENDING").length;
-  const blockedStaff  = staff.filter(s => s.status === "BLOCKED").length;
+  const activeStaff = staff.filter((s) => s.status === "ACTIVE").length;
+  const inactiveStaff = staff.filter((s) => s.status === "INACTIVE").length;
+  const pendingStaff = staff.filter((s) => s.status === "PENDING").length;
+  const blockedStaff = staff.filter((s) => s.status === "BLOCKED").length;
 
   const reqStats = { pending: 0, processing: 0, approved: 0, rejected: 0 };
-  requests.forEach(r => { reqStats[getReqStatus(r)]++; });
+  requests.forEach((r) => {
+    reqStats[getReqStatus(r)]++;
+  });
 
   const upcomingApts = appointments
-    .filter(a => new Date(a.date) >= now && a.status !== "cancelled" && a.status !== "rejected")
+    .filter(
+      (a) =>
+        new Date(a.date) >= now &&
+        a.status !== "cancelled" &&
+        a.status !== "rejected",
+    )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const todayApts = upcomingApts.filter(a => {
+  const todayApts = upcomingApts.filter((a) => {
     const d = new Date(a.date);
     return d.toDateString() === now.toDateString();
   });
 
   const recentRequests = [...requests]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
     .slice(0, 8);
 
   const staffSlices: SliceItem[] = [
-    { name: "Active",   value: activeStaff,   color: "#10b981" },
+    { name: "Active", value: activeStaff, color: "#10b981" },
     { name: "Inactive", value: inactiveStaff, color: "#6b7280" },
-    { name: "Pending",  value: pendingStaff,  color: "#f59e0b" },
-    { name: "Blocked",  value: blockedStaff,  color: "#ef4444" },
-  ].filter(s => s.value > 0);
+    { name: "Pending", value: pendingStaff, color: "#f59e0b" },
+    { name: "Blocked", value: blockedStaff, color: "#ef4444" },
+  ].filter((s) => s.value > 0);
 
-  const totalStaff   = staff.length;
-  const totalReqs    = requests.length;
-  const totalSvcs    = office._count?.service ?? office.service?.length ?? 0;
+  const totalStaff = staff.length;
+  const totalReqs = requests.length;
+  const totalSvcs = office._count?.service ?? office.service?.length ?? 0;
 
   return (
     <div className="space-y-6">
-
       {/* ── Office Identity Card ──────────────────────────────────────────── */}
       <Card className="overflow-hidden border-none shadow-sm ring-1 ring-border/50">
         <CardContent className="p-0">
@@ -327,9 +442,13 @@ function OverviewContent({ data }: { data: OverviewData }) {
               <div className="size-20 rounded-2xl bg-background border border-border shadow-sm overflow-hidden mb-4">
                 <OfficeLogo logo={office.logo} name={office.name} />
               </div>
-              <h2 className="text-lg font-black leading-tight">{office.name}</h2>
+              <h2 className="text-lg font-black leading-tight">
+                {office.name}
+              </h2>
               {office.slogan && (
-                <p className="text-xs text-muted-foreground italic mt-1 line-clamp-2">{office.slogan}</p>
+                <p className="text-xs text-muted-foreground italic mt-1 line-clamp-2">
+                  {office.slogan}
+                </p>
               )}
               <Badge
                 className={cn(
@@ -346,19 +465,34 @@ function OverviewContent({ data }: { data: OverviewData }) {
             {/* Info grid */}
             <div className="flex-1 p-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 content-start">
               {office.address && (
-                <OfficeInfoItem icon={MapPin} label={t("Address")} value={office.address} />
+                <OfficeInfoItem
+                  icon={MapPin}
+                  label={t("Address")}
+                  value={office.address}
+                />
               )}
               {office.roomNumber && (
-                <OfficeInfoItem icon={Layers} label={t("Room")} value={office.roomNumber} />
+                <OfficeInfoItem
+                  icon={Layers}
+                  label={t("Room")}
+                  value={office.roomNumber}
+                />
               )}
               {office.phoneNumber && (
-                <OfficeInfoItem icon={Phone} label={t("Phone")} value={office.phoneNumber} />
+                <OfficeInfoItem
+                  icon={Phone}
+                  label={t("Phone")}
+                  value={office.phoneNumber}
+                />
               )}
               {(office.startedAt || office.createdAt) && (
                 <OfficeInfoItem
                   icon={Clock}
                   label={t("Operating Since")}
-                  value={format(new Date(office.startedAt || office.createdAt), "MMM d, yyyy")}
+                  value={format(
+                    new Date(office.startedAt || office.createdAt),
+                    "MMM d, yyyy",
+                  )}
                 />
               )}
               {todayApts.length > 0 && (
@@ -382,7 +516,9 @@ function OverviewContent({ data }: { data: OverviewData }) {
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
                     {t("Description")}
                   </p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{office.description}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {office.description}
+                  </p>
                 </div>
               )}
             </div>
@@ -393,20 +529,74 @@ function OverviewContent({ data }: { data: OverviewData }) {
       {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
-          { label: t("Total Staff"),   value: totalStaff,          icon: Users,        color: "text-blue-600",    bg: "bg-blue-500/10",    border: "border-blue-500/20" },
-          { label: t("Active Staff"),  value: activeStaff,          icon: UserCheck,    color: "text-emerald-600", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-          { label: t("Services"),      value: totalSvcs,            icon: Layers,       color: "text-orange-600",  bg: "bg-orange-500/10",  border: "border-orange-500/20" },
-          { label: t("Total Requests"),value: totalReqs,            icon: FileText,     color: "text-pink-600",    bg: "bg-pink-500/10",    border: "border-pink-500/20" },
-          { label: t("Pending"),       value: reqStats.pending,     icon: Clock,        color: "text-amber-600",   bg: "bg-amber-500/10",   border: "border-amber-500/20" },
-          { label: t("Appointments"),  value: upcomingApts.length,  icon: Calendar,     color: "text-violet-600",  bg: "bg-violet-500/10",  border: "border-violet-500/20" },
+          {
+            label: t("Total Staff"),
+            value: totalStaff,
+            icon: Users,
+            color: "text-blue-600",
+            bg: "bg-blue-500/10",
+            border: "border-blue-500/20",
+          },
+          {
+            label: t("Active Staff"),
+            value: activeStaff,
+            icon: UserCheck,
+            color: "text-emerald-600",
+            bg: "bg-emerald-500/10",
+            border: "border-emerald-500/20",
+          },
+          {
+            label: t("Services"),
+            value: totalSvcs,
+            icon: Layers,
+            color: "text-orange-600",
+            bg: "bg-orange-500/10",
+            border: "border-orange-500/20",
+          },
+          {
+            label: t("Total Requests"),
+            value: totalReqs,
+            icon: FileText,
+            color: "text-pink-600",
+            bg: "bg-pink-500/10",
+            border: "border-pink-500/20",
+          },
+          {
+            label: t("Pending"),
+            value: reqStats.pending,
+            icon: Clock,
+            color: "text-amber-600",
+            bg: "bg-amber-500/10",
+            border: "border-amber-500/20",
+          },
+          {
+            label: t("Appointments"),
+            value: upcomingApts.length,
+            icon: Calendar,
+            color: "text-violet-600",
+            bg: "bg-violet-500/10",
+            border: "border-violet-500/20",
+          },
         ].map(({ label, value, icon: Icon, color, bg, border }) => (
-          <Card key={label} className={cn("border shadow-sm bg-card/50", border)}>
+          <Card
+            key={label}
+            className={cn("border shadow-sm bg-card/50", border)}
+          >
             <CardContent className="p-5">
-              <div className={cn("size-10 rounded-xl flex items-center justify-center mb-3", bg)}>
+              <div
+                className={cn(
+                  "size-10 rounded-xl flex items-center justify-center mb-3",
+                  bg,
+                )}
+              >
                 <Icon className={cn("size-5", color)} />
               </div>
-              <p className="text-3xl font-black leading-none tabular-nums">{value.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground font-semibold mt-1.5 uppercase tracking-wide">{label}</p>
+              <p className="text-3xl font-black leading-none tabular-nums">
+                {value.toLocaleString()}
+              </p>
+              <p className="text-xs text-muted-foreground font-semibold mt-1.5 uppercase tracking-wide">
+                {label}
+              </p>
             </CardContent>
           </Card>
         ))}
@@ -414,7 +604,6 @@ function OverviewContent({ data }: { data: OverviewData }) {
 
       {/* ── Middle row: Recent Requests + Upcoming Appointments ───────────── */}
       <div className="grid gap-6 lg:grid-cols-5">
-
         {/* Recent Requests */}
         <Card className="lg:col-span-3 border-none shadow-sm ring-1 ring-border/50">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -422,7 +611,12 @@ function OverviewContent({ data }: { data: OverviewData }) {
               <FileText className="size-4 text-pink-600" />
               {t("Recent Requests")}
             </CardTitle>
-            <Button asChild variant="ghost" size="sm" className="h-8 rounded-xl text-xs font-bold">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="h-8 rounded-xl text-xs font-bold"
+            >
               <Link href="/requestManagement">
                 {t("View all")} <ArrowRight className="ml-1 size-3" />
               </Link>
@@ -433,26 +627,44 @@ function OverviewContent({ data }: { data: OverviewData }) {
               <div className="flex flex-col items-center justify-center py-12 text-center px-6">
                 <FileText className="size-10 text-muted-foreground/20 mb-3" />
                 <p className="font-semibold text-sm">{t("No requests yet")}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t("Requests for your office will appear here.")}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("Requests for your office will appear here.")}
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-border/50">
-                {recentRequests.map(req => {
+                {recentRequests.map((req) => {
                   const status = getReqStatus(req);
                   const cfg = REQ_STATUS_CONFIG[status];
                   return (
-                    <div key={req.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-muted/10 transition-colors">
-                      <div className={cn("size-2.5 rounded-full shrink-0", cfg.dot)} />
+                    <div
+                      key={req.id}
+                      className="px-5 py-3.5 flex items-center gap-3 hover:bg-muted/10 transition-colors"
+                    >
+                      <div
+                        className={cn(
+                          "size-2.5 rounded-full shrink-0",
+                          cfg.dot,
+                        )}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm truncate">
                           {req.service?.name ?? t("Service request")}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {req.user?.name || req.user?.username || t("Customer")} ·{" "}
-                          {format(new Date(req.createdAt), "MMM d, yyyy")}
+                          {req.user?.name ||
+                            req.user?.username ||
+                            t("Customer")}{" "}
+                          · {format(new Date(req.createdAt), "MMM d, yyyy")}
                         </p>
                       </div>
-                      <Badge variant="outline" className={cn("text-xs font-semibold shrink-0", cfg.badge)}>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs font-semibold shrink-0",
+                          cfg.badge,
+                        )}
+                      >
                         {t(cfg.label)}
                       </Badge>
                     </div>
@@ -465,7 +677,6 @@ function OverviewContent({ data }: { data: OverviewData }) {
 
         {/* Right column */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-
           {/* Upcoming Appointments */}
           <Card className="border-none shadow-sm ring-1 ring-border/50">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -473,7 +684,12 @@ function OverviewContent({ data }: { data: OverviewData }) {
                 <Calendar className="size-4 text-violet-600" />
                 {t("Upcoming Appointments")}
               </CardTitle>
-              <Button asChild variant="ghost" size="sm" className="h-8 rounded-xl text-xs font-bold">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-xl text-xs font-bold"
+              >
                 <Link href="/appointments">
                   {t("All")} <ArrowRight className="ml-1 size-3" />
                 </Link>
@@ -483,24 +699,46 @@ function OverviewContent({ data }: { data: OverviewData }) {
               {upcomingApts.length === 0 ? (
                 <div className="flex flex-col items-center py-8 text-center px-4">
                   <Calendar className="size-8 text-muted-foreground/20 mb-2" />
-                  <p className="text-sm text-muted-foreground">{t("No upcoming appointments")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("No upcoming appointments")}
+                  </p>
                 </div>
               ) : (
                 <div className="divide-y divide-border/50">
-                  {upcomingApts.slice(0, 5).map(apt => {
+                  {upcomingApts.slice(0, 5).map((apt) => {
                     const aptDate = new Date(apt.date);
-                    const isToday = aptDate.toDateString() === now.toDateString();
-                    const aptCfg = APT_STATUS_CONFIG[apt.status] ?? APT_STATUS_CONFIG.pending;
+                    const isToday =
+                      aptDate.toDateString() === now.toDateString();
+                    const aptCfg =
+                      APT_STATUS_CONFIG[apt.status] ??
+                      APT_STATUS_CONFIG.pending;
                     return (
-                      <div key={apt.id} className="px-5 py-3 flex items-start gap-3">
-                        <div className={cn(
-                          "size-10 rounded-xl flex flex-col items-center justify-center shrink-0",
-                          isToday ? "bg-violet-500 text-white" : "bg-violet-500/10",
-                        )}>
-                          <p className={cn("text-[10px] font-black leading-none", isToday ? "text-white" : "text-violet-600")}>
+                      <div
+                        key={apt.id}
+                        className="px-5 py-3 flex items-start gap-3"
+                      >
+                        <div
+                          className={cn(
+                            "size-10 rounded-xl flex flex-col items-center justify-center shrink-0",
+                            isToday
+                              ? "bg-violet-500 text-white"
+                              : "bg-violet-500/10",
+                          )}
+                        >
+                          <p
+                            className={cn(
+                              "text-[10px] font-black leading-none",
+                              isToday ? "text-white" : "text-violet-600",
+                            )}
+                          >
                             {format(aptDate, "MMM")}
                           </p>
-                          <p className={cn("text-base font-black leading-none mt-0.5", isToday ? "text-white" : "text-violet-700")}>
+                          <p
+                            className={cn(
+                              "text-base font-black leading-none mt-0.5",
+                              isToday ? "text-white" : "text-violet-700",
+                            )}
+                          >
                             {aptDate.getDate()}
                           </p>
                         </div>
@@ -513,10 +751,18 @@ function OverviewContent({ data }: { data: OverviewData }) {
                             {apt.time ? ` · ${apt.time}` : ""}
                           </p>
                           {isToday && (
-                            <span className="text-[10px] font-bold text-violet-600 uppercase tracking-wide">{t("Today")}</span>
+                            <span className="text-[10px] font-bold text-violet-600 uppercase tracking-wide">
+                              {t("Today")}
+                            </span>
                           )}
                         </div>
-                        <Badge variant="outline" className={cn("text-xs font-semibold shrink-0", aptCfg.badge)}>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs font-semibold shrink-0",
+                            aptCfg.badge,
+                          )}
+                        >
                           {t(aptCfg.label)}
                         </Badge>
                       </div>
@@ -530,20 +776,68 @@ function OverviewContent({ data }: { data: OverviewData }) {
           {/* Quick Actions */}
           <Card className="border-none shadow-sm ring-1 ring-border/50 bg-primary/5">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold">{t("Quick Actions")}</CardTitle>
+              <CardTitle className="text-sm font-bold">
+                {t("Quick Actions")}
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-2">
               {[
-                { href: "/requestManagement", icon: FileText,  label: t("Manage Requests"),   color: "text-pink-600",   bg: "bg-pink-500/10" },
-                { href: "/appointments",      icon: Calendar,  label: t("Appointments"),       color: "text-violet-600", bg: "bg-violet-500/10" },
-                { href: "/staff",             icon: Users,     label: t("Staff"),              color: "text-blue-600",   bg: "bg-blue-500/10" },
-                { href: "/services",          icon: Layers,    label: t("Services"),           color: "text-orange-600", bg: "bg-orange-500/10" },
-                { href: "/report",            icon: TrendingUp,label: t("Reports"),            color: "text-emerald-600",bg: "bg-emerald-500/10" },
-                { href: "/configuration",     icon: Settings,  label: t("Configuration"),      color: "text-gray-600",   bg: "bg-gray-500/10" },
+                {
+                  href: "/requestManagement",
+                  icon: FileText,
+                  label: t("Manage Requests"),
+                  color: "text-pink-600",
+                  bg: "bg-pink-500/10",
+                },
+                {
+                  href: "/appointments",
+                  icon: Calendar,
+                  label: t("Appointments"),
+                  color: "text-violet-600",
+                  bg: "bg-violet-500/10",
+                },
+                {
+                  href: "/staff",
+                  icon: Users,
+                  label: t("Staff"),
+                  color: "text-blue-600",
+                  bg: "bg-blue-500/10",
+                },
+                {
+                  href: "/services",
+                  icon: Layers,
+                  label: t("Services"),
+                  color: "text-orange-600",
+                  bg: "bg-orange-500/10",
+                },
+                {
+                  href: "/report",
+                  icon: TrendingUp,
+                  label: t("Reports"),
+                  color: "text-emerald-600",
+                  bg: "bg-emerald-500/10",
+                },
+                {
+                  href: "/configuration",
+                  icon: Settings,
+                  label: t("Configuration"),
+                  color: "text-gray-600",
+                  bg: "bg-gray-500/10",
+                },
               ].map(({ href, icon: Icon, label, color, bg }) => (
-                <Button key={href} variant="secondary" className="justify-start rounded-xl h-9" asChild>
+                <Button
+                  key={href}
+                  variant="secondary"
+                  className="justify-start rounded-xl h-9"
+                  asChild
+                >
                   <Link href={href}>
-                    <div className={cn("size-6 rounded-lg flex items-center justify-center mr-2 shrink-0", bg)}>
+                    <div
+                      className={cn(
+                        "size-6 rounded-lg flex items-center justify-center mr-2 shrink-0",
+                        bg,
+                      )}
+                    >
                       <Icon className={cn("size-3.5", color)} />
                     </div>
                     {label}
@@ -557,7 +851,6 @@ function OverviewContent({ data }: { data: OverviewData }) {
 
       {/* ── Bottom row: Staff status + Request breakdown ───────────────────── */}
       <div className="grid gap-6 lg:grid-cols-2">
-
         {/* Staff Status Donut */}
         <Card className="border-none shadow-sm ring-1 ring-border/50">
           <CardHeader className="pb-2">
@@ -565,7 +858,9 @@ function OverviewContent({ data }: { data: OverviewData }) {
               <UserCheck className="size-4 text-emerald-600" />
               {t("Staff Status")}
               {totalStaff > 0 && (
-                <span className="ml-auto text-xs text-muted-foreground font-normal">{totalStaff} {t("total")}</span>
+                <span className="ml-auto text-xs text-muted-foreground font-normal">
+                  {totalStaff} {t("total")}
+                </span>
               )}
             </CardTitle>
           </CardHeader>
@@ -580,27 +875,40 @@ function OverviewContent({ data }: { data: OverviewData }) {
                   <PieChart>
                     <Pie
                       data={staffSlices}
-                      cx="50%" cy="50%"
-                      innerRadius={48} outerRadius={70}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={48}
+                      outerRadius={70}
                       paddingAngle={3}
                       dataKey="value"
                       strokeWidth={0}
                     >
-                      {staffSlices.map((e, i) => <Cell key={i} fill={e.color} />)}
+                      {staffSlices.map((e, i) => (
+                        <Cell key={i} fill={e.color} />
+                      ))}
                     </Pie>
                     <Tooltip
                       contentStyle={TOOLTIP_STYLE}
                       formatter={(v: any, n: any) => [
-                        `${v} (${totalStaff > 0 ? Math.round((v / totalStaff) * 100) : 0}%)`, n,
+                        `${v} (${totalStaff > 0 ? Math.round((v / totalStaff) * 100) : 0}%)`,
+                        n,
                       ]}
                     />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="flex-1 space-y-3">
-                  {staffSlices.map(s => (
-                    <div key={s.name} className="flex items-center gap-2 text-sm">
-                      <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                      <span className="text-muted-foreground flex-1">{s.name}</span>
+                  {staffSlices.map((s) => (
+                    <div
+                      key={s.name}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span
+                        className="size-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: s.color }}
+                      />
+                      <span className="text-muted-foreground flex-1">
+                        {s.name}
+                      </span>
                       <span className="font-black tabular-nums">{s.value}</span>
                       {totalStaff > 0 && (
                         <span className="text-muted-foreground/60 w-9 text-right text-xs">
@@ -614,24 +922,41 @@ function OverviewContent({ data }: { data: OverviewData }) {
             )}
 
             {/* Active staff list preview */}
-            {staff.filter(s => s.status === "ACTIVE").length > 0 && (
+            {staff.filter((s) => s.status === "ACTIVE").length > 0 && (
               <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t("Active Staff")}</p>
-                {staff.filter(s => s.status === "ACTIVE").slice(0, 4).map(s => (
-                  <div key={s.id} className="flex items-center gap-2">
-                    <div className="size-7 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                      <UserCheck className="size-3.5 text-emerald-600" />
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                  {t("Active Staff")}
+                </p>
+                {staff
+                  .filter((s) => s.status === "ACTIVE")
+                  .slice(0, 4)
+                  .map((s) => (
+                    <div key={s.id} className="flex items-center gap-2">
+                      <div className="size-7 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <UserCheck className="size-3.5 text-emerald-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate">
+                          {t(staffDisplayName(s))}
+                        </p>
+                        {s.role?.name && (
+                          <p className="text-[10px] text-muted-foreground">
+                            {s.role.name}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold truncate">{t(staffDisplayName(s))}</p>
-                      {s.role?.name && <p className="text-[10px] text-muted-foreground">{s.role.name}</p>}
-                    </div>
-                  </div>
-                ))}
-                {staff.filter(s => s.status === "ACTIVE").length > 4 && (
-                  <Button variant="link" size="sm" className="px-0 h-7 text-xs" asChild>
+                  ))}
+                {staff.filter((s) => s.status === "ACTIVE").length > 4 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="px-0 h-7 text-xs"
+                    asChild
+                  >
                     <Link href="/staff">
-                      +{staff.filter(s => s.status === "ACTIVE").length - 4} {t("more staff")}
+                      +{staff.filter((s) => s.status === "ACTIVE").length - 4}{" "}
+                      {t("more staff")}
                     </Link>
                   </Button>
                 )}
@@ -647,39 +972,58 @@ function OverviewContent({ data }: { data: OverviewData }) {
               <Activity className="size-4 text-pink-600" />
               {t("Request Breakdown")}
               {totalReqs > 0 && (
-                <span className="ml-auto text-xs text-muted-foreground font-normal">{totalReqs} {t("total")}</span>
+                <span className="ml-auto text-xs text-muted-foreground font-normal">
+                  {totalReqs} {t("total")}
+                </span>
               )}
             </CardTitle>
-            <CardDescription className="text-xs">{t("Status distribution for all office requests")}</CardDescription>
+            <CardDescription className="text-xs">
+              {t("Status distribution for all office requests")}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {totalReqs === 0 ? (
               <div className="flex flex-col items-center py-8 text-center">
                 <FileText className="size-8 text-muted-foreground/20 mb-2" />
-                <p className="text-sm text-muted-foreground">{t("No requests yet")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("No requests yet")}
+                </p>
               </div>
             ) : (
               <>
-                {(["pending", "processing", "approved", "rejected"] as const).map(status => {
-                  const cfg  = REQ_STATUS_CONFIG[status];
+                {(
+                  ["pending", "processing", "approved", "rejected"] as const
+                ).map((status) => {
+                  const cfg = REQ_STATUS_CONFIG[status];
                   const count = reqStats[status];
-                  const pct  = totalReqs > 0 ? Math.round((count / totalReqs) * 100) : 0;
+                  const pct =
+                    totalReqs > 0 ? Math.round((count / totalReqs) * 100) : 0;
                   return (
                     <div key={status}>
                       <div className="flex justify-between text-xs mb-1.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="size-2 rounded-full" style={{ backgroundColor: cfg.color }} />
-                          <span className="font-medium text-muted-foreground">{t(cfg.label)}</span>
+                          <span
+                            className="size-2 rounded-full"
+                            style={{ backgroundColor: cfg.color }}
+                          />
+                          <span className="font-medium text-muted-foreground">
+                            {t(cfg.label)}
+                          </span>
                         </div>
                         <span className="font-bold tabular-nums">
                           {count}
-                          <span className="text-muted-foreground font-normal ml-1">({pct}%)</span>
+                          <span className="text-muted-foreground font-normal ml-1">
+                            ({pct}%)
+                          </span>
                         </span>
                       </div>
                       <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${pct}%`, backgroundColor: cfg.color }}
+                          style={{
+                            width: `${pct}%`,
+                            backgroundColor: cfg.color,
+                          }}
                         />
                       </div>
                     </div>
@@ -688,15 +1032,22 @@ function OverviewContent({ data }: { data: OverviewData }) {
 
                 {/* This month highlight */}
                 {(() => {
-                  const thisMonth = requests.filter(r => {
+                  const thisMonth = requests.filter((r) => {
                     const d = new Date(r.createdAt);
-                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                    return (
+                      d.getMonth() === now.getMonth() &&
+                      d.getFullYear() === now.getFullYear()
+                    );
                   }).length;
                   return thisMonth > 0 ? (
                     <div className="flex items-center gap-3 mt-2 px-4 py-3 rounded-xl bg-primary/5 border border-primary/10">
                       <Star className="size-4 text-primary shrink-0" />
                       <p className="text-xs font-medium">
-                        <span className="font-black text-primary">{thisMonth}</span> {t("request")}{thisMonth > 1 ? "s" : ""} {t("received this month")}
+                        <span className="font-black text-primary">
+                          {thisMonth}
+                        </span>{" "}
+                        {t("request")}
+                        {thisMonth > 1 ? "s" : ""} {t("received this month")}
                       </p>
                     </div>
                   ) : null;
@@ -707,15 +1058,24 @@ function OverviewContent({ data }: { data: OverviewData }) {
             {/* Services preview */}
             {office.service && office.service.length > 0 && (
               <div className="pt-4 border-t border-border/50">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{t("Office Services")}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                  {t("Office Services")}
+                </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {office.service.slice(0, 6).map(s => (
-                    <Badge key={s.id} variant="secondary" className="text-xs font-medium rounded-lg">
+                  {office.service.slice(0, 6).map((s) => (
+                    <Badge
+                      key={s.id}
+                      variant="secondary"
+                      className="text-xs font-medium rounded-lg"
+                    >
                       {s.name}
                     </Badge>
                   ))}
                   {totalSvcs > 6 && (
-                    <Badge variant="outline" className="text-xs font-medium rounded-lg text-muted-foreground">
+                    <Badge
+                      variant="outline"
+                      className="text-xs font-medium rounded-lg text-muted-foreground"
+                    >
                       +{totalSvcs - 6} {t("more")}
                     </Badge>
                   )}
@@ -725,7 +1085,6 @@ function OverviewContent({ data }: { data: OverviewData }) {
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }
@@ -748,8 +1107,12 @@ function OfficeInfoItem({
         <Icon className="size-4 text-primary" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-        <p className={cn("text-sm font-semibold break-words", valueClass)}>{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          {label}
+        </p>
+        <p className={cn("text-sm font-semibold break-words", valueClass)}>
+          {value}
+        </p>
       </div>
     </div>
   );

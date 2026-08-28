@@ -23,7 +23,6 @@ import {
   type Permission,
   type Role,
 } from "@/lib/stores/security-store";
-import { usePermissions } from "@/lib/hooks/use-permissions";
 import {
   Accordion,
   AccordionContent,
@@ -40,7 +39,6 @@ export default function EditRolePage() {
   const router = useRouter();
   const params = useParams();
   const roleId = params.roleId as string;
-  const { isAdmin, hasPermission } = usePermissions();
 
   const {
     roles,
@@ -55,22 +53,22 @@ export default function EditRolePage() {
   >([]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const canAccess = isAdmin || hasPermission("role:read");
-
   const role = React.useMemo(
     () => roles.find((r) => r.id === roleId) || null,
     [roles, roleId],
   );
 
+  // Access is decided by RouteGuard in the dashboard layout, which knows this
+  // page needs `page:admin:roles` or `role:update` and shows a 403 when it is
+  // missing. A second check here used to redirect on its own, and it ran
+  // before usePermissions had read the stored role — so on the very first
+  // render nobody was an administrator yet and everyone was bounced to
+  // /dashboard, which then forwards to their own overview.
   React.useEffect(() => {
-    if (!canAccess) {
-      router.replace("/dashboard");
-      return;
-    }
     if (roleId) {
       void Promise.all([fetchRoles(), fetchPermissions()]);
     }
-  }, [roleId, canAccess, fetchRoles, fetchPermissions, router]);
+  }, [roleId, fetchRoles, fetchPermissions]);
 
   React.useEffect(() => {
     if (role) {

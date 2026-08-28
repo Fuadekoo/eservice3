@@ -15,14 +15,14 @@ import { toast } from "sonner";
 
 import { axiosInstance } from "@/lib/axios";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -178,26 +178,30 @@ export function AssignServicesDialog({
   const totalCount = data?.services.length ?? 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {/* A panel from the right rather than a centred dialog: the same shape
+          the service form and the request detail already use, and it leaves the
+          staff list visible behind it while services are picked. */}
+      <SheetContent
+        side="right"
         showCloseButton={false}
-        className="flex max-h-[85vh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden rounded-2xl border-border bg-card p-0 sm:max-w-[600px]"
+        className="flex h-full w-full! max-w-none! flex-col gap-0 overflow-hidden border-border bg-card p-0 sm:w-[92vw]! sm:rounded-l-2xl lg:w-152!"
       >
         {/* Header */}
         <div className="relative flex-none overflow-hidden">
           {/* Gradient accent bar */}
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
 
-          <DialogHeader className="p-6 pb-4 pr-14">
+          <SheetHeader className="gap-0 p-6 pb-4 pr-14">
             <div className="flex items-center gap-3">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/20 to-indigo-500/20">
                 <GraduationCap className="size-5 text-violet-500" />
               </div>
               <div className="flex min-w-0 flex-col gap-1">
-                <DialogTitle className="text-lg font-bold text-foreground">
+                <SheetTitle className="text-lg font-bold text-foreground">
                   {t("Assign Services")}
-                </DialogTitle>
-                <DialogDescription className="truncate text-sm text-muted-foreground">
+                </SheetTitle>
+                <SheetDescription className="truncate text-sm text-muted-foreground">
                   {staffName ? (
                     <>
                       {t("Managing services for {name}", { name: staffName })}
@@ -205,13 +209,13 @@ export function AssignServicesDialog({
                   ) : (
                     t("Select services to assign to this staff member")
                   )}
-                </DialogDescription>
+                </SheetDescription>
               </div>
             </div>
-          </DialogHeader>
+          </SheetHeader>
 
           {/* Close button */}
-          <DialogClose asChild>
+          <SheetClose asChild>
             <Button
               variant="ghost"
               size="icon-sm"
@@ -220,7 +224,7 @@ export function AssignServicesDialog({
               <X className="size-4" />
               <span className="sr-only">{t("Close")}</span>
             </Button>
-          </DialogClose>
+          </SheetClose>
         </div>
 
         {isLoading ? (
@@ -303,7 +307,11 @@ export function AssignServicesDialog({
             </div>
 
             {/* Services List */}
-            <ScrollArea className="min-h-0 flex-1 px-6">
+            {/* Radix renders the viewport's child as `display: table`, which
+                sizes to the widest row instead of to the panel — so `truncate`
+                never fired and long service names ran off the right edge.
+                Forcing that child back to a block is what makes them wrap. */}
+            <ScrollArea className="min-h-0 w-full flex-1 px-6 [&>[data-slot=scroll-area-viewport]>div]:block!">
               <div className="space-y-1.5 pb-4">
                 {filteredServices.length === 0 ? (
                   <div className="flex flex-col items-center justify-center gap-2 py-10">
@@ -367,7 +375,7 @@ export function AssignServicesDialog({
 
         {/* Footer */}
         {!isLoading && data && data.services.length > 0 && (
-          <DialogFooter className="mx-0 mb-0 flex-none border-t border-border bg-muted/30 p-4">
+          <SheetFooter className="mx-0 mb-0 flex-none border-t border-border bg-muted/30 p-4">
             <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-muted-foreground">
                 {hasChanges ? (
@@ -408,9 +416,9 @@ export function AssignServicesDialog({
                 </Button>
               </div>
             </div>
-          </DialogFooter>
+          </SheetFooter>
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

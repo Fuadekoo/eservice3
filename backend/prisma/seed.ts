@@ -6848,14 +6848,17 @@ async function main() {
     }),
   );
 
+  // A role is a job description, global to the system: which office someone
+  // works in lives on their staff row, not on their role. `role.officeId` was
+  // dropped from the schema, so writing it here fails against the real table.
   await seed("roles", data.role, (r: any) =>
     prisma.role.upsert({
       where: { id: r.id },
-      update: { name: r.name, officeId: r.officeId },
+      update: { name: r.name, description: r.description ?? null },
       create: {
         id: r.id,
         name: r.name,
-        officeId: r.officeId,
+        description: r.description ?? null,
       },
     }),
   );

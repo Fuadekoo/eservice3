@@ -1,0 +1,16 @@
+{
+  // The seed and the other prisma/ scripts sit outside the build's rootDir, so
+  // `npm run build` never typechecks them — which is how a seed that still
+  // wrote the dropped `role.officeId` column survived until it failed at
+  // runtime against a real database. `npm run check:prisma` covers them.
+  //
+  // They are run through tsx, which resolves `.ts` imports directly, hence
+  // allowImportingTsExtensions.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "allowImportingTsExtensions": true
+  },
+  "include": ["prisma/**/*.ts"]
+}

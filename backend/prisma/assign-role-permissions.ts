@@ -22,7 +22,7 @@ import { assignDefaultPermissionsToRole } from "./role-permissions-assignment.ts
  */
 async function main(): Promise<void> {
   const roles = await prisma.role.findMany({
-    select: { id: true, name: true, officeId: true },
+    select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
 
@@ -38,22 +38,21 @@ async function main(): Promise<void> {
 
   for (const role of roles) {
     const result = await assignDefaultPermissionsToRole(role.id, role.name);
-    const where = role.officeId ? ` (office ${role.officeId})` : " (global)";
 
     if (!result.success) {
-      console.warn(`  ✗ ${role.name}${where}: ${result.error}`);
+      console.warn(`  ✗ ${role.name}: ${result.error}`);
       continue;
     }
 
     if (result.error) {
       // Reported as success with a note — nothing needed changing.
-      console.log(`  · ${role.name}${where}: ${result.error}`);
+      console.log(`  · ${role.name}: ${result.error}`);
       skipped++;
       continue;
     }
 
     console.log(
-      `  ✓ ${role.name}${where}: ${result.assignedCount} permission(s) assigned`,
+      `  ✓ ${role.name}: ${result.assignedCount} permission(s) assigned`,
     );
     changed++;
   }

@@ -1,7 +1,10 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/db.js";
 import type { AuthRequest } from "../middleware/auth.js";
-import { delegatablePermissions } from "../config/role-permissions.js";
+import {
+  delegatablePermissions,
+  isPrivilegedRoleName,
+} from "../config/role-permissions.js";
 import { Prisma } from "../lib/prisma-client.js";
 // import { Prisma } from "../../generated/prisma/client.js";
 
@@ -676,12 +679,52 @@ export async function updateRole(
   }
 }
 
+/**
+ * DELETE /security/roles/:id
+ *
+ * `User.roleId` is `ON DELETE SET NULL`, so deleting a role does not fail —
+ * it quietly strips the role from everyone holding it. For the administrator
+ * role that means every administrator loses their access at once, with no
+ * account left that can grant it back. Both cases are refused here rather
+ * than left to the person clicking the button to notice.
+ */
 export async function deleteRole(
   req: Request,
   res: Response,
 ): Promise<Response | void> {
   const id = req.params.id as string;
   try {
+    const role = await prisma.role.findUnique({
+      where: { id },
+      select: { name: true, _count: { select: { users: true } } },
+    });
+
+    if (!role) {
+      return res.status(404).json({
+        error: "NotFound",
+        message: `Role with id '${id}' was not found.`,
+      });
+    }
+
+    if (isPrivilegedRoleName(role.name)) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message:
+          "The administrator role cannot be deleted. Removing it would leave " +
+          "no account able to administer the system.",
+      });
+    }
+
+    if (role._count.users > 0) {
+      return res.status(409).json({
+        error: "Conflict",
+        message:
+          `${role._count.users} user(s) still hold the "${role.name}" role. ` +
+          "Move them to another role first — deleting it now would leave them " +
+          "with no role and no way to sign in to their work.",
+      });
+    }
+
     await prisma.role.delete({ where: { id } });
     return res.status(204).send();
   } catch (error) {

@@ -19,6 +19,25 @@
  * running their office should never be able to mint a role that edits
  * permissions, reads the audit log, or manages user accounts across offices.
  */
+/**
+ * Roles that administer the system itself.
+ *
+ * They may not be deleted, and only an administrator may hand one out.
+ * Matching is on the lowercased name because these roles are identified by
+ * name throughout — `normalizeRoleName(user.role?.name)` is what decides
+ * whether a request is an admin request.
+ */
+export const PRIVILEGED_ROLE_NAMES = new Set([
+  "admin",
+  "administrator",
+  "superadmin",
+]);
+
+/** True when `name` is a role that administers the system. */
+export function isPrivilegedRoleName(name?: string | null): boolean {
+  return PRIVILEGED_ROLE_NAMES.has((name ?? "").trim().toLowerCase());
+}
+
 export const ADMIN_ONLY_PREFIXES = [
   "user:",
   "permission:",

@@ -58,6 +58,7 @@ import {
 } from "@/components/ui/table";
 import { useSecurityStore, type Role } from "@/lib/stores/security-store";
 import { useTranslation } from "@/lib/i18n";
+import { isPrivilegedRole } from "@/lib/roles";
 
 function SummaryCard({
   title,
@@ -187,7 +188,11 @@ export function RoleCatalogPage({
       setDeleteDialogOpen(false);
       setRoleToDelete(null);
     } catch (error) {
-      toast.error(t("Failed to delete role"));
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : t("Failed to delete role"),
+      );
       console.error(error);
     }
   };
@@ -377,6 +382,12 @@ export function RoleCatalogPage({
                         variant="ghost"
                         className="flex-1 rounded-none text-destructive hover:text-destructive"
                         onClick={() => handleDeleteClick(role)}
+                        disabled={isPrivilegedRole(role.name)}
+                        title={
+                          isPrivilegedRole(role.name)
+                            ? t("The administrator role cannot be deleted.")
+                            : undefined
+                        }
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         {t("Delete")}
@@ -450,6 +461,12 @@ export function RoleCatalogPage({
                               size="icon"
                               className="text-destructive hover:text-destructive"
                               onClick={() => handleDeleteClick(role)}
+                              disabled={isPrivilegedRole(role.name)}
+                              title={
+                                isPrivilegedRole(role.name)
+                                  ? t("The administrator role cannot be deleted.")
+                                  : undefined
+                              }
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

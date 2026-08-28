@@ -4,6 +4,7 @@ import { prisma } from "../lib/db.js";
 import { Prisma } from "../lib/prisma-client.js";
 import { createUserSchema, updateUserSchema, buildValidationError, } from "../validators/user.validator.js";
 import { getEthiopianMobilePhoneCandidates } from "../utils/phone.js";
+import { isPrivilegedRoleName } from "../config/role-permissions.js";
 function parseQueryString(value) {
     const str = typeof value === "string" ? value.trim() : undefined;
     return str || undefined;
@@ -203,18 +204,6 @@ export async function getUser(req, res) {
     }
 }
 /**
- * Roles that grant administration of the system itself.
- *
- * Only an administrator may hand one out. The account forms do not list them,
- * but a request can name any role id, so the rule is enforced here — otherwise
- * anyone able to create a user could make themselves an administrator.
- */
-const PRIVILEGED_ROLE_NAMES = new Set([
-    "admin",
-    "administrator",
-    "superadmin",
-]);
-/**
  * True when the caller may not assign `roleId`.
  *
  * An administrator may assign anything; anyone else is refused a privileged
@@ -227,7 +216,7 @@ async function assigningForbiddenRole(req, roleId) {
         where: { id: roleId },
         select: { name: true },
     });
-    return Boolean(role) && PRIVILEGED_ROLE_NAMES.has(role.name.trim().toLowerCase());
+    return Boolean(role) && isPrivilegedRoleName(role.name);
 }
 export async function createUser(req, res) {
     try {

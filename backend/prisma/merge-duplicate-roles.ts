@@ -13,7 +13,10 @@ import { prisma } from "../src/lib/db.ts";
  * copy is then added to the survivor, so no user can come out with less than
  * they had, and users are repointed before the losers are deleted.
  *
- * Safe to re-run: with one role per name there is nothing to merge.
+ * Safe to re-run: with one role per name there is nothing to merge, and
+ * `role.name` is unique now, so it should always report exactly that. Kept
+ * as a check rather than deleted — a database restored from an older dump
+ * still needs it.
  *
  *   npm run merge:duplicate-roles
  */
@@ -21,7 +24,6 @@ import { prisma } from "../src/lib/db.ts";
 type RoleRow = {
   id: string;
   name: string;
-  officeId: string | null;
   rolePermissions: { permissionId: string }[];
   users: { id: string }[];
 };
@@ -49,7 +51,6 @@ async function main(): Promise<void> {
     select: {
       id: true,
       name: true,
-      officeId: true,
       rolePermissions: { select: { permissionId: true } },
       users: { select: { id: true } },
     },

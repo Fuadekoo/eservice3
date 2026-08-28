@@ -10,6 +10,7 @@ import {
   buildValidationError,
 } from "../validators/user.validator.js";
 import { getEthiopianMobilePhoneCandidates } from "../utils/phone.js";
+import { isPrivilegedRoleName } from "../config/role-permissions.js";
 
 function parseQueryString(value: unknown): string | undefined {
   const str = typeof value === "string" ? value.trim() : undefined;
@@ -231,18 +232,6 @@ export async function getUser(req: AuthRequest, res: Response) {
   }
 }
 
-/**
- * Roles that grant administration of the system itself.
- *
- * Only an administrator may hand one out. The account forms do not list them,
- * but a request can name any role id, so the rule is enforced here — otherwise
- * anyone able to create a user could make themselves an administrator.
- */
-const PRIVILEGED_ROLE_NAMES = new Set([
-  "admin",
-  "administrator",
-  "superadmin",
-]);
 
 /**
  * True when the caller may not assign `roleId`.
@@ -259,7 +248,7 @@ async function assigningForbiddenRole(
     where: { id: roleId },
     select: { name: true },
   });
-  return Boolean(role) && PRIVILEGED_ROLE_NAMES.has(role!.name.trim().toLowerCase());
+  return Boolean(role) && isPrivilegedRoleName(role!.name);
 }
 export async function createUser(req: AuthRequest, res: Response) {
   try {

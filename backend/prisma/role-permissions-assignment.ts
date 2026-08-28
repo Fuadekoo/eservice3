@@ -45,12 +45,15 @@ export async function assignDefaultPermissionsToRole(
       };
     }
 
-    // Find all permissions in the database
+    // Matched on either column. Two conventions ended up in this table:
+    // `seed.ts` puts a human label in `name` ("Create User") and the code in
+    // `code` ("user:create"), while `permission-seed.ts` puts the code in
+    // `name`. Matching only `name` meant a database seeded the first way
+    // found nothing for manager, staff or customer and reported "run the
+    // permission seed first" — on a table that already held every row.
     const permissions = await prisma.permission.findMany({
       where: {
-        name: {
-          in: permissionNames,
-        },
+        OR: [{ name: { in: permissionNames } }, { code: { in: permissionNames } }],
       },
       select: {
         id: true,

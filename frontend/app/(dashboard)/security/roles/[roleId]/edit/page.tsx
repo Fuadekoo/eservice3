@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/dashboard/page-header";
+import { PermissionPicker } from "@/components/dashboard/permission-picker";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,23 +15,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  useSecurityStore,
-  type Permission,
-  type Role,
-} from "@/lib/stores/security-store";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { useSecurityStore } from "@/lib/stores/security-store";
 import { useTranslation } from "@/lib/i18n";
 
 export default function EditRolePage() {
@@ -73,7 +61,9 @@ export default function EditRolePage() {
   React.useEffect(() => {
     if (role) {
       setSelectedPermissionCodes(
-        role.permissions.map((p) => p.code).filter((c): c is string => typeof c === "string" && c.length > 0),
+        role.permissions
+          .map((p) => p.code)
+          .filter((c): c is string => typeof c === "string" && c.length > 0),
       );
     } else if (roles.length > 0 && !isLoading) {
       toast.error(t("Role not found"));
@@ -81,113 +71,11 @@ export default function EditRolePage() {
     }
   }, [role, roles, isLoading, router]);
 
-  const handleTogglePermission = React.useCallback(
-    (code: string, checked: boolean) => {
-      setSelectedPermissionCodes((previous) =>
-        checked
-          ? Array.from(new Set([...previous, code]))
-          : previous.filter((permissionCode) => permissionCode !== code),
-      );
-    },
-    [],
-  );
-
-  const groupedPermissions = React.useMemo(() => {
-    const groups: Record<string, Permission[]> = {};
-    permissions.forEach((permission) => {
-      let category = "Miscellaneous";
-      if (permission.code?.includes(".")) {
-        category = permission.code.split(".")[0];
-      } else if (permission.code?.includes("_")) {
-        category = permission.code.split("_")[0];
-      }
-
-      // Special cases or manual mapping can go here
-      const categoryMap: Record<string, string> = {
-        users: "User Management",
-        officers: "User Management",
-        roles: "Security & Access",
-        permissions: "Security & Access",
-        audit_logs: "Security & Access",
-        offices: "Office Settings",
-        services: "Service Management",
-        inventory: "Inventory Management",
-        products: "Product Management",
-        categories: "Product Management",
-        measurements: "Product Management",
-        suppliers: "Contacts",
-        customers: "Contacts",
-        stock_in: "Stock Operations",
-        stock_out: "Stock Operations",
-        stock_transfers: "Stock Operations",
-        stock_returns: "Stock Operations",
-        bank_accounts: "Finance",
-        bank_deposits: "Finance",
-        bank_withdrawals: "Finance",
-        payments: "Finance",
-        finance: "Finance",
-        subscriptions: "Platform Management",
-        plans: "Platform Management",
-        dashboard: "Dashboard & Reports",
-        reports: "Dashboard & Reports",
-        system: "System Administration",
-      };
-
-      const groupName =
-        categoryMap[category] ||
-        category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, " ");
-
-      if (!groups[groupName]) {
-        groups[groupName] = [];
-      }
-      groups[groupName].push(permission);
-    });
-
-    // Sort groups alphabetically
-    return Object.keys(groups)
-      .sort()
-      .reduce(
-        (acc, key) => {
-          acc[key] = groups[key];
-          return acc;
-        },
-        {} as Record<string, Permission[]>,
-      );
-  }, [permissions]);
-
-  const allSelected =
-    permissions.length > 0 &&
-    selectedPermissionCodes.length === permissions.length;
-  const someSelected =
-    selectedPermissionCodes.length > 0 &&
-    selectedPermissionCodes.length < permissions.length;
-
-  const handleSelectAll = React.useCallback(
-    (checked: boolean) => {
-      if (checked) {
-        setSelectedPermissionCodes(
-          permissions.map((p) => p.code).filter((c): c is string => typeof c === "string" && c.length > 0),
-        );
-      } else {
-        setSelectedPermissionCodes([]);
-      }
-    },
-    [permissions],
-  );
-
-  const handleToggleGroup = React.useCallback(
-    (groupPermissions: Permission[], checked: boolean) => {
-      const codes = groupPermissions.map((p) => p.code);
-      setSelectedPermissionCodes((previous) => {
-        if (checked) {
-          return Array.from(new Set([...previous, ...codes]));
-        } else {
-          return previous.filter((code) => !codes.includes(code));
-        }
-      });
-    },
-    [],
-  );
+  // Selection lives here; PermissionPicker owns the grouping, the search and
+  // every checkbox rule that goes with them.
+  const handlePermissionsChange = React.useCallback((codes: string[]) => {
+    setSelectedPermissionCodes(codes);
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -203,7 +91,9 @@ export default function EditRolePage() {
       await updateRole(role.id, {
         name,
         description: description || undefined,
-        permissions: selectedPermissionCodes.filter((c): c is string => typeof c === "string" && c.length > 0),
+        permissions: selectedPermissionCodes.filter(
+          (c): c is string => typeof c === "string" && c.length > 0,
+        ),
       });
       toast.success(t("Role updated successfully"));
       router.push("/security/roles");
@@ -241,7 +131,9 @@ export default function EditRolePage() {
         <CardHeader>
           <CardTitle>{t("Role details")}</CardTitle>
           <CardDescription>
-            {t("Update the metadata and permissions associated with this role.")}
+            {t(
+              "Update the metadata and permissions associated with this role.",
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -272,140 +164,18 @@ export default function EditRolePage() {
               <div className="space-y-1">
                 <h2 className="text-lg font-semibold">{t("Permissions")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {t("Toggle the permissions associated with this role. ({count} selected)", { count: selectedPermissionCodes.length })}
+                  {t(
+                    "Toggle the permissions associated with this role. ({count} selected)",
+                    { count: selectedPermissionCodes.length },
+                  )}
                 </p>
               </div>
-              {permissions.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  {t("No permissions available")}
-                </div>
-              ) : (
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <div className="mb-4 flex items-center justify-between border-b pb-3 px-2">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="select-all"
-                        checked={someSelected ? "indeterminate" : allSelected}
-                        onCheckedChange={handleSelectAll}
-                        aria-label={t("Select all permissions")}
-                      />
-                      <Label
-                        htmlFor="select-all"
-                        className="cursor-pointer text-sm font-semibold"
-                      >
-                        {t("Select All Permissions")}
-                      </Label>
-                    </div>
-                    <Badge variant="outline" className="font-normal">
-                      {selectedPermissionCodes.length} / {permissions.length}{" "}
-                      {t("selected")}
-                    </Badge>
-                  </div>
-
-                  <Accordion
-                    type="multiple"
-                    defaultValue={Object.keys(groupedPermissions)}
-                    className="w-full"
-                  >
-                    {Object.entries(groupedPermissions).map(
-                      ([groupName, groupPermissions]) => {
-                        const groupCodes = groupPermissions.map((p) => p.code);
-                        const selectedInGroup = groupCodes.filter((code) =>
-                          selectedPermissionCodes.includes(code),
-                        );
-                        const allGroupSelected =
-                          selectedInGroup.length === groupPermissions.length;
-                        const someGroupSelected =
-                          selectedInGroup.length > 0 &&
-                          selectedInGroup.length < groupPermissions.length;
-
-                        return (
-                          <AccordionItem
-                            key={groupName}
-                            value={groupName}
-                            className="border-none"
-                          >
-                            <div className="flex items-center gap-3 px-2">
-                              <Checkbox
-                                id={`group-${groupName}`}
-                                checked={
-                                  someGroupSelected
-                                    ? "indeterminate"
-                                    : allGroupSelected
-                                }
-                                onCheckedChange={(checked) =>
-                                  handleToggleGroup(
-                                    groupPermissions,
-                                    checked === true,
-                                  )
-                                }
-                                aria-label={t("Select {group} permissions", { group: groupName })}
-                                className={
-                                  someGroupSelected
-                                    ? "data-[state=unchecked]:bg-primary data-[state=unchecked]:text-primary-foreground"
-                                    : ""
-                                }
-                              />
-                              <AccordionTrigger className="flex-1 py-2 hover:no-underline">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">
-                                    {t(groupName)}
-                                  </span>
-                                  <Badge
-                                    variant="secondary"
-                                    className="h-4 px-1.5 py-0 text-[10px] font-normal"
-                                  >
-                                    {selectedInGroup.length}/
-                                    {groupPermissions.length}
-                                  </Badge>
-                                </div>
-                              </AccordionTrigger>
-                            </div>
-                            <AccordionContent>
-                              <div className="grid gap-3 pt-2 sm:grid-cols-2">
-                                {groupPermissions.map((permission) => {
-                                  const isChecked =
-                                    selectedPermissionCodes.includes(
-                                      permission.code,
-                                    );
-                                  return (
-                                    <label
-                                      key={permission.id}
-                                      className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 bg-background p-3 transition hover:border-primary/60 hover:bg-muted/50"
-                                    >
-                                      <Checkbox
-                                        checked={isChecked}
-                                        onCheckedChange={(checked) =>
-                                          handleTogglePermission(
-                                            permission.code,
-                                            checked === true,
-                                          )
-                                        }
-                                        aria-label={permission.name}
-                                      />
-                                      <div className="flex-1">
-                                        <span className="text-sm font-medium leading-tight">
-                                          {permission.name}
-                                        </span>
-                                        {permission.description && (
-                                          <p className="mt-1 text-xs text-muted-foreground">
-                                            {permission.description}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                              <Separator className="mt-4" />
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      },
-                    )}
-                  </Accordion>
-                </div>
-              )}
+              <PermissionPicker
+                permissions={permissions}
+                selected={selectedPermissionCodes}
+                onChange={handlePermissionsChange}
+                disabled={isSubmitting}
+              />
             </div>
 
             <div className="flex items-center justify-end gap-2">

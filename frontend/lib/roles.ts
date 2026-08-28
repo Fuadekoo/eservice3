@@ -62,6 +62,18 @@ const NON_OFFICE_ROLE_NAMES = new Set(["customer"]);
  */
 const PRIVILEGED_ROLE_NAMES = new Set(["admin", "administrator", "superadmin"]);
 
+/**
+ * True when `name` is a role that administers the system itself.
+ *
+ * Such a role cannot be deleted and cannot be handed out from the account
+ * forms. The API refuses both; this is what keeps the buttons honest.
+ */
+export function isPrivilegedRole(name?: string | null): boolean {
+  const key = name?.trim().toLowerCase();
+  if (!key) return false;
+  return PRIVILEGED_ROLE_NAMES.has(key);
+}
+
 /** True when the role may be handed out from the account forms. */
 export function isAssignableRole(name?: string | null): boolean {
   const key = name?.trim().toLowerCase();

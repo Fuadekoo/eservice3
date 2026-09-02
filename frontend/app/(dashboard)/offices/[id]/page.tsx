@@ -505,6 +505,7 @@ export default function OfficeDetailsPage() {
         open={isStaffCreateOpen}
         onOpenChange={setIsStaffCreateOpen}
         officeId={id as string}
+        lockOffice
       />
     </div>
   );

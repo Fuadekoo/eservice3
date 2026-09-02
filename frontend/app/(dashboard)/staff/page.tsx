@@ -402,6 +402,9 @@ export default function StaffPage() {
         officeId={
           selectedOfficeId !== "all" ? selectedOfficeId : sessionOfficeId
         }
+        // Only an admin may place staff in an office other than their own, so
+        // everyone else gets the field seeded and locked.
+        lockOffice={!isAdmin}
       />
 
       <AssignServicesDialog

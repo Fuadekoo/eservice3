@@ -5,7 +5,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, User, Shield, Phone, Key, Mail, Info } from "lucide-react";
+import {
+  Building2,
+  Loader2,
+  User,
+  Shield,
+  Phone,
+  Key,
+  Mail,
+  Info,
+} from "lucide-react";
 
 import {
   Sheet,
@@ -39,6 +48,7 @@ import {
   type UpdateStaffMemberPayload,
 } from "@/lib/stores/staff-store";
 import { useSecurityStore } from "@/lib/stores/security-store";
+import { useOfficeStore } from "@/lib/stores/office-store";
 import { assignableRoles } from "@/lib/assignable-roles";
 import {
   SearchSelect,
@@ -46,8 +56,6 @@ import {
 } from "@/components/ui/search-select";
 import { useTranslation } from "@/lib/i18n";
 import { personNameSchema } from "@/lib/name";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import {
   ethiopianMobilePhoneSchema,
@@ -73,6 +81,9 @@ const staffSchema = z.object({
   // this office's role. Avoids repeating the same role name once per office.
   // The role's own id — names are not unique across offices.
   roleId: z.string().min(1, "Role is required"),
+  // A staff row is the link between a user and an office, so there is no such
+  // thing as a staff member without one.
+  officeId: z.string().min(1, "Office is required"),
   status: z.enum(["ACTIVE", "INACTIVE", "PENDING", "BLOCKED"]),
 });
 
@@ -86,7 +97,14 @@ interface StaffCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   member?: StaffMember | null;
+  /** Office to open with. Seeds the field; the source of truth is the form. */
   officeId?: string;
+  /**
+   * Fix the office to `officeId`. Set on office-scoped surfaces — the office
+   * detail page, and any actor who may only manage their own office — where
+   * offering a choice would only invite a request the server will reject.
+   */
+  lockOffice?: boolean;
 }
 
 export function StaffCreateDialog({
@@ -94,10 +112,12 @@ export function StaffCreateDialog({
   onOpenChange,
   member,
   officeId,
+  lockOffice,
 }: StaffCreateDialogProps) {
   const { t } = useTranslation();
   const { createStaff, updateStaff } = useStaffStore();
   const { roles, fetchRoles } = useSecurityStore();
+  const { offices, fetchOffices } = useOfficeStore();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // This office's own roles plus the shared base ones, each as a distinct
@@ -137,6 +157,11 @@ export function StaffCreateDialog({
     [roleOptions, t],
   );
 
+  const officeSelectOptions = React.useMemo<SearchSelectOption[]>(
+    () => offices.map((office) => ({ value: office.id, label: office.name })),
+    [offices],
+  );
+
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffSchema),
     defaultValues: {
@@ -148,6 +173,7 @@ export function StaffCreateDialog({
       password: "",
       gender: "MALE",
       roleId: "",
+      officeId: "",
       status: "ACTIVE",
     },
   });
@@ -155,8 +181,11 @@ export function StaffCreateDialog({
   React.useEffect(() => {
     if (open) {
       fetchRoles();
+      // Needed even when locked, so the trigger can name the office rather
+      // than show a bare id.
+      fetchOffices();
     }
-  }, [open, fetchRoles]);
+  }, [open, fetchRoles, fetchOffices]);
 
   React.useEffect(() => {
     if (member) {
@@ -169,6 +198,9 @@ export function StaffCreateDialog({
         password: "",
         gender: member.gender,
         roleId: member.role?.id || "",
+        // The member's own office wins over the surface's — editing from a
+        // list must not silently move them.
+        officeId: member.officeId || officeId || "",
         status: member.status,
       });
     } else {
@@ -181,10 +213,11 @@ export function StaffCreateDialog({
         password: "",
         gender: "MALE",
         roleId: "",
+        officeId: officeId || "",
         status: "ACTIVE",
       });
     }
-  }, [member, form, open]);
+  }, [member, form, open, officeId]);
 
   const onSubmit = async (values: StaffFormValues) => {
     setIsSubmitting(true);
@@ -200,7 +233,7 @@ export function StaffCreateDialog({
         gender: values.gender,
         roleId: values.roleId,
         status: values.status,
-        officeId,
+        officeId: values.officeId,
         password: values.password || undefined,
       };
 
@@ -404,12 +437,51 @@ export function StaffCreateDialog({
 
               <Separator className="bg-border/50" />
 
-              {/* Role & Status */}
+              {/* Office, role & status */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-muted-foreground/70">
                   <Shield className="size-4" />
-                  {t("Permissions & Status")}
+                  {t("Office, Role & Status")}
                 </div>
+
+                {/* Full width and first: which office someone belongs to is the
+                    whole point of a staff row, and it used to be inherited
+                    invisibly from the page filter. */}
+                <FormField
+                  control={form.control}
+                  name="officeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-bold text-xs uppercase tracking-tighter">
+                        {t("Office")}
+                      </FormLabel>
+                      <FormControl>
+                        <SearchSelect
+                          options={officeSelectOptions}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          disabled={lockOffice}
+                          placeholder={t("Select office")}
+                          searchPlaceholder={t("Search office...")}
+                          emptyMessage={t("No matching office")}
+                          aria-label={t("Office")}
+                          triggerIcon={
+                            <Building2 className="size-4 shrink-0 text-muted-foreground" />
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription className="text-[10px]">
+                        {lockOffice
+                          ? t("You can only manage staff in your assigned office")
+                          : t(
+                              "Staff work out of one office. This is where their requests land.",
+                            )}
+                      </FormDescription>
+                      <FormMessage className="text-[10px]" />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}

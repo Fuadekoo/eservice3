@@ -58,6 +58,46 @@
       }
     },
     {
+      "key": "No roles available",
+      "translations": {
+        "en": "No roles available",
+        "am": "ምንም ሚና የለም",
+        "om": "Gaheen hin jiru"
+      }
+    },
+    {
+      "key": "Office is required for this role",
+      "translations": {
+        "en": "Office is required for this role",
+        "am": "ለዚህ ሚና ጽሕፈት ቤት ያስፈልጋል",
+        "om": "Gahee kanaaf waajjirri barbaachisaadha"
+      }
+    },
+    {
+      "key": "Office, Role & Status",
+      "translations": {
+        "en": "Office, Role & Status",
+        "am": "ጽሕፈት ቤት፣ ሚና እና ሁኔታ",
+        "om": "Waajjira, Gahee fi Haala"
+      }
+    },
+    {
+      "key": "Staff work out of one office. This is where their requests land.",
+      "translations": {
+        "en": "Staff work out of one office. This is where their requests land.",
+        "am": "ሰራተኞች ከአንድ ጽሕፈት ቤት ሆነው ይሰራሉ። ጥያቄዎቻቸው የሚደርሱት እዚህ ነው።",
+        "om": "Hojjettoonni waajjira tokko keessaa hojjetu. Gaaffiiwwan isaanii asitti dhufu."
+      }
+    },
+    {
+      "key": "What this account is allowed to do.",
+      "translations": {
+        "en": "What this account is allowed to do.",
+        "am": "ይህ መለያ ምን ማድረግ እንደሚችል።",
+        "om": "Wanti herregni kun hojjechuu danda'u."
+      }
+    },
+    {
       "key": "child",
       "translations": {
         "en": "child",
@@ -71,14 +111,6 @@
         "en": "Choose a role first — it decides whether an office applies.",
         "am": "መጀመሪያ ሚና ይምረጡ — ጽሕፈት ቤት እንደሚያስፈልግ የሚወስነው ሚናው ነው።",
         "om": "Jalqaba gahee filadhu — waajjirri barbaachisaa ta'uu isaa kan murteessu gahee dha."
-      }
-    },
-    {
-      "key": "Choose the office first — it decides which roles are available.",
-      "translations": {
-        "en": "Choose the office first — it decides which roles are available.",
-        "am": "መጀመሪያ ጽሕፈት ቤቱን ይምረጡ — የትኞቹ ሚናዎች እንደሚገኙ የሚወስነው እሱ ነው።",
-        "om": "Jalqaba waajjira filadhu — gaheewwan argaman kan murteessu isa."
       }
     },
     {
@@ -234,14 +266,6 @@
       }
     },
     {
-      "key": "No roles available for this office",
-      "translations": {
-        "en": "No roles available for this office",
-        "am": "ለዚህ ጽሕፈት ቤት ምንም ሚና የለም",
-        "om": "Waajjira kanaaf gaheen hin jiru"
-      }
-    },
-    {
       "key": "Not applicable to customers",
       "translations": {
         "en": "Not applicable to customers",
@@ -255,14 +279,6 @@
         "en": "Nothing found",
         "am": "ምንም አልተገኘም",
         "om": "Homaa hin argamne"
-      }
-    },
-    {
-      "key": "Office & Role",
-      "translations": {
-        "en": "Office & Role",
-        "am": "ጽሕፈት ቤት እና ሚና",
-        "om": "Waajjira fi Gahee"
       }
     },
     {
@@ -8575,14 +8591,6 @@
         "en": "permissions",
         "am": "ፈቃዶች",
         "om": "hayyamoota"
-      }
-    },
-    {
-      "key": "Permissions & Status",
-      "translations": {
-        "en": "Permissions & Status",
-        "am": "ፈቃዶችና ሁኔታ",
-        "om": "Hayyamaa fi Haala"
       }
     },
     {

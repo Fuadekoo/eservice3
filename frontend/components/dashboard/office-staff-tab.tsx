@@ -325,6 +325,7 @@ export function OfficeStaffTab({ officeId }: OfficeStaffTabProps) {
         onOpenChange={setIsCreateOpen}
         member={selectedMember}
         officeId={officeId}
+        lockOffice
       />
     </Card>
   );

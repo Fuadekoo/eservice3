@@ -16,6 +16,13 @@ export type StaffMember = {
     name: string;
     description?: string | null;
   };
+  /** The office this staff row belongs to. Always set by the API. */
+  officeId?: string | null;
+  office?: {
+    id: string;
+    name: string;
+    status?: string | null;
+  } | null;
   assignedServicesCount?: number;
   createdAt: string;
   updatedAt: string;
@@ -47,6 +54,8 @@ function normalizeStaffMember(raw: any): StaffMember {
       name: "Unassigned",
       description: null,
     },
+    officeId: raw?.officeId ?? raw?.office?.id ?? null,
+    office: raw?.office ?? null,
     assignedServicesCount: raw?.assignedServicesCount ?? 0,
     createdAt: raw?.createdAt ?? user?.createdAt ?? "",
     updatedAt: raw?.updatedAt ?? user?.updatedAt ?? "",

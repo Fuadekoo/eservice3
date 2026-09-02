@@ -2,6 +2,7 @@
 
 import {
   Phone,
+  Building2,
   CheckCircle2,
   XCircle,
   Edit,
@@ -80,7 +81,7 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <Table className="min-w-[1000px]">
+        <Table className="min-w-[1180px]">
           <TableHeader className="bg-muted/30">
             <TableRow className="hover:bg-transparent border-none">
               <TableHead className="w-[300px] py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider pl-6">
@@ -91,6 +92,9 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider">
                 {t("Role")}
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider">
+                {t("Office")}
               </TableHead>
               <TableHead className="py-4 font-semibold text-muted-foreground uppercase text-[11px] tracking-wider text-center">
                 {t("Services")}
@@ -107,7 +111,7 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
             {staff.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="h-32 text-center text-muted-foreground"
                 >
                   {t("No staff members found.")}
@@ -154,6 +158,23 @@ export function StaffTable({ staff, onEdit, onDelete, onAssignServices, onToggle
                     >
                       {member.role.name}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="py-5">
+                    {member.office?.name ? (
+                      <div className="flex items-center gap-2">
+                        <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+                        <span
+                          className="truncate max-w-[180px] text-sm text-foreground/80"
+                          title={member.office.name}
+                        >
+                          {member.office.name}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm italic text-muted-foreground">
+                        {t("No office")}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center py-5">
                     <Badge

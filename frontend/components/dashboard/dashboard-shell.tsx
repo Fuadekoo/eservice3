@@ -195,7 +195,8 @@ function UserAvatarDropdown() {
             <p className="text-xs leading-none text-muted-foreground">
               {user?.phone || user?.username || t("No phone")}
             </p>
-            <UserIdentityRows className="pt-2" />
+            {/* Complement of the top-bar pills, which are hidden below lg. */}
+            <UserIdentityRows className="pt-2 lg:hidden" />
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

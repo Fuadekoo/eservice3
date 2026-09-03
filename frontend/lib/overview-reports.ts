@@ -23,9 +23,60 @@ export type RequestLike = {
   createdAt: string;
   statusbystaff?: string;
   statusbyadmin?: string;
-  service?: { name?: string; office?: { name?: string } } | null;
+  service?: { id?: string; name?: string; office?: { name?: string } } | null;
   user?: { username?: string; name?: string | null } | null;
   beneficiary?: { name?: string; relationship?: string } | null;
+  /** The staff member who took the staff-level decision, approval or rejection. */
+  approveStaff?: { id: string; user?: { id?: string; username?: string } | null } | null;
+  /** The manager who took the final decision, approval or rejection. */
+  approveManager?: { id: string; user?: { id?: string; username?: string } | null } | null;
+};
+
+/** A service as `GET /services` returns it, with who is assigned to handle it. */
+export type ServiceLike = {
+  id: string;
+  name: string;
+  staffAssignments?: {
+    staffId: string;
+    staff: {
+      id: string;
+      user: {
+        id: string;
+        username: string;
+        name?: string | null;
+        firstName?: string | null;
+        fatherName?: string | null;
+        lastName?: string | null;
+      };
+    };
+  }[];
+};
+
+/** One service's requests, tallied by outcome. */
+export type ServiceSummary = {
+  id: string;
+  name: string;
+  /** Display names of the staff assigned to handle it. */
+  staff: string[];
+  total: number;
+  approved: number;
+  rejected: number;
+  /** Pending staff review or awaiting the manager. */
+  inProgress: number;
+};
+
+/** One staff member's decisions, tallied. */
+export type StaffSummary = {
+  id: string;
+  name: string;
+  role?: string;
+  status: string;
+  /** Services the member is assigned to. */
+  services: number;
+  /** Requests this member approved at the staff step. */
+  approved: number;
+  /** Requests this member rejected. */
+  rejected: number;
 };
 
 export type AppointmentLike = {
@@ -94,6 +145,188 @@ const titleCase = (value?: string | null) =>
 function staffName(member: StaffLike): string {
   const parts = [member.firstName, member.fatherName, member.lastName].filter(Boolean);
   return parts.length ? parts.join(" ") : member.name || "—";
+}
+
+function assigneeName(
+  assignment: NonNullable<ServiceLike["staffAssignments"]>[number],
+): string {
+  const { user } = assignment.staff;
+  const parts = [user.firstName, user.fatherName, user.lastName]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean);
+  return parts.length ? parts.join(" ") : user.name?.trim() || user.username;
+}
+
+// ── Per-service and per-staff tallies ────────────────────────────────────────
+//
+// Shared by the overview pages and the reports so the table on screen and the
+// table in the PDF cannot disagree. Both work from the request list the page
+// already holds; the caller narrows it to a period first when one applies.
+
+/**
+ * Every service with its requests tallied by outcome, busiest first.
+ *
+ * Services with no requests still appear, so a manager can see which ones sit
+ * idle; a request whose service is missing from the catalogue (deleted, or
+ * beyond the page the list fetched) is still counted under its own name.
+ */
+export function summarizeByService(
+  requests: RequestLike[],
+  services: ServiceLike[],
+): ServiceSummary[] {
+  const byId = new Map<string, ServiceSummary>();
+
+  for (const service of services) {
+    byId.set(service.id, {
+      id: service.id,
+      name: service.name,
+      staff: (service.staffAssignments ?? []).map(assigneeName),
+      total: 0,
+      approved: 0,
+      rejected: 0,
+      inProgress: 0,
+    });
+  }
+
+  for (const request of requests) {
+    const id = request.service?.id ?? `name:${request.service?.name ?? ""}`;
+    let summary = byId.get(id);
+    if (!summary) {
+      summary = {
+        id,
+        name: request.service?.name ?? "—",
+        staff: [],
+        total: 0,
+        approved: 0,
+        rejected: 0,
+        inProgress: 0,
+      };
+      byId.set(id, summary);
+    }
+    summary.total += 1;
+    const status = requestStatus(request);
+    if (status === "approved") summary.approved += 1;
+    else if (status === "rejected") summary.rejected += 1;
+    else summary.inProgress += 1;
+  }
+
+  return [...byId.values()].sort(
+    (a, b) => b.total - a.total || a.name.localeCompare(b.name),
+  );
+}
+
+/**
+ * Every staff member with the decisions they took, most active first.
+ *
+ * An approval is credited to the member recorded at the staff step. A
+ * rejection is credited to that member only when no manager is recorded on
+ * the request — a manager rejecting after staff approval is the manager's
+ * decision, not the staff member's.
+ */
+export function summarizeByStaff(
+  staff: StaffLike[],
+  services: ServiceLike[],
+  requests: RequestLike[],
+): StaffSummary[] {
+  const summaries = new Map<string, StaffSummary>(
+    staff.map((member) => [
+      member.id,
+      {
+        id: member.id,
+        name: staffName(member),
+        role: member.role?.name ?? undefined,
+        status: member.status,
+        services: 0,
+        approved: 0,
+        rejected: 0,
+      },
+    ]),
+  );
+
+  for (const service of services) {
+    for (const assignment of service.staffAssignments ?? []) {
+      const summary = summaries.get(assignment.staffId);
+      if (summary) summary.services += 1;
+    }
+  }
+
+  for (const request of requests) {
+    const summary = request.approveStaff
+      ? summaries.get(request.approveStaff.id)
+      : undefined;
+    if (!summary) continue;
+    const status = requestStatus(request);
+    if (status === "rejected") {
+      if (!request.approveManager) summary.rejected += 1;
+    } else if (request.statusbystaff === "approved") {
+      summary.approved += 1;
+    }
+  }
+
+  return [...summaries.values()].sort(
+    (a, b) =>
+      b.approved + b.rejected - (a.approved + a.rejected) ||
+      b.services - a.services ||
+      a.name.localeCompare(b.name),
+  );
+}
+
+function serviceTable(
+  requests: RequestLike[],
+  services: ServiceLike[],
+  t: Translate,
+  options: { showStaff?: boolean } = {},
+): ReportTable {
+  return {
+    title: t("Requests by service"),
+    columns: [
+      t("Service"),
+      ...(options.showStaff ? [t("Assigned staff")] : []),
+      t("Total"),
+      t("Approved"),
+      t("Rejected"),
+      t("In progress"),
+    ],
+    rows: summarizeByService(requests, services).map((summary) => [
+      summary.name,
+      ...(options.showStaff
+        ? [summary.staff.length ? summary.staff.join(", ") : t("Unassigned")]
+        : []),
+      summary.total,
+      summary.approved,
+      summary.rejected,
+      summary.inProgress,
+    ]),
+    emptyMessage: t("No services are offered by this office."),
+  };
+}
+
+function staffActivityTable(
+  staff: StaffLike[],
+  services: ServiceLike[],
+  requests: RequestLike[],
+  t: Translate,
+): ReportTable {
+  return {
+    title: t("Staff activity in this period"),
+    columns: [
+      t("Name"),
+      t("Role"),
+      t("Status"),
+      t("Services"),
+      t("Approved"),
+      t("Rejected"),
+    ],
+    rows: summarizeByStaff(staff, services, requests).map((summary) => [
+      summary.name,
+      titleCase(summary.role),
+      t(titleCase(summary.status)),
+      summary.services,
+      summary.approved,
+      summary.rejected,
+    ]),
+    emptyMessage: t("No staff are assigned to this office."),
+  };
 }
 
 /** Applicant, or the family member the request was filed for. */
@@ -218,11 +451,14 @@ export function buildManagerReport(input: {
   /** Office logo for the letterhead. Omitted when the office has none. */
   officeLogoUrl?: string;
   serviceCount: number;
+  /** The office catalogue, with assignments, for the per-service tables. */
+  services?: ServiceLike[];
   staff: StaffLike[];
   requests: RequestLike[];
   appointments: AppointmentLike[];
 }): ReportDocument {
   const { range, t, officeName } = input;
+  const services = input.services ?? [];
 
   const requests = input.requests.filter((r) => within(range, r.createdAt));
   const appointments = input.appointments.filter((a) => within(range, a.date));
@@ -264,20 +500,102 @@ export function buildManagerReport(input: {
     stats,
     breakdowns: [requestBreakdown(requests, t), appointmentBreakdown(appointments, t)],
     tables: [
+      serviceTable(requests, services, t, { showStaff: true }),
+      staffActivityTable(input.staff, services, requests, t),
       requestTable(requests, t),
       appointmentTable(appointments, t),
-      {
-        title: t("Staff roster"),
-        columns: [t("Name"), t("Role"), t("Status")],
-        rows: input.staff.map((member) => [
-          staffName(member),
-          titleCase(member.role?.name),
-          t(titleCase(member.status)),
-        ]),
-        emptyMessage: t("No staff are assigned to this office."),
-      },
     ],
     fileName: `${officeName} office report`,
+    t,
+  };
+}
+
+// ── Staff ────────────────────────────────────────────────────────────────────
+
+export function buildStaffReport(input: {
+  range: Range;
+  t: Translate;
+  /** The staff member the report is about; also who prepared it. */
+  staffName: string;
+  /** Staff row id, to credit decisions. Either id identifies the member. */
+  staffId?: string | null;
+  userId?: string | null;
+  officeName?: string;
+  officeLogoUrl?: string;
+  /** Services this member is assigned to handle. */
+  services: ServiceLike[];
+  /** Requests on those services — what the staff queue already shows. */
+  requests: RequestLike[];
+  appointments: AppointmentLike[];
+}): ReportDocument {
+  const { range, t } = input;
+
+  const requests = input.requests.filter((r) => within(range, r.createdAt));
+  const appointments = input.appointments.filter((a) => within(range, a.date));
+  const counts = countBy(requests, requestStatus);
+
+  const isMine = (request: RequestLike) => {
+    const actor = request.approveStaff;
+    if (!actor) return false;
+    return (
+      (Boolean(input.staffId) && actor.id === input.staffId) ||
+      (Boolean(input.userId) && actor.user?.id === input.userId)
+    );
+  };
+  const approvedByMe = requests.filter(
+    (r) => isMine(r) && r.statusbystaff === "approved",
+  ).length;
+  const rejectedByMe = requests.filter(
+    (r) => isMine(r) && requestStatus(r) === "rejected" && !r.approveManager,
+  ).length;
+
+  const stats: ReportStat[] = [
+    { label: t("Requests received"), value: requests.length },
+    {
+      label: t("Approved by me"),
+      value: approvedByMe,
+      hint: share(approvedByMe, requests.length, t),
+    },
+    {
+      label: t("Rejected by me"),
+      value: rejectedByMe,
+      hint: share(rejectedByMe, requests.length, t),
+    },
+    {
+      label: t("Awaiting my review"),
+      value: counts.pending ?? 0,
+      hint: share(counts.pending ?? 0, requests.length, t),
+    },
+    {
+      label: t("With the manager"),
+      value: counts.processing ?? 0,
+      hint: share(counts.processing ?? 0, requests.length, t),
+    },
+    {
+      label: t("Fully approved"),
+      value: counts.approved ?? 0,
+      hint: share(counts.approved ?? 0, requests.length, t),
+    },
+    { label: t("Appointments"), value: appointments.length },
+    { label: t("Assigned services"), value: input.services.length },
+  ];
+
+  return {
+    title: t("Staff Activity Report"),
+    subtitle: input.officeName
+      ? `${input.staffName} · ${input.officeName}`
+      : input.staffName,
+    logoUrl: input.officeLogoUrl,
+    range,
+    generatedBy: input.staffName,
+    stats,
+    breakdowns: [requestBreakdown(requests, t), appointmentBreakdown(appointments, t)],
+    tables: [
+      serviceTable(requests, input.services, t),
+      requestTable(requests, t),
+      appointmentTable(appointments, t),
+    ],
+    fileName: `${input.staffName} staff report`,
     t,
   };
 }

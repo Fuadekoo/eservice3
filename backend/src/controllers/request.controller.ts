@@ -1148,12 +1148,26 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
       });
     }
 
+    // Record who made the decision, on the same column the approval path
+    // uses for that role. Without it a rejection is anonymous, and the
+    // per-staff figures on the overview pages can only count approvals.
+    const [roleName, actor] = await Promise.all([
+      getUserRole(userId),
+      getStaffRecord(userId),
+    ]);
+    const decidedBy = !actor
+      ? {}
+      : roleName === "staff"
+        ? { approveStaffId: actor.id }
+        : { approveManagerId: actor.id };
+
     // Update request
     const updatedRequest = await prisma.request.update({
       where: { id: requestId },
       data: {
         statusbystaff: "rejected",
         statusbyadmin: "rejected",
+        ...decidedBy,
       },
       include: requestInclude,
     });

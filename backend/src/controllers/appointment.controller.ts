@@ -7,6 +7,7 @@ import {
   toDateKey,
 } from "../utils/office-hours.js";
 import type { AuthRequest } from "../middleware/auth.js";
+import { getAssignedOfficeId } from "../helper/myOffice.js";
 import {
   createAppointmentSchema,
   updateAppointmentSchema,
@@ -161,9 +162,25 @@ export async function listAppointments(req: AuthRequest, res: Response) {
 
     const roleName = await getUserRole(userId);
     const isCustomer = roleName === "customer";
+    const isAdmin = ["admin", "administrator"].includes(roleName);
 
-    // Build where condition based on role
-    const where = isCustomer ? { userId } : {};
+    // An office member sees their own office's appointments and nothing
+    // else, whatever the query string asks for. Administrators may narrow
+    // to one office with ?officeId=; customers only ever see their own.
+    const ownOfficeId = isAdmin ? undefined : getAssignedOfficeId(req);
+    const requestedOfficeId =
+      typeof req.query["officeId"] === "string" && req.query["officeId"]
+        ? req.query["officeId"]
+        : undefined;
+    const officeId = ownOfficeId ?? requestedOfficeId;
+
+    // Older rows predate the appointment's own officeId column, so the
+    // office is also read through the request's service.
+    const where = isCustomer
+      ? { userId }
+      : officeId
+        ? { OR: [{ officeId }, { request: { service: { officeId } } }] }
+        : {};
 
     const appointments = await prisma.appointment.findMany({
       where,

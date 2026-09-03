@@ -15,8 +15,6 @@ import {
   Loader2,
   Activity,
   Clock,
-  CheckCircle2,
-  XCircle,
   MapPin,
   Phone,
   Settings,
@@ -50,7 +48,13 @@ import {
   type ReportRange,
 } from "@/components/dashboard/report-range-dialog";
 import { generatePdfReport } from "@/lib/pdf-report";
-import { buildManagerReport } from "@/lib/overview-reports";
+import {
+  buildManagerReport,
+  summarizeByService,
+  summarizeByStaff,
+  type ServiceLike,
+} from "@/lib/overview-reports";
+import { fetchAllPages } from "@/lib/fetch-all";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Office = {
@@ -89,8 +93,10 @@ type Request = {
   statusbystaff: string;
   statusbyadmin: string;
   createdAt: string;
-  service?: { name: string };
+  service?: { id?: string; name: string };
   user?: { username: string; name?: string };
+  approveStaff?: { id: string; user?: { id?: string; username?: string } | null } | null;
+  approveManager?: { id: string; user?: { id?: string; username?: string } | null } | null;
 };
 
 type Appointment = {
@@ -111,6 +117,8 @@ type OverviewData = {
   staff: StaffMember[];
   requests: Request[];
   appointments: Appointment[];
+  /** The office catalogue with who is assigned to handle each service. */
+  services: ServiceLike[];
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -143,6 +151,13 @@ function staffDisplayName(s: StaffMember): string {
 function settledData<T>(r: PromiseSettledResult<unknown>): T | null {
   if (r.status !== "fulfilled") return null;
   return (r.value as { data?: T } | null)?.data ?? null;
+}
+
+/** The rows of a settled `fetchAllPages` call, or none if it rejected. */
+function settledPages<T>(
+  r: PromiseSettledResult<{ items: T[]; truncated: boolean }>,
+): { items: T[]; truncated: boolean } {
+  return r.status === "fulfilled" ? r.value : { items: [], truncated: false };
 }
 
 const TOOLTIP_STYLE = {
@@ -232,22 +247,41 @@ function ManagerOverviewContent() {
     if (!officeId) return;
     setIsLoading(true);
     try {
-      const [offRes, staffRes, reqRes, aptRes] = await Promise.allSettled([
-        axiosInstance.get(`/offices/${officeId}`),
-        axiosInstance.get("/staff", { params: { officeId, pageSize: 300 } }),
-        axiosInstance.get("/requests", { params: { officeId, pageSize: 300 } }),
-        axiosInstance.get("/appointments", { params: { officeId } }),
-      ]);
+      // Every page of each list, not the first 300 rows: the per-service and
+      // per-staff figures below are totals, and a total that quietly stopped
+      // partway through would be wrong without looking wrong.
+      const [offRes, staffRes, reqRes, aptRes, svcRes] =
+        await Promise.allSettled([
+          axiosInstance.get(`/offices/${officeId}`),
+          fetchAllPages<StaffMember>("/staff", { officeId }),
+          fetchAllPages<Request>("/requests", { officeId }),
+          axiosInstance.get("/appointments", { params: { officeId } }),
+          // The services endpoint caps a page at 100.
+          fetchAllPages<ServiceLike>("/services", { officeId }, { pageSize: 100 }),
+        ]);
 
       const office = settledData<Office>(offRes);
-      const staff = settledData<StaffMember[]>(staffRes) ?? [];
-      const requests = settledData<Request[]>(reqRes) ?? [];
+      const staff = settledPages(staffRes);
+      const requests = settledPages(reqRes);
       const appointments = settledData<Appointment[]>(aptRes) ?? [];
+      const services = settledPages(svcRes);
 
       if (!office) throw new Error(t("Office not found"));
 
-      setData({ office, staff, requests, appointments });
+      setData({
+        office,
+        staff: staff.items,
+        requests: requests.items,
+        appointments,
+        services: services.items,
+      });
       setUpdatedAt(new Date());
+
+      if (staff.truncated || requests.truncated || services.truncated) {
+        toast.warning(
+          t("Some records could not be loaded, so the totals shown may be low."),
+        );
+      }
     } catch {
       toast.error(t("Failed to load overview data"));
     } finally {
@@ -276,6 +310,7 @@ function ManagerOverviewContent() {
             : undefined,
           serviceCount:
             data.office._count?.service ?? data.office.service?.length ?? 0,
+          services: data.services,
           staff: data.staff,
           requests: data.requests,
           appointments: data.appointments,
@@ -362,7 +397,7 @@ function ManagerOverviewContent() {
         onOpenChange={setIsReportOpen}
         description={
           data?.office.name
-            ? `${t("Requests, appointments and staff for")} ${data.office.name}.`
+            ? `${t("Requests by service, staff activity and appointments for")} ${data.office.name}.`
             : undefined
         }
         onGenerate={handleGenerateReport}
@@ -399,8 +434,20 @@ function OfficeLogo({ logo, name }: { logo?: string | null; name: string }) {
 function OverviewContent({ data }: { data: OverviewData }) {
   const { t } = useTranslation();
 
-  const { office, staff, requests, appointments } = data;
+  const { office, staff, requests, appointments, services } = data;
   const now = new Date();
+
+  const serviceSummaries = React.useMemo(
+    () => summarizeByService(requests, services),
+    [requests, services],
+  );
+  const staffSummaries = React.useMemo(
+    () => summarizeByStaff(staff, services, requests),
+    [staff, services, requests],
+  );
+  const unassignedServices = serviceSummaries.filter(
+    (s) => s.staff.length === 0 && services.some((svc) => svc.id === s.id),
+  ).length;
 
   // ── Derived stats ────────────────────────────────────────────────────────────
   const activeStaff = staff.filter((s) => s.status === "ACTIVE").length;
@@ -863,6 +910,204 @@ function OverviewContent({ data }: { data: OverviewData }) {
         </div>
       </div>
 
+      {/* ── Service performance + staff activity ──────────────────────────── */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Card className="lg:col-span-3 border-none shadow-sm ring-1 ring-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-bold flex items-center gap-2">
+              <Layers className="size-4 text-orange-600" />
+              {t("Service Performance")}
+              {serviceSummaries.length > 0 && (
+                <span className="ml-auto text-xs text-muted-foreground font-normal">
+                  {serviceSummaries.length} {t("services")}
+                </span>
+              )}
+            </CardTitle>
+            <CardDescription className="text-xs">
+              {t("Requests per service, with the staff assigned to handle each one")}
+              {unassignedServices > 0 && (
+                <span className="ml-1 font-semibold text-amber-600">
+                  · {unassignedServices} {t("without assigned staff")}
+                </span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {serviceSummaries.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                <Layers className="size-10 text-muted-foreground/20 mb-3" />
+                <p className="font-semibold text-sm">{t("No services yet")}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("Services offered by your office will appear here.")}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50 text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <th className="px-5 py-2.5 text-left font-bold">
+                        {t("Service")}
+                      </th>
+                      <th className="px-3 py-2.5 text-left font-bold">
+                        {t("Assigned staff")}
+                      </th>
+                      <th className="px-3 py-2.5 text-right font-bold">
+                        {t("Total")}
+                      </th>
+                      <th className="px-3 py-2.5 text-right font-bold text-emerald-600">
+                        {t("Approved")}
+                      </th>
+                      <th className="px-3 py-2.5 text-right font-bold text-red-600">
+                        {t("Rejected")}
+                      </th>
+                      <th className="px-5 py-2.5 text-right font-bold text-amber-600">
+                        {t("In progress")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {serviceSummaries.map((summary) => (
+                      <tr
+                        key={summary.id}
+                        className="hover:bg-muted/10 transition-colors"
+                      >
+                        <td className="px-5 py-3 align-top">
+                          <p className="font-semibold truncate max-w-[220px]">
+                            {summary.name}
+                          </p>
+                          <OutcomeBar summary={summary} />
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          {summary.staff.length === 0 ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[11px] font-semibold bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            >
+                              {t("Unassigned")}
+                            </Badge>
+                          ) : (
+                            <div className="flex flex-wrap gap-1 max-w-[220px]">
+                              {summary.staff.map((name) => (
+                                <Badge
+                                  key={name}
+                                  variant="secondary"
+                                  className="text-[11px] font-medium rounded-lg"
+                                >
+                                  {name}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-right font-black tabular-nums align-top">
+                          {summary.total}
+                        </td>
+                        <td className="px-3 py-3 text-right font-bold tabular-nums text-emerald-600 align-top">
+                          {summary.approved}
+                        </td>
+                        <td className="px-3 py-3 text-right font-bold tabular-nums text-red-600 align-top">
+                          {summary.rejected}
+                        </td>
+                        <td className="px-5 py-3 text-right font-bold tabular-nums text-amber-600 align-top">
+                          {summary.inProgress}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2 border-none shadow-sm ring-1 ring-border/50">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <UserCheck className="size-4 text-blue-600" />
+                {t("Staff Activity")}
+              </CardTitle>
+              <CardDescription className="text-xs mt-1">
+                {t("Decisions taken by each staff member")}
+              </CardDescription>
+            </div>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="h-8 rounded-xl text-xs font-bold"
+            >
+              <Link href="/staff">
+                {t("Manage")} <ArrowRight className="ml-1 size-3" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            {staffSummaries.length === 0 ? (
+              <div className="flex flex-col items-center py-8 text-center px-4">
+                <Users className="size-8 text-muted-foreground/20 mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {t("No staff data")}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[360px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border/50 text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <th className="px-5 py-2.5 text-left font-bold">
+                        {t("Name")}
+                      </th>
+                      <th className="px-3 py-2.5 text-right font-bold">
+                        {t("Services")}
+                      </th>
+                      <th className="px-3 py-2.5 text-right font-bold text-emerald-600">
+                        {t("Approved")}
+                      </th>
+                      <th className="px-5 py-2.5 text-right font-bold text-red-600">
+                        {t("Rejected")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {staffSummaries.map((summary) => (
+                      <tr
+                        key={summary.id}
+                        className="hover:bg-muted/10 transition-colors"
+                      >
+                        <td className="px-5 py-3">
+                          <p className="font-semibold truncate max-w-[180px]">
+                            {summary.name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {summary.role ?? t("Staff")}
+                            {summary.status !== "ACTIVE" && (
+                              <span className="ml-1 text-amber-600 font-semibold">
+                                · {t(summary.status.charAt(0) + summary.status.slice(1).toLowerCase())}
+                              </span>
+                            )}
+                          </p>
+                        </td>
+                        <td className="px-3 py-3 text-right font-bold tabular-nums">
+                          {summary.services}
+                        </td>
+                        <td className="px-3 py-3 text-right font-bold tabular-nums text-emerald-600">
+                          {summary.approved}
+                        </td>
+                        <td className="px-5 py-3 text-right font-bold tabular-nums text-red-600">
+                          {summary.rejected}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* ── Bottom row: Staff status + Request breakdown ───────────────────── */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Staff Status Donut */}
@@ -1069,33 +1314,6 @@ function OverviewContent({ data }: { data: OverviewData }) {
               </>
             )}
 
-            {/* Services preview */}
-            {office.service && office.service.length > 0 && (
-              <div className="pt-4 border-t border-border/50">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                  {t("Office Services")}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {office.service.slice(0, 6).map((s) => (
-                    <Badge
-                      key={s.id}
-                      variant="secondary"
-                      className="text-xs font-medium rounded-lg"
-                    >
-                      {s.name}
-                    </Badge>
-                  ))}
-                  {totalSvcs > 6 && (
-                    <Badge
-                      variant="outline"
-                      className="text-xs font-medium rounded-lg text-muted-foreground"
-                    >
-                      +{totalSvcs - 6} {t("more")}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
@@ -1104,6 +1322,23 @@ function OverviewContent({ data }: { data: OverviewData }) {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
+
+/** A thin stacked bar of a service's outcomes, so the row reads at a glance. */
+function OutcomeBar({
+  summary,
+}: {
+  summary: { total: number; approved: number; rejected: number; inProgress: number };
+}) {
+  if (summary.total === 0) return null;
+  const pct = (n: number) => `${(n / summary.total) * 100}%`;
+  return (
+    <div className="mt-1.5 flex h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-muted">
+      <span className="bg-emerald-500" style={{ width: pct(summary.approved) }} />
+      <span className="bg-red-500" style={{ width: pct(summary.rejected) }} />
+      <span className="bg-amber-500" style={{ width: pct(summary.inProgress) }} />
+    </div>
+  );
+}
 function OfficeInfoItem({
   icon: Icon,
   label,

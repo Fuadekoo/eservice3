@@ -8,19 +8,27 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  FileDown,
   FileText,
+  Layers,
   LayoutDashboard,
   Loader2,
   RefreshCw,
-  User,
   XCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PageLayout } from "@/components/dashboard/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useSession } from "@/hooks/use-session";
 import {
   useRequestStore,
@@ -30,6 +38,20 @@ import { OVERVIEW_ROLES } from "@/lib/role-overview";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
 import { RequestNumber } from "@/components/dashboard/request-number";
+import { axiosInstance, getUploadUrl } from "@/lib/axios";
+import { fetchAllPages } from "@/lib/fetch-all";
+import {
+  ReportRangeDialog,
+  type ReportRange,
+} from "@/components/dashboard/report-range-dialog";
+import { generatePdfReport } from "@/lib/pdf-report";
+import {
+  buildStaffReport,
+  summarizeByService,
+  type ServiceLike,
+} from "@/lib/overview-reports";
+
+type OfficeSummary = { id: string; name: string; logo?: string | null };
 
 type RequestStatus = "pending" | "processing" | "approved" | "rejected";
 
@@ -113,19 +135,104 @@ function StaffOverviewContent() {
   const { t } = useTranslation();
 
   const { data: sessionData, isPending: isSessionPending } = useSession();
-  const user = sessionData?.session?.user;
+  const session = sessionData?.session;
+  const user = session?.user;
+  const userId = user?.id ?? null;
+  const staffId = user?.staffId ?? null;
+  const officeId = session?.officeId || user?.officeId || null;
+  const staffName = user?.name || user?.username || t("Staff Member");
+
   const { requests, isLoading, fetchRequests } = useRequestStore();
+  const [services, setServices] = React.useState<ServiceLike[]>([]);
+  const [office, setOffice] = React.useState<OfficeSummary | null>(null);
   const [updatedAt, setUpdatedAt] = React.useState<Date | null>(null);
+  const [isReportOpen, setIsReportOpen] = React.useState(false);
 
   const load = React.useCallback(async () => {
-    await fetchRequests({ pageSize: 300 });
+    // The request list is what the queue shows: the server already narrows
+    // it to this member's assigned services. The catalogue and office ride
+    // alongside for the per-service table and the report letterhead.
+    const [, svcRes, offRes] = await Promise.allSettled([
+      fetchRequests({ pageSize: 300 }),
+      fetchAllPages<ServiceLike>("/services", {}, { pageSize: 100 }),
+      officeId
+        ? axiosInstance.get(`/offices/${officeId}`)
+        : Promise.resolve(null),
+    ]);
+
+    if (svcRes.status === "fulfilled") {
+      // Only the services this member handles. The catalogue comes back
+      // scoped to the office; the assignment is what makes one theirs.
+      setServices(
+        svcRes.value.items.filter((service) =>
+          (service.staffAssignments ?? []).some(
+            (a) =>
+              (staffId && a.staffId === staffId) ||
+              (userId && a.staff.user.id === userId),
+          ),
+        ),
+      );
+    }
+    if (offRes.status === "fulfilled" && offRes.value) {
+      setOffice(
+        (offRes.value as unknown as { data?: OfficeSummary }).data ?? null,
+      );
+    }
     setUpdatedAt(new Date());
-  }, [fetchRequests]);
+  }, [fetchRequests, officeId, staffId, userId]);
 
   React.useEffect(() => {
     if (isSessionPending) return;
     void load();
   }, [isSessionPending, load]);
+
+  const serviceSummaries = React.useMemo(
+    () => summarizeByService(requests, services),
+    [requests, services],
+  );
+
+  const isMine = React.useCallback(
+    (request: ServiceRequest) => {
+      const actor = request.approveStaff;
+      if (!actor) return false;
+      return (
+        (Boolean(staffId) && actor.id === staffId) ||
+        (Boolean(userId) && actor.user?.id === userId)
+      );
+    },
+    [staffId, userId],
+  );
+
+  const handleGenerateReport = React.useCallback(
+    async (range: ReportRange) => {
+      const appointments = requests.flatMap((request) =>
+        (request.appointments ?? []).map((appointment) => ({
+          ...appointment,
+          request,
+        })),
+      );
+      await generatePdfReport(
+        buildStaffReport({
+          range,
+          t,
+          staffName,
+          staffId,
+          userId,
+          officeName: office?.name,
+          officeLogoUrl: office?.logo ? getUploadUrl(office.logo) : undefined,
+          services,
+          requests,
+          appointments,
+        }),
+      );
+      if (requests.length >= 300) {
+        toast.warning(
+          t("The report covers as much history as the server would return."),
+        );
+      }
+    },
+    [requests, services, office, staffName, staffId, userId, t],
+  );
 
   const stats = React.useMemo(() => {
     const now = new Date();
@@ -149,6 +256,15 @@ function StaffOverviewContent() {
 
     return {
       total: requests.length,
+      approvedByMe: requests.filter(
+        (request) => isMine(request) && request.statusbystaff === "approved",
+      ).length,
+      rejectedByMe: requests.filter(
+        (request) =>
+          isMine(request) &&
+          getRequestStatus(request) === "rejected" &&
+          !request.approveManager,
+      ).length,
       pending: requests.filter(
         (request) => request.statusbystaff === "pending",
       ).length,
@@ -178,7 +294,7 @@ function StaffOverviewContent() {
         )
         .slice(0, 5),
     };
-  }, [requests]);
+  }, [requests, isMine]);
 
   return (
     <PageLayout
@@ -201,9 +317,25 @@ function StaffOverviewContent() {
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
             {t("Refresh")}
           </Button>
+          <Button
+            onClick={() => setIsReportOpen(true)}
+            disabled={isSessionPending || isLoading}
+            className="h-10 rounded-xl gap-2 font-bold"
+          >
+            <FileDown className="size-4" />
+            {t("Generate Report")}
+          </Button>
         </div>
       }
     >
+      <ReportRangeDialog
+        open={isReportOpen}
+        onOpenChange={setIsReportOpen}
+        description={`${t("Your assigned services, decisions and appointments")}${
+          office?.name ? ` · ${office.name}` : ""
+        }.`}
+        onGenerate={handleGenerateReport}
+      />
       {isSessionPending || isLoading ? (
         <div className="flex flex-col items-center justify-center gap-3 py-32">
           <Loader2 className="size-8 animate-spin text-primary" />
@@ -227,13 +359,18 @@ function StaffOverviewContent() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8">
             <StatCard
               label={t("Assigned")}
               value={stats.total}
               icon={FileText}
               color="text-primary"
               bg="bg-primary/10"
+              sub={
+                services.length > 0
+                  ? t("{count} service(s)", { count: services.length })
+                  : undefined
+              }
             />
             <StatCard
               label={t("Pending")}
@@ -241,6 +378,20 @@ function StaffOverviewContent() {
               icon={Clock}
               color="text-amber-600"
               bg="bg-amber-500/10"
+            />
+            <StatCard
+              label={t("Approved by me")}
+              value={stats.approvedByMe}
+              icon={CheckCircle2}
+              color="text-emerald-600"
+              bg="bg-emerald-500/10"
+            />
+            <StatCard
+              label={t("Rejected by me")}
+              value={stats.rejectedByMe}
+              icon={XCircle}
+              color="text-red-600"
+              bg="bg-red-500/10"
             />
             <StatCard
               label={t("Manager Review")}
@@ -276,6 +427,98 @@ function StaffOverviewContent() {
               }
             />
           </div>
+
+          <Card className="border-none shadow-sm ring-1 ring-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base font-bold">
+                <Layers className="size-4 text-orange-600" />
+                {t("My Services")}
+                {serviceSummaries.length > 0 && (
+                  <span className="ml-auto text-xs font-normal text-muted-foreground">
+                    {serviceSummaries.length} {t("services")}
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {t("Requests on each service you are assigned to handle")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {serviceSummaries.length === 0 ? (
+                <EmptyState
+                  message={t(
+                    "You have not been assigned to any services yet. Ask your manager to assign you.",
+                  )}
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-sm">
+                    <thead>
+                      <tr className="border-b border-border/50 text-[11px] uppercase tracking-wider text-muted-foreground">
+                        <th className="px-5 py-2.5 text-left font-bold">
+                          {t("Service")}
+                        </th>
+                        <th className="px-3 py-2.5 text-right font-bold">
+                          {t("Total")}
+                        </th>
+                        <th className="px-3 py-2.5 text-right font-bold text-emerald-600">
+                          {t("Approved")}
+                        </th>
+                        <th className="px-3 py-2.5 text-right font-bold text-red-600">
+                          {t("Rejected")}
+                        </th>
+                        <th className="px-5 py-2.5 text-right font-bold text-amber-600">
+                          {t("In progress")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {serviceSummaries.map((summary) => (
+                        <tr
+                          key={summary.id}
+                          className="transition-colors hover:bg-muted/10"
+                        >
+                          <td className="px-5 py-3">
+                            <p className="max-w-[260px] truncate font-semibold">
+                              {summary.name}
+                            </p>
+                            {summary.total > 0 && (
+                              <div className="mt-1.5 flex h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-muted">
+                                <span
+                                  className="bg-emerald-500"
+                                  style={{ width: `${(summary.approved / summary.total) * 100}%` }}
+                                />
+                                <span
+                                  className="bg-red-500"
+                                  style={{ width: `${(summary.rejected / summary.total) * 100}%` }}
+                                />
+                                <span
+                                  className="bg-amber-500"
+                                  style={{ width: `${(summary.inProgress / summary.total) * 100}%` }}
+                                />
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-3 py-3 text-right font-black tabular-nums">
+                            {summary.total}
+                          </td>
+                          <td className="px-3 py-3 text-right font-bold tabular-nums text-emerald-600">
+                            {summary.approved}
+                          </td>
+                          <td className="px-3 py-3 text-right font-bold tabular-nums text-red-600">
+                            {summary.rejected}
+                          </td>
+                          <td className="px-5 py-3 text-right font-bold tabular-nums text-amber-600">
+                            {summary.inProgress}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="grid gap-6 lg:grid-cols-5">
             <Card className="border-none shadow-sm ring-1 ring-border/50 lg:col-span-3">

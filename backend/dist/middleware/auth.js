@@ -186,14 +186,17 @@ export async function requireAuth(req, res, next) {
                 message: "Your account is not assigned to an office. Please contact your administrator.",
             });
         }
-        let permissions = authenticatedUser.role?.rolePermissions.map((entry) => entry.permission.name) ?? [];
+        let permissions = [
+            ...new Set(authenticatedUser.role?.rolePermissions.flatMap((entry) => permissionIdentifiers(entry.permission)) ?? []),
+        ];
         if (isAdmin) {
             const allPermissions = await prisma.permission.findMany({
                 select: {
                     name: true,
+                    code: true,
                 },
             });
-            permissions = allPermissions.map((permission) => permission.name);
+            permissions = [...new Set(allPermissions.flatMap(permissionIdentifiers))];
         }
         req.user = buildRequestUser(authenticatedUser);
         req.userId = authenticatedUser.id;
@@ -255,8 +258,9 @@ export async function optionalAuth(req, res, next) {
         const roleName = normalizeRoleName(user.role?.name);
         req.user = buildRequestUser(user);
         req.userId = user.id;
-        req.permissions =
-            user.role?.rolePermissions.map((entry) => entry.permission.name) ?? [];
+        req.permissions = [
+            ...new Set(user.role?.rolePermissions.flatMap((entry) => permissionIdentifiers(entry.permission)) ?? []),
+        ];
         req.isAdmin = roleName === "ADMIN";
         req.isManager = roleName === "MANAGER";
         req.isStaff = roleName === "STAFF";
@@ -267,6 +271,25 @@ export async function optionalAuth(req, res, next) {
         // A bad token is treated as no token; the endpoint is public either way.
     }
     return next();
+}
+/**
+ * Every identifier a permission row can be recognised by.
+ *
+ * Two seeding conventions ended up in the permission table: `seed.ts` writes a
+ * human label into `name` and the code into `code` ("Assign Staff" /
+ * "service:assign-staff"), while `permission-seed.ts` writes the code into
+ * `name`. Guards are written against the code, so reading `name` alone denied
+ * every guarded route on a database seeded the first way — the grant was there
+ * on the role, it simply could not be recognised, which is the worst version of
+ * this bug because the roles screen shows the permission as held.
+ *
+ * `assignDefaultPermissionsToRole` already matches on either column when it
+ * grants. This is the same rule on the checking side, so the two agree.
+ */
+function permissionIdentifiers(permission) {
+    return [permission.name, permission.code]
+        .map((value) => (value ?? "").trim())
+        .filter(Boolean);
 }
 export function requirePermission(permission) {
     return (req, res, next) => {

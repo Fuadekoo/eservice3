@@ -101,6 +101,11 @@ export type ReportDocument = {
   title: string;
   /** The office or account the report covers. */
   subtitle?: string;
+  /**
+   * Letterhead logo, as a URL the browser can fetch. Optional in every sense:
+   * a report without one is a report with a plainer masthead.
+   */
+  logoUrl?: string;
   /** Inclusive reporting period. */
   range: { from: Date; to: Date };
   /** Who asked for it — printed in the footer for accountability. */
@@ -113,6 +118,56 @@ export type ReportDocument = {
   /** Translator, so the furniture matches the interface language. */
   t?: (key: string) => string;
 };
+
+// ── Letterhead logo ──────────────────────────────────────────────────────────
+
+/** Longest edge of the masthead logo, in millimetres. */
+const LOGO_BOX = 20;
+
+/** A logo fetched and encoded ready for `addImage`. */
+type LoadedLogo = { dataUrl: string; format: string };
+
+/** What jsPDF can place, keyed by the MIME type the server reports. */
+const LOGO_FORMATS: Record<string, string> = {
+  "image/png": "PNG",
+  "image/jpeg": "JPEG",
+  "image/jpg": "JPEG",
+  "image/webp": "WEBP",
+};
+
+/**
+ * Fetch the logo and encode it for jsPDF.
+ *
+ * Returns null for anything that goes wrong — absent, unreachable, or a format
+ * jsPDF cannot place (SVG among them; it rasterises nothing). A logo is
+ * decoration on a document whose point is the figures below it, so failing to
+ * load one costs the report its letterhead and nothing else.
+ *
+ * The URL comes from `getUploadUrl`, which routes through the app's own proxy,
+ * so this is a same-origin fetch and no CORS grant is involved.
+ */
+async function loadLogo(url?: string): Promise<LoadedLogo | null> {
+  if (!url) return null;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+
+    const blob = await response.blob();
+    const format = LOGO_FORMATS[blob.type.trim().toLowerCase()];
+    if (!format) return null;
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+
+    return { dataUrl, format };
+  } catch {
+    return null;
+  }
+}
 
 // ── Drawing helpers ──────────────────────────────────────────────────────────
 
@@ -137,24 +192,60 @@ function hexToRgb(hex?: string): [number, number, number] {
  *
  * @returns the y coordinate where body content may start.
  */
-function drawHeader(doc: jsPDF, report: ReportDocument, t: (k: string) => string) {
+function drawHeader(
+  doc: jsPDF,
+  report: ReportDocument,
+  t: (k: string) => string,
+  logo: LoadedLogo | null,
+) {
   const { margin } = PAGE;
 
   doc.setFillColor(...BRAND);
   doc.rect(0, 0, PAGE.width, 3, "F");
 
+  // The logo sits against the right margin, scaled to fit its box on the
+  // longer edge so a wide banner and a square crest both come out unstretched.
+  // The text column then stops short of it, which is what keeps a long office
+  // name from running underneath the image.
+  let textWidth = CONTENT_WIDTH;
+  let logoBottom = 0;
+  if (logo) {
+    const properties = doc.getImageProperties(logo.dataUrl);
+    const scale = Math.min(
+      LOGO_BOX / properties.width,
+      LOGO_BOX / properties.height,
+    );
+    const width = properties.width * scale;
+    const height = properties.height * scale;
+    doc.addImage(
+      logo.dataUrl,
+      logo.format,
+      PAGE.width - margin - width,
+      11,
+      width,
+      height,
+    );
+    textWidth = CONTENT_WIDTH - LOGO_BOX - 6;
+    logoBottom = 11 + height;
+  }
+
   doc.setFont(FONT_FAMILY, "bold");
   doc.setFontSize(17);
   doc.setTextColor(...INK);
-  doc.text(report.title, margin, 20);
+  const titleLines = doc.splitTextToSize(report.title, textWidth) as string[];
+  doc.text(titleLines, margin, 20);
 
-  let y = 26;
+  // A single line lands on the same baselines as before the logo existed;
+  // extra lines push everything below them down rather than overprinting.
+  let y = 26 + (titleLines.length - 1) * 7;
+
   if (report.subtitle) {
     doc.setFont(FONT_FAMILY, "normal");
     doc.setFontSize(10.5);
     doc.setTextColor(...BRAND);
-    doc.text(report.subtitle, margin, y);
-    y += 6;
+    const lines = doc.splitTextToSize(report.subtitle, textWidth) as string[];
+    doc.text(lines, margin, y);
+    y += 6 + (lines.length - 1) * 5;
   }
 
   doc.setFont(FONT_FAMILY, "normal");
@@ -177,6 +268,10 @@ function drawHeader(doc: jsPDF, report: ReportDocument, t: (k: string) => string
   const by = report.generatedBy ? ` · ${t("Prepared by")} ${report.generatedBy}` : "";
   doc.text(`${t("Generated")} ${stamp}${by}`, margin, y);
   y += 5;
+
+  // A short masthead — no subtitle, a one-line title — would otherwise rule a
+  // line straight across the logo.
+  y = Math.max(y, logoBottom + 4);
 
   doc.setDrawColor(...RULE);
   doc.setLineWidth(0.3);
@@ -349,6 +444,12 @@ function drawTable(doc: jsPDF, table: ReportTable, startY: number, t: (k: string
 /** Page numbers and provenance, stamped on every page once the body is done. */
 function drawFooters(doc: jsPDF, report: ReportDocument, t: (k: string) => string) {
   const total = doc.getNumberOfPages();
+  // The office leads, because a page torn from the middle of a printed stack
+  // should say which office it belongs to before it says what kind of report
+  // it is — every office produces the same kinds.
+  const provenance = report.subtitle
+    ? `${report.subtitle} · ${report.title}`
+    : report.title;
 
   for (let page = 1; page <= total; page += 1) {
     doc.setPage(page);
@@ -360,13 +461,19 @@ function drawFooters(doc: jsPDF, report: ReportDocument, t: (k: string) => strin
     doc.setFont(FONT_FAMILY, "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...MUTED);
-    doc.text(report.title, PAGE.margin, PAGE.height - 9);
-    doc.text(
-      `${t("Page")} ${page} / ${total}`,
-      PAGE.width - PAGE.margin,
-      PAGE.height - 9,
-      { align: "right" },
-    );
+    const pageLabel = `${t("Page")} ${page} / ${total}`;
+    // The footer is one line tall, and jsPDF's maxWidth wraps rather than
+    // clips — an overlong office name would run off the bottom of the page.
+    // Split it and keep the first line, leaving room for the page counter.
+    const available = CONTENT_WIDTH - doc.getTextWidth(pageLabel) - 6;
+    const [footerLine = provenance] = doc.splitTextToSize(
+      provenance,
+      available,
+    ) as string[];
+    doc.text(footerLine, PAGE.margin, PAGE.height - 9);
+    doc.text(pageLabel, PAGE.width - PAGE.margin, PAGE.height - 9, {
+      align: "right",
+    });
   }
 }
 
@@ -400,7 +507,12 @@ function safeFileName(name: string, range: { from: Date; to: Date }) {
  */
 export async function generatePdfReport(report: ReportDocument): Promise<void> {
   const t = report.t ?? ((key: string) => key);
-  const fonts = await loadFonts();
+  // In parallel: the font is required and the logo is not, so only the font's
+  // rejection is allowed to stop the report.
+  const [fonts, logo] = await Promise.all([
+    loadFonts(),
+    loadLogo(report.logoUrl),
+  ]);
 
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
 
@@ -411,12 +523,16 @@ export async function generatePdfReport(report: ReportDocument): Promise<void> {
   doc.setFont(FONT_FAMILY, "normal");
 
   doc.setProperties({
-    title: report.title,
+    // Named so the office is visible in a PDF viewer's title bar and in file
+    // properties, not only on the page.
+    title: report.subtitle
+      ? `${report.title} — ${report.subtitle}`
+      : report.title,
     subject: `${formatDate(report.range.from)} — ${formatDate(report.range.to)}`,
     creator: "eService",
   });
 
-  let y = drawHeader(doc, report, t);
+  let y = drawHeader(doc, report, t, logo);
 
   if (report.stats?.length) {
     y = drawStats(doc, report.stats, y);

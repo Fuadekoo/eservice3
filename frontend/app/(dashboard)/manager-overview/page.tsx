@@ -130,8 +130,19 @@ function staffDisplayName(s: StaffMember): string {
   return parts.length > 0 ? parts.join(" ") : s.name || "Staff Member";
 }
 
-function settled<T>(r: PromiseSettledResult<T>): T | null {
-  return r.status === "fulfilled" ? r.value : null;
+/**
+ * The payload of a settled request, or null if it rejected.
+ *
+ * Every endpoint here answers with a `{ data }` envelope, so the unwrap belongs
+ * in one place. It used to be spelled out at each call site behind an `as any`,
+ * and the office line was written without it — which the cast made invisible to
+ * the compiler. The result was an office whose every field read as undefined:
+ * no name, no logo, no address, and a status badge that reported "Inactive"
+ * because `undefined` is falsy.
+ */
+function settledData<T>(r: PromiseSettledResult<unknown>): T | null {
+  if (r.status !== "fulfilled") return null;
+  return (r.value as { data?: T } | null)?.data ?? null;
 }
 
 const TOOLTIP_STYLE = {
@@ -228,10 +239,10 @@ function ManagerOverviewContent() {
         axiosInstance.get("/appointments", { params: { officeId } }),
       ]);
 
-      const office: Office | null = (settled(offRes) as any) ?? null;
-      const staff: StaffMember[] = (settled(staffRes) as any)?.data ?? [];
-      const requests: Request[] = (settled(reqRes) as any)?.data ?? [];
-      const appointments: Appointment[] = (settled(aptRes) as any)?.data ?? [];
+      const office = settledData<Office>(offRes);
+      const staff = settledData<StaffMember[]>(staffRes) ?? [];
+      const requests = settledData<Request[]>(reqRes) ?? [];
+      const appointments = settledData<Appointment[]>(aptRes) ?? [];
 
       if (!office) throw new Error(t("Office not found"));
 
@@ -260,6 +271,9 @@ function ManagerOverviewContent() {
           t,
           generatedBy: session?.user?.name || session?.user?.username,
           officeName: data.office.name,
+          officeLogoUrl: data.office.logo
+            ? getUploadUrl(data.office.logo)
+            : undefined,
           serviceCount:
             data.office._count?.service ?? data.office.service?.length ?? 0,
           staff: data.staff,

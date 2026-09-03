@@ -215,6 +215,8 @@ export function buildManagerReport(input: {
   t: Translate;
   generatedBy?: string;
   officeName: string;
+  /** Office logo for the letterhead. Omitted when the office has none. */
+  officeLogoUrl?: string;
   serviceCount: number;
   staff: StaffLike[];
   requests: RequestLike[];
@@ -256,6 +258,7 @@ export function buildManagerReport(input: {
   return {
     title: t("Office Performance Report"),
     subtitle: officeName,
+    logoUrl: input.officeLogoUrl,
     range,
     generatedBy: input.generatedBy,
     stats,

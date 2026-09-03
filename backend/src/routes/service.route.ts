@@ -12,6 +12,7 @@ import {
   createService,
   updateService,
   deleteService,
+  listServiceStaff,
   assignStaff,
   removeStaff,
 } from "../controllers/service.controller.js";
@@ -39,7 +40,20 @@ router.put(
 );
 router.delete("/:id", requireAuth, requireAdmin, asyncHandler(deleteService));
 
-// Staff assignment management (admin or manager, enforced in controller)
+// Staff assignment management (admin or manager, enforced in controller).
+//
+// All three gate on `service:assign-staff`, including the read. The picker that
+// drives the writes used to list the office roster via `GET /staff`, which
+// gates on `staff:read` — so a manager holding the permission to assign staff
+// could still be refused the list of staff to assign, which is not a coherent
+// thing to tell someone. The read a write needs belongs behind the write's own
+// permission.
+router.get(
+  "/:id/staff",
+  requireAuth,
+  requirePermission("service:assign-staff"),
+  asyncHandler(listServiceStaff),
+);
 router.post(
   "/:id/staff",
   requireAuth,

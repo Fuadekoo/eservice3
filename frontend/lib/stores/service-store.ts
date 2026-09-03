@@ -13,6 +13,40 @@ export type ServiceFor = {
   description?: string | null;
 };
 
+/** One staff member handling a service. Mirrors the API's `staffAssignments`. */
+export type ServiceStaffAssignment = {
+  id: string;
+  staffId: string;
+  staff: {
+    id: string;
+    officeId: string;
+    user: {
+      id: string;
+      username: string;
+      name?: string | null;
+      firstName?: string | null;
+      fatherName?: string | null;
+      lastName?: string | null;
+    };
+  };
+};
+
+/**
+ * Display name for an assigned staff member. The three name parts are the
+ * authoritative source — `name` is a denormalized copy that older rows may not
+ * have — and the username is the last resort so a row is never blank.
+ */
+export function staffAssignmentName(
+  assignment: ServiceStaffAssignment,
+): string {
+  const { user } = assignment.staff;
+  const composed = [user.firstName, user.fatherName, user.lastName]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+  return composed || user.name?.trim() || user.username;
+}
+
 export type Service = {
   id: string;
   name: string;
@@ -25,6 +59,8 @@ export type Service = {
   };
   requirements: Requirement[];
   serviceFors: ServiceFor[];
+  /** Who handles this service. Absent on older cached payloads. */
+  staffAssignments?: ServiceStaffAssignment[];
   createdAt: string;
   updatedAt: string;
 };
@@ -66,6 +102,8 @@ type ServiceStore = {
     payload: UpdateServicePayload,
   ) => Promise<Service>;
   deleteService: (id: string) => Promise<void>;
+  assignStaff: (serviceId: string, staffId: string) => Promise<void>;
+  removeStaff: (serviceId: string, staffId: string) => Promise<void>;
   setError: (error: string | null) => void;
 };
 
@@ -169,6 +207,50 @@ export const useServiceStore = create<ServiceStore>((set) => ({
       set({ error: error?.message || "Failed to delete service" });
       throw error;
     }
+  },
+
+  // The join is edited one staff member at a time, so both actions patch the
+  // service in place rather than refetching the page — a list-wide reload here
+  // would drop the caller back to whatever the server's ordering says while
+  // they are still working through a dialog.
+  assignStaff: async (serviceId, staffId) => {
+    const response = (await axiosInstance.post<{
+      data: ServiceStaffAssignment;
+    }>(`/services/${serviceId}/staff`, { staffId })) as unknown as {
+      data: ServiceStaffAssignment;
+    };
+    const assignment = response.data;
+    set((state) => ({
+      services: state.services.map((service) =>
+        service.id === serviceId
+          ? {
+              ...service,
+              staffAssignments: [
+                ...(service.staffAssignments ?? []).filter(
+                  (entry) => entry.staffId !== staffId,
+                ),
+                assignment,
+              ],
+            }
+          : service,
+      ),
+    }));
+  },
+
+  removeStaff: async (serviceId, staffId) => {
+    await axiosInstance.delete(`/services/${serviceId}/staff/${staffId}`);
+    set((state) => ({
+      services: state.services.map((service) =>
+        service.id === serviceId
+          ? {
+              ...service,
+              staffAssignments: (service.staffAssignments ?? []).filter(
+                (entry) => entry.staffId !== staffId,
+              ),
+            }
+          : service,
+      ),
+    }));
   },
 
   setError: (error) => {

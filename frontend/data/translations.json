@@ -34,6 +34,14 @@
       }
     },
     {
+      "key": "Add staff to {office} before assigning them to a service.",
+      "translations": {
+        "en": "Add staff to {office} before assigning them to a service.",
+        "am": "ወደ አገልግሎት ከመመደብዎ በፊት ለ{office} ሰራተኛ ይጨምሩ።",
+        "om": "Tajaajilatti ramaduun dura {office}f hojjetaa dabali."
+      }
+    },
+    {
       "key": "Applying for",
       "translations": {
         "en": "Applying for",
@@ -50,6 +58,22 @@
       }
     },
     {
+      "key": "Assign Staff",
+      "translations": {
+        "en": "Assign Staff",
+        "am": "ሰራተኛ መድብ",
+        "om": "Hojjetaa Ramadi"
+      }
+    },
+    {
+      "key": "Assign staff",
+      "translations": {
+        "en": "Assign staff",
+        "am": "ሰራተኛ መድብ",
+        "om": "Hojjetaa ramadi"
+      }
+    },
+    {
       "key": "Assigned Office",
       "translations": {
         "en": "Assigned Office",
@@ -58,11 +82,59 @@
       }
     },
     {
+      "key": "Assigned Staff",
+      "translations": {
+        "en": "Assigned Staff",
+        "am": "የተመደበ ሰራተኛ",
+        "om": "Hojjetaa Ramadame"
+      }
+    },
+    {
+      "key": "Failed to load staff for this office",
+      "translations": {
+        "en": "Failed to load staff for this office",
+        "am": "የዚህን ጽሕፈት ቤት ሰራተኞች መጫን አልተቻለም",
+        "om": "Hojjettoota waajjira kanaa fe'uun hin danda'amne"
+      }
+    },
+    {
+      "key": "Failed to update staff assignments",
+      "translations": {
+        "en": "Failed to update staff assignments",
+        "am": "የሰራተኛ ምደባዎችን ማዘመን አልተቻለም",
+        "om": "Ramaddii hojjetaa haaromsuun hin danda'amne"
+      }
+    },
+    {
+      "key": "Loading staff…",
+      "translations": {
+        "en": "Loading staff…",
+        "am": "ሰራተኞችን በመጫን ላይ…",
+        "om": "Hojjettoota fe'aa jira…"
+      }
+    },
+    {
       "key": "No roles available",
       "translations": {
         "en": "No roles available",
         "am": "ምንም ሚና የለም",
         "om": "Gaheen hin jiru"
+      }
+    },
+    {
+      "key": "No staff in this office",
+      "translations": {
+        "en": "No staff in this office",
+        "am": "በዚህ ጽሕፈት ቤት ሰራተኛ የለም",
+        "om": "Waajjira kana keessa hojjetaan hin jiru"
+      }
+    },
+    {
+      "key": "No staff match “{query}”",
+      "translations": {
+        "en": "No staff match “{query}”",
+        "am": "“{query}” የሚዛመድ ሰራተኛ የለም",
+        "om": "Hojjetaan “{query}” waliin walsimu hin jiru"
       }
     },
     {
@@ -82,6 +154,30 @@
       }
     },
     {
+      "key": "Search staff…",
+      "translations": {
+        "en": "Search staff…",
+        "am": "ሰራተኛ ፈልግ…",
+        "om": "Hojjetaa barbaadi…"
+      }
+    },
+    {
+      "key": "Select the staff who handle this service",
+      "translations": {
+        "en": "Select the staff who handle this service",
+        "am": "ይህን አገልግሎት የሚያስተናግዱ ሰራተኞችን ይምረጡ",
+        "om": "Hojjettoota tajaajila kana kennan filadhu"
+      }
+    },
+    {
+      "key": "Staff assignments updated",
+      "translations": {
+        "en": "Staff assignments updated",
+        "am": "የሰራተኛ ምደባዎች ተዘምነዋል",
+        "om": "Ramaddiin hojjetaa haaromfameera"
+      }
+    },
+    {
       "key": "Staff work out of one office. This is where their requests land.",
       "translations": {
         "en": "Staff work out of one office. This is where their requests land.",
@@ -90,11 +186,27 @@
       }
     },
     {
+      "key": "Unassigned",
+      "translations": {
+        "en": "Unassigned",
+        "am": "አልተመደበም",
+        "om": "Hin ramadamne"
+      }
+    },
+    {
       "key": "What this account is allowed to do.",
       "translations": {
         "en": "What this account is allowed to do.",
         "am": "ይህ መለያ ምን ማድረግ እንደሚችል።",
         "om": "Wanti herregni kun hojjechuu danda'u."
+      }
+    },
+    {
+      "key": "Who handles {name}",
+      "translations": {
+        "en": "Who handles {name}",
+        "am": "{name}ን የሚያስተናግደው",
+        "om": "Eenyutu {name} hojjeta"
       }
     },
     {

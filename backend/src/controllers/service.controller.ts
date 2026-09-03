@@ -75,14 +75,25 @@ const serviceDetailInclude = {
     orderBy: { createdAt: "asc" as const },
   },
   staffAssignments: {
-    include: {
+    // A select, not an include: this rides along on `GET /services`, which is
+    // optionalAuth, so it is served to unauthenticated callers. Enough to name
+    // who handles a service and no more — the phone number that used to be
+    // here was read by nothing and had no business being public.
+    select: {
+      id: true,
+      staffId: true,
       staff: {
-        include: {
+        select: {
+          id: true,
+          officeId: true,
           user: {
             select: {
               id: true,
               username: true,
-              phoneNumber: true,
+              name: true,
+              firstName: true,
+              fatherName: true,
+              lastName: true,
             },
           },
         },
@@ -90,6 +101,9 @@ const serviceDetailInclude = {
     },
   },
 } as const;
+
+/** Matches `serviceDetailInclude.staffAssignments`, for the write endpoints. */
+const staffAssignmentSelect = serviceDetailInclude.staffAssignments.select;
 
 // ─── Controllers ─────────────────────────────────────────────────────────────
 
@@ -408,6 +422,106 @@ export async function deleteService(
  * Auth required. Admin or Manager only.
  * Staff must belong to the same office as the service.
  */
+/**
+ * GET /services/:id/staff
+ * Auth required. Admin or Manager only.
+ *
+ * The mirror of `GET /staff/:id/services`: every staff member of the service's
+ * office, each flagged with whether they already hold this service, so the
+ * picker can render its toggles from one call. Scoped to that one office
+ * because `assignStaff` refuses anything else — offering a name that cannot be
+ * assigned would only be offering an error.
+ */
+export async function listServiceStaff(
+  req: AuthRequest,
+  res: Response,
+): Promise<Response | void> {
+  try {
+    if (!req.isAdmin && !req.isManager) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "Only admins and managers can assign staff to services.",
+      });
+    }
+
+    const serviceId = req.params["id"] as string;
+
+    const service = await prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { id: true, officeId: true, office: { select: { name: true } } },
+    });
+
+    if (!service) {
+      return res
+        .status(404)
+        .json({ error: "NotFound", message: "Service not found." });
+    }
+    if (!canAccessOffice(req, service.officeId)) {
+      return res.status(403).json({
+        error: "Forbidden",
+        message: "You cannot manage this service.",
+      });
+    }
+
+    const [officeStaff, assignments] = await Promise.all([
+      prisma.staff.findMany({
+        where: { officeId: service.officeId },
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+              name: true,
+              firstName: true,
+              fatherName: true,
+              lastName: true,
+              isActive: true,
+              role: { select: { id: true, name: true } },
+            },
+          },
+        },
+      }),
+      prisma.serviceStaffAssignment.findMany({
+        where: { serviceId },
+        select: { staffId: true },
+      }),
+    ]);
+
+    const assignedStaffIds = new Set(assignments.map((a) => a.staffId));
+
+    const staff = officeStaff
+      .map((member) => ({
+        id: member.id,
+        name:
+          [member.user.firstName, member.user.fatherName, member.user.lastName]
+            .map((part) => (part ?? "").trim())
+            .filter(Boolean)
+            .join(" ") ||
+          member.user.name ||
+          member.user.username,
+        username: member.user.username,
+        roleName: member.user.role?.name ?? "",
+        isActive: member.user.isActive,
+        isAssigned: assignedStaffIds.has(member.id),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return res.json({
+      data: {
+        serviceId: service.id,
+        officeId: service.officeId,
+        officeName: service.office?.name ?? "",
+        staff,
+        assignedCount: assignedStaffIds.size,
+        totalCount: staff.length,
+      },
+    });
+  } catch (error) {
+    return handlePrismaError(error, res, "listServiceStaff");
+  }
+}
+
 export async function assignStaff(
   req: AuthRequest,
   res: Response,
@@ -464,13 +578,7 @@ export async function assignStaff(
 
     const assignment = await prisma.serviceStaffAssignment.create({
       data: { serviceId, staffId },
-      include: {
-        staff: {
-          include: {
-            user: { select: { id: true, username: true, phoneNumber: true } },
-          },
-        },
-      },
+      select: staffAssignmentSelect,
     });
 
     return res.status(201).json({ data: assignment });

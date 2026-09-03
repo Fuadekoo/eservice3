@@ -17,8 +17,8 @@ import {
   Filter,
   CheckCircle2,
   ChevronRight,
-  ArrowRight,
   Users,
+  UserPlus,
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,6 +44,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ServiceCreateDialog } from "@/components/dashboard/service-create-dialog";
+import {
+  AssignServiceStaffDialog,
+  ServiceStaffCell,
+} from "@/components/dashboard/assign-service-staff-dialog";
 import { PageLayout } from "@/components/dashboard/page-layout";
 import { cn } from "@/lib/utils";
 import {
@@ -83,11 +87,18 @@ export default function ServicesPage() {
   );
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+  const [staffingService, setStaffingService] = React.useState<Service | null>(
+    null,
+  );
 
   const isAdmin = sessionData?.session?.role?.name?.toUpperCase() === "ADMIN";
   const isManager =
     sessionData?.session?.role?.name?.toUpperCase() === "MANAGER";
   const officeId = sessionData?.session?.officeId;
+
+  // Mirrors the server's guard on POST/DELETE /services/:id/staff, so the
+  // control is only offered to someone whose click will be honoured.
+  const canAssignStaff = isAdmin || isManager;
 
   React.useEffect(() => {
     if (!isSessionPending) {
@@ -259,6 +270,8 @@ export default function ServicesPage() {
                     service={service}
                     onEdit={() => handleEdit(service)}
                     onDelete={() => setDeletingService(service)}
+                    onAssignStaff={() => setStaffingService(service)}
+                    canAssignStaff={canAssignStaff}
                     isAdmin={isAdmin}
                     t={t}
                   />
@@ -266,7 +279,7 @@ export default function ServicesPage() {
               </div>
             ) : (
               <div className="rounded-2xl border border-border/50 bg-card overflow-x-auto">
-                <table className="w-full min-w-[720px] text-left">
+                <table className="w-full min-w-[900px] text-left">
                   <thead>
                     <tr className="border-b border-border/50 bg-muted/30">
                       <th className="p-4 font-bold text-sm whitespace-nowrap">
@@ -277,6 +290,9 @@ export default function ServicesPage() {
                           {t("Office")}
                         </th>
                       )}
+                      <th className="p-4 font-bold text-sm whitespace-nowrap">
+                        {t("Assigned Staff")}
+                      </th>
                       <th className="p-4 font-bold text-sm whitespace-nowrap">
                         {t("Time")}
                       </th>
@@ -317,6 +333,14 @@ export default function ServicesPage() {
                             </div>
                           </td>
                         )}
+                        <td className="p-4">
+                          <ServiceStaffCell
+                            service={service}
+                            canAssign={canAssignStaff}
+                            onAssign={() => setStaffingService(service)}
+                            className="max-w-[200px]"
+                          />
+                        </td>
                         <td className="p-4 whitespace-nowrap">
                           <Badge
                             variant="secondary"
@@ -363,6 +387,15 @@ export default function ServicesPage() {
                               >
                                 <Edit className="h-4 w-4" /> {t("Edit")}
                               </DropdownMenuItem>
+                              {canAssignStaff && (
+                                <DropdownMenuItem
+                                  onClick={() => setStaffingService(service)}
+                                  className="gap-2"
+                                >
+                                  <UserPlus className="h-4 w-4" />{" "}
+                                  {t("Assign staff")}
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem
                                 onClick={() => setDeletingService(service)}
                                 className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/5"
@@ -405,6 +438,12 @@ export default function ServicesPage() {
           service={editingService}
           defaultOfficeId={officeId}
           isAdmin={isAdmin}
+        />
+
+        <AssignServiceStaffDialog
+          open={!!staffingService}
+          onOpenChange={(open) => !open && setStaffingService(null)}
+          service={staffingService}
         />
 
         <Sheet
@@ -510,12 +549,16 @@ function ServiceCard({
   service,
   onEdit,
   onDelete,
+  onAssignStaff,
+  canAssignStaff,
   isAdmin,
   t,
 }: {
   service: Service;
   onEdit: () => void;
   onDelete: () => void;
+  onAssignStaff: () => void;
+  canAssignStaff: boolean;
   isAdmin: boolean;
   t: any;
 }) {
@@ -597,6 +640,19 @@ function ServiceCard({
                 {service.serviceFors?.length || 0} {t("Groups")}
               </p>
             </div>
+          </div>
+
+          {/* Who actually delivers this. A service nobody handles routes
+              nowhere, so the gap is stated and fixable from here. */}
+          <div className="space-y-1.5 border-t border-border/50 pt-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+              {t("Assigned Staff")}
+            </p>
+            <ServiceStaffCell
+              service={service}
+              canAssign={canAssignStaff}
+              onAssign={onAssignStaff}
+            />
           </div>
         </div>
 

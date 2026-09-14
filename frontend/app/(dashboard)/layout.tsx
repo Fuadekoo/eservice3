@@ -1,5 +1,6 @@
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { RouteGuard } from "@/components/auth/route-guard";
+import { BrandThemeSync } from "@/components/providers/brand-theme-sync";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
@@ -16,6 +17,8 @@ export default async function DashboardLayout({
 
   return (
     <div className="fixed inset-0 h-dvh grid overflow-hidden">
+      {/* Reconciles this browser's cached palette with the office's saved one. */}
+      <BrandThemeSync />
       <DashboardShell>
         <RouteGuard>{children}</RouteGuard>
       </DashboardShell>

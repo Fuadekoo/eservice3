@@ -76,6 +76,20 @@ type Appointment = {
   notes?: string | null;
   user?: { id: string; username: string; phoneNumber: string };
   approveStaff?: { id: string; user: { id: string; username: string; phoneNumber: string } } | null;
+  /** Set when the slot was booked for a family member rather than the applicant. */
+  requestForOther?: {
+    id: string;
+    requestNumber?: string | null;
+    name?: string;
+    relationship?: string;
+    fileData?: FileData[];
+    service?: {
+      id: string;
+      name: string;
+      description?: string;
+      office?: { id: string; name: string; address: string; roomNumber: string };
+    };
+  } | null;
   request?: {
     id: string;
     requestNumber?: string;
@@ -152,6 +166,43 @@ function StatusBadge({ apt }: { apt: Pick<Appointment, "status" | "statusLabel" 
   );
 }
 
+/**
+ * The application a slot belongs to — an ordinary request, or one submitted
+ * for a family member.
+ *
+ * Exactly one of the two is set. Reading `apt.request` directly meant every
+ * appointment booked for a dependent rendered its service, office and room as
+ * "—", because the row it needed was in the other column.
+ */
+function applicationOf(apt: Appointment) {
+  return apt.request ?? apt.requestForOther ?? null;
+}
+
+/**
+ * Who owes the next action, in words.
+ *
+ * A "Pending" badge said a state but never a responsibility, so nobody could
+ * tell from the screen whether they were waiting or being waited on.
+ */
+function nextActionFor(
+  apt: Appointment,
+  viewerIsOffice: boolean,
+): string | null {
+  const waitingOn = apt.waitingOn ?? (apt.status === "pending" ? "office" : null);
+
+  if (waitingOn === "office") {
+    return viewerIsOffice
+      ? "Waiting on your office to confirm this slot"
+      : "The office is reviewing this slot and will confirm it";
+  }
+  if (waitingOn === "customer") {
+    return viewerIsOffice
+      ? "Confirmed — the customer is expected to attend"
+      : "Confirmed — please attend at the time shown";
+  }
+  return null;
+}
+
 /** Whether this appointment can still be moved. */
 function canRescheduleApt(apt: Appointment): boolean {
   if (typeof apt.canReschedule === "boolean") return apt.canReschedule;
@@ -212,6 +263,9 @@ export default function AppointmentsPage() {
   // Marking a no-show and moving a confirmed slot are the office's calls, so
   // the buttons for them are the office's too.
   const roleName = sessionData?.session?.role?.name?.toUpperCase() ?? "";
+  // Confirming stamps the staff record of whoever did it, so the approver is
+  // named on the appointment from then on.
+  const staffId = sessionData?.session?.user?.staffId ?? null;
   const isOfficeRole = ["ADMIN", "ADMINISTRATOR", "SUPERADMIN", "MANAGER", "STAFF"].includes(
     roleName,
   );
@@ -230,6 +284,7 @@ export default function AppointmentsPage() {
   const [rescheduleReason, setRescheduleReason] = React.useState("");
   const [isSaving, setIsSaving]         = React.useState(false);
   const [markingMissedId, setMarkingMissedId] = React.useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -293,7 +348,7 @@ export default function AppointmentsPage() {
     setRescheduleReason("");
     setEditSchedule(undefined);
 
-    const officeId = apt.request?.service?.office?.id;
+    const officeId = applicationOf(apt)?.service?.office?.id;
     if (!officeId) return;
     try {
       const res = (await axiosInstance.get(
@@ -349,6 +404,33 @@ export default function AppointmentsPage() {
    * Without this state the office had no way to say what happened to a
    * confirmed slot that came and went, and nothing to reschedule out of.
    */
+  /**
+   * Confirm a requested slot.
+   *
+   * The API has always had this endpoint; nothing in the dashboard called it.
+   * So every appointment sat at "pending" for ever, with no approver recorded
+   * and no next action offered to anyone — which is what "ambiguous approval
+   * responsibility" was. Confirming it stamps the staff member who did so, and
+   * notifies the customer.
+   */
+  const confirmAppointment = async (apt: Appointment) => {
+    if (!staffId) {
+      toast.error(t("Your staff record was not found. Please sign in again."));
+      return;
+    }
+
+    setConfirmingId(apt.id);
+    try {
+      await axiosInstance.patch(`/appointments/${apt.id}/approve`, { staffId });
+      toast.success(t("Appointment confirmed. The customer has been notified."));
+      void load();
+    } catch (err: any) {
+      toast.error(err?.message ?? t("Failed to confirm appointment."));
+    } finally {
+      setConfirmingId(null);
+    }
+  };
+
   const markMissed = async (apt: Appointment) => {
     setMarkingMissedId(apt.id);
     try {
@@ -443,6 +525,8 @@ export default function AppointmentsPage() {
           onEdit={openEdit}
           onMarkMissed={isOfficeRole ? markMissed : undefined}
           markingMissedId={markingMissedId}
+          onConfirm={isOfficeRole ? confirmAppointment : undefined}
+          confirmingId={confirmingId}
         />
       ) : (
         <TableView
@@ -451,6 +535,8 @@ export default function AppointmentsPage() {
           onEdit={openEdit}
           onMarkMissed={isOfficeRole ? markMissed : undefined}
           markingMissedId={markingMissedId}
+          onConfirm={isOfficeRole ? confirmAppointment : undefined}
+          confirmingId={confirmingId}
         />
       )}
 
@@ -606,9 +692,12 @@ type ListViewProps = {
   /** Office roles only; absent for a customer looking at their own diary. */
   onMarkMissed?: (a: Appointment) => void;
   markingMissedId?: string | null;
+  /** Office roles only: confirm a slot the customer is waiting on. */
+  onConfirm?: (a: Appointment) => void;
+  confirmingId?: string | null;
 };
 
-function CardGrid({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListViewProps) {
+function CardGrid({ apts, onView, onEdit, onMarkMissed, markingMissedId, onConfirm, confirmingId }: ListViewProps) {
   const { t } = useTranslation();
 
   return (
@@ -622,6 +711,9 @@ function CardGrid({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListV
         // A no-show only makes sense for a confirmed slot whose time has
         // passed — before that, nobody has failed to attend anything.
         const canMarkMissed = apt.status === "approved" && !isUpcoming(apt.date);
+        // Only an unconfirmed slot needs confirming.
+        const canConfirm = apt.status === "pending";
+        const nextAction = nextActionFor(apt, Boolean(onConfirm || onMarkMissed));
         const aptDate = new Date(apt.date);
         const upcoming = isUpcoming(apt.date);
         const today = isToday(apt.date);
@@ -649,16 +741,16 @@ function CardGrid({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListV
 
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                    {apt.request?.service?.name ?? t("Appointment")}
+                    {applicationOf(apt)?.service?.name ?? t("Appointment")}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1">
                     <Building2 className="size-3 text-muted-foreground shrink-0" />
                     <p className="text-xs text-muted-foreground line-clamp-1">
-                      {apt.request?.service?.office?.name ?? "—"}
+                      {applicationOf(apt)?.service?.office?.name ?? "—"}
                     </p>
                   </div>
                   <RequestNumber
-                    value={apt.request?.requestNumber}
+                    value={applicationOf(apt)?.requestNumber ?? undefined}
                     className="mt-1 text-muted-foreground"
                   />
                 </div>
@@ -673,10 +765,10 @@ function CardGrid({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListV
                     <Clock className="size-3.5 text-primary/70" /> {apt.time}
                   </span>
                 )}
-                {apt.request?.service?.office?.roomNumber && (
+                {applicationOf(apt)?.service?.office?.roomNumber && (
                   <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <MapPin className="size-3.5 text-primary/70" />
-                    {t("Room")} {apt.request.service.office.roomNumber}
+                    {t("Room")} {applicationOf(apt)?.service?.office?.roomNumber}
                   </span>
                 )}
                 {today && (
@@ -709,11 +801,36 @@ function CardGrid({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListV
                 </p>
               )}
 
+              {/* What happens next, and who has to do it. */}
+              {nextAction && (
+                <p className="flex items-start gap-1.5 rounded-lg bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground">
+                  <ChevronRight className="mt-0.5 size-3 shrink-0" />
+                  <span>{t(nextAction)}</span>
+                </p>
+              )}
+
               {/* Actions */}
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button size="sm" variant="outline" className="h-9 min-w-24 flex-1 rounded-xl text-xs font-bold gap-1.5" onClick={() => onView(apt)}>
                   <Eye className="size-3.5" /> {t("Details")}
                 </Button>
+                {/* The office's answer to a slot the customer is waiting on.
+                    Nothing in the dashboard used to offer it. */}
+                {onConfirm && canConfirm && (
+                  <Button
+                    size="sm"
+                    className="h-9 min-w-24 flex-1 gap-1.5 rounded-xl bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
+                    onClick={() => onConfirm(apt)}
+                    disabled={confirmingId === apt.id}
+                  >
+                    {confirmingId === apt.id ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle className="size-3.5" />
+                    )}
+                    {t("Confirm")}
+                  </Button>
+                )}
                 {canEdit && (
                   <Button size="sm" variant="outline" className="h-9 min-w-24 flex-1 rounded-xl text-xs font-bold gap-1.5 text-primary border-primary/30 hover:bg-primary/5" onClick={() => onEdit(apt)}>
                     <Edit3 className="size-3.5" />
@@ -748,7 +865,7 @@ function CardGrid({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListV
 }
 
 // ── Table View ─────────────────────────────────────────────────────────────────
-function TableView({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListViewProps) {
+function TableView({ apts, onView, onEdit, onMarkMissed, markingMissedId, onConfirm, confirmingId }: ListViewProps) {
   const { t } = useTranslation();
 
   return (
@@ -770,6 +887,7 @@ function TableView({ apts, onView, onEdit, onMarkMissed, markingMissedId }: List
               const canEdit = canRescheduleApt(apt);
               const canMarkMissed =
                 apt.status === "approved" && !isUpcoming(apt.date);
+              const canConfirm = apt.status === "pending";
               const today = isToday(apt.date);
 
               return (
@@ -778,13 +896,13 @@ function TableView({ apts, onView, onEdit, onMarkMissed, markingMissedId }: List
                     <div className="flex items-center gap-2.5">
                       <span className={cn("size-2 rounded-full shrink-0", cfg.dot)} />
                       <div>
-                        <p className="font-semibold line-clamp-1">{apt.request?.service?.name ?? "—"}</p>
+                        <p className="font-semibold line-clamp-1">{applicationOf(apt)?.service?.name ?? "—"}</p>
                         {today && <Badge className="text-[9px] bg-primary/10 text-primary border-primary/20 mt-0.5 px-1 py-0">{t("TODAY")}</Badge>}
                       </div>
                     </div>
                   </td>
                   <td className="px-5 py-4">
-                    <p className="text-sm text-muted-foreground line-clamp-1">{apt.request?.service?.office?.name ?? "—"}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-1">{applicationOf(apt)?.service?.office?.name ?? "—"}</p>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-muted-foreground">
                     {fmtDate(apt.date)}
@@ -795,7 +913,7 @@ function TableView({ apts, onView, onEdit, onMarkMissed, markingMissedId }: List
                     ) : "—"}
                   </td>
                   <td className="px-5 py-4 text-muted-foreground">
-                    {apt.request?.service?.office?.roomNumber ? `Room ${apt.request.service.office.roomNumber}` : "—"}
+                    {applicationOf(apt)?.service?.office?.roomNumber ? `Room ${applicationOf(apt)!.service!.office!.roomNumber}` : "—"}
                   </td>
                   <td className="px-5 py-4">
                     <StatusBadge apt={apt} />
@@ -805,6 +923,22 @@ function TableView({ apts, onView, onEdit, onMarkMissed, markingMissedId }: List
                       <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => onView(apt)} title={t("View details")}>
                         <Eye className="size-4" />
                       </Button>
+                      {onConfirm && canConfirm && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-lg text-emerald-600 hover:bg-emerald-500/10"
+                          onClick={() => onConfirm(apt)}
+                          disabled={confirmingId === apt.id}
+                          title={t("Confirm this appointment")}
+                        >
+                          {confirmingId === apt.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="size-4" />
+                          )}
+                        </Button>
+                      )}
                       {canEdit && (
                         <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10" onClick={() => onEdit(apt)} title={t("Reschedule")}>
                           <Edit3 className="size-4" />
@@ -849,7 +983,7 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
   const Icon = cfg.icon;
   const today = isToday(apt.date);
   const upcoming = isUpcoming(apt.date);
-  const files = apt.request?.fileData ?? [];
+  const files = apt.request?.fileData ?? apt.requestForOther?.fileData ?? [];
 
   return (
     <>
@@ -859,11 +993,11 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
           <div className="bg-primary px-6 py-5">
             <DialogHeader>
               <DialogTitle className="text-white font-black text-xl leading-snug">
-                {apt.request?.service?.name ?? t("Appointment")}
+                {applicationOf(apt)?.service?.name ?? t("Appointment")}
               </DialogTitle>
               <p className="text-primary-foreground/70 text-sm mt-0.5 flex items-center gap-1.5">
                 <Building2 className="size-3.5" />
-                {apt.request?.service?.office?.name ?? "—"}
+                {applicationOf(apt)?.service?.office?.name ?? "—"}
               </p>
             </DialogHeader>
           </div>
@@ -896,23 +1030,23 @@ function AptDetailDialog({ apt, onClose }: { apt: Appointment | null; onClose: (
                     <Clock className="size-4 text-primary" /> {apt.time}
                   </p>
                 )}
-                {apt.request?.service?.office?.roomNumber && (
+                {applicationOf(apt)?.service?.office?.roomNumber && (
                   <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="size-4 text-primary" /> {t("Room")} {apt.request.service.office.roomNumber}
+                    <MapPin className="size-4 text-primary" /> {t("Room")} {applicationOf(apt)?.service?.office?.roomNumber}
                   </p>
                 )}
               </div>
             </div>
 
             {/* Office info */}
-            {apt.request?.service?.office && (
+            {applicationOf(apt)?.service?.office && (
               <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Office Details")}</p>
                 <div className="space-y-1.5 text-sm">
-                  <p className="font-semibold">{apt.request.service.office.name}</p>
-                  {apt.request.service.office.address && (
+                  <p className="font-semibold">{applicationOf(apt)?.service?.office?.name}</p>
+                  {applicationOf(apt)?.service?.office?.address && (
                     <p className="flex items-center gap-1.5 text-muted-foreground">
-                      <MapPin className="size-3.5 shrink-0" /> {apt.request.service.office.address}
+                      <MapPin className="size-3.5 shrink-0" /> {applicationOf(apt)?.service?.office?.address}
                     </p>
                   )}
                 </div>

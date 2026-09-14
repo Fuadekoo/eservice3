@@ -17,6 +17,7 @@ import {
   UserCheck,
   ShieldCheck,
   X,
+  CalendarPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -519,6 +520,17 @@ export default function RequestManagementPage() {
                     const staffDecider = deciderName(req.approveStaff);
                     const managerDecider = deciderName(req.approveManager);
 
+                    // Booking a slot used to be possible only in the moment
+                    // after approving — the dialog opened itself, and closing
+                    // it was final. Any request that has passed staff review
+                    // and is not closed can be scheduled, whenever the desk
+                    // gets to it.
+                    const canSchedule =
+                      !isMerged &&
+                      req.statusbystaff === "approved" &&
+                      req.statusbyadmin !== "rejected";
+                    const appointmentCount = req.appointments?.length ?? 0;
+
                     return (
                       <tr
                         key={req.id}
@@ -623,6 +635,24 @@ export default function RequestManagementPage() {
                                 {t("Reject")}
                               </Button>
                             )}
+                            {canSchedule && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSchedulingRequest(req)}
+                                className="h-8 shrink-0 rounded-lg border-violet-500/30 px-3 text-xs font-bold text-violet-600 hover:bg-violet-500/5"
+                                title={
+                                  appointmentCount > 0
+                                    ? t("Book another appointment")
+                                    : t("Schedule an appointment")
+                                }
+                              >
+                                <CalendarPlus className="mr-1 size-3" />
+                                {appointmentCount > 0
+                                  ? t("Book again")
+                                  : t("Schedule")}
+                              </Button>
+                            )}
                             <Button
                               size="icon"
                               variant="ghost"
@@ -675,6 +705,9 @@ export default function RequestManagementPage() {
         onApproveSuccess={(req) => setSchedulingRequest(req)}
       />
 
+      {/* Opened automatically after a staff approval, and from the Schedule
+          action on any approved request. Dismissing it is no longer final:
+          the row keeps its button until the desk books a slot. */}
       <ScheduleAppointmentDialog
         request={schedulingRequest}
         open={!!schedulingRequest}

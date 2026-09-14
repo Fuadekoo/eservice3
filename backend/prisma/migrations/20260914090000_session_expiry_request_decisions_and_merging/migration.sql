@@ -91,3 +91,10 @@ UPDATE `request_for_other`
    SET `decidedAt` = `updatedAt`
  WHERE `decidedAt` IS NULL
    AND `status` <> 'pending';
+
+-- ── Family requests can have appointments too ────────────────────────────────
+-- `requestId` was NOT NULL, so a slot for a dependent could not be written at
+-- all: the column it belongs in (`requestForOtherId`) existed, but the row
+-- still demanded an ordinary request to point at. Exactly one of the two is
+-- set from here on.
+ALTER TABLE `appointment` MODIFY COLUMN `requestId` VARCHAR(191) NULL;

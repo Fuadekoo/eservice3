@@ -554,9 +554,15 @@ model fileData {
 }
 
 model appointment {
-  id                String           @id @default(cuid())
-  requestId         String
-  request           request          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
+
+  /// The application this slot belongs to. Optional because an application is
+  /// one of two kinds: an ordinary `request`, or a `requestForOther` submitted
+  /// for a family member. Exactly one of `requestId` / `requestForOtherId` is
+  /// set. It used to be required, which made an appointment for a dependent
+  /// impossible to record at all — the row could not be written.
+  requestId         String?
+  request           request?         @relation(fields: [requestId], references: [id], onDelete: Cascade)
   officeId          String?
   office            Office?          @relation("OfficeAppointments", fields: [officeId], references: [id], onDelete: Cascade)
   date              DateTime

@@ -52,18 +52,31 @@ async function loadAppointmentContext(appointmentId: string) {
           },
         },
       },
+      // The other kind of application a slot can belong to.
+      requestForOther: {
+        select: {
+          serviceId: true,
+          name: true,
+          service: {
+            select: { name: true, officeId: true },
+          },
+        },
+      },
     },
   });
 
   if (!appointment) return null;
 
+  // Exactly one of the two is set; whichever it is supplies the service.
+  const application = appointment.request ?? appointment.requestForOther ?? null;
+
   return {
     appointmentId: appointment.id,
     customerUserId: appointment.userId,
     customerName: appointment.user?.username ?? "A customer",
-    serviceName: appointment.request?.service?.name ?? "your service",
-    serviceId: appointment.request?.serviceId ?? null,
-    officeId: appointment.request?.service?.officeId ?? null,
+    serviceName: application?.service?.name ?? "your service",
+    serviceId: application?.serviceId ?? null,
+    officeId: application?.service?.officeId ?? null,
     date: appointment.date,
     time: appointment.time,
     notes: appointment.notes,
@@ -120,6 +133,31 @@ const appointmentInclude = {
               address: true,
               roomNumber: true,
             },
+          },
+        },
+      },
+    },
+  },
+  // A slot booked for a family member, shaped the same way so one client
+  // rendering path covers both.
+  requestForOther: {
+    select: {
+      id: true,
+      requestNumber: true,
+      statusbystaff: true,
+      statusbyadmin: true,
+      name: true,
+      relationship: true,
+      fileData: {
+        select: { id: true, name: true, filepath: true, description: true },
+      },
+      service: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          office: {
+            select: { id: true, name: true, address: true, roomNumber: true },
           },
         },
       },
@@ -197,7 +235,14 @@ export async function listAppointments(req: AuthRequest, res: Response) {
     const where = isCustomer
       ? { userId }
       : officeId
-        ? { OR: [{ officeId }, { request: { service: { officeId } } }] }
+        ? {
+            OR: [
+              { officeId },
+              { request: { service: { officeId } } },
+              // Slots booked for a family member hang off the other table.
+              { requestForOther: { service: { officeId } } },
+            ],
+          }
         : {};
 
     const appointments = await prisma.appointment.findMany({
@@ -330,16 +375,29 @@ export async function createAppointment(req: AuthRequest, res: Response) {
 
     const { requestId, date, time, notes } = validation.data;
 
-    // Verify request exists. The service comes along so the appointment can
-    // record which office it belongs to.
-    const request = await prisma.request.findUnique({
-      where: { id: requestId },
-      select: {
-        userId: true,
-        id: true,
-        service: { select: { officeId: true } },
-      },
-    });
+    // The application may be an ordinary request or one submitted for a family
+    // member. Looking only in `request` is what made booking a slot for a
+    // dependent answer "Request not found".
+    const [selfRequest, proxyRequest] = await Promise.all([
+      prisma.request.findUnique({
+        where: { id: requestId },
+        select: {
+          id: true,
+          userId: true,
+          service: { select: { officeId: true } },
+        },
+      }),
+      prisma.requestForOther.findUnique({
+        where: { id: requestId },
+        select: {
+          id: true,
+          userId: true,
+          service: { select: { officeId: true } },
+        },
+      }),
+    ]);
+
+    const request = selfRequest ?? proxyRequest;
 
     if (!request) {
       return res.status(404).json({
@@ -367,10 +425,12 @@ export async function createAppointment(req: AuthRequest, res: Response) {
       return res.status(400).json({ success: false, error: closed });
     }
 
-    // Create appointment
+    // Create appointment against whichever table the application lives in.
     const appointment = await prisma.appointment.create({
       data: {
-        requestId,
+        ...(selfRequest
+          ? { requestId: selfRequest.id }
+          : { requestForOtherId: request.id }),
         userId: request.userId,
         // Denormalised from the request's service so office dashboards can
         // count and filter appointments without a three-table join.
@@ -378,6 +438,8 @@ export async function createAppointment(req: AuthRequest, res: Response) {
         date: new Date(date),
         time: time || null,
         notes: notes || null,
+        // "Awaiting confirmation" — the office has been told, and owes the
+        // customer an answer. See config/appointment-status.ts.
         status: "pending",
       },
       include: appointmentInclude,

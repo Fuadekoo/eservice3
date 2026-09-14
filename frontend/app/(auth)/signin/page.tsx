@@ -139,6 +139,41 @@ function SignInContent() {
     loadTranslations();
   }, []);
 
+  /**
+   * Explain an automatic sign-out.
+   *
+   * Sessions now expire — after a fixed lifetime, and after a period of
+   * inactivity — so a person can arrive here without having asked to leave.
+   * Landing on the sign-in screen with no explanation reads as a bug; naming
+   * the reason reads as the policy it is. The axios interceptor appends
+   * ?reason= when it clears an expired session.
+   */
+  React.useEffect(() => {
+    const reason = searchParams.get("reason");
+    if (!reason) return;
+
+    if (reason === "idle") {
+      toast.info(getTranslationForKey("You were signed out for your security"), {
+        description: getTranslationForKey(
+          "Your session ended after a period of inactivity. Please sign in again.",
+        ),
+      });
+    } else if (reason === "expired") {
+      toast.info(getTranslationForKey("Your session has ended"), {
+        description: getTranslationForKey(
+          "Sessions expire after a set time. Please sign in again to continue.",
+        ),
+      });
+    }
+    // Reading it once is enough; leaving it in the URL would replay the
+    // message on every refresh of this page.
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("reason");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams, getTranslationForKey]);
+
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {

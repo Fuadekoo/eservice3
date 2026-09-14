@@ -1,4 +1,4 @@
-import { authSessionSelect, touchAuthSession, } from "../lib/auth-session.js";
+import { authSessionExpiryReason, authSessionSelect, deleteAuthSession, touchAuthSession, } from "../lib/auth-session.js";
 import { prisma } from "../lib/db.js";
 import { extractTokenFromHeader, verifyToken } from "../lib/jwt.js";
 import { roleRequiresOfficeAssignment } from "../helper/myOffice.js";
@@ -160,6 +160,21 @@ export async function requireAuth(req, res, next) {
                 message: "Session expired or revoked. Please sign in again.",
             });
         }
+        // A session that has run past its absolute deadline, or sat idle longer
+        // than the configured window, is over. The row is dropped on the way out
+        // so the device list stops offering it and a replayed token cannot find
+        // it again.
+        const expiryReason = authSessionExpiryReason(activeSession);
+        if (expiryReason) {
+            void deleteAuthSession(activeSession.id).catch(() => undefined);
+            return res.status(401).json({
+                error: "SessionExpired",
+                reason: expiryReason,
+                message: expiryReason === "idle"
+                    ? "You were signed out after a period of inactivity. Please sign in again."
+                    : "Your session has expired. Please sign in again.",
+            });
+        }
         const authenticatedUser = activeSession.user;
         if (!authenticatedUser.isActive) {
             return res.status(401).json({
@@ -216,10 +231,19 @@ export async function requireAuth(req, res, next) {
             ipAddress: activeSession.ipAddress,
             userAgent: activeSession.userAgent,
             lastSeenAt: activeSession.lastSeenAt,
+            expiresAt: activeSession.expiresAt,
             createdAt: activeSession.createdAt,
             updatedAt: activeSession.updatedAt,
         };
-        void touchAuthSession(activeSession.id, activeSession.lastSeenAt);
+        // `lastSeenAt` is what the idle timeout measures, so only real activity
+        // may move it. The browser re-validates the session every 20 seconds to
+        // notice a revocation promptly; if that probe counted as activity, a tab
+        // left open on an unattended machine would hold the session open for ever
+        // and the idle timeout would never fire. The probe says so in a header.
+        const isPassiveProbe = req.headers["x-session-probe"] === "1";
+        if (!isPassiveProbe) {
+            void touchAuthSession(activeSession.id, activeSession.lastSeenAt);
+        }
         next();
     }
     catch (error) {
@@ -251,6 +275,10 @@ export async function optionalAuth(req, res, next) {
             return next();
         const session = await findActiveSession(decoded.sessionId);
         if (!session || session.userId !== decoded.userId)
+            return next();
+        // Same expiry rule as requireAuth: an expired session leaves the request
+        // anonymous rather than scoping it to an office it no longer belongs to.
+        if (authSessionExpiryReason(session))
             return next();
         const user = session.user;
         if (!user.isActive)

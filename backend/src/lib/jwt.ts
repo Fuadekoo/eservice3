@@ -1,8 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "your-secret-key-change-in-production";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+import { JWT_EXPIRES_IN_SECONDS, JWT_SECRET } from "../config/session.js";
 
 export interface JWTPayload {
   sessionId: string;
@@ -19,7 +17,9 @@ export interface JWTPayload {
  */
 export function generateToken(payload: JWTPayload): string {
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
+    // Seconds, derived from SESSION_ABSOLUTE_TIMEOUT so the token and the
+    // session row behind it always agree about when the session ended.
+    expiresIn: JWT_EXPIRES_IN_SECONDS,
   } as jwt.SignOptions);
 }
 

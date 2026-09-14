@@ -1,19 +1,16 @@
-import { z, type ZodError, type ZodIssue } from "zod";
+import { z } from "zod";
 
 /**
- * Build validation error response
+ * Build a validation error the client can actually display.
+ *
+ * Re-exported from one shared implementation so every endpoint reports a
+ * failure in the same shape — see src/utils/validation-error.ts for why the
+ * per-validator copies had to go.
  */
-export function buildValidationError(error: ZodError) {
-  return {
-    error: "ValidationError",
-    message: "One or more fields are invalid.",
-    details: error.issues.map((issue: ZodIssue) => ({
-      path: issue.path.join("."),
-      message: issue.message,
-    })),
-  };
-}
-
+export {
+  buildValidationError,
+  type ValidationErrorPayload,
+} from "../utils/validation-error.js";
 /**
  * =======================
  * ROLE VALIDATORS

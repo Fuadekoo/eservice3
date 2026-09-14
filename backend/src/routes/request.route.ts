@@ -13,6 +13,7 @@ import {
   approveRequestByStaff,
   approveRequestByAdmin,
   rejectRequest,
+  mergeRequests,
   deleteRequest,
 } from "../controllers/request.controller.js";
 import {
@@ -91,6 +92,19 @@ router.patch(
     "request:approve-admin",
   ),
   asyncHandler(rejectRequest),
+);
+// Folding duplicates into one request closes the ones being absorbed, so it
+// needs approval-level rights rather than plain update rights.
+router.post(
+  "/:id/merge",
+  requireAuth,
+  requireAnyPermission(
+    "request:merge",
+    "request:approve-staff",
+    "request:approve-manager",
+    "request:approve-admin",
+  ),
+  asyncHandler(mergeRequests),
 );
 router.delete(
   "/:id",

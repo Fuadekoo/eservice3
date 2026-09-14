@@ -1,4 +1,4 @@
-import { z, type ZodError } from "zod";
+import { z } from "zod";
 
 /**
  * Schema for creating a fileData record.
@@ -35,13 +35,13 @@ export const updateFileSchema = z.object({
 export type UpdateFileInput = z.infer<typeof updateFileSchema>;
 
 /**
- * Build validation error from Zod error.
+ * Build a validation error the client can actually display.
+ *
+ * Re-exported from one shared implementation so every endpoint reports a
+ * failure in the same shape — see src/utils/validation-error.ts for why the
+ * per-validator copies had to go.
  */
-export function buildValidationError(error: ZodError): Record<string, string> {
-  const result: Record<string, string> = {};
-  error.issues.forEach((issue) => {
-    const path = issue.path.join(".");
-    result[path || "general"] = issue.message;
-  });
-  return result;
-}
+export {
+  buildValidationError,
+  type ValidationErrorPayload,
+} from "../utils/validation-error.js";

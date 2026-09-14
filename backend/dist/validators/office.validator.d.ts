@@ -1,4 +1,4 @@
-import { z, type ZodError } from "zod";
+import { z } from "zod";
 export declare const createOfficeSchema: z.ZodObject<{
     name: z.ZodString;
     roomNumber: z.ZodString;
@@ -21,12 +21,12 @@ export declare const updateOfficeSchema: z.ZodObject<{
     settings: z.ZodOptional<z.ZodOptional<z.ZodAny>>;
     status: z.ZodOptional<z.ZodOptional<z.ZodBoolean>>;
 }, z.core.$strip>;
-export declare function buildValidationError(error: ZodError): {
-    error: string;
-    message: string;
-    details: {
-        path: string;
-        message: string;
-    }[];
-};
+/**
+ * Build a validation error the client can actually display.
+ *
+ * Re-exported from one shared implementation so every endpoint reports a
+ * failure in the same shape — see src/utils/validation-error.ts for why the
+ * per-validator copies had to go.
+ */
+export { buildValidationError, type ValidationErrorPayload, } from "../utils/validation-error.js";
 //# sourceMappingURL=office.validator.d.ts.map

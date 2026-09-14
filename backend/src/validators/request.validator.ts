@@ -1,4 +1,4 @@
-import { z, type ZodError } from "zod";
+import { z } from "zod";
 import {
   ETHIOPIAN_MOBILE_PHONE_MESSAGE,
   normalizeEthiopianMobilePhone,
@@ -114,6 +114,25 @@ export const rejectRequestSchema = z.object({
   rejectionReason: z.string().trim().min(1, "Rejection reason is required."),
 });
 
+/**
+ * Fold one or more duplicate applications into a surviving one.
+ *
+ * Capped at twenty per call: a legitimate duplicate set is two or three, and a
+ * larger number is far more likely to be a mis-selected page of the table than
+ * a real intention.
+ */
+export const mergeRequestSchema = z.object({
+  duplicateIds: z
+    .array(z.string().trim().min(1, "A request id is required."))
+    .min(1, "Select at least one duplicate request to merge.")
+    .max(20, "At most 20 requests can be merged at once.")
+    // The same id twice would re-point its files and close it twice over.
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: "The same request was listed more than once.",
+    }),
+  note: z.string().trim().max(500, "Keep the note under 500 characters.").optional(),
+});
+
 export type CreateRequestInput = z.infer<typeof createRequestSchema>;
 export type UpdateRequestInput = z.infer<typeof updateRequestSchema>;
 export type ApproveRequestByStaffInput = z.infer<
@@ -125,13 +144,13 @@ export type ApproveRequestByAdminInput = z.infer<
 export type RejectRequestInput = z.infer<typeof rejectRequestSchema>;
 
 /**
- * Build validation error from Zod error
+ * Build a validation error the client can actually display.
+ *
+ * Re-exported from one shared implementation so every endpoint reports a
+ * failure in the same shape — see src/utils/validation-error.ts for why the
+ * per-validator copies had to go.
  */
-export function buildValidationError(error: ZodError): Record<string, string> {
-  const result: Record<string, string> = {};
-  error.issues.forEach((issue) => {
-    const path = issue.path.join(".");
-    result[path || "general"] = issue.message;
-  });
-  return result;
-}
+export {
+  buildValidationError,
+  type ValidationErrorPayload,
+} from "../utils/validation-error.js";

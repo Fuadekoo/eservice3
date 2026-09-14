@@ -1,15 +1,12 @@
-import { z, type ZodError } from "zod";
+import { z } from "zod";
 /**
- * Build validation error response
+ * Build a validation error the client can actually display.
+ *
+ * Re-exported from one shared implementation so every endpoint reports a
+ * failure in the same shape — see src/utils/validation-error.ts for why the
+ * per-validator copies had to go.
  */
-export declare function buildValidationError(error: ZodError): {
-    error: string;
-    message: string;
-    details: {
-        path: string;
-        message: string;
-    }[];
-};
+export { buildValidationError, type ValidationErrorPayload, } from "../utils/validation-error.js";
 /**
  * =======================
  * ROLE VALIDATORS

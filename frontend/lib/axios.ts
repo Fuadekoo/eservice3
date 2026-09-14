@@ -38,16 +38,26 @@ export const getUploadUrl = (filename?: string) => {
 export class ApiError extends Error {
   status: number;
   details?: Array<{ path?: string; message: string }>;
+  /**
+   * Machine-readable cause, when the API gives one.
+   *
+   * Used for session endings — "idle" or "expired" — so the browser can say
+   * why somebody was signed out instead of returning them to the sign-in page
+   * with no explanation.
+   */
+  reason?: string;
 
   constructor(
     message: string,
     status: number,
     details?: Array<{ path?: string; message: string }>,
+    reason?: string,
   ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.details = details;
+    this.reason = reason;
   }
 }
 
@@ -172,26 +182,68 @@ axiosInstance.interceptors.response.use(
             typeof window !== "undefined" &&
             window.location.pathname !== "/signin"
           ) {
-            window.location.href = "/signin";
+            // Sessions now expire, so say which kind of ending this was. Being
+            // returned to the sign-in screen with no explanation reads as a
+            // bug; "you were signed out after 30 minutes of inactivity" reads
+            // as the policy it is.
+            const reason =
+              (errorData as Record<string, unknown>)?.reason === "idle"
+                ? "idle"
+                : errorData?.error === "SessionExpired"
+                  ? "expired"
+                  : "";
+            const query = reason ? `?reason=${reason}` : "";
+            window.location.href = `/signin${query}`;
           }
         }
       }
 
-      // Validation failures arrive in two shapes: flat
-      // ({ error, message, details }) and nested
-      // ({ success: false, errors: { error, message, details } }). Without
-      // unwrapping the nested one, every endpoint that uses it — including
-      // POST /requests — surfaces only "API request failed (400)".
+      // Validation failures arrive in three shapes:
+      //   flat    { error, message, details[] }
+      //   nested  { success: false, errors: { error, message, details[] } }
+      //   fields  { success: false, errors: { fieldName: "message", ... } }
+      //
+      // The third is the one that used to defeat this handler: a bare
+      // field-keyed map has no `message`, `error` or `details` key, so every
+      // check below fell through to "API request failed (400)" and the person
+      // filling in the form was told nothing about what to fix. The backend now
+      // sends all three at once, and this reads whichever it is given so an
+      // endpoint that has not been updated still reports something useful.
       const nested =
         errorData.errors && typeof errorData.errors === "object"
           ? errorData.errors
           : undefined;
 
+      /** Turn a bare `{ field: message }` map into the details shape. */
+      const detailsFromFieldMap = (
+        candidate: unknown,
+      ): Array<{ path?: string; message: string }> | undefined => {
+        if (!candidate || typeof candidate !== "object") return undefined;
+        if (Array.isArray(candidate)) return undefined;
+
+        const entries = Object.entries(candidate as Record<string, unknown>)
+          .filter(
+            (entry): entry is [string, string] => typeof entry[1] === "string",
+          )
+          // `error` and `message` are the envelope, not fields.
+          .filter(([key]) => key !== "error" && key !== "message");
+
+        if (entries.length === 0) return undefined;
+
+        return entries.map(([path, message]) => ({ path, message }));
+      };
+
       const rawDetails = Array.isArray(errorData?.details)
         ? errorData.details
         : Array.isArray(nested?.details)
           ? nested.details
-          : undefined;
+          : detailsFromFieldMap(
+              (nested as Record<string, unknown> | undefined)?.fields,
+            ) ??
+            detailsFromFieldMap(nested) ??
+            detailsFromFieldMap(
+              (errorData as Record<string, unknown>)?.fields,
+            );
 
       const details = rawDetails
         ? rawDetails.map((item) => ({
@@ -215,7 +267,12 @@ axiosInstance.interceptors.response.use(
         nested?.error ||
         `API request failed (${status})`;
 
-      return Promise.reject(new ApiError(message, status, details));
+      const reason =
+        typeof (errorData as Record<string, unknown>)?.reason === "string"
+          ? ((errorData as Record<string, unknown>).reason as string)
+          : undefined;
+
+      return Promise.reject(new ApiError(message, status, details, reason));
     }
 
     // Handle network errors (request made but no response received)

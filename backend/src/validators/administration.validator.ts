@@ -1,4 +1,4 @@
-import { z, type ZodError } from "zod";
+import { z } from "zod";
 import { containsTypedCode } from "../utils/sanitize-html.js";
 
 export const createAdministrationSchema = z.object({
@@ -18,13 +18,14 @@ export const createAdministrationSchema = z.object({
 
 export const updateAdministrationSchema = createAdministrationSchema.partial();
 
-export function buildValidationError(error: ZodError) {
-  return {
-    error: "ValidationError",
-    message: "One or more fields are invalid.",
-    details: error.issues.map((issue) => ({
-      path: issue.path.join("."),
-      message: issue.message,
-    })),
-  };
-}
+/**
+ * Build a validation error the client can actually display.
+ *
+ * Re-exported from one shared implementation so every endpoint reports a
+ * failure in the same shape — see src/utils/validation-error.ts for why the
+ * per-validator copies had to go.
+ */
+export {
+  buildValidationError,
+  type ValidationErrorPayload,
+} from "../utils/validation-error.js";

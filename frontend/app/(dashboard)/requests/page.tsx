@@ -23,6 +23,8 @@ import {
   User,
   Users,
   Phone,
+  Ban,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -560,6 +562,47 @@ function CardView({
                 </div>
               </div>
 
+              {/* Why it was turned down.
+                  The reason used to travel only in the SMS and push
+                  notification announcing the rejection, so a customer who
+                  missed both — or came back a week later — saw "Rejected" and
+                  had no way to find out what to fix. It is stored on the
+                  request now, and this is where they read it. */}
+              {req.rejectionReason && (
+                <div className="space-y-1 rounded-xl border border-red-500/20 bg-red-500/5 p-3">
+                  <p className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-red-600 uppercase">
+                    <Ban className="size-3.5 shrink-0" />
+                    {req.mergedInto
+                      ? t("Merged into another request")
+                      : t("Why this was rejected")}
+                  </p>
+                  <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                    {req.rejectionReason}
+                  </p>
+                  {req.mergedInto?.requestNumber && (
+                    <p className="text-xs text-muted-foreground">
+                      {t("Continue with")}{" "}
+                      <span className="font-mono font-semibold">
+                        {req.mergedInto.requestNumber}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Notes the reviewer left on an approval. */}
+              {!req.rejectionReason && req.approveNote && (
+                <div className="space-y-1 rounded-xl border border-border bg-muted/20 p-3">
+                  <p className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                    <MessageSquare className="size-3.5 shrink-0" />
+                    {t("Note from the office")}
+                  </p>
+                  <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                    {req.approveNote}
+                  </p>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex gap-2 pt-1">
                 <Button
@@ -698,6 +741,47 @@ function RequestDetailDialog({
               />
             </div>
           </div>
+
+          {/* The office's decision, in their words */}
+          {request.rejectionReason && (
+            <div className="space-y-2 rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+              <p className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-red-600 uppercase">
+                <Ban className="size-3.5 shrink-0" />
+                {request.mergedInto
+                  ? t("Merged into another request")
+                  : t("Why this was rejected")}
+              </p>
+              <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                {request.rejectionReason}
+              </p>
+              {request.mergedInto?.requestNumber && (
+                <p className="text-xs text-muted-foreground">
+                  {t("Your application is continuing under")}{" "}
+                  <span className="font-mono font-semibold">
+                    {request.mergedInto.requestNumber}
+                  </span>
+                  {t(". Nothing you sent has been lost.")}
+                </p>
+              )}
+              {request.decidedAt && (
+                <p className="text-xs text-muted-foreground">
+                  {t("Decided")} {fmtDate(request.decidedAt)}
+                </p>
+              )}
+            </div>
+          )}
+
+          {request.approveNote && (
+            <div className="space-y-2 rounded-xl border border-border bg-muted/20 p-4">
+              <p className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                <MessageSquare className="size-3.5 shrink-0" />
+                {t("Notes from the office")}
+              </p>
+              <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                {request.approveNote}
+              </p>
+            </div>
+          )}
 
           {/* Appointments */}
           {request.appointments?.length > 0 && (

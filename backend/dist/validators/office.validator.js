@@ -25,14 +25,12 @@ export const createOfficeSchema = z.object({
     status: z.boolean().optional(),
 });
 export const updateOfficeSchema = createOfficeSchema.partial();
-export function buildValidationError(error) {
-    return {
-        error: "ValidationError",
-        message: "One or more fields are invalid.",
-        details: error.issues.map((issue) => ({
-            path: issue.path.join("."),
-            message: issue.message,
-        })),
-    };
-}
+/**
+ * Build a validation error the client can actually display.
+ *
+ * Re-exported from one shared implementation so every endpoint reports a
+ * failure in the same shape — see src/utils/validation-error.ts for why the
+ * per-validator copies had to go.
+ */
+export { buildValidationError, } from "../utils/validation-error.js";
 //# sourceMappingURL=office.validator.js.map

@@ -39,8 +39,13 @@ const reportInclude = {
       username: true,
       phoneNumber: true,
       role: { select: { name: true } },
+      // `staff` is a to-one relation (one staff row per user, enforced by the
+      // unique userId). Prisma rejects `take` on a to-one relation with
+      // "Unknown argument `take`", and because this include is shared by every
+      // read and write in this controller, a stray `take: 1` here turned each
+      // one into a 500 — which is what "system error when generating a report"
+      // was.
       staff: {
-        take: 1,
         select: {
           office: { select: { id: true, name: true } },
         },

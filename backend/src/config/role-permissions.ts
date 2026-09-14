@@ -111,8 +111,14 @@ const MANAGER_PERMISSIONS = [
   "request:update",
   "request:approve-manager",
   "request:view-all",
+  // Duplicate applications are an office-desk problem, so the desk resolves
+  // them rather than escalating to an administrator.
+  "request:merge",
   "appointment:read",
   "appointment:update",
+  // Moving a slot the customer missed is ordinary desk work, and the one thing
+  // a confirmed appointment used to make impossible.
+  "appointment:reschedule",
   "appointment:approve",
   "appointment:manage",
   // Reporting
@@ -148,8 +154,10 @@ const STAFF_PERMISSIONS = [
   "request:read",
   "request:update",
   "request:approve-staff",
+  "request:merge",
   "appointment:read",
   "appointment:update",
+  "appointment:reschedule",
   "appointment:approve",
   "report:create",
   "report:read",

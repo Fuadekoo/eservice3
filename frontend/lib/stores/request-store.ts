@@ -21,14 +21,43 @@ export type ServiceRequest = {
   } | null;
   statusbystaff: "pending" | "approved" | "rejected";
   statusbyadmin: "pending" | "approved" | "rejected";
-  approveStaff?: { id: string; user: { id: string; username: string; phoneNumber: string } } | null;
-  approveManager?: { id: string; user: { id: string; username: string; phoneNumber: string } } | null;
+  /** Which table the row came from; "other" is a request for a family member. */
+  beneficiaryType?: "self" | "other";
+  approveStaff?: Decider | null;
+  approveManager?: Decider | null;
+  /** Notes left by whoever reviewed it, newest appended. */
+  approveNote?: string | null;
+  /**
+   * Why it was turned down. Persisted rather than only sent by SMS, so the
+   * customer can still read it in the portal days later.
+   */
+  rejectionReason?: string | null;
+  /** When the decision behind the current status was taken. */
+  decidedAt?: string | null;
+  /** Set when this request was folded into another as a duplicate. */
+  mergedInto?: { id: string; requestNumber: string } | null;
+  /** Duplicates that were folded into this one. */
+  mergedDuplicates?: Array<{ id: string; requestNumber: string; createdAt: string }>;
+  mergedAt?: string | null;
+  mergeNote?: string | null;
   appointments: any[];
   fileData: any[];
   customerSatisfaction?: { id: string; rating: number; comment: string | null } | null;
   createdAt: string;
   updatedAt: string;
 };
+
+/** Whoever took a decision, as the API returns them. */
+export type Decider = {
+  id: string;
+  user: { id: string; username: string; name?: string | null; phoneNumber?: string };
+};
+
+/** The display name for a decider, preferring their full name. */
+export function deciderName(decider?: Decider | null): string | null {
+  if (!decider) return null;
+  return decider.user?.name?.trim() || decider.user?.username || null;
+}
 
 type Pagination = { page: number; pageSize: number; total: number; totalPages: number };
 
@@ -48,6 +77,11 @@ type RequestStore = {
   approveRequestStaff: (id: string, staffId: string, notes?: string) => Promise<void>;
   approveRequestManager: (id: string, approverId: string, notes?: string) => Promise<void>;
   rejectRequest: (id: string, rejectionReason: string) => Promise<void>;
+  mergeRequests: (
+    primaryId: string,
+    duplicateIds: string[],
+    note?: string
+  ) => Promise<number>;
   createAppointment: (requestId: string, date: string, time?: string, notes?: string) => Promise<void>;
 };
 
@@ -91,6 +125,22 @@ export const useRequestStore = create<RequestStore>((set) => ({
 
   rejectRequest: async (id, rejectionReason) => {
     await axiosInstance.patch(`/requests/${id}/reject`, { rejectionReason });
+  },
+
+  /**
+   * Fold duplicate applications into one.
+   *
+   * The duplicates keep their reference numbers and their place in the record;
+   * they are marked as merged and closed, and their attachments move to the
+   * surviving request. Returns how many were absorbed.
+   */
+  mergeRequests: async (primaryId, duplicateIds, note) => {
+    const res = (await axiosInstance.post(`/requests/${primaryId}/merge`, {
+      duplicateIds,
+      note,
+    })) as unknown as { mergedCount?: number };
+
+    return res?.mergedCount ?? duplicateIds.length;
   },
 
   createAppointment: async (requestId, date, time, notes) => {

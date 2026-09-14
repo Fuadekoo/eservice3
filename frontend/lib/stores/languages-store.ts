@@ -157,9 +157,20 @@ export interface LanguagesStore {
   setIsAddKeyDialogOpen: (isOpen: boolean) => void
   setIsEditKeyDialogOpen: (isOpen: boolean) => void
   setSelectedTranslationKey: (key: TranslationKey | null) => void
-  updateTranslation: (key: string, languageCode: string, value: string) => void
-  addNewTranslationKey: (key: string, translations: Record<string, string>) => void
-  deleteTranslationKey: (key: string) => void
+  // Declared as Promise<void> because that is what they are: each one awaits a
+  // write to /api/translations and rethrows on failure. Typing them as `void`
+  // meant a caller could not await them and had no way to know a save had
+  // failed — the toast said "saved" either way.
+  updateTranslation: (
+    key: string,
+    languageCode: string,
+    value: string
+  ) => Promise<void>
+  addNewTranslationKey: (
+    key: string,
+    translations: Record<string, string>
+  ) => Promise<void>
+  deleteTranslationKey: (key: string) => Promise<void>
   updateNewKeyForm: (field: string, value: string | Record<string, string>) => void
   resetNewKeyForm: () => void
   saveTranslations: () => Promise<void>

@@ -43,8 +43,22 @@ export const updateAppointmentSchema = z.object({
   date: futureDateField.optional(),
   time: z.string().trim().optional().nullable(),
   notes: z.string().trim().optional().nullable(),
-  status: z.enum(["pending", "approved", "rejected", "completed"]).optional(),
+  // `missed` records a customer who did not turn up. Without it the office had
+  // no way to say what happened, and no state to reschedule out of.
+  status: z
+    .enum(["pending", "approved", "rejected", "completed", "missed"])
+    .optional(),
   approveStaffId: z.string().trim().optional(),
+  /**
+   * Why the slot moved. Shown to the customer alongside the new date, because
+   * "your appointment changed" without a reason is the kind of message that
+   * generates a phone call.
+   */
+  rescheduleReason: z
+    .string()
+    .trim()
+    .max(500, "Keep the reason under 500 characters.")
+    .optional(),
 });
 
 /**
@@ -56,15 +70,13 @@ export const approveAppointmentSchema = z.object({
 });
 
 /**
- * Build validation error from Zod error
+ * Build a validation error the client can actually display.
+ *
+ * Re-exported from one shared implementation so every endpoint reports a
+ * failure in the same shape — see src/utils/validation-error.ts for why the
+ * per-validator copies had to go.
  */
-export function buildValidationError(
-  error: z.ZodError,
-): Record<string, string> {
-  const result: Record<string, string> = {};
-  error.issues.forEach((issue) => {
-    const path = issue.path.join(".");
-    result[path || "general"] = issue.message;
-  });
-  return result;
-}
+export {
+  buildValidationError,
+  type ValidationErrorPayload,
+} from "../utils/validation-error.js";

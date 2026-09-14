@@ -24,6 +24,17 @@ import {
   notifyRequestRejected,
   notifyRequestSubmitted,
 } from "../services/notification-events.js";
+import {
+  applyManagerApproval,
+  applyRejection,
+  applyStaffApproval,
+  loadDecisionContext,
+  resolveRequestRef,
+  type DecisionActor,
+  type DecisionContext,
+  type RequestRef,
+} from "../services/request-decisions.js";
+import { mergeRequestSchema } from "../validators/request.validator.js";
 
 /**
  * Request response include configuration
@@ -55,6 +66,9 @@ const requestInclude = {
         select: {
           id: true,
           username: true,
+          // The dashboard names whoever decided, so it needs the person's
+          // name and not only their login handle.
+          name: true,
           phoneNumber: true,
         },
       },
@@ -66,10 +80,25 @@ const requestInclude = {
         select: {
           id: true,
           username: true,
+          name: true,
           phoneNumber: true,
         },
       },
     },
+  },
+  mergedBy: {
+    select: {
+      id: true,
+      user: { select: { id: true, username: true } },
+    },
+  },
+  mergedInto: {
+    select: { id: true, requestNumber: true },
+  },
+  // Duplicates folded into this one, so the desk can see at a glance what it
+  // absorbed rather than having to search for the numbers it no longer shows.
+  mergedDuplicates: {
+    select: { id: true, requestNumber: true, createdAt: true },
   },
   fileData: true,
   appointments: {
@@ -126,6 +155,16 @@ const requestForOtherInclude = {
       },
     },
   },
+  approveStaff: {
+    include: {
+      user: { select: { id: true, username: true, name: true, phoneNumber: true } },
+    },
+  },
+  approveManager: {
+    include: {
+      user: { select: { id: true, username: true, name: true, phoneNumber: true } },
+    },
+  },
   fileData: true,
   appointments: true,
 } as const;
@@ -143,18 +182,31 @@ const requestForOtherInclude = {
 function formatRequestForOther(row: any) {
   return {
     id: row.id,
-    requestNumber: "",
+    // Dependent requests are issued numbers from the same series now. Rows
+    // created before that keep an empty string, which is what the UI already
+    // renders as "no reference".
+    requestNumber: row.requestNumber ?? "",
+    // Says which table this row came from, so a client that needs to know —
+    // the merge action, for instance — does not have to guess from shape.
+    beneficiaryType: "other" as const,
     user: row.user,
     service: row.service,
     currentAddress: row.currentAddress,
     date: row.date.toISOString(),
-    // Mirrored onto both status columns so existing filters and badges read
-    // a dependent request without special-casing it.
-    statusbystaff: row.status,
-    statusbyadmin: row.status,
-    approveStaff: null,
-    approveManager: null,
-    approveNote: null,
+    // The dependent request now goes through the same two gates as an
+    // ordinary one, so these are real columns rather than a single status
+    // mirrored twice.
+    statusbystaff: row.statusbystaff ?? row.status,
+    statusbyadmin: row.statusbyadmin ?? row.status,
+    approveStaff: row.approveStaff ?? null,
+    approveManager: row.approveManager ?? null,
+    approveNote: row.approveNote ?? null,
+    rejectionReason: row.rejectionReason ?? null,
+    decidedAt: row.decidedAt ? row.decidedAt.toISOString() : null,
+    mergedInto: null,
+    mergedDuplicates: [],
+    mergedAt: null,
+    mergeNote: null,
     beneficiary: {
       name: row.name,
       phoneNumber: row.phoneNumber,
@@ -185,6 +237,18 @@ function formatRequest(req: any) {
     // Explicitly null rather than absent: "applied for themselves" is a fact
     // the list shows, not something the client should infer from a gap.
     beneficiary: null,
+    beneficiaryType: "self" as const,
+    // The reason a request was turned down, and when the decision was taken.
+    // Both are shown to the customer — a rejection they cannot act on is
+    // worse than no answer at all — so they travel with every read.
+    rejectionReason: req.rejectionReason ?? null,
+    decidedAt: req.decidedAt ? req.decidedAt.toISOString() : null,
+    mergedAt: req.mergedAt ? req.mergedAt.toISOString() : null,
+    mergedDuplicates:
+      req.mergedDuplicates?.map((duplicate: any) => ({
+        ...duplicate,
+        createdAt: duplicate.createdAt.toISOString(),
+      })) ?? [],
     date: req.date.toISOString(),
     createdAt: req.createdAt.toISOString(),
     updatedAt: req.updatedAt.toISOString(),
@@ -339,6 +403,14 @@ export async function listRequests(req: AuthRequest, res: Response) {
 
     let where: any = {};
 
+    // A duplicate that has been folded into another request is finished work.
+    // The office still reaches it by reference number, and the customer still
+    // sees it on their own list, but it must not sit in the queue asking for a
+    // second decision on something already being handled.
+    if (!isCustomer) {
+      where.mergedIntoId = null;
+    }
+
     // Build where clause based on role
     if (isCustomer) {
       where.userId = userId;
@@ -384,52 +456,43 @@ export async function listRequests(req: AuthRequest, res: Response) {
       where.service = { officeId };
     }
 
-    // Status filter
+    // Status and search are combined under a single AND list.
+    //
+    // They used to be written straight onto `where`, and the search branch
+    // reconciled a clash with `where.AND = [where, searchConditions]` — which
+    // makes `where` an element of itself. Prisma then recurses through the
+    // cycle until the stack runs out, so filtering by status *and* searching
+    // at the same time answered 500 rather than a result set. Building the
+    // clauses in a list and assigning once cannot produce a cycle.
+    const clauses: any[] = [];
+
     if (status) {
       if (status === "pending") {
-        where.OR = [{ statusbystaff: "pending" }, { statusbyadmin: "pending" }];
+        // Pending overall: either gate is still undecided.
+        clauses.push({
+          OR: [{ statusbystaff: "pending" }, { statusbyadmin: "pending" }],
+        });
       } else {
-        where.AND = [{ statusbystaff: status }, { statusbyadmin: status }];
+        clauses.push({ statusbystaff: status }, { statusbyadmin: status });
       }
     }
 
-    // Search filter
     if (search) {
-      const searchConditions = {
+      clauses.push({
         OR: [
           // Listed first so quoting a reference number is the fastest path —
           // `contains` also matches a partial number like "00042".
-          {
-            requestNumber: { contains: search },
-          },
-          {
-            service: {
-              name: { contains: search },
-            },
-          },
-          {
-            service: {
-              office: {
-                name: { contains: search },
-              },
-            },
-          },
-          {
-            user: {
-              username: { contains: search },
-            },
-          },
-          {
-            currentAddress: { contains: search },
-          },
+          { requestNumber: { contains: search } },
+          { service: { name: { contains: search } } },
+          { service: { office: { name: { contains: search } } } },
+          { user: { username: { contains: search } } },
+          { currentAddress: { contains: search } },
         ],
-      };
+      });
+    }
 
-      if (where.OR || where.AND) {
-        where.AND = [where, searchConditions];
-      } else {
-        where.OR = searchConditions.OR;
-      }
+    if (clauses.length > 0) {
+      where.AND = clauses;
     }
 
     // ── Requests submitted on behalf of a family member ────────────────
@@ -450,25 +513,39 @@ export async function listRequests(req: AuthRequest, res: Response) {
       otherWhere.service = { officeId };
     }
 
+    const otherClauses: any[] = [];
+
     if (status) {
-      // One column here, rather than the separate staff/admin pair.
-      otherWhere.status = status;
+      // The same pair of columns as an ordinary request, now that a dependent
+      // request goes through the same two gates.
+      if (status === "pending") {
+        otherClauses.push({
+          OR: [{ statusbystaff: "pending" }, { statusbyadmin: "pending" }],
+        });
+      } else {
+        otherClauses.push(
+          { statusbystaff: status },
+          { statusbyadmin: status },
+        );
+      }
     }
 
     if (search) {
-      otherWhere.AND = [
-        ...(otherWhere.AND ?? []),
-        {
-          OR: [
-            { name: { contains: search } },
-            { phoneNumber: { contains: search } },
-            { currentAddress: { contains: search } },
-            { service: { name: { contains: search } } },
-            { service: { office: { name: { contains: search } } } },
-            { user: { username: { contains: search } } },
-          ],
-        },
-      ];
+      otherClauses.push({
+        OR: [
+          { requestNumber: { contains: search } },
+          { name: { contains: search } },
+          { phoneNumber: { contains: search } },
+          { currentAddress: { contains: search } },
+          { service: { name: { contains: search } } },
+          { service: { office: { name: { contains: search } } } },
+          { user: { username: { contains: search } } },
+        ],
+      });
+    }
+
+    if (otherClauses.length > 0) {
+      otherWhere.AND = otherClauses;
     }
 
     const skip = (page - 1) * pageSize;
@@ -551,6 +628,35 @@ export async function getRequest(req: AuthRequest, res: Response) {
     });
 
     if (!request) {
+      // The list mixes both kinds, so an id taken from it may belong to a
+      // request submitted for a family member. Looking only in `request` is
+      // what made those rows unreachable from every detail view.
+      const proxy = await prisma.requestForOther.findUnique({
+        where: isRequestNumber(identifier)
+          ? { requestNumber: normalizeRequestNumber(identifier) }
+          : { id: identifier },
+        include: requestForOtherInclude,
+      });
+
+      if (proxy) {
+        const proxyRole = await getUserRole(userId);
+        const proxyIsAdmin = ["admin", "administrator"].includes(proxyRole);
+        const allowed =
+          proxyIsAdmin ||
+          proxy.userId === userId ||
+          (proxyRole !== "customer" &&
+            (await getManagerOffice(userId)) === proxy.officeId);
+
+        if (!allowed) {
+          return res.status(403).json({ success: false, error: "Unauthorized" });
+        }
+
+        return res.status(200).json({
+          success: true,
+          data: formatRequestForOther(proxy),
+        });
+      }
+
       return res.status(404).json({
         success: false,
         error: "Request not found",
@@ -822,12 +928,12 @@ export async function updateRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    // Get existing request
-    const existingRequest = await prisma.request.findUnique({
-      where: { id: requestId },
-    });
+    // The list mixes ordinary and family requests, so the id may belong to
+    // either table — see `requireRequestRef`.
+    const ref = await resolveRequestRef(requestId);
+    const existingRequest = ref ? await loadDecisionContext(ref) : null;
 
-    if (!existingRequest) {
+    if (!ref || !existingRequest) {
       return res.status(404).json({
         success: false,
         error: "Request not found",
@@ -845,7 +951,7 @@ export async function updateRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    // Prevent updates if already approved or completed
+    // Prevent updates once the office has finished deciding.
     if (
       existingRequest.statusbystaff === "approved" &&
       existingRequest.statusbyadmin === "approved"
@@ -862,16 +968,22 @@ export async function updateRequest(req: AuthRequest, res: Response) {
     if (currentAddress) updateData.currentAddress = currentAddress;
     if (date) updateData.date = new Date(date);
 
-    // Update request
-    const updatedRequest = await prisma.request.update({
-      where: { id: requestId },
-      data: updateData,
-      include: requestInclude,
-    });
+    if (ref.kind === "self") {
+      await prisma.request.update({
+        where: { id: ref.id },
+        data: updateData,
+        include: requestInclude,
+      });
+    } else {
+      await prisma.requestForOther.update({
+        where: { id: ref.id },
+        data: updateData,
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      data: formatRequest(updatedRequest),
+      data: await readDecided(ref),
       message: "Request updated successfully",
     });
   } catch (error: any) {
@@ -884,7 +996,104 @@ export async function updateRequest(req: AuthRequest, res: Response) {
 }
 
 /**
+ * Resolve the id in the URL to whichever table owns it, or answer 404.
+ *
+ * The dashboard lists ordinary requests and requests submitted for a family
+ * member in one table, so the id arriving here belongs to either. Looking only
+ * in `request` is what made approving a family request fail with
+ * "Request not found".
+ */
+async function requireRequestRef(
+  req: AuthRequest,
+  res: Response,
+): Promise<{ ref: RequestRef; context: DecisionContext } | null> {
+  const identifier = (req.params.id as string) ?? "";
+  const ref = await resolveRequestRef(identifier);
+
+  if (!ref) {
+    res.status(404).json({
+      success: false,
+      error: "Request not found",
+    });
+    return null;
+  }
+
+  const context = await loadDecisionContext(ref);
+  if (!context) {
+    res.status(404).json({
+      success: false,
+      error: "Request not found",
+    });
+    return null;
+  }
+
+  return { ref, context };
+}
+
+/**
+ * Refuse a decision on a request belonging to another office.
+ *
+ * The route guards decide who may reach the endpoint; they cannot know which
+ * office a given row belongs to. Without this a staff member holding
+ * `request:approve-staff` could approve any office's request by id.
+ *
+ * Administrators are exempt, and so is the case where the office genuinely
+ * cannot be determined — refusing on missing data would break decisions on
+ * older rows rather than protect anything.
+ */
+async function officeMismatch(
+  req: AuthRequest,
+  context: DecisionContext,
+): Promise<boolean> {
+  if (req.isAdmin) return false;
+
+  const actorOfficeId = req.user?.staff?.officeId;
+  if (!actorOfficeId || !context.officeId) return false;
+
+  return actorOfficeId !== context.officeId;
+}
+
+/** The staff record behind an id, used to attribute a decision to a person. */
+async function resolveActor(staffId: string): Promise<DecisionActor | null> {
+  const staff = await prisma.staff.findUnique({
+    where: { id: staffId },
+    select: { id: true, user: { select: { username: true, name: true } } },
+  });
+
+  if (!staff) return null;
+
+  return {
+    staffId: staff.id,
+    label: staff.user.name ?? staff.user.username,
+  };
+}
+
+/** Read a decided request back in its API shape, whichever table it is in. */
+async function readDecided(ref: RequestRef) {
+  if (ref.kind === "self") {
+    const row = await prisma.request.findUnique({
+      where: { id: ref.id },
+      include: requestInclude,
+    });
+    return row ? formatRequest(row) : null;
+  }
+
+  const row = await prisma.requestForOther.findUnique({
+    where: { id: ref.id },
+    include: requestForOtherInclude,
+  });
+  return row ? formatRequestForOther(row) : null;
+}
+
+/** The reference to quote back to the customer, when the row has one. */
+function referenceSuffix(requestNumber: string | null): string {
+  return requestNumber ? "\n\nRequest No: " + requestNumber : "";
+}
+
+/**
  * PATCH - Approve request by staff
+ *
+ * Works for both ordinary and dependent requests; see `requireRequestRef`.
  */
 export async function approveRequestByStaff(req: AuthRequest, res: Response) {
   try {
@@ -896,9 +1105,6 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id as string;
-
-    // Validate request body
     const validation = approveRequestByStaffSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
@@ -909,77 +1115,77 @@ export async function approveRequestByStaff(req: AuthRequest, res: Response) {
 
     const { staffId, notes } = validation.data;
 
-    // Get existing request
-    const existingRequest = await prisma.request.findUnique({
-      where: { id: requestId },
-      include: {
-        user: { select: { id: true, username: true, phoneNumber: true } },
-        service: { select: { name: true, officeId: true } },
-      },
-    });
+    const resolved = await requireRequestRef(req, res);
+    if (!resolved) return;
+    const { ref, context } = resolved;
 
-    if (!existingRequest) {
-      return res.status(404).json({
+    if (await officeMismatch(req, context)) {
+      return res.status(403).json({
         success: false,
-        error: "Request not found",
+        error: "This request belongs to another office.",
       });
     }
 
-    // Verify staff exists
-    const staff = await prisma.staff.findUnique({
-      where: { id: staffId },
-      include: { user: { select: { phoneNumber: true, username: true } } },
-    });
+    if (context.mergedIntoId) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "This request was merged into another one. Decide on the request it was merged into.",
+      });
+    }
 
-    if (!staff) {
+    if (context.statusbystaff !== "pending") {
+      return res.status(400).json({
+        success: false,
+        error:
+          "This request has already been " +
+          context.statusbystaff +
+          " at staff level.",
+      });
+    }
+
+    const actor = await resolveActor(staffId);
+    if (!actor) {
       return res.status(404).json({
         success: false,
         error: "Staff not found",
       });
     }
 
-    // Update request
-    const updatedRequest = await prisma.request.update({
-      where: { id: requestId },
-      data: {
-        statusbystaff: "approved",
-        approveStaffId: staffId,
-      },
-      include: requestInclude,
-    });
+    await applyStaffApproval(ref, actor, notes);
 
     // Customer hears it moved forward; the office managers hear it now needs
     // their decision.
     dispatch(
       notifyRequestApprovedByStaff({
-        requestId,
-        customerUserId: existingRequest.user.id,
-        requestNumber: existingRequest.requestNumber,
-        customerName: existingRequest.user.username,
-        serviceName: existingRequest.service.name,
-        officeId: existingRequest.service.officeId,
-        actorStaffId: staffId,
+        requestId: ref.id,
+        customerUserId: context.userId,
+        requestNumber: context.requestNumber,
+        customerName: context.customerName,
+        serviceName: context.serviceName,
+        officeId: context.officeId,
+        actorStaffId: actor.staffId,
         note: notes ?? null,
       }),
     );
 
-    // Notify customer — staff-level approval (non-blocking)
-    if (existingRequest.user?.phoneNumber) {
+    if (context.customerPhone) {
       const customerMsg =
-        `Dear ${existingRequest.user.username},\n\n` +
-        `Your request for "${existingRequest.service.name}" has been reviewed and approved by staff.\n\n` +
-        `It is now pending manager approval. You will be notified once fully approved.` +
-        (notes ? `\n\nNote: ${notes}` : "") +
-        `\n\nRequest No: ${existingRequest.requestNumber}`;
+        "Dear " + context.customerName + ",\n\n" +
+        "Your request for \"" + context.serviceName + "\" has been reviewed " +
+        "and approved by staff.\n\n" +
+        "It is now pending manager approval. You will be notified once fully approved." +
+        (notes ? "\n\nNote: " + notes : "") +
+        referenceSuffix(context.requestNumber);
 
-      sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
+      sendSMS(context.customerPhone, customerMsg).catch((e) =>
         console.error("Customer SMS (staff approval) failed:", e),
       );
     }
 
     return res.status(200).json({
       success: true,
-      data: formatRequest(updatedRequest),
+      data: await readDecided(ref),
       message: "Request approved by staff successfully",
     });
   } catch (error: any) {
@@ -1004,9 +1210,6 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id as string;
-
-    // Validate request body
     const validation = approveRequestByAdminSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
@@ -1017,84 +1220,87 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
 
     const { approverId, notes } = validation.data;
 
-    // Get existing request
-    const existingRequest = await prisma.request.findUnique({
-      where: { id: requestId },
-      include: {
-        user: { select: { id: true, username: true, phoneNumber: true } },
-        service: {
-          include: {
-            office: { select: { name: true, roomNumber: true, address: true } },
-          },
-        },
-      },
-    });
+    const resolved = await requireRequestRef(req, res);
+    if (!resolved) return;
+    const { ref, context } = resolved;
 
-    if (!existingRequest) {
-      return res.status(404).json({
+    if (await officeMismatch(req, context)) {
+      return res.status(403).json({
         success: false,
-        error: "Request not found",
+        error: "This request belongs to another office.",
       });
     }
 
-    // Verify approver exists (staff)
-    const approver = await prisma.staff.findUnique({
-      where: { id: approverId },
-      include: { user: { select: { phoneNumber: true, username: true } } },
-    });
+    if (context.mergedIntoId) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "This request was merged into another one. Decide on the request it was merged into.",
+      });
+    }
 
-    if (!approver) {
+    if (context.statusbyadmin !== "pending") {
+      return res.status(400).json({
+        success: false,
+        error: "This request has already been " + context.statusbyadmin + ".",
+      });
+    }
+
+    // Manager sign-off is the second gate, so the first has to have been
+    // passed. Approving out of order would leave a request approved overall
+    // with nobody recorded as having checked it.
+    if (context.statusbystaff !== "approved") {
+      return res.status(400).json({
+        success: false,
+        error: "This request is still awaiting staff review.",
+      });
+    }
+
+    const actor = await resolveActor(approverId);
+    if (!actor) {
       return res.status(404).json({
         success: false,
         error: "Approver not found",
       });
     }
 
-    // Update request
-    const updatedRequest = await prisma.request.update({
-      where: { id: requestId },
-      data: {
-        statusbyadmin: "approved",
-        approveManagerId: approverId,
-      },
-      include: requestInclude,
-    });
+    await applyManagerApproval(ref, actor, notes);
 
     // Final approval — the customer's notification carries the address,
     // because "where do I go now?" is the only thing left to answer.
     dispatch(
       notifyRequestApprovedByManager({
-        requestId,
-        customerUserId: existingRequest.user.id,
-        requestNumber: existingRequest.requestNumber,
-        customerName: existingRequest.user.username,
-        serviceName: existingRequest.service.name,
-        officeName: existingRequest.service.office.name,
-        roomNumber: existingRequest.service.office.roomNumber,
-        address: existingRequest.service.office.address,
-        actorStaffId: approverId,
+        requestId: ref.id,
+        customerUserId: context.userId,
+        requestNumber: context.requestNumber,
+        customerName: context.customerName,
+        serviceName: context.serviceName,
+        officeName: context.officeName,
+        roomNumber: context.officeRoomNumber,
+        address: context.officeAddress,
+        actorStaffId: actor.staffId,
         note: notes ?? null,
       }),
     );
 
-    // Notify customer — final approval (non-blocking)
-    if (existingRequest.user?.phoneNumber) {
-      const office = existingRequest.service.office;
+    if (context.customerPhone) {
       const customerMsg =
-        `Dear ${existingRequest.user.username},\n\n` +
-        `Your request for "${existingRequest.service.name}" has been approved.\n\n` +
-        `Please visit ${office.name} (Room ${office.roomNumber}, ${office.address}) for further assistance.` +
-        (notes ? `\n\nNote: ${notes}` : "") +
-        `\n\nRequest No: ${existingRequest.requestNumber}`;
+        "Dear " + context.customerName + ",\n\n" +
+        "Your request for \"" + context.serviceName + "\" has been approved.\n\n" +
+        "Please visit " + context.officeName + " (Room " +
+        context.officeRoomNumber + ", " + context.officeAddress +
+        ") for further assistance." +
+        (notes ? "\n\nNote: " + notes : "") +
+        referenceSuffix(context.requestNumber);
 
-      sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
+      sendSMS(context.customerPhone, customerMsg).catch((e) =>
         console.error("Customer SMS (manager approval) failed:", e),
       );
     }
 
     return res.status(200).json({
       success: true,
-      data: formatRequest(updatedRequest),
+      data: await readDecided(ref),
       message: "Request approved by admin successfully",
     });
   } catch (error: any) {
@@ -1108,6 +1314,10 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
 
 /**
  * PATCH - Reject a request
+ *
+ * The reason is written to the row, not only sent out. It used to live purely
+ * inside the SMS and the push notification, so a customer who missed both saw
+ * "Rejected" in the portal with no way to find out why.
  */
 export async function rejectRequest(req: AuthRequest, res: Response) {
   try {
@@ -1119,9 +1329,6 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    const requestId = req.params.id as string;
-
-    // Validate request body
     const validation = rejectRequestSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
@@ -1132,77 +1339,61 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
 
     const { rejectionReason } = validation.data;
 
-    // Get existing request
-    const existingRequest = await prisma.request.findUnique({
-      where: { id: requestId },
-      include: {
-        user: { select: { id: true, username: true, phoneNumber: true } },
-        service: { select: { id: true, name: true } },
-      },
-    });
+    const resolved = await requireRequestRef(req, res);
+    if (!resolved) return;
+    const { ref, context } = resolved;
 
-    if (!existingRequest) {
-      return res.status(404).json({
+    if (await officeMismatch(req, context)) {
+      return res.status(403).json({
         success: false,
-        error: "Request not found",
+        error: "This request belongs to another office.",
       });
     }
 
-    // Record who made the decision, on the same column the approval path
-    // uses for that role. Without it a rejection is anonymous, and the
-    // per-staff figures on the overview pages can only count approvals.
-    const [roleName, actor] = await Promise.all([
+    // Record who made the decision, on the same column the approval path uses
+    // for that role. Without it a rejection is anonymous, and the per-staff
+    // figures on the overview pages can only ever count approvals.
+    const [roleName, actorStaff] = await Promise.all([
       getUserRole(userId),
       getStaffRecord(userId),
     ]);
-    const decidedBy = !actor
-      ? {}
-      : roleName === "staff"
-        ? { approveStaffId: actor.id }
-        : { approveManagerId: actor.id };
 
-    // Update request
-    const updatedRequest = await prisma.request.update({
-      where: { id: requestId },
-      data: {
-        statusbystaff: "rejected",
-        statusbyadmin: "rejected",
-        ...decidedBy,
-      },
-      include: requestInclude,
-    });
+    const actor: DecisionActor | null = actorStaff
+      ? await resolveActor(actorStaff.id)
+      : null;
 
-    // The reason travels with the notification — a rejection the customer
-    // cannot act on is worse than no notification at all.
+    await applyRejection(ref, actor, rejectionReason, roleName === "staff");
+
+    // The reason travels with the notification too — one copy for the person
+    // reading their phone, one for the person reading the portal later.
     dispatch(
       notifyRequestRejected({
-        requestId,
-        customerUserId: existingRequest.user.id,
-        requestNumber: existingRequest.requestNumber,
-        customerName: existingRequest.user.username,
-        serviceName: existingRequest.service.name,
-        serviceId: existingRequest.service.id,
+        requestId: ref.id,
+        customerUserId: context.userId,
+        requestNumber: context.requestNumber,
+        customerName: context.customerName,
+        serviceName: context.serviceName,
+        serviceId: context.serviceId,
         reason: rejectionReason,
       }),
     );
 
-    // Notify customer — rejection (non-blocking)
-    if (existingRequest.user?.phoneNumber) {
+    if (context.customerPhone) {
       const customerMsg =
-        `Dear ${existingRequest.user.username},\n\n` +
-        `Your request for "${existingRequest.service.name}" has been rejected.\n\n` +
-        `Reason: ${rejectionReason}\n\n` +
-        `For more information, please contact us.\n\n` +
-        `Request No: ${existingRequest.requestNumber}`;
+        "Dear " + context.customerName + ",\n\n" +
+        "Your request for \"" + context.serviceName + "\" has been rejected.\n\n" +
+        "Reason: " + rejectionReason + "\n\n" +
+        "For more information, please contact us." +
+        referenceSuffix(context.requestNumber);
 
-      sendSMS(existingRequest.user.phoneNumber, customerMsg).catch((e) =>
+      sendSMS(context.customerPhone, customerMsg).catch((e) =>
         console.error("Customer SMS (rejection) failed:", e),
       );
     }
 
     return res.status(200).json({
       success: true,
-      data: formatRequest(updatedRequest),
+      data: await readDecided(ref),
       message: "Request rejected successfully",
     });
   } catch (error: any) {
@@ -1210,6 +1401,206 @@ export async function rejectRequest(req: AuthRequest, res: Response) {
     return res.status(500).json({
       success: false,
       error: error.message || "Failed to reject request",
+    });
+  }
+}
+
+/**
+ * POST - Merge duplicate requests into this one.
+ *
+ * Customers routinely apply twice — the first submission appears not to have
+ * worked, or a second family member files the same thing — and the office had
+ * no way to say so. Both copies stayed in the queue, each needing its own
+ * decision, and every count included them twice.
+ *
+ * Merging keeps every row. The duplicates are marked as merged into the one
+ * the office is keeping, their attachments are re-pointed at it so nothing the
+ * customer uploaded is lost, and they are closed with a note naming the
+ * survivor. The reference numbers the customers were given therefore keep
+ * working, and still lead to wherever the work actually continued.
+ */
+export async function mergeRequests(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized",
+      });
+    }
+
+    const validation = mergeRequestSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        errors: buildValidationError(validation.error),
+      });
+    }
+
+    const { duplicateIds, note } = validation.data;
+
+    const primaryRef = await resolveRequestRef((req.params.id as string) ?? "");
+
+    if (!primaryRef) {
+      return res.status(404).json({ success: false, error: "Request not found" });
+    }
+
+    if (primaryRef.kind !== "self") {
+      // Dependent requests live in their own table with no merge column, so
+      // one can be folded into an ordinary request but never be the survivor.
+      return res.status(400).json({
+        success: false,
+        error:
+          "A request submitted for a family member cannot be the surviving request in a merge.",
+      });
+    }
+
+    const primaryContext = await loadDecisionContext(primaryRef);
+    if (!primaryContext) {
+      return res.status(404).json({ success: false, error: "Request not found" });
+    }
+
+    if (await officeMismatch(req, primaryContext)) {
+      return res.status(403).json({
+        success: false,
+        error: "This request belongs to another office.",
+      });
+    }
+
+    if (primaryContext.mergedIntoId) {
+      return res.status(400).json({
+        success: false,
+        error: "This request has itself been merged into another one.",
+      });
+    }
+
+    // Resolve every duplicate before writing anything, so one bad id fails the
+    // whole merge rather than leaving it half applied.
+    const resolvedDuplicates: { ref: RequestRef; context: DecisionContext }[] = [];
+
+    for (const duplicateId of duplicateIds) {
+      const ref = await resolveRequestRef(duplicateId);
+      if (!ref) {
+        return res.status(404).json({
+          success: false,
+          error: "Request " + duplicateId + " was not found.",
+        });
+      }
+
+      if (ref.kind === primaryRef.kind && ref.id === primaryRef.id) {
+        return res.status(400).json({
+          success: false,
+          error: "A request cannot be merged into itself.",
+        });
+      }
+
+      const context = await loadDecisionContext(ref);
+      if (!context) {
+        return res.status(404).json({
+          success: false,
+          error: "Request " + duplicateId + " was not found.",
+        });
+      }
+
+      const label = context.requestNumber ?? duplicateId;
+
+      if (await officeMismatch(req, context)) {
+        return res.status(403).json({
+          success: false,
+          error: "Request " + label + " belongs to another office.",
+        });
+      }
+
+      // Merging across customers would silently hand one person's documents
+      // to another, so the applicant has to match.
+      if (context.userId !== primaryContext.userId) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "Only requests from the same customer can be merged. " +
+            label + " belongs to someone else.",
+        });
+      }
+
+      if (context.mergedIntoId) {
+        return res.status(400).json({
+          success: false,
+          error: "Request " + label + " has already been merged.",
+        });
+      }
+
+      resolvedDuplicates.push({ ref, context });
+    }
+
+    const actorStaff = await getStaffRecord(userId);
+    const mergedAt = new Date();
+    const mergeNote =
+      note?.trim() ||
+      "Merged into " + (primaryContext.requestNumber ?? primaryRef.id) + ".";
+
+    await prisma.$transaction(async (tx) => {
+      for (const { ref } of resolvedDuplicates) {
+        if (ref.kind === "self") {
+          // Attachments follow the work, so the surviving request carries
+          // everything the customer ever sent about this matter.
+          await tx.fileData.updateMany({
+            where: { requestId: ref.id },
+            data: { requestId: primaryRef.id },
+          });
+
+          await tx.request.update({
+            where: { id: ref.id },
+            data: {
+              mergedIntoId: primaryRef.id,
+              mergedAt,
+              mergedById: actorStaff?.id ?? null,
+              mergeNote,
+              // Closed rather than left pending: a merged duplicate must stop
+              // appearing as work somebody still owes a decision on.
+              statusbystaff: "rejected",
+              statusbyadmin: "rejected",
+              rejectionReason: mergeNote,
+              decidedAt: mergedAt,
+            },
+          });
+          continue;
+        }
+
+        await tx.fileData.updateMany({
+          where: { requestForOtherId: ref.id },
+          data: { requestForOtherId: null, requestId: primaryRef.id },
+        });
+
+        await tx.requestForOther.update({
+          where: { id: ref.id },
+          data: {
+            statusbystaff: "rejected",
+            statusbyadmin: "rejected",
+            status: "rejected",
+            rejectionReason: mergeNote,
+            decidedAt: mergedAt,
+          },
+        });
+      }
+    });
+
+    console.log(
+      "✅ Merged " + resolvedDuplicates.length + " request(s) into " +
+        (primaryContext.requestNumber ?? primaryRef.id),
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: await readDecided(primaryRef),
+      mergedCount: resolvedDuplicates.length,
+      message:
+        resolvedDuplicates.length + " duplicate request(s) merged successfully",
+    });
+  } catch (error: any) {
+    console.error("❌ Error merging requests:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to merge requests",
     });
   }
 }
@@ -1229,12 +1620,12 @@ export async function deleteRequest(req: AuthRequest, res: Response) {
 
     const requestId = req.params.id as string;
 
-    // Get existing request
-    const existingRequest = await prisma.request.findUnique({
-      where: { id: requestId },
-    });
+    // Family requests live in their own table; withdrawing one has to work
+    // from the same list the customer withdrew an ordinary one from.
+    const ref = await resolveRequestRef(requestId);
+    const existingRequest = ref ? await loadDecisionContext(ref) : null;
 
-    if (!existingRequest) {
+    if (!ref || !existingRequest) {
       return res.status(404).json({
         success: false,
         error: "Request not found",
@@ -1252,7 +1643,7 @@ export async function deleteRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    // Prevent deletion if approved
+    // Prevent deletion once either gate has approved it.
     if (
       existingRequest.statusbystaff === "approved" ||
       existingRequest.statusbyadmin === "approved"
@@ -1263,15 +1654,17 @@ export async function deleteRequest(req: AuthRequest, res: Response) {
       });
     }
 
-    // Delete related fileData first
-    await prisma.fileData.deleteMany({
-      where: { requestId },
-    });
-
-    // Delete the request
-    await prisma.request.delete({
-      where: { id: requestId },
-    });
+    if (ref.kind === "self") {
+      // Attachments first: `fileData.requestId` has no cascade, so deleting
+      // the request without them leaves orphaned rows pointing at nothing.
+      await prisma.fileData.deleteMany({ where: { requestId: ref.id } });
+      await prisma.request.delete({ where: { id: ref.id } });
+    } else {
+      await prisma.fileData.deleteMany({
+        where: { requestForOtherId: ref.id },
+      });
+      await prisma.requestForOther.delete({ where: { id: ref.id } });
+    }
 
     return res.status(200).json({
       success: true,

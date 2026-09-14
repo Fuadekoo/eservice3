@@ -60,6 +60,19 @@ type Appointment = {
   date: string;
   time?: string | null;
   status: string;
+  /**
+   * What the status means, resolved by the API from one shared vocabulary.
+   *
+   * `status` alone was ambiguous: "pending" names the staff gate on a request,
+   * the manager gate on a request, the state of a report *and* an appointment
+   * the office has not confirmed yet — four different things reading as one
+   * word. These say which is meant and who is expected to act.
+   */
+  statusLabel?: string;
+  statusDescription?: string | null;
+  waitingOn?: "office" | "customer" | null;
+  /** Whether this appointment can still be moved to another slot. */
+  canReschedule?: boolean;
   notes?: string | null;
   user?: { id: string; username: string; phoneNumber: string };
   approveStaff?: { id: string; user: { id: string; username: string; phoneNumber: string } } | null;
@@ -81,30 +94,70 @@ type Appointment = {
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-type AptStatus = "pending" | "approved" | "completed" | "rejected" | "cancelled";
+type AptStatus =
+  | "pending"
+  | "approved"
+  | "completed"
+  | "rejected"
+  | "cancelled"
+  | "missed";
 
-const STATUS_CFG: Record<string, { label: string; icon: React.ElementType; badge: string; dot: string; bg: string }> = {
-  pending:   { label: "Pending",   icon: Clock,         badge: "bg-amber-500/10 text-amber-600 border-amber-500/20",     dot: "bg-amber-500",   bg: "bg-amber-50 dark:bg-amber-950/20" },
-  approved:  { label: "Confirmed", icon: CheckCircle,   badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", dot: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/20" },
-  completed: { label: "Completed", icon: CheckCheck,    badge: "bg-blue-500/10 text-blue-600 border-blue-500/20",        dot: "bg-blue-500",    bg: "bg-blue-50 dark:bg-blue-950/20" },
-  rejected:  { label: "Rejected",  icon: XCircle,       badge: "bg-red-500/10 text-red-600 border-red-500/20",           dot: "bg-red-500",     bg: "bg-red-50 dark:bg-red-950/20" },
-  cancelled: { label: "Cancelled", icon: AlertCircle,   badge: "bg-gray-500/10 text-gray-500 border-gray-500/20",        dot: "bg-gray-400",    bg: "bg-gray-50 dark:bg-gray-950/20" },
+/**
+ * One label per state, and one sentence saying what it means.
+ *
+ * "Pending" was the whole of the previous vocabulary for a slot the office had
+ * been told about but not yet confirmed. It reads as "nothing has happened",
+ * when in fact the customer is waiting for an answer — and the same word
+ * appears on the requests screen meaning two other things. Each state now
+ * names who is expected to act next.
+ */
+const STATUS_CFG: Record<
+  string,
+  {
+    label: string;
+    hint: string;
+    icon: React.ElementType;
+    badge: string;
+    dot: string;
+    bg: string;
+  }
+> = {
+  pending:   { label: "Awaiting confirmation", hint: "The office has not confirmed this slot yet.",                icon: Clock,       badge: "bg-amber-500/10 text-amber-600 border-amber-500/20",       dot: "bg-amber-500",   bg: "bg-amber-50 dark:bg-amber-950/20" },
+  approved:  { label: "Confirmed",             hint: "The office confirmed this slot. Please attend.",             icon: CheckCircle, badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", dot: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/20" },
+  completed: { label: "Completed",             hint: "The visit happened and the service was carried out.",        icon: CheckCheck,  badge: "bg-blue-500/10 text-blue-600 border-blue-500/20",          dot: "bg-blue-500",    bg: "bg-blue-50 dark:bg-blue-950/20" },
+  missed:    { label: "Missed",                hint: "Nobody attended. It can be moved to a new slot.",            icon: AlertCircle, badge: "bg-orange-500/10 text-orange-600 border-orange-500/20",    dot: "bg-orange-500",  bg: "bg-orange-50 dark:bg-orange-950/20" },
+  rejected:  { label: "Cancelled",             hint: "This appointment was cancelled and will not go ahead.",      icon: XCircle,     badge: "bg-red-500/10 text-red-600 border-red-500/20",             dot: "bg-red-500",     bg: "bg-red-50 dark:bg-red-950/20" },
+  cancelled: { label: "Cancelled",             hint: "This appointment was cancelled and will not go ahead.",      icon: AlertCircle, badge: "bg-gray-500/10 text-gray-500 border-gray-500/20",          dot: "bg-gray-400",    bg: "bg-gray-50 dark:bg-gray-950/20" },
 };
 
 function getStatusCfg(status: string) {
   return STATUS_CFG[status] ?? STATUS_CFG.pending;
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ apt }: { apt: Pick<Appointment, "status" | "statusLabel" | "statusDescription"> }) {
   const { t } = useTranslation();
-  const cfg = getStatusCfg(status);
+  const cfg = getStatusCfg(apt.status);
   const Icon = cfg.icon;
   return (
-    <Badge variant="outline" className={cn("font-semibold text-xs gap-1.5", cfg.badge)}>
+    <Badge
+      variant="outline"
+      className={cn("font-semibold text-xs gap-1.5", cfg.badge)}
+      // The API sends the canonical sentence; the local copy is the fallback
+      // for a cached response that predates it.
+      title={apt.statusDescription ?? t(cfg.hint)}
+    >
       <Icon className="size-3" />
-      {t(cfg.label)}
+      {apt.statusLabel ?? t(cfg.label)}
     </Badge>
   );
+}
+
+/** Whether this appointment can still be moved. */
+function canRescheduleApt(apt: Appointment): boolean {
+  if (typeof apt.canReschedule === "boolean") return apt.canReschedule;
+  // Fallback for a response that predates the field: everything but a
+  // completed visit may be moved.
+  return apt.status !== "completed";
 }
 
 function fmtDate(iso: string) {
@@ -123,18 +176,19 @@ function isToday(iso: string) {
 }
 
 const TABS = [
-  { label: "All",       value: "" },
-  { label: "Upcoming",  value: "upcoming" },
-  { label: "Today",     value: "today" },
-  { label: "Pending",   value: "pending" },
-  { label: "Confirmed", value: "approved" },
-  { label: "Completed", value: "completed" },
-  { label: "Past",      value: "past" },
+  { label: "All",                  value: "" },
+  { label: "Upcoming",             value: "upcoming" },
+  { label: "Today",                value: "today" },
+  { label: "Awaiting confirmation", value: "pending" },
+  { label: "Confirmed",            value: "approved" },
+  { label: "Missed",               value: "missed" },
+  { label: "Completed",            value: "completed" },
+  { label: "Past",                 value: "past" },
 ];
 
 function filterAppointments(list: Appointment[], tab: string, search: string) {
   let filtered = list;
-  if (tab === "upcoming")  filtered = list.filter(a => isUpcoming(a.date) && a.status !== "cancelled" && a.status !== "rejected");
+  if (tab === "upcoming")  filtered = list.filter(a => isUpcoming(a.date) && !["cancelled", "rejected", "missed"].includes(a.status));
   else if (tab === "today")  filtered = list.filter(a => isToday(a.date));
   else if (tab === "past")   filtered = list.filter(a => !isUpcoming(a.date));
   else if (tab)              filtered = list.filter(a => a.status === tab);
@@ -153,7 +207,14 @@ function filterAppointments(list: Appointment[], tab: string, search: string) {
 export default function AppointmentsPage() {
   const { t } = useTranslation();
 
-  const { isPending: isSessionPending } = useSession();
+  const { data: sessionData, isPending: isSessionPending } = useSession();
+
+  // Marking a no-show and moving a confirmed slot are the office's calls, so
+  // the buttons for them are the office's too.
+  const roleName = sessionData?.session?.role?.name?.toUpperCase() ?? "";
+  const isOfficeRole = ["ADMIN", "ADMINISTRATOR", "SUPERADMIN", "MANAGER", "STAFF"].includes(
+    roleName,
+  );
 
   const [appointments, setAppointments] = React.useState<Appointment[]>([]);
   const [isLoading, setIsLoading]       = React.useState(true);
@@ -164,7 +225,11 @@ export default function AppointmentsPage() {
   const [detailApt, setDetailApt]       = React.useState<Appointment | null>(null);
   const [editApt, setEditApt]           = React.useState<Appointment | null>(null);
   const [editForm, setEditForm]         = React.useState({ date: "", time: "", notes: "" });
+  // Why the slot moved. Shown to the customer with the new date, because
+  // "your appointment changed" on its own generates a phone call.
+  const [rescheduleReason, setRescheduleReason] = React.useState("");
   const [isSaving, setIsSaving]         = React.useState(false);
+  const [markingMissedId, setMarkingMissedId] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -194,6 +259,7 @@ export default function AppointmentsPage() {
     confirmed: appointments.filter(a => a.status === "approved").length,
     completed: appointments.filter(a => a.status === "completed").length,
     pending:   appointments.filter(a => a.status === "pending").length,
+    missed:    appointments.filter(a => a.status === "missed").length,
   }), [appointments]);
 
   const displayed = React.useMemo(
@@ -224,6 +290,7 @@ export default function AppointmentsPage() {
       notes: apt.notes ?? "",
     });
     setDateError("");
+    setRescheduleReason("");
     setEditSchedule(undefined);
 
     const officeId = apt.request?.service?.office?.id;
@@ -259,14 +326,39 @@ export default function AppointmentsPage() {
         date:  new Date(editForm.date).toISOString(),
         time:  editForm.time || undefined,
         notes: editForm.notes || undefined,
+        rescheduleReason: rescheduleReason.trim() || undefined,
       });
-      toast.success(t("Appointment updated."));
+      toast.success(
+        editApt.status === "pending"
+          ? t("Appointment updated.")
+          : t("Appointment rescheduled. The customer has been notified."),
+      );
       setEditApt(null);
+      setRescheduleReason("");
       void load();
     } catch (err: any) {
       toast.error(err?.message ?? t("Failed to update appointment."));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  /**
+   * Record that nobody attended.
+   *
+   * Without this state the office had no way to say what happened to a
+   * confirmed slot that came and went, and nothing to reschedule out of.
+   */
+  const markMissed = async (apt: Appointment) => {
+    setMarkingMissedId(apt.id);
+    try {
+      await axiosInstance.patch(`/appointments/${apt.id}`, { status: "missed" });
+      toast.success(t("Marked as missed. It can now be rescheduled."));
+      void load();
+    } catch (err: any) {
+      toast.error(err?.message ?? t("Failed to update appointment."));
+    } finally {
+      setMarkingMissedId(null);
     }
   };
 
@@ -293,13 +385,14 @@ export default function AppointmentsPage() {
     >
       <div className="space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-7">
           {[
             { label: t("Total"),     value: stats.total,     icon: Calendar,      color: "text-primary",     bg: "bg-primary/10" },
             { label: t("Upcoming"),  value: stats.upcoming,  icon: ChevronRight,  color: "text-violet-600",  bg: "bg-violet-500/10" },
             { label: t("Today"),     value: stats.today,     icon: CalendarDays,  color: "text-orange-600",  bg: "bg-orange-500/10" },
-            { label: t("Pending"),   value: stats.pending,   icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
+            { label: t("To confirm"), value: stats.pending,  icon: Clock,         color: "text-amber-600",   bg: "bg-amber-500/10" },
             { label: t("Confirmed"), value: stats.confirmed, icon: CheckCircle,   color: "text-emerald-600", bg: "bg-emerald-500/10" },
+            { label: t("Missed"),    value: stats.missed,    icon: AlertCircle,   color: "text-orange-600",  bg: "bg-orange-500/10" },
             { label: t("Completed"), value: stats.completed, icon: CheckCheck,    color: "text-blue-600",    bg: "bg-blue-500/10" },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <Card key={label} className="border-none shadow-sm ring-1 ring-border/50 bg-card/50">
@@ -344,9 +437,21 @@ export default function AppointmentsPage() {
       ) : displayed.length === 0 ? (
         <EmptyState tab={tab} search={search} />
       ) : view === "card" ? (
-        <CardGrid apts={aptPagination.paginatedData} onView={setDetailApt} onEdit={openEdit} />
+        <CardGrid
+          apts={aptPagination.paginatedData}
+          onView={setDetailApt}
+          onEdit={openEdit}
+          onMarkMissed={isOfficeRole ? markMissed : undefined}
+          markingMissedId={markingMissedId}
+        />
       ) : (
-        <TableView apts={aptPagination.paginatedData} onView={setDetailApt} onEdit={openEdit} />
+        <TableView
+          apts={aptPagination.paginatedData}
+          onView={setDetailApt}
+          onEdit={openEdit}
+          onMarkMissed={isOfficeRole ? markMissed : undefined}
+          markingMissedId={markingMissedId}
+        />
       )}
 
       {/* Pagination */}
@@ -376,7 +481,11 @@ export default function AppointmentsPage() {
             <>
               <div className="bg-primary px-6 py-5">
                 <DialogHeader>
-                  <DialogTitle className="text-white font-black text-lg">{t("Reschedule Appointment")}</DialogTitle>
+                  <DialogTitle className="text-white font-black text-lg">
+                    {editApt.status === "pending"
+                      ? t("Change Appointment")
+                      : t("Reschedule Appointment")}
+                  </DialogTitle>
                   <p className="text-primary-foreground/70 text-sm mt-0.5">{editApt.request?.service?.name}</p>
                   <RequestNumber
                     value={editApt.request?.requestNumber}
@@ -429,6 +538,28 @@ export default function AppointmentsPage() {
                     className="w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
+
+                {/* Moving a slot the customer was already told about is a
+                    different act from editing one nobody has confirmed yet,
+                    so it asks for a reason and says who will read it. */}
+                {editApt.status !== "pending" && (
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-bold">
+                      {t("Reason for rescheduling")}
+                    </label>
+                    <textarea
+                      value={rescheduleReason}
+                      onChange={e => setRescheduleReason(e.target.value)}
+                      placeholder={t("e.g. The customer did not attend the confirmed slot")}
+                      rows={2}
+                      className="w-full resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t("Sent to the customer with the new date, and kept on the appointment.")}
+                    </p>
+                  </div>
+                )}
+
                 <Separator />
                 <div className="flex gap-3">
                   <Button variant="outline" className="flex-1 rounded-xl h-11 font-bold" onClick={() => setEditApt(null)} disabled={isSaving}>
@@ -468,14 +599,29 @@ function EmptyState({ tab, search }: { tab: string; search: string }) {
 }
 
 // ── Card Grid ─────────────────────────────────────────────────────────────────
-function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: Appointment) => void; onEdit: (a: Appointment) => void }) {
+type ListViewProps = {
+  apts: Appointment[];
+  onView: (a: Appointment) => void;
+  onEdit: (a: Appointment) => void;
+  /** Office roles only; absent for a customer looking at their own diary. */
+  onMarkMissed?: (a: Appointment) => void;
+  markingMissedId?: string | null;
+};
+
+function CardGrid({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListViewProps) {
   const { t } = useTranslation();
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {apts.map(apt => {
         const cfg = getStatusCfg(apt.status);
-        const canEdit = apt.status === "pending";
+        // Anything but a completed visit can be moved. This used to be
+        // status === "pending", so a confirmed appointment the customer
+        // missed could never be given a new slot.
+        const canEdit = canRescheduleApt(apt);
+        // A no-show only makes sense for a confirmed slot whose time has
+        // passed — before that, nobody has failed to attend anything.
+        const canMarkMissed = apt.status === "approved" && !isUpcoming(apt.date);
         const aptDate = new Date(apt.date);
         const upcoming = isUpcoming(apt.date);
         const today = isToday(apt.date);
@@ -549,7 +695,7 @@ function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: A
 
               {/* Status row */}
               <div className="flex items-center justify-between">
-                <StatusBadge status={apt.status} />
+                <StatusBadge apt={apt} />
                 {apt.approveStaff && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <User className="size-3" /> {apt.approveStaff.user.username}
@@ -564,13 +710,32 @@ function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: A
               )}
 
               {/* Actions */}
-              <div className="flex gap-2 pt-1">
-                <Button size="sm" variant="outline" className="flex-1 h-9 rounded-xl text-xs font-bold gap-1.5" onClick={() => onView(apt)}>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button size="sm" variant="outline" className="h-9 min-w-24 flex-1 rounded-xl text-xs font-bold gap-1.5" onClick={() => onView(apt)}>
                   <Eye className="size-3.5" /> {t("Details")}
                 </Button>
                 {canEdit && (
-                  <Button size="sm" variant="outline" className="flex-1 h-9 rounded-xl text-xs font-bold gap-1.5 text-primary border-primary/30 hover:bg-primary/5" onClick={() => onEdit(apt)}>
-                    <Edit3 className="size-3.5" /> {t("Reschedule")}
+                  <Button size="sm" variant="outline" className="h-9 min-w-24 flex-1 rounded-xl text-xs font-bold gap-1.5 text-primary border-primary/30 hover:bg-primary/5" onClick={() => onEdit(apt)}>
+                    <Edit3 className="size-3.5" />
+                    {apt.status === "pending" ? t("Change") : t("Reschedule")}
+                  </Button>
+                )}
+                {/* Office-only: recording a no-show is what makes a confirmed
+                    slot reschedulable rather than silently stale. */}
+                {onMarkMissed && canMarkMissed && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 min-w-24 flex-1 gap-1.5 rounded-xl border-orange-500/30 text-xs font-bold text-orange-600 hover:bg-orange-500/5"
+                    onClick={() => onMarkMissed(apt)}
+                    disabled={markingMissedId === apt.id}
+                  >
+                    {markingMissedId === apt.id ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <AlertCircle className="size-3.5" />
+                    )}
+                    {t("Missed")}
                   </Button>
                 )}
               </div>
@@ -583,7 +748,7 @@ function CardGrid({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: A
 }
 
 // ── Table View ─────────────────────────────────────────────────────────────────
-function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: Appointment) => void; onEdit: (a: Appointment) => void }) {
+function TableView({ apts, onView, onEdit, onMarkMissed, markingMissedId }: ListViewProps) {
   const { t } = useTranslation();
 
   return (
@@ -602,7 +767,9 @@ function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: 
           <tbody>
             {apts.map(apt => {
               const cfg = getStatusCfg(apt.status);
-              const canEdit = apt.status === "pending";
+              const canEdit = canRescheduleApt(apt);
+              const canMarkMissed =
+                apt.status === "approved" && !isUpcoming(apt.date);
               const today = isToday(apt.date);
 
               return (
@@ -631,7 +798,7 @@ function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: 
                     {apt.request?.service?.office?.roomNumber ? `Room ${apt.request.service.office.roomNumber}` : "—"}
                   </td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={apt.status} />
+                    <StatusBadge apt={apt} />
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1 justify-end">
@@ -641,6 +808,22 @@ function TableView({ apts, onView, onEdit }: { apts: Appointment[]; onView: (a: 
                       {canEdit && (
                         <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-primary hover:bg-primary/10" onClick={() => onEdit(apt)} title={t("Reschedule")}>
                           <Edit3 className="size-4" />
+                        </Button>
+                      )}
+                      {onMarkMissed && canMarkMissed && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-lg text-orange-600 hover:bg-orange-500/10"
+                          onClick={() => onMarkMissed(apt)}
+                          disabled={markingMissedId === apt.id}
+                          title={t("Mark as missed")}
+                        >
+                          {markingMissedId === apt.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <AlertCircle className="size-4" />
+                          )}
                         </Button>
                       )}
                     </div>

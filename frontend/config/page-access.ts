@@ -35,6 +35,7 @@ export const PAGE_ACCESS: Record<string, string[]> = {
     "page:customer:appointment",
     "page:staff:appointment",
     "page:manager:appointment",
+    "page:admin:appointment",
     "appointment:read",
   ],
   "/feedback": ["page:customer:feedback", "feedback:read"],

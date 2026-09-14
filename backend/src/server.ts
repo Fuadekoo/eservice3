@@ -1,9 +1,16 @@
 import "dotenv/config";
 import app from "./app.js";
+import { assertSessionConfig } from "./config/session.js";
 import { prisma } from "./lib/db.js";
 import { startAuditCleanupScheduler } from "./services/audit-cleanup.js";
+import { startSessionCleanupScheduler } from "./services/session-cleanup.js";
+import { ensurePermissionCatalogue } from "./services/permission-sync.js";
 
 const port = Number(process.env.PORT ?? 3000);
+
+// Fails fast in production when tokens would be signed with the placeholder
+// secret, and reports the configured session lifetimes either way.
+assertSessionConfig();
 
 /**
  * The adapter opens its first connection lazily, so without this the first
@@ -36,4 +43,12 @@ app.listen(port, () => {
 
   // Start audit log cleanup scheduler
   startAuditCleanupScheduler();
+
+  // Drop sessions that have expired, so the device list stays truthful.
+  startSessionCleanupScheduler();
+
+  // Make sure every permission the code guards on actually exists as a row,
+  // and that the built-in roles hold their defaults. Without this a fresh or
+  // partially seeded database denies pages to everyone but an administrator.
+  void ensurePermissionCatalogue();
 });

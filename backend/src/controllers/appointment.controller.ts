@@ -14,6 +14,12 @@ import {
   approveAppointmentSchema,
   buildValidationError,
 } from "../validators/appointment.validator.js";
+import {
+  APPOINTMENT_STATUS_META,
+  canReschedule,
+  isAppointmentStatus,
+  statusAfterReschedule,
+} from "../config/appointment-status.js";
 import { dispatch } from "../services/notification.service.js";
 import {
   notifyAppointmentApproved,
@@ -126,11 +132,23 @@ const appointmentInclude = {
  * Format appointment response with ISO date strings
  */
 function formatAppointment(appointment: any) {
+  const status: string = appointment.status ?? "pending";
+  const meta = isAppointmentStatus(status)
+    ? APPOINTMENT_STATUS_META[status]
+    : null;
+
   return {
     ...appointment,
     date: appointment.date.toISOString(),
     createdAt: appointment.createdAt.toISOString(),
     updatedAt: appointment.updatedAt.toISOString(),
+    // The raw value stays on `status` for anything matching on it; these say
+    // what it means. "Pending" alone never conveyed who was expected to act,
+    // which is the whole of the ambiguity complaint.
+    statusLabel: meta?.label ?? status,
+    statusDescription: meta?.description ?? null,
+    waitingOn: meta?.waitingOn ?? null,
+    canReschedule: canReschedule(status),
   };
 }
 
@@ -443,19 +461,67 @@ export async function updateAppointment(req: AuthRequest, res: Response) {
       });
     }
 
-    // Prevent editing if appointment is approved or completed
-    if (
-      appointment.status === "approved" ||
-      appointment.status === "completed"
-    ) {
+    const { date, time, notes, status, approveStaffId, rescheduleReason } =
+      validation.data;
+
+    const isMovingSlot = date !== undefined || time !== undefined;
+
+    // A completed appointment is a record of a visit that happened. Editing it
+    // into a record of a different visit is the one thing that must stay
+    // refused.
+    if (appointment.status === "completed") {
       return res.status(400).json({
         success: false,
-        error: "Cannot update approved or completed appointment",
+        error:
+          "This appointment is already completed and can no longer be changed.",
       });
     }
 
+    // Everything else may be moved. It used to refuse any change to an
+    // approved appointment, which meant a customer who missed their confirmed
+    // slot could never be given another one — the office had to delete the
+    // record and rebook from scratch, losing the history.
+    if (isMovingSlot && !canReschedule(appointment.status)) {
+      return res.status(400).json({
+        success: false,
+        error: `An appointment that is ${appointment.status} cannot be rescheduled.`,
+      });
+    }
+
+    // A customer may adjust a slot that has not been confirmed yet. Once the
+    // office has confirmed it, moving it is the office's call — otherwise a
+    // confirmed booking could be moved out from under the desk that planned
+    // its day around it.
+    if (isCustomer && isMovingSlot && appointment.status !== "pending") {
+      return res.status(403).json({
+        success: false,
+        error:
+          "This appointment has already been confirmed. Please contact the office to change it.",
+      });
+    }
+
+    // Moving a slot the office already committed to is a heavier action than
+    // editing one still awaiting confirmation, so it carries its own grant.
+    // Plain `appointment:update` remains enough for a pending slot.
+    if (!isCustomer && isMovingSlot && appointment.status !== "pending") {
+      const held = req.permissions ?? [];
+      const mayReschedule =
+        req.isAdmin === true ||
+        held.includes("appointment:reschedule") ||
+        held.includes("appointment:manage") ||
+        held.includes("appointment:approve");
+
+      if (!mayReschedule) {
+        return res.status(403).json({
+          success: false,
+          error:
+            "You do not have permission to reschedule a confirmed appointment.",
+          requiredPermission: "appointment:reschedule",
+        });
+      }
+    }
+
     // Build update data
-    const { date, time, notes, status, approveStaffId } = validation.data;
     const updateData: any = {};
 
     if (date) {
@@ -471,6 +537,27 @@ export async function updateAppointment(req: AuthRequest, res: Response) {
     if (status) updateData.status = status;
     if (approveStaffId) updateData.staffId = approveStaffId;
 
+    // Moving the slot settles the status unless the caller stated one: an
+    // office member moving it is confirming the new slot, a customer moving
+    // their own puts it back in the queue to be confirmed.
+    if (isMovingSlot && !status) {
+      updateData.status = statusAfterReschedule(appointment.status, !isCustomer);
+    }
+
+    if (rescheduleReason) {
+      const stamp = new Date().toLocaleDateString("en-GB");
+      const entry = `Rescheduled ${stamp}: ${rescheduleReason}`;
+      updateData.notes = appointment.notes
+        ? `${appointment.notes}\n${entry}`
+        : entry;
+    }
+
+    // Whoever moved a confirmed slot is the one now standing behind it.
+    if (isMovingSlot && !isCustomer && !approveStaffId) {
+      const actingStaff = req.user?.staff?.id;
+      if (actingStaff) updateData.staffId = actingStaff;
+    }
+
     // Update the appointment
     const updatedAppointment = await prisma.appointment.update({
       where: { id: appointmentId },
@@ -484,10 +571,11 @@ export async function updateAppointment(req: AuthRequest, res: Response) {
       (date !== undefined &&
         new Date(date).getTime() !== appointment.date.getTime()) ||
       (time !== undefined && time !== appointment.time);
+    const wasMissed = status === "missed" && appointment.status !== "missed";
     const wasCancelled =
       status === "rejected" && appointment.status !== "rejected";
 
-    if (slotMoved || wasCancelled) {
+    if (slotMoved || wasCancelled || wasMissed) {
       dispatch(
         (async () => {
           const context = await loadAppointmentContext(appointmentId);
@@ -497,6 +585,16 @@ export async function updateAppointment(req: AuthRequest, res: Response) {
             await notifyAppointmentCancelled({
               ...context,
               cancelledByStaff: !isCustomer,
+            });
+            return;
+          }
+
+          // Marked as missed without a new slot yet: tell the customer, so the
+          // first they hear of it is not a bill or a closed file.
+          if (wasMissed && !slotMoved) {
+            await notifyAppointmentCancelled({
+              ...context,
+              cancelledByStaff: true,
             });
             return;
           }
@@ -656,14 +754,21 @@ export async function deleteAppointment(req: AuthRequest, res: Response) {
       });
     }
 
-    // Prevent deleting if appointment is approved or completed
-    if (
-      appointment.status === "approved" ||
-      appointment.status === "completed"
-    ) {
+    // A completed appointment is part of the record and stays. A confirmed one
+    // may only be removed by the office — a customer cancelling their own
+    // confirmed slot should go through the cancel path so the desk is told.
+    if (appointment.status === "completed") {
       return res.status(400).json({
         success: false,
-        error: "Cannot delete approved or completed appointment",
+        error: "A completed appointment cannot be deleted.",
+      });
+    }
+
+    if (isCustomer && appointment.status === "approved") {
+      return res.status(400).json({
+        success: false,
+        error:
+          "This appointment has been confirmed. Please contact the office to cancel it.",
       });
     }
 

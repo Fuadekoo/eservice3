@@ -88,6 +88,15 @@ export const NAVIGATION: NavSection[] = [
         roles: ["ADMIN"],
       },
       {
+        // Administrators approve and reschedule appointments like anyone else
+        // in an office, but the sidebar only offered this to staff and
+        // customers — so the page existed and was unreachable from the nav.
+        titleKey: "Appointments",
+        icon: Calendar,
+        href: "/appointments",
+        roles: ["ADMIN"],
+      },
+      {
         titleKey: "Languages",
         icon: Globe,
         href: "/languages/overview",
@@ -166,6 +175,15 @@ export const NAVIGATION: NavSection[] = [
         href: "/report",
         roles: ["MANAGER"],
         permissions: ["report:read"],
+      },
+      {
+        // Same gap as the administrator entry above: a manager runs the
+        // office's diary but had no way into it from the sidebar.
+        titleKey: "Appointments",
+        icon: Calendar,
+        href: "/appointments",
+        roles: ["MANAGER"],
+        permissions: ["appointment:read"],
       },
       {
         titleKey: "Configuration",

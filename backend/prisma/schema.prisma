@@ -72,11 +72,18 @@ model session {
   ipAddress       String?
   userAgent       String?  @db.Text
   lastSeenAt      DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @default(now()) @updatedAt
+
+  /// When this session stops being accepted, whatever happens in the meantime.
+  /// Set from SESSION_ABSOLUTE_TIMEOUT at sign-in. Nullable only so rows that
+  /// predate the column keep loading; `requireAuth` treats a null as expired
+  /// rather than as "never expires", which is the safe reading.
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
 
   @@index([userId])
   @@index([lastSeenAt])
+  @@index([expiresAt])
   @@map("session")
 }
 
@@ -166,6 +173,9 @@ model staff {
   appointments            appointment[]
   approvedStaffRequests   request[]                @relation("ApproveStaff")
   approvedManagerRequests request[]                @relation("ApproveManager")
+  mergedRequests          request[]                @relation("RequestMergedBy")
+  approvedStaffProxy      requestForOther[]        @relation("ProxyApproveStaff")
+  approvedManagerProxy    requestForOther[]        @relation("ProxyApproveManager")
   serviceAssignments      serviceStaffAssignment[]
 
   @@map("staff")
@@ -404,32 +414,59 @@ enum reportStatus {
 }
 
 model request {
-  id                   String                @id @default(cuid())
+  id               String             @id @default(cuid())
   /// Human-readable reference the customer is given (REQ-YYYYMMDD-NNNNN).
   /// Unique so it can be quoted over the phone and looked up directly.
-  requestNumber        String                @unique
-  userId               String
-  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  serviceId            String
-  service              service               @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  officeId             String?
-  office               Office?               @relation("OfficeRequests", fields: [officeId], references: [id], onDelete: Cascade)
-  currentAddress       String
-  date                 DateTime
-  statusbystaff        requestStatus
-  statusbyadmin        requestStatusAdmin
+  requestNumber    String             @unique
+  userId           String
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId        String
+  service          service            @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  officeId         String?
+  office           Office?            @relation("OfficeRequests", fields: [officeId], references: [id], onDelete: Cascade)
+  currentAddress   String
+  date             DateTime
+  statusbystaff    requestStatus
+  statusbyadmin    requestStatusAdmin
   // add the the approve requst staff id and note write by the approve staff
-  approveStaffId       String?
-  approveStaff         staff?                @relation("ApproveStaff", fields: [approveStaffId], references: [id])
-  approveManagerId     String?
-  approveManager       staff?                @relation("ApproveManager", fields: [approveManagerId], references: [id])
-  approveNote          String?
+  approveStaffId   String?
+  approveStaff     staff?             @relation("ApproveStaff", fields: [approveStaffId], references: [id])
+  approveManagerId String?
+  approveManager   staff?             @relation("ApproveManager", fields: [approveManagerId], references: [id])
+  approveNote      String?            @db.Text
+
+  /// Why the request was turned down, in the decider's words.
+  ///
+  /// The reason used to exist only inside the SMS and the push notification
+  /// that announced the rejection. Neither is reachable from the portal, so a
+  /// customer who missed the message — or simply came back a week later — was
+  /// shown "Rejected" and nothing else. Stored here it survives, and the
+  /// customer's own request page can show it.
+  rejectionReason String? @db.Text
+
+  /// When the decision that produced the current status was taken.
+  decidedAt DateTime?
+
+  /// The request this one was merged into, when an office judges it a
+  /// duplicate. The row is kept rather than deleted: the customer was given
+  /// this reference number, so quoting it must keep working and must lead to
+  /// wherever the work actually continued.
+  mergedIntoId     String?
+  mergedInto       request?  @relation("RequestMerge", fields: [mergedIntoId], references: [id])
+  mergedDuplicates request[] @relation("RequestMerge")
+  mergedAt         DateTime?
+  /// Who merged it, and the note they left explaining why.
+  mergedById       String?
+  mergedBy         staff?    @relation("RequestMergedBy", fields: [mergedById], references: [id])
+  mergeNote        String?   @db.Text
+
   customerSatisfaction customerSatisfaction?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @default(now()) @updatedAt
   appointments         appointment[]
   fileData             fileData[]
 
+  @@index([mergedIntoId])
   @@map("request")
 }
 
@@ -444,20 +481,51 @@ model requestSequence {
   @@map("request_sequence")
 }
 
+/// A request a customer submits for a family member or dependent.
+///
+/// It goes through exactly the same two-step review as an ordinary request —
+/// a staff member checks it, then a manager signs it off — so it carries the
+/// same decision columns. It did not use to: it had a single `status` and no
+/// way to record a decision at all, while the dashboard listed these rows
+/// alongside ordinary ones and pointed its Approve button at the `request`
+/// endpoints. Approving a family request therefore answered "Request not
+/// found", because the id belonged to this table.
 model requestForOther {
-  id                     String                @id @default(cuid())
-  userId                 String
-  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  serviceId              String
-  service                service               @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  officeId               String?
-  office                 Office?               @relation("OfficeRequestsForOther", fields: [officeId], references: [id], onDelete: Cascade)
-  currentAddress         String
-  name                   String
-  phoneNumber            String
-  relationship           String
-  date                   DateTime
-  status                 requestStatus
+  id             String   @id @default(cuid())
+  /// The reference the applicant is given, on the same REQ-YYYYMMDD-NNNNN
+  /// series as ordinary requests so one number space covers both. Nullable
+  /// for rows created before the column existed.
+  requestNumber  String?  @unique
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId      String
+  service        service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  officeId       String?
+  office         Office?  @relation("OfficeRequestsForOther", fields: [officeId], references: [id], onDelete: Cascade)
+  currentAddress String
+  name           String
+  phoneNumber    String
+  relationship   String
+  date           DateTime
+
+  /// The overall outcome, kept for the rows and readers that predate the split
+  /// below: pending until both steps approve, rejected the moment either one
+  /// does. Every write goes through `applyProxyDecision`, so it cannot drift
+  /// from the two columns it summarises.
+  status requestStatus
+
+  /// The staff check and the manager sign-off, mirroring `request`.
+  statusbystaff requestStatus      @default(pending)
+  statusbyadmin requestStatusAdmin @default(pending)
+
+  approveStaffId   String?
+  approveStaff     staff?    @relation("ProxyApproveStaff", fields: [approveStaffId], references: [id])
+  approveManagerId String?
+  approveManager   staff?    @relation("ProxyApproveManager", fields: [approveManagerId], references: [id])
+  approveNote      String?   @db.Text
+  rejectionReason  String?   @db.Text
+  decidedAt        DateTime?
+
   customerSatisfaction   customerSatisfaction? @relation(fields: [customerSatisfactionId], references: [id])
   createdAt              DateTime              @default(now())
   updatedAt              DateTime              @default(now()) @updatedAt

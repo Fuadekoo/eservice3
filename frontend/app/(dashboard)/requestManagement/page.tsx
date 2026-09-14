@@ -12,10 +12,19 @@ import {
   Eye,
   Building2,
   Filter,
+  GitMerge,
+  Users,
+  UserCheck,
+  ShieldCheck,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { useRequestStore, type ServiceRequest } from "@/lib/stores/request-store";
+import {
+  deciderName,
+  useRequestStore,
+  type ServiceRequest,
+} from "@/lib/stores/request-store";
 import { useOfficeStore } from "@/lib/stores/office-store";
 import { useSession } from "@/hooks/use-session";
 import { PageLayout, type PageTab } from "@/components/dashboard/page-layout";
@@ -42,6 +51,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 import { ReviewRequestDialog } from "./_components/review-request-dialog";
@@ -115,6 +133,84 @@ export default function RequestManagementPage() {
   const [rejectingId, setRejectingId] = React.useState<string | null>(null);
   const [rejectReason, setRejectReason] = React.useState("");
   const [isRejecting, setIsRejecting] = React.useState(false);
+
+  // ── Merging duplicates ────────────────────────────────────────────────
+  // Customers routinely apply twice. Selecting the copies and folding them
+  // into one keeps every reference number working while leaving a single
+  // piece of work in the queue.
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+  const [isMergeOpen, setIsMergeOpen] = React.useState(false);
+  const [mergePrimaryId, setMergePrimaryId] = React.useState<string | null>(null);
+  const [mergeNote, setMergeNote] = React.useState("");
+  const [isMerging, setIsMerging] = React.useState(false);
+
+  const selectedRequests = React.useMemo(
+    () => requests.filter((request) => selectedIds.includes(request.id)),
+    [requests, selectedIds],
+  );
+
+  // Only requests from one customer can be merged — folding two people's
+  // applications together would hand one of them the other's documents.
+  const selectionCustomerIds = React.useMemo(
+    () => new Set(selectedRequests.map((request) => request.user?.id)),
+    [selectedRequests],
+  );
+  const canMergeSelection =
+    selectedRequests.length >= 2 && selectionCustomerIds.size === 1;
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((entry) => entry !== id)
+        : [...current, id],
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedIds([]);
+    setMergePrimaryId(null);
+    setMergeNote("");
+  };
+
+  const openMergeDialog = () => {
+    if (!canMergeSelection) return;
+    // Default to keeping the earliest application — it holds the queue
+    // position the customer has already waited for.
+    const earliest = [...selectedRequests].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    )[0];
+    setMergePrimaryId(earliest?.id ?? null);
+    setIsMergeOpen(true);
+  };
+
+  const handleMerge = async () => {
+    if (!mergePrimaryId) return;
+
+    const duplicateIds = selectedIds.filter((id) => id !== mergePrimaryId);
+    if (duplicateIds.length === 0) {
+      toast.error(t("Choose which request to keep, and at least one duplicate."));
+      return;
+    }
+
+    setIsMerging(true);
+    try {
+      const merged = await useRequestStore
+        .getState()
+        .mergeRequests(mergePrimaryId, duplicateIds, mergeNote.trim() || undefined);
+
+      toast.success(
+        t("{count} duplicate request(s) merged", { count: merged }),
+      );
+      setIsMergeOpen(false);
+      clearSelection();
+      refresh();
+    } catch (err: any) {
+      toast.error(err?.message ?? t("Failed to merge requests"));
+    } finally {
+      setIsMerging(false);
+    }
+  };
 
   const effectiveOfficeId = React.useMemo(() => {
     if (isAdmin) {
@@ -331,6 +427,43 @@ export default function RequestManagementPage() {
           )}
         </div>
 
+        {/* Selection bar — appears only once something is ticked */}
+        {selectedIds.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-2 text-sm">
+              <GitMerge className="size-4 shrink-0 text-primary" />
+              <span className="font-semibold">
+                {t("{count} selected", { count: selectedIds.length })}
+              </span>
+              {selectedIds.length >= 2 && !canMergeSelection && (
+                <span className="text-muted-foreground">
+                  · {t("Requests from different customers cannot be merged.")}
+                </span>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                size="sm"
+                onClick={openMergeDialog}
+                disabled={!canMergeSelection}
+                className="h-9 rounded-lg text-xs font-bold"
+              >
+                <GitMerge className="mr-1.5 size-3.5" />
+                {t("Merge duplicates")}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={clearSelection}
+                className="h-9 rounded-lg text-xs font-semibold"
+              >
+                <X className="mr-1.5 size-3.5" />
+                {t("Clear")}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Requests Table */}
         <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
           {isLoading ? (
@@ -349,9 +482,14 @@ export default function RequestManagementPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left text-sm">
+              {/* Wider than most viewports, so it scrolls inside its own box
+                  rather than stretching the page. */}
+              <table className="w-full min-w-[1000px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border/50 bg-muted/30">
+                    <th className="w-10 p-4">
+                      <span className="sr-only">{t("Select")}</span>
+                    </th>
                     <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Request No.")}</th>
                     <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Customer")}</th>
                     <th className="p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground">{t("Service")}</th>
@@ -363,25 +501,66 @@ export default function RequestManagementPage() {
                 </thead>
                 <tbody>
                   {requests.map((req) => {
-                    const canApprove =
+                    // A duplicate already folded into another request is
+                    // settled: the decision belongs on the survivor.
+                    const isMerged = Boolean(req.mergedInto);
+                    const isSelected = selectedIds.includes(req.id);
+
+                    const canApprove = isMerged ? false :
                       activeRole === "staff" ? req.statusbystaff === "pending" :
                       activeRole === "manager" ? req.statusbyadmin === "pending" && req.statusbystaff === "approved" : false;
-                    const canReject =
+                    const canReject = isMerged ? false :
                       activeRole === "staff" ? req.statusbystaff === "pending" :
                       activeRole === "manager" ? req.statusbyadmin === "pending" : false;
                     const isThisApproving = approvingId === req.id;
 
+                    // Who took each decision. A manager could previously see
+                    // that a request was approved but never by whom.
+                    const staffDecider = deciderName(req.approveStaff);
+                    const managerDecider = deciderName(req.approveManager);
+
                     return (
                       <tr
                         key={req.id}
-                        className="border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors"
+                        className={cn(
+                          "border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors",
+                          isSelected && "bg-primary/5",
+                          isMerged && "opacity-60",
+                        )}
                       >
                         <td className="p-4">
-                          <RequestNumber value={req.requestNumber} copyable />
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelected(req.id)}
+                            disabled={isMerged}
+                            aria-label={t("Select this request")}
+                          />
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <RequestNumber value={req.requestNumber} copyable />
+                            {isMerged && (
+                              <Badge
+                                variant="outline"
+                                className="shrink-0 border-border text-[10px] font-bold uppercase"
+                              >
+                                <GitMerge className="mr-1 size-2.5" />
+                                {t("Merged")}
+                              </Badge>
+                            )}
+                          </div>
                         </td>
                         <td className="p-4">
                           <p className="font-semibold">{req.user?.username}</p>
                           <p className="text-xs text-muted-foreground">{req.user?.phoneNumber}</p>
+                          {req.beneficiary && (
+                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                              <Users className="size-3 shrink-0" />
+                              <span className="truncate">
+                                {t("for")} {req.beneficiary.name}
+                              </span>
+                            </p>
+                          )}
                         </td>
                         <td className="p-4">
                           <p className="font-medium">{req.service?.name}</p>
@@ -398,9 +577,21 @@ export default function RequestManagementPage() {
                         </td>
                         <td className="p-4">
                           <StatusBadge status={req.statusbystaff} />
+                          {staffDecider && (
+                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                              <UserCheck className="size-3 shrink-0" />
+                              <span className="max-w-32 truncate">{staffDecider}</span>
+                            </p>
+                          )}
                         </td>
                         <td className="p-4">
                           <StatusBadge status={req.statusbyadmin} />
+                          {managerDecider && (
+                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                              <ShieldCheck className="size-3 shrink-0" />
+                              <span className="max-w-32 truncate">{managerDecider}</span>
+                            </p>
+                          )}
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2 justify-end">
@@ -493,6 +684,124 @@ export default function RequestManagementPage() {
           refresh();
         }}
       />
+
+      {/* ── Merge duplicates ─────────────────────────────────── */}
+      <Dialog
+        open={isMergeOpen}
+        onOpenChange={(open) => {
+          setIsMergeOpen(open);
+          if (!open) setMergeNote("");
+        }}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("Merge duplicate requests")}</DialogTitle>
+            <DialogDescription>
+              {t("Choose the request to keep. The others are closed and marked as merged into it, and their attachments move across. Every reference number keeps working.")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              {t("Keep this request")}
+            </p>
+
+            <div className="space-y-2">
+              {selectedRequests.map((request) => {
+                const isPrimary = mergePrimaryId === request.id;
+                return (
+                  <button
+                    key={request.id}
+                    type="button"
+                    onClick={() => setMergePrimaryId(request.id)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors",
+                      isPrimary
+                        ? "border-primary bg-primary/5"
+                        : "border-border/50 hover:bg-muted/30",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2",
+                        isPrimary
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground/40",
+                      )}
+                    >
+                      {isPrimary && (
+                        <span className="size-1.5 rounded-full bg-primary-foreground" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-mono text-sm font-semibold">
+                        {request.requestNumber || request.id.slice(0, 8)}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                        {request.service?.name}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {t("Submitted")}{" "}
+                        {new Date(request.createdAt).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </span>
+                    {isPrimary && (
+                      <Badge className="shrink-0 bg-primary text-[10px] font-bold uppercase">
+                        {t("Keeping")}
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="merge-note"
+                className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+              >
+                {t("Note (optional)")}
+              </label>
+              <Textarea
+                id="merge-note"
+                rows={2}
+                className="resize-none rounded-xl"
+                placeholder={t("Why these are duplicates...")}
+                value={mergeNote}
+                onChange={(e) => setMergeNote(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("Recorded on each merged request, so anyone opening one later can see what happened.")}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsMergeOpen(false)}
+              disabled={isMerging}
+            >
+              {t("Cancel")}
+            </Button>
+            <Button
+              className="rounded-xl"
+              onClick={handleMerge}
+              disabled={isMerging || !mergePrimaryId || selectedIds.length < 2}
+            >
+              {isMerging && <Loader2 className="mr-2 size-4 animate-spin" />}
+              {t("Merge {count} into this one", {
+                count: Math.max(0, selectedIds.length - 1),
+              })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={!!rejectingId}

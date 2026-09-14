@@ -6,6 +6,7 @@ import {
   buildValidationError,
 } from "../validators/request.validator.js";
 import { sendSMS } from "../services/sms.service.js";
+import { generateRequestNumber } from "../utils/notification.js";
 
 /**
  * Requests a customer submits on behalf of a family member or dependent.
@@ -26,6 +27,18 @@ const requestForOtherInclude = {
       name: true,
       officeId: true,
       office: { select: { id: true, name: true } },
+    },
+  },
+  approveStaff: {
+    select: {
+      id: true,
+      user: { select: { id: true, username: true, name: true } },
+    },
+  },
+  approveManager: {
+    select: {
+      id: true,
+      user: { select: { id: true, username: true, name: true } },
     },
   },
   fileData: {
@@ -56,6 +69,9 @@ async function getUserRole(userId: string): Promise<string> {
 function formatRequestForOther(row: NonNullable<RequestForOtherRecord>) {
   return {
     id: row.id,
+    // Same REQ-YYYYMMDD-NNNNN series as an ordinary request, so one number
+    // space covers both kinds and a customer can quote either one.
+    requestNumber: row.requestNumber ?? "",
     // Marks the row as a dependent request wherever the two kinds are mixed.
     beneficiaryType: "other" as const,
     beneficiary: {
@@ -66,6 +82,14 @@ function formatRequestForOther(row: NonNullable<RequestForOtherRecord>) {
     currentAddress: row.currentAddress,
     date: row.date,
     status: row.status,
+    // The two review gates this row now goes through, matching `request`.
+    statusbystaff: row.statusbystaff,
+    statusbyadmin: row.statusbyadmin,
+    approveStaff: row.approveStaff ?? null,
+    approveManager: row.approveManager ?? null,
+    approveNote: row.approveNote,
+    rejectionReason: row.rejectionReason,
+    decidedAt: row.decidedAt,
     applicant: row.user,
     service: row.service,
     officeId: row.officeId,
@@ -122,6 +146,9 @@ export async function createRequestForOther(req: AuthRequest, res: Response) {
       data: {
         userId,
         serviceId,
+        // Issued from the same per-day counter as an ordinary request, so the
+        // applicant has a reference to quote and the office can search for it.
+        requestNumber: await generateRequestNumber(),
         // Denormalised so the office can filter and count without joining
         // through the service on every read, as `request` already does.
         officeId: service.officeId,
@@ -131,6 +158,8 @@ export async function createRequestForOther(req: AuthRequest, res: Response) {
         relationship,
         date: new Date(date),
         status: "pending",
+        statusbystaff: "pending",
+        statusbyadmin: "pending",
         ...(files.length > 0
           ? {
               fileData: {
@@ -153,7 +182,10 @@ export async function createRequestForOther(req: AuthRequest, res: Response) {
         `Dear ${created.user.name ?? created.user.username},\n\n` +
         `Your application for "${service.name}" at ${service.office.name} ` +
         `on behalf of ${name} (${relationship}) has been received ` +
-        `and is now under review.`;
+        `and is now under review.` +
+        (created.requestNumber
+          ? `\n\nRequest No: ${created.requestNumber}`
+          : "");
       sendSMS(created.user.phoneNumber, message).catch((error) =>
         console.error("SMS to applicant failed:", error),
       );

@@ -29,7 +29,7 @@ export function useSessionHeartbeat() {
   useEffect(() => {
     let cancelled = false;
 
-    const forceLogout = () => {
+    const forceLogout = (reason?: "idle" | "expired") => {
       if (loggingOutRef.current) {
         return;
       }
@@ -38,14 +38,21 @@ export function useSessionHeartbeat() {
       removeToken();
       toast.error("You have been signed out", {
         description:
-          "This device's session was ended. Please sign in again to continue.",
+          reason === "idle"
+            ? "Your session ended after a period of inactivity."
+            : reason === "expired"
+              ? "Your session reached its time limit."
+              : "This device's session was ended. Please sign in again to continue.",
       });
 
       if (
         typeof window !== "undefined" &&
         window.location.pathname !== "/signin"
       ) {
-        window.location.href = "/signin";
+        // The sign-in page repeats the reason, so the explanation survives the
+        // navigation rather than vanishing with the toast.
+        const query = reason ? `?reason=${reason}` : "";
+        window.location.href = `/signin${query}`;
       }
     };
 
@@ -66,12 +73,26 @@ export function useSessionHeartbeat() {
       }
 
       try {
-        await axiosInstance.get("/auth/me");
+        // Marked as a probe so it does not count as activity: the idle timeout
+        // measures when the person last did something, and a poll running on
+        // its own every 20 seconds is not that. Without the header an open tab
+        // would keep an unattended session alive indefinitely.
+        await axiosInstance.get("/auth/me", {
+          headers: { "X-Session-Probe": "1" },
+        });
       } catch (error) {
         // Only a 401 means the session was revoked/expired. Network errors
         // (status 0) or other failures must not sign the user out.
         if (error instanceof ApiError && error.status === 401) {
-          forceLogout();
+          // The API says which kind of ending this was; anything else is a
+          // revocation from another device.
+          forceLogout(
+            error.reason === "idle"
+              ? "idle"
+              : error.reason === "absolute"
+                ? "expired"
+                : undefined,
+          );
         }
       }
     };

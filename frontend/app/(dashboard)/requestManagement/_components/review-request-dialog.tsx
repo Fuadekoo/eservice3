@@ -14,10 +14,16 @@ import {
   User,
   Phone,
   MessageSquare,
+  UserCheck,
+  ShieldCheck,
+  Users,
+  GitMerge,
+  Ban,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
+  deciderName,
   useRequestStore,
   type ServiceRequest,
 } from "@/lib/stores/request-store";
@@ -124,20 +130,46 @@ export function ReviewRequestDialog({
     }
   };
 
+  // A duplicate that has been folded into another request is finished work:
+  // the decision belongs on the request it was merged into.
+  const isMerged = Boolean(request.mergedInto);
+
   const canApprove =
-    role === "staff"
-      ? request.statusbystaff === "pending"
-      : role === "manager"
-        ? request.statusbyadmin === "pending"
-        : false;
+    isMerged
+      ? false
+      : role === "staff"
+        ? request.statusbystaff === "pending"
+        : role === "manager"
+          ? // Manager sign-off is the second gate, so it only opens once staff
+            // have passed the first — matching what the API now enforces.
+            request.statusbyadmin === "pending" &&
+            request.statusbystaff === "approved"
+          : false;
   const canReject =
-    role === "staff"
-      ? request.statusbystaff !== "rejected"
-      : role === "manager"
-        ? request.statusbyadmin !== "rejected"
-        : false;
+    isMerged
+      ? false
+      : role === "staff"
+        ? request.statusbystaff === "pending"
+        : role === "manager"
+          ? request.statusbyadmin === "pending"
+          : false;
 
   const fileCount = request.fileData?.length || 0;
+
+  // Who actually decided. Recorded on every decision now, including
+  // rejections, so the trail is complete rather than approvals-only.
+  const staffDecider = deciderName(request.approveStaff);
+  const managerDecider = deciderName(request.approveManager);
+  const mergedDuplicates = request.mergedDuplicates ?? [];
+  const decidedOn = request.decidedAt
+    ? new Date(request.decidedAt).toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
 
   // The customer's note is stored as the `description` on the uploaded file
   // records (see request creation). Surface the first non-empty one.
@@ -326,6 +358,153 @@ export function ReviewRequestDialog({
                       </div>
                     </div>
                   </div>
+
+                  {/* Who the request is actually for */}
+                  {request.beneficiary && (
+                    <div className="space-y-2 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
+                      <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                        <Users className="size-3.5" />
+                        {t("Applying on behalf of")}
+                      </p>
+                      <div className="space-y-0.5 text-sm">
+                        <p className="font-semibold">
+                          {request.beneficiary.name}
+                        </p>
+                        <p className="text-muted-foreground">
+                          {request.beneficiary.relationship}
+                          {request.beneficiary.phoneNumber
+                            ? ` · ${request.beneficiary.phoneNumber}`
+                            : ""}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Decision trail — who decided what, and what they said.
+                      A manager could previously see only that a request had
+                      been approved, never by whom. */}
+                  {(staffDecider ||
+                    managerDecider ||
+                    request.approveNote ||
+                    request.rejectionReason ||
+                    request.mergedInto) && (
+                    <div className="space-y-3 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
+                      <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                        <ShieldCheck className="size-3.5" />
+                        {t("Decision History")}
+                      </p>
+
+                      <div className="space-y-2.5">
+                        {staffDecider && (
+                          <div className="flex items-start gap-2.5">
+                            <UserCheck
+                              className={cn(
+                                "mt-0.5 size-4 shrink-0",
+                                request.statusbystaff === "approved"
+                                  ? "text-emerald-600"
+                                  : "text-destructive",
+                              )}
+                            />
+                            <div className="min-w-0 text-sm">
+                              <p className="font-semibold">
+                                {request.statusbystaff === "approved"
+                                  ? t("Approved by staff")
+                                  : t("Rejected by staff")}
+                              </p>
+                              <p className="text-muted-foreground">
+                                {staffDecider}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {managerDecider && (
+                          <div className="flex items-start gap-2.5">
+                            <ShieldCheck
+                              className={cn(
+                                "mt-0.5 size-4 shrink-0",
+                                request.statusbyadmin === "approved"
+                                  ? "text-emerald-600"
+                                  : "text-destructive",
+                              )}
+                            />
+                            <div className="min-w-0 text-sm">
+                              <p className="font-semibold">
+                                {request.statusbyadmin === "approved"
+                                  ? t("Approved by manager")
+                                  : t("Rejected by manager")}
+                              </p>
+                              <p className="text-muted-foreground">
+                                {managerDecider}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {decidedOn && (
+                          <p className="text-xs text-muted-foreground">
+                            {t("Last decision")}: {decidedOn}
+                          </p>
+                        )}
+                      </div>
+
+                      {request.approveNote && (
+                        <div className="border-t border-border/40 pt-2.5">
+                          <p className="mb-1 text-xs font-semibold text-muted-foreground">
+                            {t("Reviewer notes")}
+                          </p>
+                          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                            {request.approveNote}
+                          </p>
+                        </div>
+                      )}
+
+                      {request.rejectionReason && (
+                        <div className="border-t border-border/40 pt-2.5">
+                          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-destructive">
+                            <Ban className="size-3.5" />
+                            {t("Reason for rejection")}
+                          </p>
+                          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                            {request.rejectionReason}
+                          </p>
+                        </div>
+                      )}
+
+                      {request.mergedInto && (
+                        <div className="border-t border-border/40 pt-2.5">
+                          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                            <GitMerge className="size-3.5" />
+                            {t("Merged into")}
+                          </p>
+                          <p className="text-sm font-semibold">
+                            {request.mergedInto.requestNumber}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Duplicates folded into this one */}
+                  {mergedDuplicates.length > 0 && (
+                    <div className="space-y-2 rounded-xl border border-border/50 bg-muted/10 px-4 py-3">
+                      <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                        <GitMerge className="size-3.5" />
+                        {t("Duplicates merged in")}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {mergedDuplicates.map((duplicate) => (
+                          <Badge
+                            key={duplicate.id}
+                            variant="outline"
+                            className="font-mono text-[11px]"
+                          >
+                            {duplicate.requestNumber || duplicate.id.slice(0, 8)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Customer note */}
                   {customerNote && (

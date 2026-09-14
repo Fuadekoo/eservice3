@@ -15,6 +15,12 @@ import { prisma } from "../src/lib/db.ts";
  * requestForOther, appointment, customerSatisfaction, fileData) are
  * deliberately excluded — the application writes those itself, and seeding them
  * would fabricate login sessions, live OTP codes and audit history.
+ *
+ * Staffing: every office gets at least one `staff` account and one `manager`,
+ * and every service is assigned to a staff member of its own office. Both are
+ * enforced by `assertEveryServiceIsStaffed` before the first write, because a
+ * service with nobody assigned still accepts applications that then reach no
+ * desk at all. There is exactly one administrator, `admin`.
  */
 
 /** Plain development password. Login with this; the DB stores its bcrypt hash. */
@@ -2074,15 +2080,6 @@ const data: SeedData = {
       "phoneVerified": false,
     },
     {
-      "id": "49e8f5ff-d7c3-4519-9112-ef80062780b0",
-      "username": "admin3",
-      "phoneNumber": "251900112239",
-      "password": hashedPassword,
-      "roleId": "cmiwl338h0000jsnoikvgm780",
-      "isActive": true,
-      "phoneVerified": false,
-    },
-    {
       "id": "4a0a2f19-0f05-4f65-8230-a59eaef86b6c",
       "username": "manager5",
       "phoneNumber": "251910000005",
@@ -2245,15 +2242,6 @@ const data: SeedData = {
       "phoneVerified": false,
     },
     {
-      "id": "e1ce808d-c5d0-4b18-9369-07615f154878",
-      "username": "admin2",
-      "phoneNumber": "251900112238",
-      "password": hashedPassword,
-      "roleId": "cmiwl338h0000jsnoikvgm780",
-      "isActive": true,
-      "phoneVerified": false,
-    },
-    {
       "id": "ee9819f5-23a8-465b-8d99-13600a7a4b15",
       "username": "Staffnahenya",
       "phoneNumber": "251910000036",
@@ -2279,6 +2267,213 @@ const data: SeedData = {
       "roleId": "cmiwl338t0001jsno43wxxf9k",
       "isActive": true,
       "phoneVerified": false,
+    },
+    {
+      "id": "27128090-2a24-4ac5-badd-577e369b16ef",
+      "username": "staff_admin",
+      "phoneNumber": "251920001001",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "9eacaa2c-45bb-4001-b5ea-91ccaac97e18",
+      "username": "staff_wchuo",
+      "phoneNumber": "251920001002",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "eadd9846-0a58-4ccd-8980-597910def323",
+      "username": "staff_wmmm",
+      "phoneNumber": "251920001003",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "bff45d90-6c23-4dca-9c36-eef6bb57ad01",
+      "username": "staff_galii",
+      "phoneNumber": "251920001004",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "1e971a23-2190-488c-9db3-7d144227da9c",
+      "username": "staff_bishaani",
+      "phoneNumber": "251920001005",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "8cd33181-92c8-472d-a2e0-e6f9eb15ebac",
+      "username": "staff_daandiiwwaanni",
+      "phoneNumber": "251920001006",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "b3b24f94-ab0b-4803-a869-54ed54d55929",
+      "username": "staff_ejensii",
+      "phoneNumber": "251920001007",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "f3920112-a4de-4074-ad08-d7a6c74388bd",
+      "username": "staff_dargaggoo",
+      "phoneNumber": "251920001008",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "53db617b-1725-4a59-b906-5fc48c0a88f5",
+      "username": "staff_wmjhb",
+      "phoneNumber": "251920001009",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "af9e8509-2229-42b5-b641-bfc7c8c756a5",
+      "username": "staff_albuuada",
+      "phoneNumber": "251920001010",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "844b0791-245d-481f-a81b-e99cd462a40a",
+      "username": "staff_aadaa",
+      "phoneNumber": "251920001011",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "439a0e17-a71d-46a4-a44f-bede24964c4f",
+      "username": "staff_barnoota",
+      "phoneNumber": "251920001012",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "c3794e46-9f23-4820-9ac6-7d97a48b2605",
+      "username": "staff_geejjiba",
+      "phoneNumber": "251920001013",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "a90a8a1a-aca5-41bd-a0e5-06bfdbca97b0",
+      "username": "staff_investmantii",
+      "phoneNumber": "251920001014",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "d15c6fd8-d92d-4710-9fff-87e98c841395",
+      "username": "staff_konistraakshinii",
+      "phoneNumber": "251920001015",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "41cdc2b1-11b4-4047-aaba-b1166f5d5e69",
+      "username": "staff_lafa",
+      "phoneNumber": "251920001016",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "39559d09-d30b-41dc-8c13-14870b65cb38",
+      "username": "staff_psmqn",
+      "phoneNumber": "251920001017",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "603f2c5d-52e0-4035-95f7-15fb6ac98b07",
+      "username": "staff_coop",
+      "phoneNumber": "251920001018",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "057aa033-9bd2-4a49-aaa7-de3477d98770",
+      "username": "staff_wmwd",
+      "phoneNumber": "251920001019",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "26119644-5f6e-459f-a8b6-24f9a6c6b4aa",
+      "username": "staff_agriculture",
+      "phoneNumber": "251920001020",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "3ddfa9bf-ac08-4e41-94bc-39e40aa986d3",
+      "username": "staff_communication",
+      "phoneNumber": "251920001021",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "704b6291-282d-4892-909b-13582c7231a3",
+      "username": "staff_attornery",
+      "phoneNumber": "251920001022",
+      "password": hashedPassword,
+      "roleId": "cmiwl338z0002jsnorjywaoi9",
+      "isActive": true,
+      "phoneVerified": true,
+    },
+    {
+      "id": "be39599d-e08c-42d6-81f7-2f05e6e8a118",
+      "username": "manager23",
+      "phoneNumber": "251910000023",
+      "password": hashedPassword,
+      "roleId": "cmiwl338t0001jsno43wxxf9k",
+      "isActive": true,
+      "phoneVerified": true,
     }
   ],
   "staff": [
@@ -2416,6 +2611,121 @@ const data: SeedData = {
       "id": "cmjcj8aoa000bjsc0ohzv8c8y",
       "userId": "3fc75fa4-52ed-481f-9250-a2aa309fb9f9",
       "officeId": "cmj0g35y30000js4678hrglup",
+    },
+    {
+      "id": "468f9815-c38f-4cd7-96c2-7ae6b36bcde0",
+      "userId": "27128090-2a24-4ac5-badd-577e369b16ef",
+      "officeId": "cmiwlbtt20000jsp6ch1mh3lp",
+    },
+    {
+      "id": "9591770e-59b5-4a7f-9ba7-9da643b3b01a",
+      "userId": "9eacaa2c-45bb-4001-b5ea-91ccaac97e18",
+      "officeId": "cmiwtftvd0001jsmvnaiv0eka",
+    },
+    {
+      "id": "8876e6f3-8892-42a3-96d7-35c053bb6330",
+      "userId": "eadd9846-0a58-4ccd-8980-597910def323",
+      "officeId": "cmiwtiz420002jsmvzoblvc02",
+    },
+    {
+      "id": "bd7f7cc6-c30a-4c9c-be72-50b487442b48",
+      "userId": "bff45d90-6c23-4dca-9c36-eef6bb57ad01",
+      "officeId": "cmiwtl9ma0003jsmvqgo0nji3",
+    },
+    {
+      "id": "10193730-c32d-4989-9aeb-3e4c4e7e188a",
+      "userId": "1e971a23-2190-488c-9db3-7d144227da9c",
+      "officeId": "cmiwtowsm0004jsmvphmlc4z5",
+    },
+    {
+      "id": "802f15da-527c-448e-81c7-e0ce4a51ecec",
+      "userId": "8cd33181-92c8-472d-a2e0-e6f9eb15ebac",
+      "officeId": "cmiwtrp780005jsmvjob5rfok",
+    },
+    {
+      "id": "ed01c7af-8e50-47ef-b30f-8f96062c3f8f",
+      "userId": "b3b24f94-ab0b-4803-a869-54ed54d55929",
+      "officeId": "cmiwu1g5d0007jsmvkltn6oq3",
+    },
+    {
+      "id": "537cdc3c-c554-4ac0-8b7c-5acac8bcb8d0",
+      "userId": "f3920112-a4de-4074-ad08-d7a6c74388bd",
+      "officeId": "cmiwu4izk0008jsmve2lcslgp",
+    },
+    {
+      "id": "983dd0ca-61f4-487b-89a5-d9109d9d252d",
+      "userId": "53db617b-1725-4a59-b906-5fc48c0a88f5",
+      "officeId": "cmiwu7x6m0009jsmvjbc45zv5",
+    },
+    {
+      "id": "9cd22acf-2ad1-419f-96e1-4901ff4e804b",
+      "userId": "af9e8509-2229-42b5-b641-bfc7c8c756a5",
+      "officeId": "cmiwua43n000ajsmvogq5fg4p",
+    },
+    {
+      "id": "528839b9-21a7-4733-898e-e8fbb9a7a313",
+      "userId": "844b0791-245d-481f-a81b-e99cd462a40a",
+      "officeId": "cmiwucdsm000bjsmv0hkq50cy",
+    },
+    {
+      "id": "7e560b7e-9431-4797-bd5d-d4665c792bfc",
+      "userId": "439a0e17-a71d-46a4-a44f-bede24964c4f",
+      "officeId": "cmiwukmpq000djsmv89g4bk05",
+    },
+    {
+      "id": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+      "userId": "c3794e46-9f23-4820-9ac6-7d97a48b2605",
+      "officeId": "cmiwupjpr000fjsmvz77cek4a",
+    },
+    {
+      "id": "1d399670-9dd8-43d7-85cd-fc57d807d893",
+      "userId": "a90a8a1a-aca5-41bd-a0e5-06bfdbca97b0",
+      "officeId": "cmiwuv4ar000gjsmvn7thi4qz",
+    },
+    {
+      "id": "351bbda5-ac7a-4e2d-a499-0c47e4135c8c",
+      "userId": "d15c6fd8-d92d-4710-9fff-87e98c841395",
+      "officeId": "cmiwve9qh000hjsmv1ktd3i4r",
+    },
+    {
+      "id": "59887a12-eba5-4d72-908f-0be03fa0a028",
+      "userId": "41cdc2b1-11b4-4047-aaba-b1166f5d5e69",
+      "officeId": "cmiwvt0pm000ijsmvqgicrbqs",
+    },
+    {
+      "id": "be919956-653e-4546-9444-84b1ab7f5b76",
+      "userId": "39559d09-d30b-41dc-8c13-14870b65cb38",
+      "officeId": "cmiww0myi000jjsmvyhxxlz3o",
+    },
+    {
+      "id": "c7bf00c8-537b-4756-a78f-98c3bfe28fc6",
+      "userId": "603f2c5d-52e0-4035-95f7-15fb6ac98b07",
+      "officeId": "cmixqur860010jsn7l58up53s",
+    },
+    {
+      "id": "3e449cc1-da73-4e75-9411-c06d0c386019",
+      "userId": "057aa033-9bd2-4a49-aaa7-de3477d98770",
+      "officeId": "cmj0g35y30000js4678hrglup",
+    },
+    {
+      "id": "600a9276-ba38-4890-a89f-4fc454ac0fe0",
+      "userId": "26119644-5f6e-459f-a8b6-24f9a6c6b4aa",
+      "officeId": "cmj6sdygu0006js064fd2lgpr",
+    },
+    {
+      "id": "0659acb3-f071-4fdf-822f-f45a9b46b78a",
+      "userId": "3ddfa9bf-ac08-4e41-94bc-39e40aa986d3",
+      "officeId": "cmj6syico0007js06qt4vpskb",
+    },
+    {
+      "id": "53eea042-8b00-4be1-9051-c5c00a358fd9",
+      "userId": "704b6291-282d-4892-909b-13582c7231a3",
+      "officeId": "cmj6t45fm0008js06xip4001x",
+    },
+    {
+      "id": "067b730f-0513-479e-a208-ae6ea0bc90c7",
+      "userId": "be39599d-e08c-42d6-81f7-2f05e6e8a118",
+      "officeId": "cmj6sdygu0006js064fd2lgpr",
     }
   ],
   "officeAvailability": [
@@ -6364,6 +6674,516 @@ const data: SeedData = {
       "id": "b5af7edc-0e8f-4e94-9e1c-07abc032b2f4",
       "serviceId": "86f3511e-648a-4e91-a791-9401dc15eab1",
       "staffId": "6b414f29-cc4e-420c-adb5-fb2887b37a6a",
+    },
+    {
+      "id": "606f74ae-c241-4a84-a0bf-79d24d599663",
+      "serviceId": "01f10b33-2c44-40c1-94d5-e8601272d08a",
+      "staffId": "9591770e-59b5-4a7f-9ba7-9da643b3b01a",
+    },
+    {
+      "id": "cd89a64b-f6cd-44fb-8f40-603956a56393",
+      "serviceId": "03861060-a202-432f-810e-3aab203188e1",
+      "staffId": "10db531b-bdce-4be8-afe7-3416340ff539",
+    },
+    {
+      "id": "a3b34726-5944-4dd8-bf76-23ac7d3abe94",
+      "serviceId": "06659662-1aae-43dd-972a-260dee1f3ed8",
+      "staffId": "10db531b-bdce-4be8-afe7-3416340ff539",
+    },
+    {
+      "id": "b094b4cf-b949-4c0d-82e8-aa7231007c65",
+      "serviceId": "081af485-b176-46f4-8ec3-29bcc49508c9",
+      "staffId": "468f9815-c38f-4cd7-96c2-7ae6b36bcde0",
+    },
+    {
+      "id": "a8625dd6-883c-4cd3-8a30-d9514577a4d6",
+      "serviceId": "0851495e-b516-4e2b-a490-0f5e685f3b68",
+      "staffId": "ed01c7af-8e50-47ef-b30f-8f96062c3f8f",
+    },
+    {
+      "id": "7854a3ab-cab3-45b5-8f5a-c9fafb28a15e",
+      "serviceId": "0a8f009c-be2b-4176-b348-823d62060fc6",
+      "staffId": "8876e6f3-8892-42a3-96d7-35c053bb6330",
+    },
+    {
+      "id": "0b53beef-a0e6-4069-ab27-07b48db7e1c4",
+      "serviceId": "179f8fae-275e-49c1-8ad9-ef10b33854c7",
+      "staffId": "8876e6f3-8892-42a3-96d7-35c053bb6330",
+    },
+    {
+      "id": "2c70eb46-d9fd-4362-9c6d-6a80b62a85b0",
+      "serviceId": "18c5c8f5-baa4-4e9b-bad7-7b49acd8ac62",
+      "staffId": "537cdc3c-c554-4ac0-8b7c-5acac8bcb8d0",
+    },
+    {
+      "id": "5c610aac-dbeb-48a0-a33f-f969df033e22",
+      "serviceId": "1b87687c-254a-4160-a2da-a518520c19ae",
+      "staffId": "be919956-653e-4546-9444-84b1ab7f5b76",
+    },
+    {
+      "id": "cfadb56a-91ff-4ee7-868a-60c6c621f4e8",
+      "serviceId": "1be5cfba-dcd7-46a4-bfee-a5f7b1abbb20",
+      "staffId": "802f15da-527c-448e-81c7-e0ce4a51ecec",
+    },
+    {
+      "id": "cbfe6791-7d55-47d5-a126-338ca64b6b31",
+      "serviceId": "1de5f168-0255-4599-8c53-c101ad0cdc96",
+      "staffId": "802f15da-527c-448e-81c7-e0ce4a51ecec",
+    },
+    {
+      "id": "476f4792-7cf4-4461-80f5-cdddd0538cd5",
+      "serviceId": "209fd0ea-5389-43aa-ad45-30eddd0c32ce",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "1a0e647f-f293-48eb-a144-f01acd886eb8",
+      "serviceId": "26190bdc-9647-4d42-b06c-3f0b0fee3441",
+      "staffId": "be919956-653e-4546-9444-84b1ab7f5b76",
+    },
+    {
+      "id": "cace7355-4493-436a-bd37-329327dd1c13",
+      "serviceId": "28a3145d-6b17-4c63-a002-b0ccac96493e",
+      "staffId": "9cd22acf-2ad1-419f-96e1-4901ff4e804b",
+    },
+    {
+      "id": "504c9e22-2086-41e5-a312-128ab51964af",
+      "serviceId": "29bedd98-d936-4203-984f-d1797be4ef0b",
+      "staffId": "9591770e-59b5-4a7f-9ba7-9da643b3b01a",
+    },
+    {
+      "id": "419e20f7-ab11-4426-ad00-d1adc515aceb",
+      "serviceId": "29f44708-f88f-4232-802a-95027d7de1fa",
+      "staffId": "bd7f7cc6-c30a-4c9c-be72-50b487442b48",
+    },
+    {
+      "id": "b9465f17-3ac8-4f23-90eb-6f1321b0f58c",
+      "serviceId": "2dd72ac4-5d84-4aa7-9797-fce1fdcc8d8c",
+      "staffId": "53eea042-8b00-4be1-9051-c5c00a358fd9",
+    },
+    {
+      "id": "061d03ef-9f0b-4d46-85c3-9a3b8b3d9f95",
+      "serviceId": "2f8c6004-33ed-4115-a425-f4ba9c019409",
+      "staffId": "be919956-653e-4546-9444-84b1ab7f5b76",
+    },
+    {
+      "id": "c918c310-b0bf-4991-964a-19587502802b",
+      "serviceId": "326d9f37-c2b5-4e91-89c1-e6d0cc9afa32",
+      "staffId": "10193730-c32d-4989-9aeb-3e4c4e7e188a",
+    },
+    {
+      "id": "7b70313d-a481-41fb-852c-3effa20051c1",
+      "serviceId": "335add8c-a208-43a5-a9df-4a75212e2e7d",
+      "staffId": "0659acb3-f071-4fdf-822f-f45a9b46b78a",
+    },
+    {
+      "id": "2de40bbd-d3e3-4b9c-a3dd-ba8204608090",
+      "serviceId": "355b1c52-08e5-461c-a4fb-fa0d0e0fa940",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "011f6654-da72-4a18-b88c-6fabfd670177",
+      "serviceId": "360087c9-2136-411d-a8f0-22df4d81bafa",
+      "staffId": "802f15da-527c-448e-81c7-e0ce4a51ecec",
+    },
+    {
+      "id": "5e319734-66a7-4f1b-9391-588ae25f5801",
+      "serviceId": "36830254-7603-49f4-80ac-14c0b9ca121c",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "0ed22d77-ef28-4c02-aa5b-593260c8bd5b",
+      "serviceId": "391e9e71-1fd9-4d94-8d8d-587ac3095c6a",
+      "staffId": "351bbda5-ac7a-4e2d-a499-0c47e4135c8c",
+    },
+    {
+      "id": "9b6e7cc5-1b1a-47fa-9d1d-8cc6ca4d1034",
+      "serviceId": "392c931c-c5e1-47db-ae80-186d2a96cce5",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "e77fed26-a798-43c1-9d99-75fabe876750",
+      "serviceId": "39b83cb7-dabf-4bcd-8903-34c535d9fa81",
+      "staffId": "983dd0ca-61f4-487b-89a5-d9109d9d252d",
+    },
+    {
+      "id": "cb6f838f-bea7-4392-ac58-aa5cdba05d6e",
+      "serviceId": "3a1c11e9-3d92-4b55-85a7-aa0e8812d725",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "4598da79-7ddc-47bc-8ddd-067efedcf357",
+      "serviceId": "43ca0fb2-44c7-4a33-a447-02ab02a49663",
+      "staffId": "0659acb3-f071-4fdf-822f-f45a9b46b78a",
+    },
+    {
+      "id": "1fce8f21-9357-42ae-b678-7b901344c470",
+      "serviceId": "450a78c4-1776-4dc5-9850-8f5062013f5b",
+      "staffId": "9cd22acf-2ad1-419f-96e1-4901ff4e804b",
+    },
+    {
+      "id": "ee12d498-182d-4f59-9ace-83dc5191f94a",
+      "serviceId": "4654175b-4cef-4637-9803-77fcdfbe2cf8",
+      "staffId": "be919956-653e-4546-9444-84b1ab7f5b76",
+    },
+    {
+      "id": "1df6ecc6-4e92-412e-9fed-7386cd110321",
+      "serviceId": "4b6c3fc8-d4f9-4d78-8975-8fe6ceb70e92",
+      "staffId": "537cdc3c-c554-4ac0-8b7c-5acac8bcb8d0",
+    },
+    {
+      "id": "c231b5f4-d671-4569-bca8-01a8e14485e4",
+      "serviceId": "4d5c048b-8d64-46e1-90a4-1bd904943795",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "a40be2f0-f44b-4055-bc94-b066e628bb48",
+      "serviceId": "4d846a21-e5f8-49f2-a967-d3a94fdf8864",
+      "staffId": "802f15da-527c-448e-81c7-e0ce4a51ecec",
+    },
+    {
+      "id": "22c0bd61-0e9e-4c68-8d99-53f3daf43dd3",
+      "serviceId": "4eff135e-2db7-40b7-acaa-98ab47190114",
+      "staffId": "c7bf00c8-537b-4756-a78f-98c3bfe28fc6",
+    },
+    {
+      "id": "29ff0001-1c10-4804-a608-a095f031ada1",
+      "serviceId": "501f51e5-9844-428f-b021-769667aaa312",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "11e6a1a5-f7ea-4438-839b-306807429dea",
+      "serviceId": "514a02c8-6986-4155-a199-edfd734ae0f8",
+      "staffId": "bd7f7cc6-c30a-4c9c-be72-50b487442b48",
+    },
+    {
+      "id": "b129b556-8d9c-40f7-b374-76093b5efb88",
+      "serviceId": "549854a7-c1ae-4899-93a7-89854f339890",
+      "staffId": "c7bf00c8-537b-4756-a78f-98c3bfe28fc6",
+    },
+    {
+      "id": "40ba0ac7-18ae-4c4c-9d5a-78148bb8c108",
+      "serviceId": "57e54c18-bf04-4052-8156-686b4cf06687",
+      "staffId": "8876e6f3-8892-42a3-96d7-35c053bb6330",
+    },
+    {
+      "id": "75da7ce4-8af5-415d-9a19-adb34b656dab",
+      "serviceId": "58edfa34-0e84-419e-95fe-f4af36bc1099",
+      "staffId": "9cd22acf-2ad1-419f-96e1-4901ff4e804b",
+    },
+    {
+      "id": "0a7ff16c-e918-4471-9893-3523466f5cb4",
+      "serviceId": "5b83e2e7-aa86-480b-8b57-eeec355d1b03",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "e193f294-b804-4e74-b4d5-ac62aeb80063",
+      "serviceId": "5d7158db-5005-48de-87e3-41de50e24521",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "e5827621-3f71-4032-8598-8549cdbda8da",
+      "serviceId": "601e4598-e1aa-4804-abc8-6d0b7cc08fd6",
+      "staffId": "c7bf00c8-537b-4756-a78f-98c3bfe28fc6",
+    },
+    {
+      "id": "6167282c-2d01-4736-b06c-cb0c1f242a3b",
+      "serviceId": "65e1c5c6-dd89-4fba-b71b-666b0581a236",
+      "staffId": "537cdc3c-c554-4ac0-8b7c-5acac8bcb8d0",
+    },
+    {
+      "id": "4f3b5972-ab91-48c5-8b76-4841d9d0d0be",
+      "serviceId": "6695f1d1-d96b-49cd-bda2-1bc4a9caaee0",
+      "staffId": "468f9815-c38f-4cd7-96c2-7ae6b36bcde0",
+    },
+    {
+      "id": "fd8410b0-ebb1-4626-ae17-9ee62c36ae6b",
+      "serviceId": "66ab7e77-f7a4-4b6c-8200-6941164d4fc0",
+      "staffId": "9591770e-59b5-4a7f-9ba7-9da643b3b01a",
+    },
+    {
+      "id": "c5bb7570-f83e-43d3-b3ae-461469203aa5",
+      "serviceId": "6b291339-4335-45fd-af55-0c7ecbd60474",
+      "staffId": "983dd0ca-61f4-487b-89a5-d9109d9d252d",
+    },
+    {
+      "id": "6741af10-ff4a-4632-9edb-607049bd5e19",
+      "serviceId": "6fdde07d-81f5-4040-be9b-767cc0215f40",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "753fd92c-4839-4d04-9d4b-03b44836fb20",
+      "serviceId": "71e8c566-9c54-4933-b8a8-a89ed4b2a99d",
+      "staffId": "9cd22acf-2ad1-419f-96e1-4901ff4e804b",
+    },
+    {
+      "id": "e2d1cadf-9d8a-4b78-9658-326374b34a55",
+      "serviceId": "7472e7c7-c839-484c-bf6e-49b4a5fdc864",
+      "staffId": "ed01c7af-8e50-47ef-b30f-8f96062c3f8f",
+    },
+    {
+      "id": "0d7271f1-8a38-4ae5-b9dd-58caee6a19dd",
+      "serviceId": "753ad252-2ed5-4da9-89ea-4203a744db49",
+      "staffId": "0659acb3-f071-4fdf-822f-f45a9b46b78a",
+    },
+    {
+      "id": "d16430a5-fa1c-478a-acf1-8ee23193aeb1",
+      "serviceId": "7bbfae6e-b6ff-403b-82bb-6d5b12319158",
+      "staffId": "c7bf00c8-537b-4756-a78f-98c3bfe28fc6",
+    },
+    {
+      "id": "22948358-ebf8-4aa2-95a6-c26615af1fad",
+      "serviceId": "824e2b8b-e831-4541-9a45-2a54ae9b0c4c",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "c8b565f2-b4d7-40ff-97a8-3638694c8017",
+      "serviceId": "82e60402-e65b-48c5-acc1-e95cb62186f9",
+      "staffId": "ed01c7af-8e50-47ef-b30f-8f96062c3f8f",
+    },
+    {
+      "id": "e2aa3cc4-1f32-440d-8b39-fe8a221f9dea",
+      "serviceId": "84352a7b-79a1-444e-a100-22d5c4dabb46",
+      "staffId": "ed01c7af-8e50-47ef-b30f-8f96062c3f8f",
+    },
+    {
+      "id": "8a115ae4-8d2e-4841-bc0b-4064aaae4780",
+      "serviceId": "845ed3fe-f137-4693-b80b-652b10249918",
+      "staffId": "6b414f29-cc4e-420c-adb5-fb2887b37a6a",
+    },
+    {
+      "id": "0ee68d9f-995b-4c57-a472-00bc628ad711",
+      "serviceId": "8529fa35-d948-48c0-85ad-7f1723ca7293",
+      "staffId": "53eea042-8b00-4be1-9051-c5c00a358fd9",
+    },
+    {
+      "id": "3e29f647-6c02-4734-af58-c2ae68599f5b",
+      "serviceId": "88a011fc-6c83-4a49-b750-5a61d06dc797",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "ed512802-0fc1-4d0c-9f45-2833705ac889",
+      "serviceId": "8cc00cb2-c8a4-47c0-8849-32ce6291f8bc",
+      "staffId": "bd7f7cc6-c30a-4c9c-be72-50b487442b48",
+    },
+    {
+      "id": "8cab049c-3530-430e-8044-85a4678e5762",
+      "serviceId": "8dae1245-4642-4d15-a338-52e88e21bc18",
+      "staffId": "537cdc3c-c554-4ac0-8b7c-5acac8bcb8d0",
+    },
+    {
+      "id": "e886f807-8492-44f1-ab09-93bc3214ef79",
+      "serviceId": "928edd8e-1ed2-4b28-a73e-6f1a12028b2d",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "5d6c6c1d-73ca-42a8-90e9-0cdb1a66d186",
+      "serviceId": "94fe6660-e196-4d3f-a3b6-1c614d41f439",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "fac4dbce-ad91-4b01-95c4-01eccadba6e6",
+      "serviceId": "952fe9ae-b0c7-4e7c-89e3-be4914fb40b7",
+      "staffId": "9591770e-59b5-4a7f-9ba7-9da643b3b01a",
+    },
+    {
+      "id": "8f319a17-2ceb-4b91-8b06-c4d7d6b8390f",
+      "serviceId": "95f58ca9-0fae-4aba-a5f3-f1a8819ac173",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "3d316fc9-7aad-4f14-be41-c399ef1728cd",
+      "serviceId": "964a9011-c8e8-4b27-b773-67f83af9aff6",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "381a88b6-74da-46c0-ac2a-b1f1df796d8a",
+      "serviceId": "976f2107-33f7-4529-a1a9-da874364f973",
+      "staffId": "983dd0ca-61f4-487b-89a5-d9109d9d252d",
+    },
+    {
+      "id": "440a669b-19dc-4e6f-9a1a-90b53d75efd1",
+      "serviceId": "9a8ac3f2-0606-4c3b-bb05-217248b68f89",
+      "staffId": "bd7f7cc6-c30a-4c9c-be72-50b487442b48",
+    },
+    {
+      "id": "93dac917-43d5-493e-816e-e04256e847db",
+      "serviceId": "9d4a7897-4c04-4626-92cf-e772d4776368",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "258e7541-cdf4-4474-bd30-8191096889f3",
+      "serviceId": "9f9afed5-a7e0-463e-8c63-e37c3ed27f74",
+      "staffId": "be919956-653e-4546-9444-84b1ab7f5b76",
+    },
+    {
+      "id": "1aa78e51-5b01-4a74-8e11-c41e3d2842d6",
+      "serviceId": "a4172090-d35f-44d6-9c8f-a4fe62dfcbb7",
+      "staffId": "10193730-c32d-4989-9aeb-3e4c4e7e188a",
+    },
+    {
+      "id": "541bf699-0f88-4810-bb17-5038d412f447",
+      "serviceId": "a61909fb-89ff-4e99-923f-922b36c0f8db",
+      "staffId": "c7bf00c8-537b-4756-a78f-98c3bfe28fc6",
+    },
+    {
+      "id": "692bc0e2-82df-4ab1-9b54-ef9685df5923",
+      "serviceId": "aa46f53c-01b5-4b51-a0bb-0d4e255e8164",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "52c09315-a89e-4dbc-8a92-a0491381742e",
+      "serviceId": "b0ffb9b2-83f1-4d29-aa51-728eb37c7cc5",
+      "staffId": "53eea042-8b00-4be1-9051-c5c00a358fd9",
+    },
+    {
+      "id": "46dcafbb-3c55-49d6-ab90-93d4854b71b5",
+      "serviceId": "b527d5a0-1f08-4c9b-b905-9ae5b431b70c",
+      "staffId": "983dd0ca-61f4-487b-89a5-d9109d9d252d",
+    },
+    {
+      "id": "9220a4ea-737c-46f9-8d64-e8683e08e24e",
+      "serviceId": "bd07182b-e95c-426f-9ddc-522c6c851b5b",
+      "staffId": "10193730-c32d-4989-9aeb-3e4c4e7e188a",
+    },
+    {
+      "id": "1b73453c-2682-405c-a0cc-2582b9bf404e",
+      "serviceId": "be39f394-53ee-497f-b39d-4d191bcaf357",
+      "staffId": "be919956-653e-4546-9444-84b1ab7f5b76",
+    },
+    {
+      "id": "004178d4-d446-4271-b9a8-2d2c28cb8cd9",
+      "serviceId": "c0b7148a-2d2b-4341-bc17-c9d60b460047",
+      "staffId": "b01174d5-8c27-4ba1-942f-2c76506a4862",
+    },
+    {
+      "id": "2b866b03-d6df-4407-aa7e-f639cc132f93",
+      "serviceId": "c13f72f3-4334-4047-8d2f-a3999f412b85",
+      "staffId": "468f9815-c38f-4cd7-96c2-7ae6b36bcde0",
+    },
+    {
+      "id": "67ce5886-350d-4c6e-b96c-8cf7e8e8f5a8",
+      "serviceId": "c17b9a58-3905-4aaa-ad84-96d017177013",
+      "staffId": "6b414f29-cc4e-420c-adb5-fb2887b37a6a",
+    },
+    {
+      "id": "711af9a5-3954-41db-9631-bcc624018728",
+      "serviceId": "c5f0fb23-c51a-48e8-a5aa-88965a3144a7",
+      "staffId": "468f9815-c38f-4cd7-96c2-7ae6b36bcde0",
+    },
+    {
+      "id": "deefed30-b0c9-4600-9445-256796cf5f31",
+      "serviceId": "c6554f1b-3970-45ca-9d1a-f4a0f92de745",
+      "staffId": "9cd22acf-2ad1-419f-96e1-4901ff4e804b",
+    },
+    {
+      "id": "a86b779c-54e7-4e1e-bc78-51d12be39115",
+      "serviceId": "c7e20280-6746-4edb-9a7c-8ff29c324eea",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "082a5642-efed-4eef-a96b-616d5d49fa07",
+      "serviceId": "c8f335a2-25f3-479a-b8c9-50e5297f8a34",
+      "staffId": "10193730-c32d-4989-9aeb-3e4c4e7e188a",
+    },
+    {
+      "id": "f88ff587-b0b3-4cac-90d4-ecb2e865a05a",
+      "serviceId": "cb0b7afc-8097-46bf-9572-00de031d8e64",
+      "staffId": "983dd0ca-61f4-487b-89a5-d9109d9d252d",
+    },
+    {
+      "id": "12df9a29-6657-40c1-8087-8c6aac00e7e3",
+      "serviceId": "cc35c70f-05df-4e13-bdd2-8d3cccde6fa0",
+      "staffId": "53eea042-8b00-4be1-9051-c5c00a358fd9",
+    },
+    {
+      "id": "490ab500-4c36-473f-80c3-4592c6bc1aee",
+      "serviceId": "d15e78a5-15da-47f8-a165-aa7a1f61657c",
+      "staffId": "bd7f7cc6-c30a-4c9c-be72-50b487442b48",
+    },
+    {
+      "id": "8cfec9e8-8e1d-4eae-b9b4-464b860f40d7",
+      "serviceId": "d1a85619-efba-497c-b854-a47a8c66b3c2",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "d8b1062c-aa42-4fd3-a6a8-e54484f9d69e",
+      "serviceId": "d3f1698a-579c-4dab-acab-c2d526569448",
+      "staffId": "c7bf00c8-537b-4756-a78f-98c3bfe28fc6",
+    },
+    {
+      "id": "cf2620b7-a586-4f08-90b5-666ddd5d2579",
+      "serviceId": "d78c9717-9361-4383-8009-ff4b4766efbf",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "d2332dc6-8fde-4381-acbe-f622ce8e7243",
+      "serviceId": "dbc68074-704e-4de2-9510-e34f3cc50ca8",
+      "staffId": "0659acb3-f071-4fdf-822f-f45a9b46b78a",
+    },
+    {
+      "id": "968ba057-9cbf-4591-983e-7e500eab6c8b",
+      "serviceId": "dbf0a495-0321-4d28-8b87-7770642faa02",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "d21908e2-8dc2-4016-b081-ee15c8c1f38b",
+      "serviceId": "e00f6d6f-3a4a-4e55-8ddd-6f5b2727a5cd",
+      "staffId": "10db531b-bdce-4be8-afe7-3416340ff539",
+    },
+    {
+      "id": "c9cc9aef-f53c-4776-94d7-6ff1fc104529",
+      "serviceId": "e0408764-e6bd-4c00-bd69-074fdd206c15",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
+    },
+    {
+      "id": "f3a2fbd9-9d7f-45f7-9538-02759222e145",
+      "serviceId": "e56aadd7-c402-4428-a302-acb1fc4e87eb",
+      "staffId": "bd7f7cc6-c30a-4c9c-be72-50b487442b48",
+    },
+    {
+      "id": "716f703e-8057-4709-b3b6-016a20454775",
+      "serviceId": "e6fff1c2-a36a-414c-9256-1dafa2a979be",
+      "staffId": "b01174d5-8c27-4ba1-942f-2c76506a4862",
+    },
+    {
+      "id": "6297ba57-3d22-4cc7-b979-2a61c0c36a11",
+      "serviceId": "e8f0a7bd-a60d-4e68-9224-6876b38cad7c",
+      "staffId": "59887a12-eba5-4d72-908f-0be03fa0a028",
+    },
+    {
+      "id": "5d643a5f-0472-4889-97e6-787c330b27ef",
+      "serviceId": "eca2a955-dbff-4cc6-876d-b60044be9f67",
+      "staffId": "9cd22acf-2ad1-419f-96e1-4901ff4e804b",
+    },
+    {
+      "id": "a8ad3f5f-9cf2-4cbf-aaab-5876a1f98460",
+      "serviceId": "ed7c6c1c-448b-423a-88a3-d98f6f734ebe",
+      "staffId": "802f15da-527c-448e-81c7-e0ce4a51ecec",
+    },
+    {
+      "id": "0f8d245a-8539-41f4-bded-e379fe08f3e0",
+      "serviceId": "f473e8c7-80cf-4787-9e10-6dbd79d5877d",
+      "staffId": "53eea042-8b00-4be1-9051-c5c00a358fd9",
+    },
+    {
+      "id": "d7367cb9-d67a-499d-83a0-7e8e2934b20b",
+      "serviceId": "f8408180-afba-428f-be89-069f699e128e",
+      "staffId": "983dd0ca-61f4-487b-89a5-d9109d9d252d",
+    },
+    {
+      "id": "4c956122-5127-4ed7-9dee-f2a4b4341e83",
+      "serviceId": "f944d9a0-64b7-4056-b8f7-f0ba50fe2c73",
+      "staffId": "b01174d5-8c27-4ba1-942f-2c76506a4862",
+    },
+    {
+      "id": "f0c20775-983c-4904-96ab-d10e2fec3bda",
+      "serviceId": "fbbb1ad5-98bc-495e-8d8a-029fb908291c",
+      "staffId": "ed01c7af-8e50-47ef-b30f-8f96062c3f8f",
+    },
+    {
+      "id": "4eca05f4-2ebf-47da-904e-8f18e40d61a5",
+      "serviceId": "fdbf28c0-c9c1-4327-b884-221bfbdd7cbb",
+      "staffId": "e32834c4-b5b2-4f2a-bb9b-e1e925a802e8",
     }
   ],
   "gallery": [
@@ -6775,6 +7595,88 @@ const data: SeedData = {
   ]
 };
 
+/**
+ * Extra administrator accounts this seed used to create, now retired.
+ *
+ * The dataset carries exactly one admin — `admin` — because a second and third
+ * one only ever existed as leftovers from manual testing, and every extra admin
+ * is another account that can approve anything in any office. Dropping them from
+ * the rows above stops a fresh database from getting them, but the seed is an
+ * upsert: a database seeded earlier still holds them. So they are deleted here
+ * by id, which is why the ids outlive the rows.
+ */
+const RETIRED_ADMIN_IDS = [
+  "49e8f5ff-d7c3-4519-9112-ef80062780b0", // admin3
+  "e1ce808d-c5d0-4b18-9369-07615f154878", // admin2
+] as const;
+
+/**
+ * Fails before the first write if the dataset would leave any service without a
+ * staff member, or any office without someone to work it.
+ *
+ * A request is only ever shown to staff the service is assigned to — see
+ * `listRequests` — so a service with no assignment accepts applications that
+ * then reach nobody: the customer waits, and no desk ever sees the request.
+ * That is a data mistake with no symptom until someone complains, so it is
+ * checked here rather than discovered in production.
+ */
+function assertEveryServiceIsStaffed(): void {
+  const roleById = new Map(data.role.map((r: any) => [r.id, r.name as string]));
+  const userById = new Map(data.user.map((u: any) => [u.id, u]));
+  const staffById = new Map(data.staff.map((s: any) => [s.id, s]));
+  const officeById = new Map(data.office.map((o: any) => [o.id, o]));
+
+  const problems: string[] = [];
+  const nameOf = (officeId: string) =>
+    (officeById.get(officeId) as any)?.name ?? officeId;
+
+  // Every office needs someone to review (staff) and someone to sign off
+  // (manager, or the admin office's admin).
+  for (const office of data.office as any[]) {
+    const rows = (data.staff as any[]).filter((s) => s.officeId === office.id);
+    const rolesHeld = new Set(
+      rows.map((s) => roleById.get((userById.get(s.userId) as any)?.roleId)),
+    );
+    if (!rolesHeld.has("staff")) {
+      problems.push(`office "${office.name}" has no staff member`);
+    }
+    if (!rolesHeld.has("manager") && !rolesHeld.has("admin")) {
+      problems.push(`office "${office.name}" has no manager`);
+    }
+  }
+
+  // Every service needs at least one assignee, and an assignee only counts if
+  // they work in the office that owns the service — the same rule the API
+  // enforces in `assignStaff`.
+  for (const service of data.service as any[]) {
+    const assignees = (data.serviceStaffAssignment as any[])
+      .filter((a) => a.serviceId === service.id)
+      .map((a) => staffById.get(a.staffId) as any);
+
+    if (assignees.length === 0) {
+      problems.push(
+        `service "${service.name}" (${nameOf(service.officeId)}) has no staff assigned`,
+      );
+      continue;
+    }
+    for (const assignee of assignees) {
+      if (!assignee) {
+        problems.push(`service "${service.name}" is assigned to an unknown staff row`);
+      } else if (assignee.officeId !== service.officeId) {
+        problems.push(
+          `service "${service.name}" is assigned to staff from another office`,
+        );
+      }
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      `Seed data is inconsistent:\n  - ${problems.join("\n  - ")}`,
+    );
+  }
+}
+
 /** ISO string -> Date. Every timestamp in the dataset is already ISO/UTC. */
 const d = (v: unknown): Date => new Date(v as string);
 
@@ -6801,6 +7703,9 @@ async function seed<T>(
 
 async function main() {
   console.log("🌱 Seeding East Shoa E-Service data...\n");
+
+  // Cheaper to fail here than to leave a service nobody can act on.
+  assertEveryServiceIsStaffed();
 
   // Order below follows foreign keys: a row is only written once everything it
   // points at already exists.
@@ -6898,6 +7803,18 @@ async function main() {
         phoneVerified: r.phoneVerified,
       },
     }),
+  );
+
+  // Only after the remaining users exist, so the system is never briefly
+  // without an administrator. Cascades take their sessions and notifications
+  // with them; neither account owns any seeded data.
+  const pruned = await prisma.user.deleteMany({
+    where: { id: { in: [...RETIRED_ADMIN_IDS] } },
+  });
+  console.log(
+    pruned.count > 0
+      ? `   retired admins removed: ${pruned.count}`
+      : "   retired admins: none left to remove",
   );
 
   await seed("staff", data.staff, (r: any) =>

@@ -45,6 +45,39 @@ function PopoverAnchor({
   return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
 }
 
+/**
+ * A scrim behind an open popover, for panels that are a destination rather than
+ * a hint — a notification list, say — where the page behind should visibly
+ * recede instead of competing with it.
+ *
+ * Radix has no `Popover.Overlay`, so this is a plain element inside the
+ * popover's own portal: it mounts and unmounts with `open`, escapes any
+ * stacking or containing block the trigger sits in (a `backdrop-blur` header is
+ * a containing block for fixed children, so a scrim rendered in place would be
+ * the size of the header), and sits between the page and the content at z-50.
+ *
+ * It is clickable on purpose. Dismissal is already handled by the content's
+ * outside-press, and catching the press here stops that same click from also
+ * landing on whatever sits underneath. Styled to match `DialogOverlay`.
+ *
+ * Render it as a sibling before `PopoverContent`, inside `Popover`.
+ */
+function PopoverOverlay({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <PopoverPrimitive.Portal>
+      <div
+        data-slot="popover-overlay"
+        aria-hidden="true"
+        className={cn(
+          "fixed inset-0 z-40 bg-black/10 duration-100 animate-in fade-in-0 supports-backdrop-filter:backdrop-blur-xs",
+          className
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
+  )
+}
+
 function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -84,6 +117,7 @@ export {
   PopoverContent,
   PopoverDescription,
   PopoverHeader,
+  PopoverOverlay,
   PopoverTitle,
   PopoverTrigger,
 }

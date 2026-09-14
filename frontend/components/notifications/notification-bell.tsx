@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
+  PopoverOverlay,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { usePushStore } from "@/lib/stores/push-store";
 import {
@@ -115,13 +115,22 @@ export function NotificationBell() {
         </Button>
       </PopoverTrigger>
 
+      <PopoverOverlay />
+
+      {/*
+        The panel is a column that never outgrows the space below the bell:
+        `--radix-popover-content-available-height` is the gap Radix measured to
+        the bottom of the viewport. Everything but the list is `shrink-0`, so the
+        list is the only part that gives, and `overflow-hidden` keeps the rounded
+        corners clipping it.
+      */}
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-[min(24rem,calc(100vw-1.5rem))] p-0"
+        className="flex max-h-[min(32rem,var(--radix-popover-content-available-height))] w-[min(24rem,calc(100vw-1.5rem))] flex-col overflow-hidden p-0"
       >
         {/* ── Header ─────────────────────────────────────── */}
-        <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-2.5">
           <div className="flex min-w-0 items-center gap-2">
             <h2 className="text-sm font-semibold">{t("Notifications")}</h2>
             {unreadCount > 0 && (
@@ -144,11 +153,11 @@ export function NotificationBell() {
           )}
         </div>
 
-        <Separator />
+        <Separator className="shrink-0" />
 
         {/* ── Enable-push prompt ─────────────────────────── */}
         {canOfferPush && (
-          <div className="flex items-start gap-3 bg-primary/[0.06] px-3 py-3">
+          <div className="flex shrink-0 items-start gap-3 bg-primary/[0.06] px-3 py-3">
             <Bell className="mt-0.5 size-4 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium">{t("Get notified instantly")}</p>
@@ -169,7 +178,7 @@ export function NotificationBell() {
         )}
 
         {pushPermission === "denied" && (
-          <div className="flex items-start gap-2 bg-muted/50 px-3 py-2.5">
+          <div className="flex shrink-0 items-start gap-2 bg-muted/50 px-3 py-2.5">
             <BellOff className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
             <p className="text-[11px] text-muted-foreground">
               {t("Browser notifications are blocked for this site. Re-enable them in your browser's site settings to get instant alerts.")}
@@ -194,24 +203,33 @@ export function NotificationBell() {
             </p>
           </div>
         ) : (
-          <ScrollArea className="max-h-[22rem]">
-            <div className="min-w-0">
-              {recent.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onSelect={handleSelect}
-                  dense
-                />
-              ))}
-            </div>
-          </ScrollArea>
+          /*
+            A plain scroll container rather than ScrollArea. Radix sizes its
+            viewport with `height: 100%`, which against a parent that only has a
+            `max-height` resolves to `auto` — the viewport grew to the full list
+            and spilled out over the page instead of scrolling, which is why the
+            footer used to appear halfway up the list.
+
+            `min-h-0` is what lets this flex child shrink below its content, and
+            `overscroll-contain` keeps a flick at the end of the list from
+            scrolling the page behind the panel.
+          */
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
+            {recent.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onSelect={handleSelect}
+                dense
+              />
+            ))}
+          </div>
         )}
 
-        <Separator />
+        <Separator className="shrink-0" />
 
         {/* ── Footer ─────────────────────────────────────── */}
-        <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+        <div className="flex shrink-0 items-center justify-between gap-2 px-2 py-1.5">
           <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
             <Link href="/notifications" onClick={() => setOpen(false)}>
               {t("View all")}

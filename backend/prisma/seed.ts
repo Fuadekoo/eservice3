@@ -6,10 +6,16 @@ import { prisma } from "../src/lib/db.ts";
  * Seeds the real East Shoa dataset (previously exported to seed-data.json,
  * now embedded directly in this file as a typed constant).
  *
+ * Re-running is safe and additive: rows already in the database are skipped,
+ * never overwritten, so a service an office has since renamed keeps its new
+ * name and a password someone has changed keeps working. Only what is missing
+ * gets written — see `seed` below.
+ *
  * Passwords: the exported rows carried per-user bcrypt hashes from the live
- * database. Those are intentionally discarded here — every seeded user is given
- * the shared development password below, hashed with bcrypt at seed time, so the
- * database still stores an encrypted value (never plaintext).
+ * database. Those are intentionally discarded here — an account this seed
+ * creates is given the shared development password below, hashed with bcrypt at
+ * seed time, so the database still stores an encrypted value (never plaintext).
+ * An account that already exists is left with the password it has.
  *
  * Runtime tables (session, otp, audit_log) and transactional ones (request,
  * requestForOther, appointment, customerSatisfaction, fileData) are
@@ -29,7 +35,8 @@ const SEED_PASSWORD = "password123";
 /**
  * The shared password, bcrypt-hashed once at module load. Every user row below
  * references this directly, so the seed data never carries a plaintext value or
- * a stale per-user hash — the database always stores this single encrypted hash.
+ * a stale per-user hash — a newly created account always stores this single
+ * encrypted hash.
  */
 const hashedPassword = await hash(SEED_PASSWORD, 10);
 
@@ -7601,9 +7608,10 @@ const data: SeedData = {
  * The dataset carries exactly one admin — `admin` — because a second and third
  * one only ever existed as leftovers from manual testing, and every extra admin
  * is another account that can approve anything in any office. Dropping them from
- * the rows above stops a fresh database from getting them, but the seed is an
- * upsert: a database seeded earlier still holds them. So they are deleted here
- * by id, which is why the ids outlive the rows.
+ * the rows above stops a fresh database from getting them, but the seed only
+ * ever inserts: a database seeded earlier still holds them, and nothing else
+ * here would ever take them away. So they are deleted by id — the one removal
+ * this seed performs, and why the ids outlive the rows.
  */
 const RETIRED_ADMIN_IDS = [
   "49e8f5ff-d7c3-4519-9112-ef80062780b0", // admin3
@@ -7681,24 +7689,50 @@ function assertEveryServiceIsStaffed(): void {
 const d = (v: unknown): Date => new Date(v as string);
 
 /**
- * Upserts are issued in batches inside a transaction: one round trip per row
- * would make a 2,000-row seed needlessly slow, and upsert keeps it re-runnable.
+ * Inserts run in batches: one round trip per row would make a 2,000-row seed
+ * needlessly slow.
  */
 const CHUNK = 100;
 
+/**
+ * Inserts the rows that are not there yet and leaves every row already in the
+ * database exactly as it is.
+ *
+ * This used to upsert, which made each re-run overwrite whatever the offices had
+ * changed since — a renamed service, a corrected phone number, a password
+ * someone had reset — with the values frozen in this file. Every insert now
+ * carries `skipDuplicates`, so a row whose id (or, for the two tables keyed on a
+ * pair, whose unique combination) already exists is dropped by the database
+ * instead of colliding or overwriting. Re-running the seed therefore fills in
+ * only what is new, and on an up-to-date database does nothing at all.
+ *
+ * `skipDuplicates` is `INSERT IGNORE` on MySQL, which also downgrades a foreign
+ * key violation to a warning rather than an error. The per-table counts below
+ * are what makes that visible: a table reporting fewer rows created than were
+ * missing is pointing at something the dataset references but the database does
+ * not have.
+ */
 async function seed<T>(
   label: string,
   rows: T[],
-  toOp: (row: T) => Prisma.PrismaPromise<unknown>,
+  insert: (batch: T[]) => Prisma.PrismaPromise<{ count: number }>,
 ): Promise<void> {
   if (rows.length === 0) {
     console.log(`   ${label}: nothing to seed`);
     return;
   }
+
+  let created = 0;
   for (let i = 0; i < rows.length; i += CHUNK) {
-    await prisma.$transaction(rows.slice(i, i + CHUNK).map(toOp));
+    const result = await insert(rows.slice(i, i + CHUNK));
+    created += result.count;
   }
-  console.log(`   ${label}: ${rows.length}`);
+
+  console.log(
+    created === 0
+      ? `   ${label}: all ${rows.length} already present — skipped`
+      : `   ${label}: ${created} created, ${rows.length - created} skipped`,
+  );
 }
 
 async function main() {
@@ -7710,34 +7744,21 @@ async function main() {
   // Order below follows foreign keys: a row is only written once everything it
   // points at already exists.
 
-  await seed("permissions", data.permission, (r: any) =>
-    prisma.permission.upsert({
-      where: { id: r.id },
-      update: { code: r.code, name: r.name, description: r.description },
-      create: {
+  await seed("permissions", data.permission, (batch) =>
+    prisma.permission.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         code: r.code,
         name: r.name,
         description: r.description,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("offices", data.office, (r: any) =>
-    prisma.office.upsert({
-      where: { id: r.id },
-      update: {
-        name: r.name,
-        phoneNumber: r.phoneNumber,
-        roomNumber: r.roomNumber,
-        address: r.address,
-        subdomain: r.subdomain,
-        logo: r.logo,
-        slogan: r.slogan,
-        settings: r.settings,
-        status: r.status,
-      },
-      create: {
+  await seed("offices", data.office, (batch) =>
+    prisma.office.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         name: r.name,
         phoneNumber: r.phoneNumber,
@@ -7749,51 +7770,43 @@ async function main() {
         settings: r.settings,
         status: r.status,
         startedAt: d(r.startedAt),
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
   // A role is a job description, global to the system: which office someone
   // works in lives on their staff row, not on their role. `role.officeId` was
   // dropped from the schema, so writing it here fails against the real table.
-  await seed("roles", data.role, (r: any) =>
-    prisma.role.upsert({
-      where: { id: r.id },
-      update: { name: r.name, description: r.description ?? null },
-      create: {
+  await seed("roles", data.role, (batch) =>
+    prisma.role.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description ?? null,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("role permissions", data.rolePermission, (r: any) =>
-    prisma.rolePermission.upsert({
-      // Keyed on the pair, not the id: the unique constraint is what a re-run
-      // would otherwise collide with.
-      where: { roleId_permissionId: { roleId: r.roleId, permissionId: r.permissionId } },
-      update: {},
-      create: {
+  // Keyed on the (role, permission) pair as well as the id, so a row already
+  // granted under a different id is skipped too.
+  await seed("role permissions", data.rolePermission, (batch) =>
+    prisma.rolePermission.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         roleId: r.roleId,
         permissionId: r.permissionId,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("users", data.user, (r: any) =>
-    prisma.user.upsert({
-      where: { id: r.id },
-      update: {
-        username: r.username,
-        phoneNumber: r.phoneNumber,
-        password: hashedPassword,
-        roleId: r.roleId,
-        isActive: r.isActive,
-        phoneVerified: r.phoneVerified,
-      },
-      create: {
+  // An account that already exists keeps the password it has — only accounts
+  // this run creates get SEED_PASSWORD.
+  await seed("users", data.user, (batch) =>
+    prisma.user.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         username: r.username,
         phoneNumber: r.phoneNumber,
@@ -7801,7 +7814,8 @@ async function main() {
         roleId: r.roleId,
         isActive: r.isActive,
         phoneVerified: r.phoneVerified,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
@@ -7817,30 +7831,20 @@ async function main() {
       : "   retired admins: none left to remove",
   );
 
-  await seed("staff", data.staff, (r: any) =>
-    prisma.staff.upsert({
-      where: { id: r.id },
-      update: { userId: r.userId, officeId: r.officeId },
-      create: {
+  await seed("staff", data.staff, (batch) =>
+    prisma.staff.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         userId: r.userId,
         officeId: r.officeId,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("office availability", data.officeAvailability, (r: any) =>
-    prisma.officeAvailability.upsert({
-      where: { id: r.id },
-      update: {
-        officeId: r.officeId,
-        defaultSchedule: r.defaultSchedule,
-        slotDuration: r.slotDuration,
-        unavailableDateRanges: r.unavailableDateRanges,
-        unavailableDates: r.unavailableDates,
-        dateOverrides: r.dateOverrides,
-      },
-      create: {
+  await seed("office availability", data.officeAvailability, (batch) =>
+    prisma.officeAvailability.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         officeId: r.officeId,
         defaultSchedule: r.defaultSchedule,
@@ -7848,133 +7852,117 @@ async function main() {
         unavailableDateRanges: r.unavailableDateRanges,
         unavailableDates: r.unavailableDates,
         dateOverrides: r.dateOverrides,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("services", data.service, (r: any) =>
-    prisma.service.upsert({
-      where: { id: r.id },
-      update: {
-        name: r.name,
-        description: r.description,
-        timeToTake: r.timeToTake,
-        roomNumber: r.roomNumber,
-        officeId: r.officeId,
-      },
-      create: {
+  await seed("services", data.service, (batch) =>
+    prisma.service.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description,
         timeToTake: r.timeToTake,
         roomNumber: r.roomNumber,
         officeId: r.officeId,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("requirements", data.requirement, (r: any) =>
-    prisma.requirement.upsert({
-      where: { id: r.id },
-      update: { name: r.name, description: r.description, serviceId: r.serviceId },
-      create: {
+  await seed("requirements", data.requirement, (batch) =>
+    prisma.requirement.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description,
         serviceId: r.serviceId,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("service audiences", data.serviceFor, (r: any) =>
-    prisma.serviceFor.upsert({
-      where: { id: r.id },
-      update: { name: r.name, description: r.description, serviceId: r.serviceId },
-      create: {
+  await seed("service audiences", data.serviceFor, (batch) =>
+    prisma.serviceFor.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description,
         serviceId: r.serviceId,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("service-staff assignments", data.serviceStaffAssignment, (r: any) =>
-    prisma.serviceStaffAssignment.upsert({
-      where: { serviceId_staffId: { serviceId: r.serviceId, staffId: r.staffId } },
-      update: {},
-      create: {
+  // Also keyed on a pair — see "role permissions" above.
+  await seed("service-staff assignments", data.serviceStaffAssignment, (batch) =>
+    prisma.serviceStaffAssignment.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         serviceId: r.serviceId,
         staffId: r.staffId,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("galleries", data.gallery, (r: any) =>
-    prisma.gallery.upsert({
-      where: { id: r.id },
-      update: { name: r.name, description: r.description },
-      create: {
+  await seed("galleries", data.gallery, (batch) =>
+    prisma.gallery.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("gallery images", data.galleryImage, (r: any) =>
-    prisma.galleryImage.upsert({
-      where: { id: r.id },
-      update: { galleryId: r.galleryId, filename: r.filename, order: r.order },
-      create: {
+  await seed("gallery images", data.galleryImage, (batch) =>
+    prisma.galleryImage.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         galleryId: r.galleryId,
         filename: r.filename,
         order: r.order,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("administration", data.administration, (r: any) =>
-    prisma.administration.upsert({
-      where: { id: r.id },
-      update: { name: r.name, description: r.description, image: r.image },
-      create: {
+  await seed("administration", data.administration, (batch) =>
+    prisma.administration.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description,
         image: r.image,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
-  await seed("reports", data.report, (r: any) =>
-    prisma.report.upsert({
-      where: { id: r.id },
-      update: {
-        name: r.name,
-        description: r.description,
-        reportSentTo: r.reportSentTo,
-        reportSentBy: r.reportSentBy,
-        receiverStatus: r.receiverStatus,
-      },
-      create: {
+  await seed("reports", data.report, (batch) =>
+    prisma.report.createMany({
+      data: batch.map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description,
         reportSentTo: r.reportSentTo,
         reportSentBy: r.reportSentBy,
         receiverStatus: r.receiverStatus,
-      },
+      })),
+      skipDuplicates: true,
     }),
   );
 
   const total = Object.values(data).reduce((n, rows) => n + rows.length, 0);
   console.log(
-    `\n🎉 Seed complete — ${total} rows across ${Object.keys(data).length} tables.`,
+    `\n🎉 Seed complete — ${total} rows across ${Object.keys(data).length} tables, rows already present left untouched.`,
   );
-  console.log(`   Every user's password is "${SEED_PASSWORD}" (stored bcrypt-hashed).`);
+  console.log(
+    `   Accounts created by this run have the password "${SEED_PASSWORD}" (stored bcrypt-hashed).`,
+  );
 }
 
 main()

@@ -1249,7 +1249,12 @@ export async function approveRequestByAdmin(req: AuthRequest, res: Response) {
     // Manager sign-off is the second gate, so the first has to have been
     // passed. Approving out of order would leave a request approved overall
     // with nobody recorded as having checked it.
-    if (context.statusbystaff !== "approved") {
+    //
+    // Administrators are exempt: this endpoint is also how an admin decides a
+    // request outright, and that route existed before the ordering rule did.
+    // Refusing them here would take away a working path rather than protect
+    // anything — an admin approval is itself an accountable, recorded act.
+    if (!req.isAdmin && context.statusbystaff !== "approved") {
       return res.status(400).json({
         success: false,
         error: "This request is still awaiting staff review.",

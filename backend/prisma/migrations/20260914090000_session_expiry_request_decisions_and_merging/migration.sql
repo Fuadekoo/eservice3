@@ -23,7 +23,7 @@ ALTER TABLE `request` MODIFY COLUMN `approveNote` TEXT NULL;
 ALTER TABLE `request` ADD COLUMN `rejectionReason` TEXT NULL;
 ALTER TABLE `request` ADD COLUMN `decidedAt` DATETIME(3) NULL;
 
--- A request already decided has no recorded decision time; the last update is
+-- A request already decided has no recorded decision time. The last update is
 -- the closest honest approximation, and leaving it null would read as
 -- "never decided".
 UPDATE `request`
@@ -80,8 +80,8 @@ ALTER TABLE `request_for_other`
   ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- The old single `status` becomes the summary of the two new columns. An
--- already-approved row was approved outright, so both steps are satisfied; a
--- rejected one is rejected at both. Pending rows keep the defaults.
+-- already-approved row was approved outright, so both steps are satisfied, and
+-- a rejected one is rejected at both. Pending rows keep the defaults.
 UPDATE `request_for_other`
    SET `statusbystaff` = `status`,
        `statusbyadmin` = `status`

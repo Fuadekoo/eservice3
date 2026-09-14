@@ -23,13 +23,15 @@ import {
   applyTheme,
   BRAND_PRESETS,
   buildPalette,
+  deepBrandShade,
   contrastRatio,
   DEFAULT_BRAND,
   DEFAULT_THEME,
-  hexToOklch,
   normalizeHex,
   oklchToHex,
+  readableInk,
   readStoredTheme,
+  SIDEBAR_PRESETS,
   themesEqual,
   type BrandTheme,
   type ThemeVars,
@@ -62,12 +64,6 @@ const SURFACES = {
     border: oklchToHex({ l: 0.32, c: 0.006, h: 286.033 }),
   },
 } as const;
-
-/** A sensible opening value when the sidebar colour is first taken over. */
-function seedSidebarColour(brandHex: string): string {
-  const { c, h } = hexToOklch(brandHex);
-  return oklchToHex({ l: 0.28, c: Math.min(c * 0.35, 0.06), h });
-}
 
 export function AppearanceTab() {
   const { t } = useTranslation();
@@ -148,7 +144,7 @@ export function AppearanceTab() {
 
   const toggleCustomSidebar = React.useCallback(
     (enabled: boolean) => {
-      setSidebar(enabled ? seedSidebarColour(brandHex) : null);
+      setSidebar(enabled ? deepBrandShade(brandHex) : null);
     },
     [brandHex, setSidebar],
   );
@@ -231,36 +227,12 @@ export function AppearanceTab() {
             <div className="min-w-0 space-y-6">
               <div className="space-y-3">
                 <Label>{t("Presets")}</Label>
-                <div className="flex flex-wrap gap-2.5">
-                  {BRAND_PRESETS.map((preset) => {
-                    const isActive = brandHex === preset.hex;
-                    return (
-                      <button
-                        key={preset.hex}
-                        type="button"
-                        onClick={() => setBrand(preset.hex)}
-                        disabled={isSaving}
-                        title={t(preset.name)}
-                        aria-label={t(preset.name)}
-                        aria-pressed={isActive}
-                        className={cn(
-                          "flex size-9 items-center justify-center rounded-full transition",
-                          "ring-offset-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          "hover:scale-110 disabled:pointer-events-none disabled:opacity-50",
-                          isActive && "ring-2 ring-foreground",
-                        )}
-                        style={{ backgroundColor: preset.hex }}
-                      >
-                        {isActive && (
-                          <Check
-                            className="size-4"
-                            style={{ color: palette.light["--primary-foreground"] }}
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                <SwatchRow
+                  presets={BRAND_PRESETS}
+                  selected={brandHex}
+                  onSelect={setBrand}
+                  disabled={isSaving}
+                />
               </div>
 
               <div className="space-y-2">
@@ -311,7 +283,14 @@ export function AppearanceTab() {
                       )}
                 </p>
                 {draft.sidebar !== null && (
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="space-y-3 pt-2">
+                    <SwatchRow
+                      presets={SIDEBAR_PRESETS}
+                      selected={draft.sidebar}
+                      onSelect={setSidebar}
+                      disabled={isSaving}
+                    />
+                    <div className="flex items-center gap-2">
                     <ColourSwatch
                       id="sidebar-colour-swatch"
                       value={draft.sidebar}
@@ -327,6 +306,7 @@ export function AppearanceTab() {
                       autoComplete="off"
                       className="font-mono"
                     />
+                    </div>
                   </div>
                 )}
               </div>
@@ -385,6 +365,56 @@ export function AppearanceTab() {
 /* ──────────────────────────────────────────────────────────────────────────
    Pieces
    ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * A row of one-click colours.
+ *
+ * Shared by the brand and sidebar pickers: the same affordance either way, so
+ * choosing a sidebar surface works exactly like choosing a brand colour.
+ */
+function SwatchRow({
+  presets,
+  selected,
+  onSelect,
+  disabled,
+}: {
+  presets: ReadonlyArray<{ name: string; hex: string }>;
+  selected: string;
+  onSelect: (hex: string) => void;
+  disabled?: boolean;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-wrap gap-2.5">
+      {presets.map((preset) => {
+        const isActive = selected.toLowerCase() === preset.hex.toLowerCase();
+        return (
+          <button
+            key={preset.hex}
+            type="button"
+            onClick={() => onSelect(preset.hex)}
+            disabled={disabled}
+            title={t(preset.name)}
+            aria-label={t(preset.name)}
+            aria-pressed={isActive}
+            className={cn(
+              "flex size-9 items-center justify-center rounded-full border border-black/10 transition",
+              "ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+              "hover:scale-110 disabled:pointer-events-none disabled:opacity-50",
+              isActive && "ring-2 ring-foreground",
+            )}
+            style={{ backgroundColor: preset.hex }}
+          >
+            {isActive && (
+              <Check className="size-4" style={{ color: readableInk(preset.hex) }} />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 /**
  * A native colour picker wearing the app's input styling.

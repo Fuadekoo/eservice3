@@ -45,6 +45,22 @@ export const BRAND_PRESETS: ReadonlyArray<{ name: string; hex: string }> = [
   { name: "Midnight", hex: "#1e293b" },
 ];
 
+/**
+ * Ready-made sidebar surfaces.
+ *
+ * Deep, low-chroma colours, because the sidebar is a large flat area that a
+ * saturated fill makes exhausting to sit beside all day. The pale one is here
+ * for anyone who wants the rail to recede instead.
+ */
+export const SIDEBAR_PRESETS: ReadonlyArray<{ name: string; hex: string }> = [
+  { name: "Navy", hex: "#16213e" },
+  { name: "Charcoal", hex: "#1f2430" },
+  { name: "Slate", hex: "#27313f" },
+  { name: "Forest", hex: "#12281f" },
+  { name: "Plum", hex: "#26172e" },
+  { name: "Porcelain", hex: "#eef1f6" },
+];
+
 /* ──────────────────────────────────────────────────────────────────────────
    Colour space conversions
    ────────────────────────────────────────────────────────────────────────── */
@@ -419,6 +435,18 @@ export function applyTheme(theme: BrandTheme): void {
   }
 
   window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: theme }));
+}
+
+/**
+ * A deep, mostly-desaturated shade of the brand.
+ *
+ * The opening value when somebody takes the sidebar colour into their own
+ * hands: recognisably their brand, dark enough to carry pale labels, and a
+ * starting point rather than a surprise.
+ */
+export function deepBrandShade(brandHex: string): string {
+  const { c, h } = hexToOklch(brandHex);
+  return ok(0.28, Math.min(c * 0.35, 0.06), h);
 }
 
 /** True when the two themes would produce the same palette. */

@@ -292,6 +292,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const matchPath = React.useCallback(
     (href: string) => {
+      // A collapsible parent has no page of its own. Without this, the empty
+      // href fell through to `pathname.startsWith("/")`, which is true on
+      // every route, so such an item was permanently highlighted.
+      if (!href) {
+        return false;
+      }
+
       if (href === "/") {
         return pathname === "/";
       }

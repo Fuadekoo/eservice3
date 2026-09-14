@@ -524,7 +524,11 @@ function SidebarMenuButton({
       data-slot="sidebar-menu-button"
       data-sidebar="menu-button"
       data-size={size}
-      data-active={isActive}
+      // `|| undefined` so the attribute is ABSENT when inactive. React
+      // renders data-active={false} as the string "false", and Tailwind's
+      // `data-active:` variant compiles to `[data-active]` — presence, not
+      // value — so every row matched and the whole menu rendered as active.
+      data-active={isActive || undefined}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
       {...props}
     />
@@ -680,7 +684,11 @@ function SidebarMenuSubButton({
       data-slot="sidebar-menu-sub-button"
       data-sidebar="menu-sub-button"
       data-size={size}
-      data-active={isActive}
+      // `|| undefined` so the attribute is ABSENT when inactive. React
+      // renders data-active={false} as the string "false", and Tailwind's
+      // `data-active:` variant compiles to `[data-active]` — presence, not
+      // value — so every row matched and the whole menu rendered as active.
+      data-active={isActive || undefined}
       className={cn(
         "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden transition-[background-color,color] duration-150 ease-in-out group-data-[collapsible=icon]:hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[size=md]:text-sm data-[size=sm]:text-xs data-active:bg-sidebar-active data-active:text-sidebar-primary data-active:font-medium [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-current",
         className

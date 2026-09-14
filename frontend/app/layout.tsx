@@ -6,6 +6,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaProvider } from "@/components/providers/pwa-provider";
 import { TranslationsProvider } from "@/components/providers/translations-provider";
+import {
+  absoluteUrl,
+  OG_LOCALE,
+  OG_LOCALE_ALTERNATES,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TITLE,
+  SITE_URL,
+} from "@/lib/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,16 +28,61 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "e-Service | Government Services Management System",
-  description:
-    "e-Service Government Services Management System for your needs with multi-tenant support and multi-language support",
+  // Every relative URL below — and every file-convention share image — is
+  // resolved against this. Without it Next emits relative `og:image` paths,
+  // which crawlers discard, and the card renders with no image at all.
+  metadataBase: SITE_URL,
+  title: {
+    default: SITE_TITLE,
+    // Page titles read as "About — e-Service" without each one repeating it.
+    template: `%s — ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  category: "government",
+  keywords: [
+    "government services",
+    "e-service",
+    "online application",
+    "public services",
+    "appointment booking",
+    "Oromia",
+    "East Shoa",
+  ],
+  alternates: { canonical: absoluteUrl("/") },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: absoluteUrl("/"),
+    locale: OG_LOCALE,
+    alternateLocale: OG_LOCALE_ALTERNATES,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      // Let Google show the full-size preview image and a useful snippet
+      // instead of the conservative defaults it applies without this.
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "e-Service",
+    title: SITE_NAME,
   },
-  applicationName: "e-Service",
   formatDetection: { telephone: false },
   icons: {
     icon: [

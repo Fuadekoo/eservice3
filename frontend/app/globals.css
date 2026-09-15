@@ -82,6 +82,10 @@
   --sidebar-active: oklch(0.488 0.243 264.376 / 0.1);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.708 0 0);
+  --toast-success: oklch(0.52 0.14 152);
+  --toast-error: oklch(0.55 0.21 27);
+  --toast-warning: oklch(0.55 0.13 70);
+  --toast-info: oklch(0.52 0.17 258);
 }
 
 .dark {
@@ -117,6 +121,10 @@
   --sidebar-active: oklch(0.623 0.214 259.815 / 0.15);
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(0.439 0 0);
+  --toast-success: oklch(0.8 0.16 155);
+  --toast-error: oklch(0.72 0.17 25);
+  --toast-warning: oklch(0.83 0.14 82);
+  --toast-info: oklch(0.76 0.13 254);
 }
 
 @layer base {
@@ -130,82 +138,90 @@
 
 @layer components {
   .app-toast {
-    width: min(92vw, 540px) !important;
-    min-height: 92px !important;
-    gap: 14px !important;
+    width: min(92vw, 380px) !important;
+    min-height: 0 !important;
+    gap: 10px !important;
     align-items: flex-start !important;
-    padding: 22px 24px !important;
-    border: 0 !important;
-    border-radius: 18px !important;
+    padding: 12px 14px !important;
+    background: var(--popover) !important;
+    color: var(--popover-foreground) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
     box-shadow:
-      0 18px 50px oklch(0.12 0.02 260 / 18%),
-      0 4px 12px oklch(0.12 0.02 260 / 10%) !important;
-  }
-
-  .app-toast-success {
-    background: oklch(0.58 0.18 148) !important;
-    color: white !important;
-  }
-
-  .app-toast-error {
-    background: oklch(0.58 0.23 27) !important;
-    color: white !important;
-  }
-
-  .app-toast-warning {
-    background: oklch(0.72 0.16 72) !important;
-    color: oklch(0.18 0.03 70) !important;
-  }
-
-  .app-toast-info,
-  .app-toast-loading {
-    background: oklch(0.54 0.18 255) !important;
-    color: white !important;
+      0 8px 24px oklch(0.12 0.02 260 / 10%),
+      0 2px 6px oklch(0.12 0.02 260 / 6%) !important;
   }
 
   .app-toast-content {
-    gap: 6px !important;
+    gap: 2px !important;
   }
 
   .app-toast-title {
-    font-size: 1rem !important;
+    font-size: 0.875rem !important;
     line-height: 1.25rem !important;
-    font-weight: 800 !important;
+    font-weight: 600 !important;
     letter-spacing: 0 !important;
+    color: var(--popover-foreground) !important;
   }
 
   .app-toast-description {
-    color: currentColor !important;
-    font-size: 1.125rem !important;
-    line-height: 1.5rem !important;
-    font-weight: 600 !important;
-    opacity: 0.96 !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.125rem !important;
+    font-weight: 400 !important;
+    color: var(--muted-foreground) !important;
+    opacity: 1 !important;
   }
 
   .app-toast-icon {
-    margin-top: 8px !important;
-    color: currentColor !important;
+    margin: 1px 0 0 !important;
+    flex-shrink: 0 !important;
   }
 
   .app-toast-close {
-    top: 12px !important;
-    right: 12px !important;
+    top: 10px !important;
+    right: 10px !important;
     left: auto !important;
+    width: 18px !important;
+    height: 18px !important;
     border: 0 !important;
-    background: color-mix(in oklch, currentColor 14%, transparent) !important;
-    color: currentColor !important;
+    background: transparent !important;
+    color: var(--muted-foreground) !important;
+    transition: color 0.15s ease !important;
+  }
+
+  .app-toast-close:hover {
+    color: var(--popover-foreground) !important;
+  }
+
+  /* Only the accent colour changes per type - surface stays neutral. */
+  .app-toast-success .app-toast-icon,
+  .app-toast-success .app-toast-title {
+    color: var(--toast-success) !important;
+  }
+
+  .app-toast-error .app-toast-icon,
+  .app-toast-error .app-toast-title {
+    color: var(--toast-error) !important;
+  }
+
+  .app-toast-warning .app-toast-icon,
+  .app-toast-warning .app-toast-title {
+    color: var(--toast-warning) !important;
+  }
+
+  .app-toast-info .app-toast-icon,
+  .app-toast-info .app-toast-title {
+    color: var(--toast-info) !important;
+  }
+
+  .app-toast-loading .app-toast-icon {
+    color: var(--muted-foreground) !important;
   }
 
   @media (max-width: 640px) {
     .app-toast {
       width: calc(100vw - 24px) !important;
-      min-height: 84px !important;
-      padding: 18px 20px !important;
-    }
-
-    .app-toast-description {
-      font-size: 1rem !important;
-      line-height: 1.375rem !important;
+      padding: 11px 13px !important;
     }
   }
 }

@@ -21,20 +21,20 @@ const Toaster = ({ ...props }: ToasterProps) => {
       closeButton
       expand
       visibleToasts={4}
-      duration={4500}
+      duration={4000}
       icons={{
-        success: <CircleCheckIcon className="size-5" />,
-        info: <InfoIcon className="size-5" />,
-        warning: <TriangleAlertIcon className="size-5" />,
-        error: <OctagonXIcon className="size-5" />,
-        loading: <Loader2Icon className="size-5 animate-spin" />,
+        success: <CircleCheckIcon className="size-4" />,
+        info: <InfoIcon className="size-4" />,
+        warning: <TriangleAlertIcon className="size-4" />,
+        error: <OctagonXIcon className="size-4" />,
+        loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
       style={
         {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "18px",
+          "--border-radius": "12px",
         } as React.CSSProperties
       }
       toastOptions={{

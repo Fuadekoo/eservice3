@@ -15,6 +15,7 @@ import {
   rejectRequest,
   mergeRequests,
   deleteRequest,
+  requestStats,
 } from "../controllers/request.controller.js";
 import {
   createRequestForOther,
@@ -50,6 +51,13 @@ router.get(
 );
 
 // ── Ordinary self-requests ───────────────────────────────────────────────
+// Declared before "/:id" for the same reason as "/for-other" above.
+router.get(
+  "/stats",
+  requireAuth,
+  requirePermission("request:read"),
+  asyncHandler(requestStats),
+);
 router.get("/", requireAuth, requirePermission("request:read"), asyncHandler(listRequests));
 router.get(
   "/:id",

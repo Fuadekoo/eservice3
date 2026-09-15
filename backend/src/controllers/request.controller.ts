@@ -377,6 +377,232 @@ async function getOfficeManagers(officeId: string) {
 }
 
 /**
+ * The overall status of a request, as a Prisma filter.
+ *
+ * What a person sees on a row is a function of both approval columns, so a
+ * filter for it has to be written against the pair. Spelling the four states
+ * out in one place keeps the list and the counts in agreement, and is what
+ * makes "processing" — past staff review, waiting on the manager — filterable
+ * at all: it used to be compared against the columns as a literal value, which
+ * no row can ever hold, so that tab always came back empty.
+ *
+ * Returns null for anything that is not one of the four, which callers treat
+ * as "no status filter" rather than as a filter matching nothing.
+ */
+function overallStatusClause(status: string): Record<string, unknown> | null {
+  switch (status) {
+    case "pending":
+      // Nobody has decided yet. A rejection writes "rejected" to both columns,
+      // so a staff column still reading "pending" cannot belong to a closed
+      // request and there is nothing further to exclude.
+      return { statusbystaff: "pending" };
+    case "processing":
+      return { statusbystaff: "approved", statusbyadmin: "pending" };
+    case "approved":
+      return { statusbystaff: "approved", statusbyadmin: "approved" };
+    case "rejected":
+      return {
+        OR: [{ statusbystaff: "rejected" }, { statusbyadmin: "rejected" }],
+      };
+    default:
+      return null;
+  }
+}
+
+/** Free-text search across an ordinary request and the rows it hangs off. */
+function requestSearchClause(search: string) {
+  return {
+    OR: [
+      // Listed first so quoting a reference number is the fastest path —
+      // `contains` also matches a partial number like "00042".
+      { requestNumber: { contains: search } },
+      { service: { name: { contains: search } } },
+      { service: { office: { name: { contains: search } } } },
+      { user: { username: { contains: search } } },
+      { currentAddress: { contains: search } },
+    ],
+  };
+}
+
+/** The same search, against the columns a dependent request actually has. */
+function requestForOtherSearchClause(search: string) {
+  return {
+    OR: [
+      { requestNumber: { contains: search } },
+      { name: { contains: search } },
+      { phoneNumber: { contains: search } },
+      { currentAddress: { contains: search } },
+      { service: { name: { contains: search } } },
+      { service: { office: { name: { contains: search } } } },
+      { user: { username: { contains: search } } },
+    ],
+  };
+}
+
+/**
+ * The rows a caller is allowed to see, as a pair of where clauses — one for
+ * ordinary requests, one for those filed on behalf of a family member.
+ *
+ * Returns null when the role has no queue at all (a manager without an office,
+ * a staff member with no assigned services), which callers answer with an
+ * empty result rather than with the whole table.
+ */
+async function buildRequestScope(
+  userId: string,
+  officeId: string,
+): Promise<{ where: any; otherWhere: any } | null> {
+  const roleName = await getUserRole(userId);
+  const isAdmin = ["admin", "administrator"].includes(roleName);
+  const isManager = roleName === "manager";
+  const isStaff = roleName === "staff";
+  const isCustomer = roleName === "customer";
+
+  const where: any = {};
+
+  // A duplicate that has been folded into another request is finished work.
+  // The office still reaches it by reference number, and the customer still
+  // sees it on their own list, but it must not sit in the queue asking for a
+  // second decision on something already being handled.
+  if (!isCustomer) {
+    where.mergedIntoId = null;
+  }
+
+  if (isCustomer) {
+    where.userId = userId;
+  } else if (isManager) {
+    const managerOfficeId = await getManagerOffice(userId);
+    if (!managerOfficeId) return null;
+    where.service = { officeId: managerOfficeId };
+  } else if (isStaff) {
+    const staffRecord = await getStaffRecord(userId);
+    if (!staffRecord) return null;
+
+    const assignedServices = await prisma.serviceStaffAssignment.findMany({
+      where: { staffId: staffRecord.id },
+      select: { serviceId: true },
+    });
+
+    const serviceIds = assignedServices.map((a) => a.serviceId);
+    if (serviceIds.length === 0) return null;
+
+    where.serviceId = { in: serviceIds };
+  }
+
+  // Office filter (admin only)
+  if (isAdmin && officeId) {
+    where.service = { officeId };
+  }
+
+  // ── Requests submitted on behalf of a family member ────────────────
+  // They live in their own table, so the same scope has to be expressed
+  // against its columns: it has no requestNumber, a single `status`, and
+  // its own denormalised officeId.
+  const otherWhere: any = {};
+
+  if (isCustomer) {
+    otherWhere.userId = userId;
+  } else if (isManager) {
+    otherWhere.service = where.service;
+  } else if (isStaff) {
+    otherWhere.serviceId = where.serviceId;
+  }
+
+  if (isAdmin && officeId) {
+    otherWhere.service = { officeId };
+  }
+
+  return { where, otherWhere };
+}
+
+/**
+ * GET - Counts per overall status for the caller's queue.
+ *
+ * The dashboard used to tally whichever page it happened to be showing, so a
+ * desk with sixty pending requests read "10 pending" — and the number moved
+ * every time someone paged. These counts cover the whole queue, under the same
+ * scope and search the list endpoint applies, so the tabs and the tiles say
+ * what is actually there.
+ */
+export async function requestStats(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const search = (req.query.search as string) || "";
+    const officeId = (req.query.officeId as string) || "";
+
+    const empty = {
+      total: 0,
+      pending: 0,
+      processing: 0,
+      approved: 0,
+      rejected: 0,
+    };
+
+    const scope = await buildRequestScope(userId, officeId);
+    if (!scope) {
+      return res.status(200).json({ success: true, data: empty });
+    }
+
+    const where = { ...scope.where };
+    const otherWhere = { ...scope.otherWhere };
+
+    if (search) {
+      where.AND = [requestSearchClause(search)];
+      otherWhere.AND = [requestForOtherSearchClause(search)];
+    }
+
+    const [selfGroups, otherGroups] = await Promise.all([
+      prisma.request.groupBy({
+        by: ["statusbystaff", "statusbyadmin"],
+        where,
+        _count: { _all: true },
+      }),
+      prisma.requestForOther.groupBy({
+        by: ["statusbystaff", "statusbyadmin"],
+        where: otherWhere,
+        _count: { _all: true },
+      }),
+    ]);
+
+    const counts = { ...empty };
+
+    // The same fold the rows themselves go through, so a tile can never
+    // disagree with the tab above it.
+    for (const group of [...selfGroups, ...otherGroups]) {
+      const count = group._count._all;
+      counts.total += count;
+
+      if (
+        group.statusbystaff === "rejected" ||
+        group.statusbyadmin === "rejected"
+      ) {
+        counts.rejected += count;
+      } else if (
+        group.statusbystaff === "approved" &&
+        group.statusbyadmin === "approved"
+      ) {
+        counts.approved += count;
+      } else if (group.statusbystaff === "approved") {
+        counts.processing += count;
+      } else {
+        counts.pending += count;
+      }
+    }
+
+    return res.status(200).json({ success: true, data: counts });
+  } catch (error: any) {
+    console.error("❌ Error counting requests:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Failed to count requests",
+    });
+  }
+}
+
+/**
  * GET - List all requests (role-based access)
  */
 export async function listRequests(req: AuthRequest, res: Response) {
@@ -395,66 +621,19 @@ export async function listRequests(req: AuthRequest, res: Response) {
     const officeId = (req.query.officeId as string) || "";
     const status = (req.query.status as string) || "";
 
-    const roleName = await getUserRole(userId);
-    const isAdmin = ["admin", "administrator"].includes(roleName);
-    const isManager = roleName === "manager";
-    const isStaff = roleName === "staff";
-    const isCustomer = roleName === "customer";
-
-    let where: any = {};
-
-    // A duplicate that has been folded into another request is finished work.
-    // The office still reaches it by reference number, and the customer still
-    // sees it on their own list, but it must not sit in the queue asking for a
-    // second decision on something already being handled.
-    if (!isCustomer) {
-      where.mergedIntoId = null;
-    }
-
-    // Build where clause based on role
-    if (isCustomer) {
-      where.userId = userId;
-    } else if (isManager) {
-      const managerOfficeId = await getManagerOffice(userId);
-      if (!managerOfficeId) {
-        return res.status(200).json({
-          success: true,
-          data: [],
-          pagination: { page, pageSize, total: 0, totalPages: 0 },
-        });
-      }
-      where.service = { officeId: managerOfficeId };
-    } else if (isStaff) {
-      const staffRecord = await getStaffRecord(userId);
-      if (!staffRecord) {
-        return res.status(200).json({
-          success: true,
-          data: [],
-          pagination: { page, pageSize, total: 0, totalPages: 0 },
-        });
-      }
-
-      const assignedServices = await prisma.serviceStaffAssignment.findMany({
-        where: { staffId: staffRecord.id },
-        select: { serviceId: true },
+    const scope = await buildRequestScope(userId, officeId);
+    if (!scope) {
+      // The role has no queue — a manager without an office, or a staff member
+      // with nothing assigned. An empty page, not the whole table.
+      return res.status(200).json({
+        success: true,
+        data: [],
+        pagination: { page, pageSize, total: 0, totalPages: 0 },
       });
-
-      const serviceIds = assignedServices.map((a) => a.serviceId);
-      if (serviceIds.length === 0) {
-        return res.status(200).json({
-          success: true,
-          data: [],
-          pagination: { page, pageSize, total: 0, totalPages: 0 },
-        });
-      }
-
-      where.serviceId = { in: serviceIds };
     }
 
-    // Office filter (admin only)
-    if (isAdmin && officeId) {
-      where.service = { officeId };
-    }
+    const where: any = { ...scope.where };
+    const otherWhere: any = { ...scope.otherWhere };
 
     // Status and search are combined under a single AND list.
     //
@@ -465,83 +644,23 @@ export async function listRequests(req: AuthRequest, res: Response) {
     // at the same time answered 500 rather than a result set. Building the
     // clauses in a list and assigning once cannot produce a cycle.
     const clauses: any[] = [];
+    const otherClauses: any[] = [];
 
-    if (status) {
-      if (status === "pending") {
-        // Pending overall: either gate is still undecided.
-        clauses.push({
-          OR: [{ statusbystaff: "pending" }, { statusbyadmin: "pending" }],
-        });
-      } else {
-        clauses.push({ statusbystaff: status }, { statusbyadmin: status });
-      }
+    // The two tables carry the same pair of approval columns, so one clause
+    // serves both.
+    const statusClause = status ? overallStatusClause(status) : null;
+    if (statusClause) {
+      clauses.push(statusClause);
+      otherClauses.push(statusClause);
     }
 
     if (search) {
-      clauses.push({
-        OR: [
-          // Listed first so quoting a reference number is the fastest path —
-          // `contains` also matches a partial number like "00042".
-          { requestNumber: { contains: search } },
-          { service: { name: { contains: search } } },
-          { service: { office: { name: { contains: search } } } },
-          { user: { username: { contains: search } } },
-          { currentAddress: { contains: search } },
-        ],
-      });
+      clauses.push(requestSearchClause(search));
+      otherClauses.push(requestForOtherSearchClause(search));
     }
 
     if (clauses.length > 0) {
       where.AND = clauses;
-    }
-
-    // ── Requests submitted on behalf of a family member ────────────────
-    // They live in their own table, so the same scope has to be expressed
-    // against its columns: it has no requestNumber, a single `status`, and
-    // its own denormalised officeId.
-    const otherWhere: any = {};
-
-    if (isCustomer) {
-      otherWhere.userId = userId;
-    } else if (isManager) {
-      otherWhere.service = where.service;
-    } else if (isStaff) {
-      otherWhere.serviceId = where.serviceId;
-    }
-
-    if (isAdmin && officeId) {
-      otherWhere.service = { officeId };
-    }
-
-    const otherClauses: any[] = [];
-
-    if (status) {
-      // The same pair of columns as an ordinary request, now that a dependent
-      // request goes through the same two gates.
-      if (status === "pending") {
-        otherClauses.push({
-          OR: [{ statusbystaff: "pending" }, { statusbyadmin: "pending" }],
-        });
-      } else {
-        otherClauses.push(
-          { statusbystaff: status },
-          { statusbyadmin: status },
-        );
-      }
-    }
-
-    if (search) {
-      otherClauses.push({
-        OR: [
-          { requestNumber: { contains: search } },
-          { name: { contains: search } },
-          { phoneNumber: { contains: search } },
-          { currentAddress: { contains: search } },
-          { service: { name: { contains: search } } },
-          { service: { office: { name: { contains: search } } } },
-          { user: { username: { contains: search } } },
-        ],
-      });
     }
 
     if (otherClauses.length > 0) {

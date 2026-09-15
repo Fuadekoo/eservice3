@@ -689,10 +689,13 @@ function StaffOverviewContent() {
                     color="text-violet-600"
                     bg="bg-violet-500/10"
                   />
+                  {/* Straight to what is waiting on this desk. It used to
+                      point at /requests — the customer's tracking page, which
+                      showed the same rows with no way to act on them. */}
                   <QuickAction
-                    href="/requests"
+                    href="/requestManagement?status=pending"
                     icon={Clock}
-                    label={t("Request Queue")}
+                    label={t("Pending Queue")}
                     color="text-amber-600"
                     bg="bg-amber-500/10"
                   />

@@ -59,6 +59,44 @@ export function deciderName(decider?: Decider | null): string | null {
   return decider.user?.name?.trim() || decider.user?.username || null;
 }
 
+/**
+ * The status a person actually sees on a request.
+ *
+ * It is a fold of the two approval columns rather than a column of its own:
+ * "processing" is the gap between the two gates — staff have passed it, the
+ * manager has not looked yet — which is where most of the queue sits on any
+ * given day.
+ */
+export type OverallStatus = "pending" | "processing" | "approved" | "rejected";
+
+export function getOverallStatus(req: ServiceRequest): OverallStatus {
+  if (req.statusbystaff === "rejected" || req.statusbyadmin === "rejected") {
+    return "rejected";
+  }
+  if (req.statusbystaff === "approved" && req.statusbyadmin === "approved") {
+    return "approved";
+  }
+  if (req.statusbystaff === "approved") return "processing";
+  return "pending";
+}
+
+/** Counts across the caller's whole queue, not just the page on screen. */
+export type RequestStats = {
+  total: number;
+  pending: number;
+  processing: number;
+  approved: number;
+  rejected: number;
+};
+
+const EMPTY_STATS: RequestStats = {
+  total: 0,
+  pending: 0,
+  processing: 0,
+  approved: 0,
+  rejected: 0,
+};
+
 type Pagination = { page: number; pageSize: number; total: number; totalPages: number };
 
 type RequestStore = {
@@ -66,6 +104,8 @@ type RequestStore = {
   isLoading: boolean;
   error: string | null;
   pagination: Pagination | null;
+  /** Whole-queue counts, kept apart from the page currently loaded. */
+  stats: RequestStats;
 
   fetchRequests: (params?: {
     page?: number;
@@ -74,6 +114,7 @@ type RequestStore = {
     status?: string;
     officeId?: string;
   }) => Promise<void>;
+  fetchStats: (params?: { search?: string; officeId?: string }) => Promise<void>;
   approveRequestStaff: (id: string, staffId: string, notes?: string) => Promise<void>;
   approveRequestManager: (id: string, approverId: string, notes?: string) => Promise<void>;
   rejectRequest: (id: string, rejectionReason: string) => Promise<void>;
@@ -90,6 +131,7 @@ export const useRequestStore = create<RequestStore>((set) => ({
   isLoading: false,
   error: null,
   pagination: null,
+  stats: EMPTY_STATS,
 
   fetchRequests: async (params = {}) => {
     set({ isLoading: true, error: null });
@@ -112,6 +154,32 @@ export const useRequestStore = create<RequestStore>((set) => ({
         isLoading: false,
         requests: [],
       });
+    }
+  },
+
+  /**
+   * Counts for every status tab at once.
+   *
+   * Tallying the loaded page instead was wrong in both directions: a tab could
+   * read zero while the queue held dozens, and every number changed as soon as
+   * someone turned the page. The status filter is deliberately not sent — the
+   * point is to say how many are in each state, including the ones the current
+   * filter is hiding.
+   */
+  fetchStats: async (params = {}) => {
+    try {
+      const q = new URLSearchParams();
+      if (params.search) q.set("search", params.search);
+      if (params.officeId) q.set("officeId", params.officeId);
+
+      const res = (await axiosInstance.get(
+        `/requests/stats?${q.toString()}`
+      )) as unknown as { data: RequestStats };
+
+      set({ stats: res.data ?? EMPTY_STATS });
+    } catch {
+      // A failed count must not blank the queue underneath it; the tabs simply
+      // keep the last figures they had.
     }
   },
 

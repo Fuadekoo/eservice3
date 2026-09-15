@@ -212,12 +212,12 @@ export const NAVIGATION: NavSection[] = [
         roles: ["STAFF"],
       },
       {
-        titleKey: "Requests",
-        icon: FileText,
-        href: "/requests",
-        roles: ["STAFF"],
-      },
-      {
+        // One entry, not two. Staff used to get "Requests" (the customer's
+        // own tracking page, pointed at their queue) alongside "Request
+        // Management" — the same rows, one of them with no way to act on
+        // them. Everything a staff member does with a request now lives on
+        // /requestManagement, and /requests is the customer page it always
+        // was.
         titleKey: "Request Management",
         icon: ClipboardList,
         href: "/requestManagement",
